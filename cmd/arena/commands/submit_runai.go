@@ -243,6 +243,8 @@ type submitRunaiJobArgs struct {
 	LargeShm            *bool             `yaml:"shm,omitempty"`
 	EnvironmentVariable []string          `yaml:"environment"`
 	LocalImage          *bool             `yaml:"localImage,omitempty"`
+	Completions         *int              `yaml:"completions,omitempty"`
+	Parallelism         *int              `yaml:"parallelism,omitempty"`
 	TTL                 *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Labels              map[string]string `yaml:"labels,omitempty"`
 	IsJupyter           bool
@@ -313,6 +315,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
+	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
+	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
@@ -334,6 +338,11 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 		if configToUse == nil {
 			return fmt.Errorf("Could not find runai environment %s. Please run '%s env list'", configArg, config.CLIName)
 		}
+	}
+
+	if submitArgs.Completions == nil && submitArgs.Parallelism != nil {
+		return fmt.Errorf("If the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)./n " +
+			"Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns")
 	}
 
 	if err != nil {
