@@ -341,8 +341,8 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	if submitArgs.Completions == nil && submitArgs.Parallelism != nil {
-		return fmt.Errorf("If the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)./n " +
-			"Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns")
+		// Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
+		return fmt.Errorf("if the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)")
 	}
 
 	if err != nil {
