@@ -1,14 +1,17 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
+
+executors:
+  runai-executor:
+    docker:
+      - image: runai/circleci-go-gcloud
+    working_directory: /go/src/github.com/kubeflow/arena
+
+version: 2.1
 jobs:
   build:
-    docker:
-    - image: runai/circleci-go
-    working_directory: /go/src/github.com/kubeflow/arena
+    executor: runai-executor
     steps:
     - checkout
+    - run: mkdir -p workspace/binaries
     - run:
         name: general-prep
         command: rm .env
@@ -17,16 +20,74 @@ jobs:
         command: |
           make cli-darwin-amd64
           tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts
+          mv darwin-amd64.tar.gz workspace/binaries
     - run: 
         name: build-linux
         command: |
           make cli-linux-amd64
           tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
-    - run:
-        name: push-binaries
-        command: |
-          if [ "$CIRCLE_BRANCH" == "runai-master" ]
-          then
+          mv linux-amd64.tar.gz workspace/binaries
+    - persist_to_workspace:
+        root: workspace
+        paths:
+          - binaries
+  push:
+    executor: runai-executor
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: push
+          command: |
             set -ex 
-            hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -m "" v1.0.0
-          fi
+            echo $GCP_SERVICE_ACCOUNT >> ./key_file
+            gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
+            gsutil cp /tmp/workspace/binaries/darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz
+            gsutil cp /tmp/workspace/binaries/linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz
+            # hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" v1.0.1
+  release:
+    executor: runai-executor
+    steps:
+      - checkout
+      - run:
+          name: get-packages
+          command: |
+            set -ex 
+            mkdir -p /tmp/packages
+            echo $GCP_SERVICE_ACCOUNT >> ./key_file
+            gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/packages/darwin-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/packages/linux-amd64.tar.gz
+      - run:
+          name: upload-version
+          command: |
+            hub release edit -a /tmp/packages/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/packages/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
+
+
+workflows:
+  version: 2.1
+
+  staging:
+    jobs:
+      - build: 
+          name: build
+      - push:
+          name: push
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+               - runai-master
+            tags:
+              ignore: /.*/
+  release:
+    jobs:
+      - release:
+          name: release
+          filters:
+            branches:
+              ignore: /.*/  
+            tags:
+              only: /^v.*/
