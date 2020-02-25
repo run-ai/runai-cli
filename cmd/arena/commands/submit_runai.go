@@ -31,7 +31,11 @@ var (
 )
 
 const (
+	defaultNamespace = "default"
 	defaultRunaiTrainingType = "runai"
+	runaiNamespace = "runai"
+	runaiFractionGPUSuffix = "runai-fraction-gpu"
+	runaiVisibleDevices = "RUNAI-VISIBLE-DEVICES"
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -170,7 +174,6 @@ func getJobIndex() (string, error) {
 func tryGetJobIndexOnce() (string, bool, error) {
 	var (
 		indexKey       = "index"
-		runaiNamespace = "runai"
 		configMapName  = "runai-cli-index"
 	)
 
@@ -205,6 +208,7 @@ func tryGetJobIndexOnce() (string, bool, error) {
 
 	newIndex := fmt.Sprintf("%d", lastIndex+1)
 	configMap.Data[indexKey] = newIndex
+
 	_, err = clientset.CoreV1().ConfigMaps(runaiNamespace).Update(configMap)
 
 	// Might be someone already updated this configmap. Try the process again.
@@ -236,7 +240,10 @@ type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
 	Project             string            `yaml:"project,omitempty"`
-	GPU                 *int              `yaml:"gpu,omitempty"`
+	GPU                 *float64
+	GPUInt              *int              `yaml:"gpuInt,omitempty"`
+	GPUFraction         string            `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed    string            `yaml:"gpuFractionFixed,omitempty"`
 	Image               string            `yaml:"image,omitempty"`
 	HostIPC             *bool             `yaml:"hostIPC,omitempty"`
 	Interactive         *bool             `yaml:"interactive,omitempty"`
@@ -307,7 +314,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&nameParameter, "name", "", "Job name")
 	command.Flags().MarkDeprecated("name", "please use positional argument instead")
 
-	flags.AddIntNullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
+	flags.AddFloat64NullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
 	command.Flags().StringVar(&(sa.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
 	command.Flags().StringVar(&(sa.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M, .etc)")
 	command.Flags().StringVarP(&(sa.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
@@ -365,6 +372,12 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 		configValues = configToUse.Values
 	}
 
+	fmt.Println("GPU: ", submitArgs.GPU)
+	err = handleSharedGPUsIfNeeded(name, submitArgs)
+	if err != nil {
+		return err
+	}
+
 	err = workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
@@ -373,4 +386,48 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	log.Infof("The Job %s has been submitted successfully", name)
 	log.Infof("You can run `%s get %s` to check the job status", config.CLIName, name)
 	return nil
+}
+
+func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error {
+	if submitArgs.GPU == nil {
+		return nil
+	}
+
+	if float64(int(*submitArgs.GPU)) == *submitArgs.GPU  {
+		gpu := int(*submitArgs.GPU)
+		submitArgs.GPUInt = &gpu
+
+		return nil
+	}
+
+	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
+	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", *submitArgs.GPU  * 0.7)
+	submitArgs.Args = []string{strconv.Itoa(int(64 * *submitArgs.GPU * 0.4)), strconv.Itoa(int(64 * *submitArgs.GPU * 0.4))}
+
+	fmt.Println("gpuFraction:", submitArgs.GPUFraction)
+	return setConfigMapForFractionGPU(name)
+}
+
+func setConfigMapForFractionGPU(jobName string) error {
+	configMapName := fmt.Sprintf("%v-%v", jobName, runaiFractionGPUSuffix)
+	configMap, err := clientset.CoreV1().ConfigMaps(defaultNamespace).Get(configMapName, metav1.GetOptions{})
+
+	// Map already exists
+	if err == nil {
+		configMap.Data[runaiVisibleDevices] = ""
+		_, err = clientset.CoreV1().ConfigMaps(defaultNamespace).Update(configMap)
+		return err
+	}
+
+	data := make(map[string]string)
+	data[runaiVisibleDevices] = ""
+	configMap = &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: configMapName,
+		},
+		Data: data,
+	}
+
+	_, err = clientset.CoreV1().ConfigMaps(defaultNamespace).Create(configMap)
+	return err
 }
