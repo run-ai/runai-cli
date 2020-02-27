@@ -6,10 +6,10 @@ JOB_MONITOR=jobmon
 OS_ARCH?=linux-amd64
 
 # Use .env file if exists - for local development
--include .env
+#-include .env
 
 ifndef RUNAI_CONFIG
-RUNAI_CONFIG=/etc/runai
+RUNAI_CONFIG=/etc/gpusharing
 endif
 
 CHARTS_FOLDER=$(RUNAI_CONFIG)/charts

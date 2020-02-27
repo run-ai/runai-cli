@@ -372,7 +372,6 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 		configValues = configToUse.Values
 	}
 
-	fmt.Println("GPU: ", submitArgs.GPU)
 	err = handleSharedGPUsIfNeeded(name, submitArgs)
 	if err != nil {
 		return err
@@ -401,10 +400,9 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 	}
 
 	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
-	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", *submitArgs.GPU  * 0.7)
-	submitArgs.Args = []string{strconv.Itoa(int(64 * *submitArgs.GPU * 0.4)), strconv.Itoa(int(64 * *submitArgs.GPU * 0.4))}
+	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", *submitArgs.GPU * 0.7)
+	submitArgs.Args = []string{"1", "1", "32"}
 
-	fmt.Println("gpuFraction:", submitArgs.GPUFraction)
 	return setConfigMapForFractionGPU(name)
 }
 
@@ -431,3 +429,4 @@ func setConfigMapForFractionGPU(jobName string) error {
 	_, err = clientset.CoreV1().ConfigMaps(defaultNamespace).Create(configMap)
 	return err
 }
+

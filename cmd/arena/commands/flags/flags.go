@@ -47,9 +47,7 @@ func (argument *intNullableArgument) String() string {
 
 func (argument *float64NullableArgument) Set(s string) error {
 	f, err := strconv.ParseFloat(s, 64)
-	fmt.Println("yodar1 f:", f)
 	*argument.variableToSet = &f
-	fmt.Println("yodar2 f:", **argument.variableToSet)
 
 	return err
 }
@@ -60,11 +58,8 @@ func (argument *float64NullableArgument) Type() string {
 
 func (argument *float64NullableArgument) String() string {
 	if *argument.variableToSet == nil {
-		fmt.Println("yodar3 nil:")
 		return ""
 	}
-	a:= fmt.Sprintf("%v", **argument.variableToSet)
-	fmt.Println("yodar4 f:", a)
 
 	return fmt.Sprintf("%v", **argument.variableToSet)
 }
