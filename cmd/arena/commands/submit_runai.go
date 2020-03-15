@@ -31,11 +31,11 @@ var (
 )
 
 const (
-	defaultNamespace = "default"
+	defaultNamespace         = "default"
 	defaultRunaiTrainingType = "runai"
-	runaiNamespace = "runai"
-	runaiFractionGPUSuffix = "runai-fraction-gpu"
-	runaiVisibleDevices = "RUNAI-VISIBLE-DEVICES"
+	runaiNamespace           = "runai"
+	runaiFractionGPUSuffix   = "runai-fraction-gpu"
+	runaiVisibleDevices      = "RUNAI-VISIBLE-DEVICES"
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -173,8 +173,8 @@ func getJobIndex() (string, error) {
 
 func tryGetJobIndexOnce() (string, bool, error) {
 	var (
-		indexKey       = "index"
-		configMapName  = "runai-cli-index"
+		indexKey      = "index"
+		configMapName = "runai-cli-index"
 	)
 
 	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(configMapName, metav1.GetOptions{})
@@ -239,7 +239,7 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	Project             string            `yaml:"project,omitempty"`
+	Project             string `yaml:"project,omitempty"`
 	GPU                 *float64
 	GPUInt              *int              `yaml:"gpuInt,omitempty"`
 	GPUFraction         string            `yaml:"gpuFraction,omitempty"`
@@ -392,7 +392,7 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 		return nil
 	}
 
-	if float64(int(*submitArgs.GPU)) == *submitArgs.GPU  {
+	if float64(int(*submitArgs.GPU)) == *submitArgs.GPU {
 		gpu := int(*submitArgs.GPU)
 		submitArgs.GPUInt = &gpu
 
@@ -400,10 +400,10 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 	}
 	interactiveJobPatch := true
 
-	submitArgs.GPUFraction =  fmt.Sprintf("%v", *submitArgs.GPU)
-	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU) * 0.7)
+	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
+	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU)*0.7)
 	submitArgs.Interactive = &interactiveJobPatch
-	if submitArgs.Interactive == nil || *submitArgs.Interactive == false{
+	if submitArgs.Interactive == nil || *submitArgs.Interactive == false {
 		return fmt.Errorf("Jobs that require a fractional number of GPUs must be interactive. Run the job with flag '--interactive'")
 	}
 
@@ -415,7 +415,8 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 		return fmt.Errorf("Jobs that require a fractional number of GPUs must require less than 1 GPU")
 	}
 
-	submitArgs.Args = []string{"1", "1", "32"}
+	// patch for demo
+	submitArgs.Image = "gcr.io/run-ai-lab/quickstart-sharing"
 
 	return setConfigMapForFractionGPU(name)
 }
@@ -443,4 +444,3 @@ func setConfigMapForFractionGPU(jobName string) error {
 	_, err = clientset.CoreV1().ConfigMaps(defaultNamespace).Create(configMap)
 	return err
 }
-
