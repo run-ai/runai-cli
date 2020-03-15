@@ -129,11 +129,13 @@ spec:
             - name: RUNAI_GPU_FRACTION
               value: "{{ .Values.gpuFractionFixed }}"
             {{- end }}
+            {{- if .Values.gpuFraction }}
             - name: NVIDIA_VISIBLE_DEVICES
               valueFrom:
                 configMapKeyRef:
                   name: "{{  .Release.Name }}-runai-fraction-gpu"
                   key: RUNAI-VISIBLE-DEVICES
+            {{- end}}
             - name: podUUID
               valueFrom:
                 fieldRef:

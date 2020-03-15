@@ -398,9 +398,22 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 
 		return nil
 	}
+	interactiveJobPatch := true
 
 	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
-	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", *submitArgs.GPU * 0.7)
+	submitArgs.Interactive = &interactiveJobPatch
+	if submitArgs.Interactive == nil || *submitArgs.Interactive == false{
+		return fmt.Errorf("Jobs that require a fractional number of GPUs must be interactive. Run the job with flag '--interactive'")
+	}
+
+	if submitArgs.Elastic != nil && *submitArgs.Elastic == true {
+		return fmt.Errorf("Jobs that require a fractional number of GPUs can't be elastic jobs. Run the job without flag '--elastic'")
+	}
+
+	if *submitArgs.GPU > 1 {
+		return fmt.Errorf("Jobs that require a fractional number of GPUs must require less than 1 GPU")
+	}
+
 	submitArgs.Args = []string{"1", "1", "32"}
 
 	return setConfigMapForFractionGPU(name)

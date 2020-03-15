@@ -15,6 +15,8 @@
 package commands
 
 import (
+	"strconv"
+
 	"k8s.io/api/core/v1"
 )
 
@@ -70,17 +72,19 @@ func gpuInPod(pod v1.Pod) (gpuCount int64) {
 	return gpuCount
 }
 
-func gpuInActivePod(pod v1.Pod) (gpuCount int64) {
+func gpuInActivePod(pod v1.Pod) (gpuCount float64) {
 	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
 		return 0
 	}
 
-	containers := pod.Spec.Containers
-	for _, container := range containers {
-		gpuCount += gpuInContainer(container)
+	if pod.Annotations != nil {
+		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations["gpu-fraction"], 64)
+		if GPUFractionErr == nil {
+			return gpuFraction
+		}
 	}
 
-	return gpuCount
+	return float64(gpuInPod(pod))
 }
 
 func gpuInContainer(container v1.Container) int64 {
