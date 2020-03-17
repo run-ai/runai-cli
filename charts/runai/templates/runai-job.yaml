@@ -133,6 +133,10 @@ spec:
               value: "{{ .Values.gpuFractionFixed }}"
             {{- end }}
             {{- if .Values.gpuFraction }}
+            - name: RUNAI_GPU_USER_FRACTION
+              value: "{{ .Values.gpuFraction }}"
+            {{- end }}
+            {{- if .Values.gpuFraction }}
             - name: NVIDIA_VISIBLE_DEVICES
               valueFrom:
                 configMapKeyRef:

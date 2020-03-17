@@ -31,7 +31,7 @@ import (
 )
 
 var (
-	showDetails  bool
+	showDetails bool
 )
 
 type NodeInfo struct {
@@ -265,7 +265,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		var allocatableGPU int64
 		var allocatedGPU int64
 		totalGPU, allocatableGPU, allocatedGPU = calculateNodeGPU(nodeInfo)
-	
+
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 		unhealthyGPUs := totalGPU - allocatableGPU
@@ -358,6 +358,10 @@ func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatbleGPU, allocatedGPU 
 	for _, pod := range nodeInfo.pods {
 		allocatedGPU += gpuInPod(pod)
 	}
+
+	fractionalGPUsUsedInNode := fractionGPUsUsedInNode(nodeInfo)
+	allocatedGPU += fractionalGPUsUsedInNode
+	totalGPU += fractionalGPUsUsedInNode
 
 	return totalGPU, allocatbleGPU, allocatedGPU
 }

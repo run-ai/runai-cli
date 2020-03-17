@@ -417,10 +417,16 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 		return fmt.Errorf("Jobs that require a fractional number of GPUs must require less than 1 GPU")
 	}
 
-	if *submitArgs.GPU >= 0.5 {
-		submitArgs.Args = []string{"32", "32", "224"}
+	if *submitArgs.GPU >= 0.3 {
+		submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU)*0.8)
 	} else {
-		submitArgs.Args = []string{"128", "128", "32"}
+		submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU)*0.7)
+	}
+
+	if *submitArgs.GPU >= 0.5 {
+		submitArgs.Args = []string{"32", "224"}
+	} else {
+		submitArgs.Args = []string{"128", "32"}
 	}
 
 	// patch for demo

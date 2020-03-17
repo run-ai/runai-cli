@@ -106,3 +106,23 @@ func gpuInContainerDeprecated(container v1.Container) int64 {
 
 	return val.Value()
 }
+
+func fractionGPUsUsedInNode(nodeInfo NodeInfo) int64 {
+	gpuIndexUsed := map[string]bool{}
+	for _, pod := range nodeInfo.pods {
+		if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+			return 0
+		}
+
+		if pod.Annotations != nil {
+			gpuIndex, found := pod.Annotations["runai-gpu"]
+			if !found {
+				continue
+			}
+
+			gpuIndexUsed[gpuIndex] = true
+		}
+	}
+
+	return int64(len(gpuIndexUsed))
+}
