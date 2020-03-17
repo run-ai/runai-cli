@@ -240,6 +240,7 @@ type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
 	Project             string `yaml:"project,omitempty"`
+	Name                string `yaml:"name,omitempty"`
 	GPU                 *float64
 	GPUInt              *int              `yaml:"gpuInt,omitempty"`
 	GPUFraction         string            `yaml:"gpuFraction,omitempty"`
@@ -372,6 +373,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 		configValues = configToUse.Values
 	}
 
+	submitArgs.Name = name
 	err = handleSharedGPUsIfNeeded(name, submitArgs)
 	if err != nil {
 		return err
@@ -398,8 +400,8 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 
 		return nil
 	}
-	interactiveJobPatch := true
 
+	interactiveJobPatch := true
 	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
 	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU)*0.8)
 	submitArgs.Interactive = &interactiveJobPatch
@@ -413,6 +415,12 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 
 	if *submitArgs.GPU > 1 {
 		return fmt.Errorf("Jobs that require a fractional number of GPUs must require less than 1 GPU")
+	}
+
+	if *submitArgs.GPU >= 0.5 {
+		submitArgs.Args = []string{"32", "32", "224"}
+	} else {
+		submitArgs.Args = []string{"128", "128", "32"}
 	}
 
 	// patch for demo
