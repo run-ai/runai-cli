@@ -41,10 +41,10 @@ func DeleteJob(name, namespace, trainingType string, clientset *kubernetes.Clien
 	}
 
 	err = kubectl.DeleteAppConfigMap(jobName, namespace)
-	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
-	}
+	// if err != nil {
+	// log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
+	// log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
+	// }
 
 	return nil
 }
