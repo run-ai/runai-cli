@@ -39,7 +39,7 @@ const (
 func NewRunaiJobCommand() *cobra.Command {
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "submit [NAME]",
+		Use:     "train [NAME]",
 		Short:   "Submit a Runai job.",
 		Aliases: []string{"ra"},
 		Run: func(cmd *cobra.Command, args []string) {
