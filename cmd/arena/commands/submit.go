@@ -246,27 +246,27 @@ Available Commands:
 )
 
 func NewSubmitCommand() *cobra.Command {
-	return NewRunaiJobCommand()
-	// var command = &cobra.Command{
-	// 	Use:   "submit",
-	// 	Short: "Submit a job.",
-	// 	Long:  submitLong,
-	// 	Run: func(cmd *cobra.Command, args []string) {
-	// 		cmd.HelpFunc()(cmd, args)
-	// 	},
-	// }
+	// return NewRunaiJobCommand()
+	var command = &cobra.Command{
+		Use:   "submit",
+		Short: "Submit a job.",
+		Long:  submitLong,
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.HelpFunc()(cmd, args)
+		},
+	}
 
 	// command.AddCommand(NewSubmitTFJobCommand())
-	// command.AddCommand(NewSubmitMPIJobCommand())
+	command.AddCommand(NewSubmitMPIJobCommand())
 	// command.AddCommand(NewSubmitHorovodJobCommand())
 	// // This will be deprecated soon.
 	// command.AddCommand(NewSubmitStandaloneJobCommand())
 	// command.AddCommand(NewSparkApplicationCommand())
 
 	// command.AddCommand(NewVolcanoJobCommand())
-	// command.AddCommand(NewRunaiJobCommand())
+	command.AddCommand(NewRunaiJobCommand())
 
-	// return command
+	return command
 }
 
 func transformSliceToMap(sets []string, split string) (valuesMap map[string]string) {

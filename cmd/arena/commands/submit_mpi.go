@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build ignore
-
 package commands
 
 import (
@@ -182,7 +180,8 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, "", mpijob_chart, clientset)
+	vDryRun := true
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, "", mpijob_chart, clientset, !vDryRun)
 	if err != nil {
 		return err
 	}
