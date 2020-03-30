@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 
+	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
@@ -50,7 +51,7 @@ func initMPIJobClient() (mpijobClientset *versioned.Clientset, err error) {
 
 // MPI Job Information
 type MPIJob struct {
-	*BasicJobInfo
+	*cmdTypes.BasicJobInfo
 	mpijob       v1alpha1.MPIJob
 	chiefjob     batchv1.Job
 	pods         []v1.Pod // all the pods including statefulset and job
@@ -61,7 +62,7 @@ type MPIJob struct {
 }
 
 func (mj *MPIJob) Name() string {
-	return mj.name
+	return mj.Name()
 }
 
 func (mj *MPIJob) Uid() string {
@@ -69,8 +70,8 @@ func (mj *MPIJob) Uid() string {
 }
 
 // Get the chief Pod of the Job.
-func (mj *MPIJob) ChiefPod() v1.Pod {
-	return mj.chiefPod
+func (mj *MPIJob) ChiefPod() *v1.Pod {
+	return &mj.chiefPod
 }
 
 // Get the name of the Training Job
@@ -192,25 +193,25 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 }
 
 // Requested GPU count of the Job
-func (mj *MPIJob) RequestedGPU() int64 {
+func (mj *MPIJob) RequestedGPU() float64 {
 	if mj.requestedGPU > 0 {
-		return mj.requestedGPU
+		return float64(mj.requestedGPU)
 	}
 	for _, pod := range mj.pods {
 		mj.requestedGPU += gpuInPod(pod)
 	}
-	return mj.requestedGPU
+	return float64(mj.requestedGPU)
 }
 
 // Requested GPU count of the Job
-func (mj *MPIJob) AllocatedGPU() int64 {
+func (mj *MPIJob) AllocatedGPU() float64 {
 	if mj.allocatedGPU > 0 {
-		return mj.allocatedGPU
+		return float64(mj.allocatedGPU)
 	}
 	for _, pod := range mj.pods {
-		mj.allocatedGPU += gpuInActivePod(pod)
+		mj.allocatedGPU += int64(gpuInActivePod(pod))
 	}
-	return mj.allocatedGPU
+	return float64(mj.allocatedGPU)
 }
 
 // Get the hostIP of the chief Pod
@@ -368,15 +369,12 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 		return nil, err
 	}
 	return &MPIJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: resources,
-			name:      name,
-		},
-		mpijob:      mpijob,
-		chiefPod:    chiefPod,
-		chiefjob:    job,
-		pods:        pods,
-		trainerType: tt.Type(),
+		BasicJobInfo: cmdTypes.NewBasicJobInfo(name, resources),
+		mpijob:       mpijob,
+		chiefPod:     chiefPod,
+		chiefjob:     job,
+		pods:         pods,
+		trainerType:  tt.Type(),
 	}, nil
 
 }
@@ -410,15 +408,12 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, 
 	pods, chiefPod := getPodsOfMPIJob(name, tt, allPods)
 
 	return &MPIJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(pods),
-			name:      name,
-		},
-		mpijob:      mpijob,
-		chiefPod:    chiefPod,
-		pods:        pods,
-		chiefjob:    job,
-		trainerType: tt.Type(),
+		BasicJobInfo: cmdTypes.NewBasicJobInfo(name, cmdTypes.PodResources(pods)),
+		mpijob:       mpijob,
+		chiefPod:     chiefPod,
+		pods:         pods,
+		chiefjob:     job,
+		trainerType:  tt.Type(),
 	}, nil
 }
 
@@ -539,8 +534,8 @@ func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
 	return true
 }
 
-func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod) ([]Resource, error) {
-	resources := []Resource{}
+func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod) ([]cmdTypes.Resource, error) {
+	resources := []cmdTypes.Resource{}
 
 	// 2. Find the pod list, and determine the pod of the job
 	stsList, err := tt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
@@ -553,10 +548,10 @@ func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod)
 		return resources, err
 	}
 	for _, sts := range stsList.Items {
-		resources = append(resources, Resource{
+		resources = append(resources, cmdTypes.Resource{
 			Name:         sts.Name,
 			Uid:          string(sts.UID),
-			ResourceType: ResourceTypeStatefulSet,
+			ResourceType: cmdTypes.ResourceTypeStatefulSet,
 		})
 	}
 
@@ -571,20 +566,20 @@ func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod)
 		return resources, err
 	}
 	for _, job := range jobs.Items {
-		resources = append(resources, Resource{
+		resources = append(resources, cmdTypes.Resource{
 			Name:         job.Name,
 			Uid:          string(job.UID),
-			ResourceType: ResourceTypeJob,
+			ResourceType: cmdTypes.ResourceTypeJob,
 		})
 	}
-	resources = append(resources, podResources(pods)...)
+	resources = append(resources, cmdTypes.PodResources(pods)...)
 	return resources, nil
 }
 
 /**
 * List Training jobs
  */
-func (tt *MPIJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
+func (tt *MPIJobTrainer) ListTrainingJobs(namespace string) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
 	jobInfos := []types.TrainingJobInfo{}
 	for _, mpijob := range allMPIjobs {
@@ -636,6 +631,19 @@ func (mj *MPIJob) isPending() bool {
 	}
 
 	return false
+}
+
+func (mj *MPIJob) Project() string {
+	return ""
+}
+
+func (mj *MPIJob) User() string {
+	return ""
+}
+
+// Get all the kubernetes resource of the Training Job
+func (mj *MPIJob) Resources() []cmdTypes.Resource {
+	return mj.Resources()
 }
 
 // Get PriorityClass
