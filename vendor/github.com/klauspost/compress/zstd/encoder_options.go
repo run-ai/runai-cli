@@ -20,6 +20,7 @@ type encoderOptions struct {
 	windowSize int
 	level      EncoderLevel
 	fullZero   bool
+	noEntropy  bool
 }
 
 func (o *encoderOptions) setDefault() {
@@ -38,9 +39,11 @@ func (o *encoderOptions) setDefault() {
 func (o encoderOptions) encoder() encoder {
 	switch o.level {
 	case SpeedDefault:
-		return &doubleFastEncoder{fastEncoder: fastEncoder{maxMatchOff: int32(o.windowSize)}}
+		return &doubleFastEncoder{fastEncoder: fastEncoder{fastBase: fastBase{maxMatchOff: int32(o.windowSize)}}}
+	case SpeedBetterCompression:
+		return &betterFastEncoder{fastBase: fastBase{maxMatchOff: int32(o.windowSize)}}
 	case SpeedFastest:
-		return &fastEncoder{maxMatchOff: int32(o.windowSize)}
+		return &fastEncoder{fastBase: fastBase{maxMatchOff: int32(o.windowSize)}}
 	}
 	panic("unknown compression level")
 }
@@ -66,7 +69,7 @@ func WithEncoderConcurrency(n int) EOption {
 }
 
 // WithWindowSize will set the maximum allowed back-reference distance.
-// The value must be a power of two between WindowSizeMin and WindowSizeMax.
+// The value must be a power of two between MinWindowSize and MaxWindowSize.
 // A larger value will enable better compression but allocate more memory and,
 // for above-default values, take considerably longer.
 // The default value is determined by the compression level.
@@ -129,18 +132,18 @@ const (
 	// This is roughly equivalent to the default Zstandard mode (level 3).
 	SpeedDefault
 
+	// SpeedBetterCompression will yield better compression than the default.
+	// Currently it is about zstd level 7-8 with ~ 2x-3x the default CPU usage.
+	// By using this, notice that CPU usage may go up in the future.
+	SpeedBetterCompression
+
 	// speedLast should be kept as the last actual compression option.
 	// The is not for external usage, but is used to keep track of the valid options.
 	speedLast
 
-	// SpeedBetterCompression will (in the future) yield better compression than the default,
-	// but at approximately 4x the CPU usage of the default.
-	// For now this is not implemented.
-	SpeedBetterCompression = SpeedDefault
-
 	// SpeedBestCompression will choose the best available compression option.
 	// For now this is not implemented.
-	SpeedBestCompression = SpeedDefault
+	SpeedBestCompression = SpeedBetterCompression
 )
 
 // EncoderLevelFromString will convert a string representation of an encoding level back
@@ -162,8 +165,10 @@ func EncoderLevelFromZstd(level int) EncoderLevel {
 	switch {
 	case level < 3:
 		return SpeedFastest
-	case level >= 3:
+	case level >= 3 && level < 6:
 		return SpeedDefault
+	case level > 5:
+		return SpeedBetterCompression
 	}
 	return SpeedDefault
 }
@@ -175,6 +180,8 @@ func (e EncoderLevel) String() string {
 		return "fastest"
 	case SpeedDefault:
 		return "default"
+	case SpeedBetterCompression:
+		return "better"
 	default:
 		return "invalid"
 	}
@@ -198,6 +205,16 @@ func WithEncoderLevel(l EncoderLevel) EOption {
 func WithZeroFrames(b bool) EOption {
 	return func(o *encoderOptions) error {
 		o.fullZero = b
+		return nil
+	}
+}
+
+// WithNoEntropyCompression will always skip entropy compression of literals.
+// This can be useful if content has matches, but unlikely to benefit from entropy
+// compression. Usually the slight speed improvement is not worth enabling this.
+func WithNoEntropyCompression(b bool) EOption {
+	return func(o *encoderOptions) error {
+		o.noEntropy = b
 		return nil
 	}
 }

@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
-	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -28,14 +27,15 @@ import (
 
 	"time"
 
-	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
+	"github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha2"
+	mpijobclientset "github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned"
 )
 
 var (
-	allMPIjobs []v1alpha1.MPIJob
+	allMPIjobs []v1alpha2.MPIJob
 )
 
-func initMPIJobClient() (mpijobClientset *versioned.Clientset, err error) {
+func initMPIJobClient() (mpijobClientset mpijobclientset.Interface, err error) {
 	if restConfig == nil {
 		restConfig, err = clientConfig.ClientConfig()
 		if err != nil {
@@ -45,14 +45,13 @@ func initMPIJobClient() (mpijobClientset *versioned.Clientset, err error) {
 	}
 
 	// create the mpijobClientset
-	mpijobClientset = versioned.NewForConfigOrDie(restConfig)
-	return mpijobClientset, nil
+	return mpijobclientset.NewForConfigOrDie(restConfig), nil
 }
 
 // MPI Job Information
 type MPIJob struct {
 	*cmdTypes.BasicJobInfo
-	mpijob       v1alpha1.MPIJob
+	mpijob       v1alpha2.MPIJob
 	chiefjob     batchv1.Job
 	pods         []v1.Pod // all the pods including statefulset and job
 	chiefPod     v1.Pod   // the chief pod
@@ -63,7 +62,7 @@ type MPIJob struct {
 }
 
 func (mj *MPIJob) Name() string {
-	return mj.Name()
+	return mj.mpijob.Name
 }
 
 func (mj *MPIJob) Uid() string {
@@ -95,23 +94,24 @@ func (mj *MPIJob) GetStatus() (status string) {
 	if mj.mpijob.Name == "" {
 		return status
 	}
+	mj.chiefjob.Status
 
-	if mj.isSucceeded() {
-		status = "SUCCEEDED"
-	} else if mj.isFailed() {
-		status = "FAILED"
-	} else if mj.isPending() {
-		status = "PENDING"
-	} else {
-		status = "RUNNING"
-	}
+	// if mj.isSucceeded() {
+	// 	status = "SUCCEEDED"
+	// } else if mj.isFailed() {
+	// 	status = "FAILED"
+	// } else if mj.isPending() {
+	// 	status = "PENDING"
+	// } else {
+	// 	status = "RUNNING"
+	// }
 
 	return status
 }
 
 // Get the start time
 func (mj *MPIJob) StartTime() *metav1.Time {
-	return &mj.mpijob.CreationTimestamp
+	return &metav1.Time{}
 }
 
 // Get the Job Age
@@ -137,14 +137,14 @@ func (mj *MPIJob) Duration() time.Duration {
 		return mj.chiefjob.Status.CompletionTime.Time.Sub(mpijob.CreationTimestamp.Time)
 	}
 
-	if mj.isFailed() {
-		cond := getPodLatestCondition(mj.chiefPod)
-		if !cond.LastTransitionTime.IsZero() {
-			return cond.LastTransitionTime.Time.Sub(mpijob.CreationTimestamp.Time)
-		} else {
-			log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
-		}
-	}
+	// if mj.isFailed() { // yodarsdebug uncomment this comment
+	// 	cond := getPodLatestCondition(mj.chiefPod)
+	// 	if !cond.LastTransitionTime.IsZero() {
+	// 		return cond.LastTransitionTime.Time.Sub(mpijob.CreationTimestamp.Time)
+	// 	} else {
+	// 		log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
+	// 	}
+	// }
 
 	return metav1.Now().Sub(mpijob.CreationTimestamp.Time)
 }
@@ -232,7 +232,7 @@ func (mj *MPIJob) Namespace() string {
 // MPI Job trainer
 type MPIJobTrainer struct {
 	client       kubernetes.Interface
-	mpijobClient *versioned.Clientset
+	mpijobClient mpijobclientset.Interface
 	trainerType  string
 	// check if it's enabled
 	enabled bool
@@ -251,26 +251,26 @@ func NewMPIJobTrainer(client kubernetes.Interface) Trainer {
 		}
 	}
 	// allPods have been cached, we do the same to allMPIjobs
-	// if useCache {
-	ns := namespace
-	if allNamespaces {
-		ns = metav1.NamespaceAll
-	}
+	if useCache {
+		ns := namespace
+		if allNamespaces {
+			ns = metav1.NamespaceAll
+		}
 
-	mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{})
-	// mpijobList, err := mpijobClient.KubeflowV1alpha2().mpijob(metav1.NamespaceAll).List(metav1.ListOptions{})
-	if err != nil {
-		log.Debugf("unsupported mpijob due to %v", err)
-		return &MPIJobTrainer{
-			trainerType: "mpijob",
-			enabled:     false,
+		mpijobList, err := mpijobClient.KubeflowV1alpha2().MPIJobs(ns).List(metav1.ListOptions{})
+		// mpijobList, err := mpijobClient.KubeflowV1alpha2().mpijob(metav1.NamespaceAll).List(metav1.ListOptions{})
+		if err != nil {
+			log.Debugf("unsupported mpijob due to %v", err)
+			return &MPIJobTrainer{
+				trainerType: "mpijob",
+				enabled:     false,
+			}
+		}
+
+		for _, mpijob := range mpijobList.Items {
+			allMPIjobs = append(allMPIjobs, mpijob)
 		}
 	}
-
-	for _, mpijob := range mpijobList.Items {
-		allMPIjobs = append(allMPIjobs, mpijob)
-	}
-	// }
 
 	return &MPIJobTrainer{
 		mpijobClient: mpijobClient,
@@ -302,7 +302,7 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	} else {
-		mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{
+		mpijobList, err := tt.mpijobClient.KubeflowV1alpha2().MPIJobs(ns).List(metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("release=%s", name),
 		})
 
@@ -329,17 +329,19 @@ func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob,
 
 func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
 	var (
-		mpijob v1alpha1.MPIJob
+		mpijob v1alpha2.MPIJob
 		job    batchv1.Job
 	)
+	fmt.Println("yodarsdebug11")
 
 	// 0. get the batch job of the mpijob
 	job = tt.getChiefJob(name, namespace)
 
 	// 1. Get the batchJob of training Job
-	mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(namespace).List(metav1.ListOptions{
+	mpijobList, err := tt.mpijobClient.KubeflowV1alpha2().MPIJobs(namespace).List(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("release=%s", name),
 	})
+	fmt.Println("mpijpblist length: ", len(mpijobList.Items))
 	if err != nil {
 		return nil, err
 	}
@@ -383,9 +385,10 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, error) {
 
 	var (
-		mpijob v1alpha1.MPIJob
+		mpijob v1alpha2.MPIJob
 		job    batchv1.Job
 	)
+	fmt.Println("yodarsdebug222")
 
 	// 0. Find the batch job
 	//isChiefJob
@@ -489,7 +492,7 @@ func (tt *MPIJobTrainer) isChiefPod(item v1.Pod) bool {
 	return true
 }
 
-func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha1.MPIJob) bool {
+func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha2.MPIJob) bool {
 	if val, ok := item.Labels["release"]; ok && (val == name) {
 		log.Debugf("the mpijob %s with labels %s", item.Name, val)
 	} else {
@@ -610,29 +613,29 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string) (jobs []TrainingJob,
 	return jobs, nil
 }
 
-func (mj *MPIJob) isSucceeded() bool {
-	// status.MPIJobLauncherStatusType
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherSucceeded
-}
-
-func (mj *MPIJob) isFailed() bool {
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherFailed
-}
-
-func (mj *MPIJob) isPending() bool {
-	// return false
-	if len(mj.chiefjob.Name) == 0 {
-		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
-		return true
-	}
-
-	if len(mj.chiefPod.Name) == 0 || mj.chiefPod.Status.Phase == v1.PodPending {
-		log.Debugf("The MPIJob is pending due to chiefPod is not ready")
-		return true
-	}
-
-	return false
-}
+// func (mj *MPIJob) isSucceeded() bool {
+// 	// status.MPIJobLauncherStatusType
+// 	return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherSucceeded
+// }
+//
+// func (mj *MPIJob) isFailed() bool {
+// 	return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherFailed
+// }
+//
+// func (mj *MPIJob) isPending() bool {
+// 	// return false
+// 	if len(mj.chiefjob.Name) == 0 {
+// 		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
+// 		return true
+// 	}
+//
+// 	if len(mj.chiefPod.Name) == 0 || mj.chiefPod.Status.Phase == v1.PodPending {
+// 		log.Debugf("The MPIJob is pending due to chiefPod is not ready")
+// 		return true
+// 	}
+//
+// 	return false
+// }
 
 func (mj *MPIJob) Project() string {
 	return mj.podMetadata.Labels["project"]
@@ -649,8 +652,7 @@ func (mj *MPIJob) Resources() []cmdTypes.Resource {
 
 // Get PriorityClass
 func (m *MPIJob) GetPriorityClass() string {
-	// return ""
-	return m.mpijob.Spec.Template.Spec.PriorityClassName
+	return ""
 }
 
 func getPodsOfMPIJob(name string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
