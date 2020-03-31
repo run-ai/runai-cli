@@ -28,7 +28,7 @@ func NewTrainers(client *kubernetes.Clientset) []Trainer {
 		// NewHorovodJobTrainer,
 		// NewStandaloneJobTrainer,
 		// NewTensorFlowJobTrainer,
-		// NewMPIJobTrainer,
+		NewMPIJobTrainer,
 		// NewSparkJobTrainer,
 		// NewVolcanoJobTrainer,
 		NewRunaiTrainer}

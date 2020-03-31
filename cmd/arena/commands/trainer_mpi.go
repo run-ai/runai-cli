@@ -59,6 +59,7 @@ type MPIJob struct {
 	requestedGPU int64
 	allocatedGPU int64
 	trainerType  string // return trainer type: TENSORFLOW
+	podMetadata  metav1.ObjectMeta
 }
 
 func (mj *MPIJob) Name() string {
@@ -230,7 +231,7 @@ func (mj *MPIJob) Namespace() string {
 
 // MPI Job trainer
 type MPIJobTrainer struct {
-	client       *kubernetes.Clientset
+	client       kubernetes.Interface
 	mpijobClient *versioned.Clientset
 	trainerType  string
 	// check if it's enabled
@@ -238,9 +239,10 @@ type MPIJobTrainer struct {
 }
 
 // NewMPIJobTrainer
-func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
-	log.Debugf("Init MPI job trainer")
+func NewMPIJobTrainer(client kubernetes.Interface) Trainer {
+	log.Println("Init MPI job trainer")
 	mpijobClient, err := initMPIJobClient()
+	log.Println("mpijobClient is nil? ", mpijobClient == nil)
 	if err != nil {
 		log.Debugf("unsupported mpijob due to %v", err)
 		return &MPIJobTrainer{
@@ -249,26 +251,26 @@ func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
 		}
 	}
 	// allPods have been cached, we do the same to allMPIjobs
-	if useCache {
-		ns := namespace
-		if allNamespaces {
-			ns = metav1.NamespaceAll
-		}
+	// if useCache {
+	ns := namespace
+	if allNamespaces {
+		ns = metav1.NamespaceAll
+	}
 
-		mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{})
-		// mpijobList, err := mpijobClient.KubeflowV1alpha2().mpijob(metav1.NamespaceAll).List(metav1.ListOptions{})
-		if err != nil {
-			log.Debugf("unsupported mpijob due to %v", err)
-			return &MPIJobTrainer{
-				trainerType: "mpijob",
-				enabled:     false,
-			}
-		}
-
-		for _, mpijob := range mpijobList.Items {
-			allMPIjobs = append(allMPIjobs, mpijob)
+	mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{})
+	// mpijobList, err := mpijobClient.KubeflowV1alpha2().mpijob(metav1.NamespaceAll).List(metav1.ListOptions{})
+	if err != nil {
+		log.Debugf("unsupported mpijob due to %v", err)
+		return &MPIJobTrainer{
+			trainerType: "mpijob",
+			enabled:     false,
 		}
 	}
+
+	for _, mpijob := range mpijobList.Items {
+		allMPIjobs = append(allMPIjobs, mpijob)
+	}
+	// }
 
 	return &MPIJobTrainer{
 		mpijobClient: mpijobClient,
@@ -319,12 +321,10 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 // Get the training job from cache or directly
 func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
 	if len(allMPIjobs) > 0 {
-		tj, err = tt.getTrainingJobFromCache(name, namespace)
-	} else {
-		tj, err = tt.getTrainingJob(name, namespace)
+		return tt.getTrainingJobFromCache(name, namespace)
 	}
 
-	return tj, err
+	return tt.getTrainingJob(name, namespace)
 }
 
 func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
@@ -582,11 +582,12 @@ func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod)
 func (tt *MPIJobTrainer) ListTrainingJobs(namespace string) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
 	jobInfos := []types.TrainingJobInfo{}
+	fmt.Println("list training jobs allMPIjobs len: ", len(allMPIjobs))
 	for _, mpijob := range allMPIjobs {
 		jobInfo := types.TrainingJobInfo{}
-		log.Debugf("find mpijob %s in %s", mpijob.Name, mpijob.Namespace)
+		log.Printf("find mpijob %s in %s\n", mpijob.Name, mpijob.Namespace)
 		if val, ok := mpijob.Labels["release"]; ok && (mpijob.Name == fmt.Sprintf("%s-%s", val, tt.Type())) {
-			log.Debugf("the mpijob %s with labels %s found in List", mpijob.Name, val)
+			log.Printf("the mpijob %s with labels %s found in List\n", mpijob.Name, val)
 			jobInfo.Name = val
 		} else {
 			jobInfo.Name = mpijob.Name
@@ -634,11 +635,11 @@ func (mj *MPIJob) isPending() bool {
 }
 
 func (mj *MPIJob) Project() string {
-	return ""
+	return mj.podMetadata.Labels["project"]
 }
 
 func (mj *MPIJob) User() string {
-	return ""
+	return mj.podMetadata.Labels["user"]
 }
 
 // Get all the kubernetes resource of the Training Job

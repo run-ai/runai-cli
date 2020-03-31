@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"strconv"
 	"strings"
 
@@ -60,8 +61,9 @@ type submitArgs struct {
 
 	IsNonRoot          bool                      `yaml:"isNonRoot"`
 	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
-
-	PriorityClassName string `yaml:"priorityClassName"`
+	Project            string                    `yaml:"project,omitempty"`
+	User               string                    `yaml:"user,omitempty"`
+	PriorityClassName  string                    `yaml:"priorityClassName"`
 }
 
 type dataDirVolume struct {
@@ -196,6 +198,13 @@ func (submitArgs *submitArgs) addJobInfoToEnv() {
 }
 
 func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
+	var defaultUser string
+	currentUser, err := user.Current()
+	if err != nil {
+		defaultUser = ""
+	} else {
+		defaultUser = currentUser.Username
+	}
 
 	// create subcommands
 	command.Flags().StringVar(&name, "name", "", "override name")
@@ -224,9 +233,11 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
 	// enable RDMA or not, support hostnetwork for now
 	command.Flags().BoolVar(&submitArgs.EnableRDMA, "rdma", false, "enable RDMA")
+	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
+	command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 
 	// use priority
-	command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
+	// command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
 	// toleration
 	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)

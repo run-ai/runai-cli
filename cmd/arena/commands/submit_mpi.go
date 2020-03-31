@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/util"
@@ -27,7 +28,7 @@ import (
 )
 
 var (
-	mpijob_chart = util.GetChartsFolder() + "/mpijob"
+	mpijob_chart = path.Join(util.GetChartsFolder(), "mpijob")
 )
 
 func NewSubmitMPIJobCommand() *cobra.Command {
@@ -42,10 +43,10 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 		Short:   "Submit MPIjob as training job.",
 		Aliases: []string{"mpi", "mj"},
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				os.Exit(1)
-			}
+			// if len(args) == 0 {
+			// 	cmd.HelpFunc()(cmd, args)
+			// 	os.Exit(1)
+			// }
 
 			util.SetLogLevel(logLevel)
 			_, err := initKubeClient()
