@@ -280,21 +280,27 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	// Get all different job stypes to one general job type with pod spec
 	jobsForListCommand := []*cmdTypes.PodTemplateJob{}
-	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{})
+	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
+		LabelSelector: "app=runaijob",
+	})
 
 	for _, job := range runaiJobList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromJob(job)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	runaiStatefulSetsList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{})
+	runaiStatefulSetsList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{
+		LabelSelector: "app=runaijob",
+	})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromStatefulSet(statefulSet)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	replicasetJobs, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{})
+	replicasetJobs, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{
+		LabelSelector: "app=runaijob",
+	})
 
 	for _, replicaSet := range replicasetJobs.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromReplicaSet(replicaSet)

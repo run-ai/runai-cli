@@ -85,7 +85,7 @@ func NewGetCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", true, "Show events relating to job lifecycle.")
+	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Show events relating to job lifecycle.")
 	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
 
 	command.Flags().MarkDeprecated("events", "default is true")
@@ -271,7 +271,7 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 	fmt.Fprintf(w, "NAME: %s\n", job.Name())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
-	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))
+	// fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))
 	fmt.Fprintf(w, "TRAINING DURATION: %s\n", util.ShortHumanDuration(job.Duration()))
 	fmt.Fprintln(w, "")
 

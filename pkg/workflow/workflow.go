@@ -137,7 +137,6 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 2. Generate Template file
-	fmt.Printf("\nyodarsdebug :%v", chart)
 	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, envValuesFile, chart)
 	if err != nil {
 		return err

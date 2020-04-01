@@ -81,6 +81,7 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
 
 	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
+	command.Flags().StringVar(&(submitArgs.NodeName), "nodename", "", "Enforce node affinity by setting a nodeName label")
 
 	submitArgs.addCommonFlags(command)
 	submitArgs.addSyncFlags(command)
@@ -96,7 +97,7 @@ type submitMPIJobArgs struct {
 
 	// for tensorboard
 	submitTensorboardArgs `yaml:",inline"`
-
+	NodeName              string `yaml:"nodeName,omitempty"`
 	// for sync up source code
 	submitSyncCodeArgs `yaml:",inline"`
 }
@@ -204,7 +205,7 @@ func submitMPIJobWithHelm(args []string, submitArgs *submitMPIJobArgs) (err erro
 		return err
 	}
 	if exist {
-		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'runai delete %s'", name, name)
 	}
 
 	return helm.InstallRelease(name, namespace, submitArgs, mpijob_chart)
