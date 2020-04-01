@@ -37,7 +37,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiJobList.Items) > 0 {
 		for _, item := range runaiJobList.Items {
-			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName && item.Labels["app"] == "runaijob" {
 				return true
 			}
 		}
@@ -148,7 +148,7 @@ func (rt *RunaiTrainer) Type() string {
 }
 
 func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob) (TrainingJob, error) {
-	if podSpecJob.Template.Spec.SchedulerName != SchedulerName {
+	if podSpecJob.Template.Spec.SchedulerName != SchedulerName || podSpecJob.Labels["app"] != "runaijob" {
 		return nil, nil
 	}
 
@@ -239,6 +239,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	// Get all pods running with runai scheduler
 	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", SchedulerName),
+		LabelSelector: "app=runaijob",
 	})
 
 	if err != nil {
@@ -301,7 +302,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	}
 
 	for _, job := range jobsForListCommand {
-		if job.Template.Spec.SchedulerName != SchedulerName {
+		if job.Template.Spec.SchedulerName != SchedulerName || job.Labels["app"] != "runaijob" {
 			continue
 		}
 

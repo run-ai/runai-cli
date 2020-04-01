@@ -2,12 +2,18 @@ apiVersion: kubeflow.org/v1alpha2
 kind: MPIJob
 metadata:
   name: {{ .Release.Name }}
+  annotations:
+    image: "{{ .Values.image }}"
   labels:
     app: {{ template "mpijob.name" . }}
     chart: {{ template "mpijob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     createdBy: "MPIJob"
+    project: {{ .Values.project }}
+    {{- if .Values.user }}
+    user: {{ .Values.user }}
+    {{- end }}
 spec:
   slotsPerWorker: 1
   cleanPodPolicy: Running
@@ -17,7 +23,6 @@ spec:
       template:
         metadata:
           labels:
-            app: "runaijob"
             project: {{ .Values.project }}
             {{- if .Values.user }}
             user: {{ .Values.user }}
@@ -60,7 +65,6 @@ spec:
       template:
         metadata:
           labels:
-            app: "runaijob"
             project: {{ .Values.project }}
             {{- if .Values.user }}
             user: {{ .Values.user }}

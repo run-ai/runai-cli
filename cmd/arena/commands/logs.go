@@ -72,9 +72,12 @@ func NewLogsCommand() *cobra.Command {
 				names = append(names, path.Base(pod.ObjectMeta.SelfLink))
 			}
 			chiefPod := job.ChiefPod()
+			fmt.Println("names1:", names)
+			fmt.Println("chiefPod:", chiefPod.Name)
 			if len(names) > 1 && outerArgs.PodName == "" {
 				names = []string{path.Base(chiefPod.ObjectMeta.SelfLink)}
 			}
+			fmt.Println("names2:", names)
 			logPrinter, err := tlogs.NewPodLogPrinter(names, outerArgs)
 			if err != nil {
 				log.Errorf(err.Error())

@@ -15,6 +15,7 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
@@ -59,6 +60,7 @@ type MPIJob struct {
 	allocatedGPU int64
 	trainerType  string // return trainer type: TENSORFLOW
 	podMetadata  metav1.ObjectMeta
+	imageName    string
 }
 
 func (mj *MPIJob) Name() string {
@@ -83,9 +85,16 @@ func (mj *MPIJob) Trainer() string {
 	return mj.trainerType
 }
 
-// Get all the pods of the Training Job
-func (mj *MPIJob) AllPods() []v1.Pod {
-	return mj.pods
+func (mj *MPIJob) CreatedByCLI() bool {
+	return true
+}
+
+func (mj *MPIJob) Interactive() (status string) {
+	return "false"
+}
+
+func (mj *MPIJob) Image() (status string) {
+	return mj.mpijob.Annotations["image"]
 }
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
@@ -94,17 +103,16 @@ func (mj *MPIJob) GetStatus() (status string) {
 	if mj.mpijob.Name == "" {
 		return status
 	}
-	mj.chiefjob.Status
 
-	// if mj.isSucceeded() {
-	// 	status = "SUCCEEDED"
-	// } else if mj.isFailed() {
-	// 	status = "FAILED"
-	// } else if mj.isPending() {
-	// 	status = "PENDING"
-	// } else {
-	// 	status = "RUNNING"
-	// }
+	if mj.isSucceeded() {
+		status = "Succeeded"
+	} else if mj.isFailed() {
+		status = "Failed"
+	} else if mj.isPending() {
+		status = "Pending"
+	} else {
+		status = string(mj.chiefPod.Status.Phase)
+	}
 
 	return status
 }
@@ -137,14 +145,14 @@ func (mj *MPIJob) Duration() time.Duration {
 		return mj.chiefjob.Status.CompletionTime.Time.Sub(mpijob.CreationTimestamp.Time)
 	}
 
-	// if mj.isFailed() { // yodarsdebug uncomment this comment
-	// 	cond := getPodLatestCondition(mj.chiefPod)
-	// 	if !cond.LastTransitionTime.IsZero() {
-	// 		return cond.LastTransitionTime.Time.Sub(mpijob.CreationTimestamp.Time)
-	// 	} else {
-	// 		log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
-	// 	}
-	// }
+	if mj.isFailed() { // yodarsdebug uncomment this comment
+		cond := getPodLatestCondition(mj.chiefPod)
+		if !cond.LastTransitionTime.IsZero() {
+			return cond.LastTransitionTime.Time.Sub(mpijob.CreationTimestamp.Time)
+		} else {
+			log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
+		}
+	}
 
 	return metav1.Now().Sub(mpijob.CreationTimestamp.Time)
 }
@@ -356,7 +364,7 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s", name),
+		}, LabelSelector: fmt.Sprintf("mpi_job_name=%s", name),
 	})
 
 	if err != nil {
@@ -388,7 +396,6 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, 
 		mpijob v1alpha2.MPIJob
 		job    batchv1.Job
 	)
-	fmt.Println("yodarsdebug222")
 
 	// 0. Find the batch job
 	//isChiefJob
@@ -409,6 +416,7 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, 
 
 	// 2. Find the pods, and determine the pod of the job
 	pods, chiefPod := getPodsOfMPIJob(name, tt, allPods)
+	fmt.Println("len pods: ", len(pods))
 
 	return &MPIJob{
 		BasicJobInfo: cmdTypes.NewBasicJobInfo(name, cmdTypes.PodResources(pods)),
@@ -458,6 +466,7 @@ func (tt *MPIJobTrainer) getChiefJob(name string, namespace string) (job batchv1
 		job = jobList.Items[0]
 	}
 
+	fmt.Println("created chief pod: job:", job.Name, job.ObjectMeta.Labels["project"])
 	return job
 }
 
@@ -472,7 +481,7 @@ func (tt *MPIJobTrainer) isChiefJob(job batchv1.Job, name string, namespace stri
 	}
 
 	if job.Name == fmt.Sprintf("%s-launcher", name) || job.Name == fmt.Sprintf("%s-mpijob-launcher", name) {
-		log.Debugf("The job %s is the chief job of %s", job.Name, name)
+		fmt.Println("found chief job")
 		return true
 	} else {
 		log.Debugf("The job %s is not the chief job of %s", job.Name, name)
@@ -482,14 +491,14 @@ func (tt *MPIJobTrainer) isChiefJob(job batchv1.Job, name string, namespace stri
 }
 
 func (tt *MPIJobTrainer) isChiefPod(item v1.Pod) bool {
+	fmt.Println("looking for chief pod")
 
 	if val, ok := item.Labels["mpi_role_type"]; ok && (val == "launcher") {
-		log.Debugf("the mpijob %s with labels %s", item.Name, val)
-	} else {
-		return false
+		fmt.Println("foudn chief pod", item.Name, val)
+		return true
 	}
 
-	return true
+	return false
 }
 
 func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha2.MPIJob) bool {
@@ -508,33 +517,16 @@ func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha2.MPIJob) bool {
 	if item.Namespace != ns {
 		return false
 	}
+	fmt.Println("found a mpi job")
 	return true
 }
 
 func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
-	log.Debugf("pod.name: %s: %v", item.Name, item.Labels)
-	if val, ok := item.Labels["release"]; ok && (val == name) {
-		log.Debugf("the mpijob %s with labels %s", item.Name, val)
-	} else {
-		return false
+	if value, ok := item.ObjectMeta.Labels["mpi_job_name"]; ok && (value == name) {
+		return true
 	}
 
-	if val, ok := item.Labels["app"]; ok && (val == "mpijob") {
-		log.Debugf("the mpijob %s with labels %s is found.", item.Name, val)
-	} else {
-		return false
-	}
-
-	if val, ok := item.Labels["group_name"]; ok && (val == "kubeflow.org") {
-		log.Debugf("the mpijob %s with labels %s is found.", item.Name, val)
-	} else {
-		return false
-	}
-
-	if item.Namespace != ns {
-		return false
-	}
-	return true
+	return false
 }
 
 func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod) ([]cmdTypes.Resource, error) {
@@ -603,6 +595,7 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string) (jobs []TrainingJob,
 	log.Debugf("jobInfos %v", jobInfos)
 
 	for _, jobInfo := range jobInfos {
+
 		job, err := tt.getTrainingJobFromCache(jobInfo.Name, jobInfo.Namespace)
 		if err != nil {
 			return jobs, err
@@ -613,41 +606,64 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string) (jobs []TrainingJob,
 	return jobs, nil
 }
 
-// func (mj *MPIJob) isSucceeded() bool {
-// 	// status.MPIJobLauncherStatusType
-// 	return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherSucceeded
-// }
-//
-// func (mj *MPIJob) isFailed() bool {
-// 	return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherFailed
-// }
-//
-// func (mj *MPIJob) isPending() bool {
-// 	// return false
-// 	if len(mj.chiefjob.Name) == 0 {
-// 		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
-// 		return true
-// 	}
-//
-// 	if len(mj.chiefPod.Name) == 0 || mj.chiefPod.Status.Phase == v1.PodPending {
-// 		log.Debugf("The MPIJob is pending due to chiefPod is not ready")
-// 		return true
-// 	}
-//
-// 	return false
-// }
+func (mj *MPIJob) isSucceeded() bool {
+	return hasCondition(mj.mpijob.Status, v1alpha2.JobSucceeded)
+	// return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherSucceeded
+}
 
+func (mj *MPIJob) isFailed() bool {
+	return hasCondition(mj.mpijob.Status, v1alpha2.JobSucceeded)
+	// return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherFailed
+}
+
+func (mj *MPIJob) isPending() bool {
+	// return false
+	if len(mj.chiefjob.Name) == 0 {
+		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
+		return true
+	}
+
+	// if len(mj.chiefPod.Name) == 0 || mj.chiefPod.Status.Phase == v1.PodPending {
+	// 	log.Debugf("The MPIJob is pending due to chiefPod is not ready")
+	// 	return true
+	// }
+
+	return false
+}
+
+func hasCondition(status v1alpha2.JobStatus, condType v1alpha2.JobConditionType) bool {
+	for _, condition := range status.Conditions {
+		if condition.Type == condType && condition.Status == v1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func createKeyValuePairs(m map[string]string) string {
+	b := new(bytes.Buffer)
+	for key, value := range m {
+		fmt.Fprintf(b, "%s=\"%s\"\n", key, value)
+	}
+	return b.String()
+}
 func (mj *MPIJob) Project() string {
-	return mj.podMetadata.Labels["project"]
+	return mj.mpijob.ObjectMeta.Labels["project"]
 }
 
 func (mj *MPIJob) User() string {
-	return mj.podMetadata.Labels["user"]
+	return mj.mpijob.ObjectMeta.Labels["user"]
+}
+
+// Get all the pods of the Training Job
+func (mj *MPIJob) AllPods() []v1.Pod {
+	fmt.Println("length of pods: ", len(mj.pods))
+	return mj.pods
 }
 
 // Get all the kubernetes resource of the Training Job
 func (mj *MPIJob) Resources() []cmdTypes.Resource {
-	return mj.Resources()
+	return mj.BasicJobInfo.Resources()
 }
 
 // Get PriorityClass
@@ -661,6 +677,7 @@ func getPodsOfMPIJob(name string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v
 		if !tt.isMPIPod(name, namespace, item) {
 			continue
 		}
+		fmt.Println("found mpi pod ", item.Name)
 		if tt.isChiefPod(item) && item.CreationTimestamp.After(chiefPod.CreationTimestamp.Time) {
 			// If there are some failed chiefPod, and the new chiefPod haven't started, set the latest failed pod as chief pod
 			if chiefPod.Name != "" && item.Status.Phase == v1.PodPending {
