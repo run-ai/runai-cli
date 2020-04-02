@@ -372,6 +372,12 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	submitArgs.Name = name
+
+	if submitArgs.Interactive != nil && *submitArgs.Interactive == true {
+		submitArgs.Command = []string{"/bin/bash", "-c", "--"}
+		submitArgs.Args = []string{"while true; do sleep 30; done;"}
+	}
+
 	err = handleRequestedGPUs(submitArgs)
 	if err != nil {
 		return err
