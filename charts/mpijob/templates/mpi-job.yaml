@@ -43,7 +43,7 @@ spec:
                 - "-c"
                 - "{{ .Values.command }}"
     Worker:
-      replicas: {{ .Values.workers }}
+      replicas: {{ .Values.numProcesses }}
       template:
         metadata:
           labels:
@@ -62,4 +62,4 @@ spec:
               imagePullPolicy: {{ .Values.imagePullPolicy }}
               resources:
                 limits:
-                  nvidia.com/gpu: 1
+                  nvidia.com/gpu: {{ .Values.gpuCount}}

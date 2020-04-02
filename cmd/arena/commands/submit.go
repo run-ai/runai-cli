@@ -46,8 +46,8 @@ type submitArgs struct {
 	WorkingDir    string            `yaml:"workingDir"`    // --workingDir
 	Command       string            `yaml:"command"`
 	// for horovod
-	Mode        string `yaml:"mode"`    // --mode
-	WorkerCount int    `yaml:"workers"` // --workers
+	Mode            string `yaml:"mode"`         // --mode
+	NumberProcesses int    `yaml:"numProcesses"` // --workers
 	// SSHPort     int               `yaml:"sshPort"`  // --sshPort
 	Retry int `yaml:"retry"` // --retry
 	// DataDir  string            `yaml:"dataDir"`  // --dataDir
@@ -193,7 +193,7 @@ func (submitArgs *submitArgs) addJobInfoToEnv() {
 	if len(submitArgs.Envs) == 0 {
 		submitArgs.Envs = map[string]string{}
 	}
-	submitArgs.Envs["workers"] = strconv.Itoa(submitArgs.WorkerCount)
+	submitArgs.Envs["workers"] = strconv.Itoa(submitArgs.NumberProcesses)
 	submitArgs.Envs["gpus"] = strconv.Itoa(submitArgs.GPUCount)
 }
 
@@ -211,11 +211,10 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.MarkFlagRequired("name")
 	command.Flags().StringVar(&submitArgs.Image, "image", "", "the docker image name of training job")
 	// command.MarkFlagRequired("image")
-	command.Flags().IntVar(&submitArgs.GPUCount, "gpus", 0,
+	command.Flags().IntVarP(&submitArgs.GPUCount, "gpus", "g", 0,
 		"the GPU count of each worker to run the training.")
 	// command.Flags().StringVar(&submitArgs.DataDir, "dataDir", "", "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
-	command.Flags().IntVar(&submitArgs.WorkerCount, "workers", 1,
-		"the worker number to run the distributed training.")
+	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "the number of processes to run the distributed training.")
 	command.Flags().IntVar(&submitArgs.Retry, "retry", 0,
 		"retry times.")
 	// command.MarkFlagRequired("syncSource")
