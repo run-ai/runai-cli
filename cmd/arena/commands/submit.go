@@ -209,7 +209,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	// create subcommands
 	command.Flags().StringVar(&name, "name", "", "override name")
 	command.MarkFlagRequired("name")
-	command.Flags().StringVar(&submitArgs.Image, "image", "", "the docker image name of training job")
+	command.Flags().StringVarP(&submitArgs.Image, "image", "i", "", "the docker image name of training job")
 	// command.MarkFlagRequired("image")
 	command.Flags().IntVarP(&submitArgs.GPUCount, "gpus", "g", 0,
 		"the GPU count of each worker to run the training.")
