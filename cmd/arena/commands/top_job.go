@@ -96,13 +96,13 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 		totalRequestedGPUs float64
 	)
 
-	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TRAINER", "AGE", "NODE"}
+	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TRAINER", "AGE"}
 
 	PrintLine(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
 
-		hostIP := jobInfo.HostIPOfChief()
+		// hostIP := jobInfo.HostIPOfChief()
 		requestedGPU := jobInfo.RequestedGPU()
 		allocatedGPU := jobInfo.AllocatedGPU()
 		// status, hostIP := jobInfo.getStatus()
@@ -114,17 +114,17 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 			jobInfo.GetStatus(),
 			jobInfo.Trainer(),
 			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP,
+			// hostIP,
 		)
 	}
 
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Total Allocated GPUs of Training Job:\n")
-	fmt.Fprintf(w, "%v \t\n", strconv.FormatFloat(totalAllocatedGPUs, 'f', -1, 32),)
+	fmt.Fprintf(w, "%v \t\n", strconv.FormatFloat(totalAllocatedGPUs, 'f', -1, 32))
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Total Requested GPUs of Training Job:\n")
-	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32),)
+	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32))
 
 	_ = w.Flush()
 }
