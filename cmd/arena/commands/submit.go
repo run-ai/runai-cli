@@ -232,7 +232,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
 	// enable RDMA or not, support hostnetwork for now
 	command.Flags().BoolVar(&submitArgs.EnableRDMA, "rdma", false, "enable RDMA")
-	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
+	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "default", "Specifies the Run:AI project to use for this Job.")
 	command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 
 	// use priority
