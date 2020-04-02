@@ -176,7 +176,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	}
 
 	if job != nil {
-		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'runai delete %s'", name, name)
 	}
 
 	// the master is also considered as a worker
@@ -189,7 +189,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	}
 
 	log.Infof("The Job %s has been submitted successfully", name)
-	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	log.Infof("You can run `runai get %s --type %s` to check the job status", name, submitArgs.Mode)
 	return nil
 }
 
