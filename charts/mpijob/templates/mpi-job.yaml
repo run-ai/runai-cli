@@ -30,8 +30,6 @@ spec:
         spec:
           {{- if .Values.nodeName}}
           nodeName: {{ .Values.nodeName }}
-          {{- else }}
-          nodeName: "gke-dev-3-gpu-pool-e0790631-djzk"
           {{- end }}
           schedulerName: runai-scheduler
           containers:
