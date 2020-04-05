@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -64,6 +65,18 @@ type submitArgs struct {
 	Project            string                    `yaml:"project,omitempty"`
 	User               string                    `yaml:"user,omitempty"`
 	PriorityClassName  string                    `yaml:"priorityClassName"`
+	// Name       string   `yaml:"name"`       // --name
+	Name                string `yaml:"name,omitempty"`
+	GPU                 *float64
+	GPUInt              *int     `yaml:"gpuInt,omitempty"`
+	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed    string   `yaml:"gpuFractionFixed,omitempty"`
+	NodeType            string   `yaml:"node_type,omitempty"`
+	Ports               []string `yaml:"ports,omitempty"`
+	Args                []string `yaml:"args,omitempty"`
+	CPU                 string   `yaml:"cpu,omitempty"`
+	Memory              string   `yaml:"memory,omitempty"`
+	EnvironmentVariable []string `yaml:"environment,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -206,40 +219,22 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 		defaultUser = currentUser.Username
 	}
 
-	// create subcommands
-	command.Flags().StringVar(&name, "name", "", "override name")
-	command.MarkFlagRequired("name")
-	command.Flags().StringVarP(&submitArgs.Image, "image", "i", "", "the docker image name of training job")
-	// command.MarkFlagRequired("image")
-	command.Flags().IntVarP(&submitArgs.GPUCount, "gpus", "g", 0,
-		"the GPU count of each worker to run the training.")
-	// command.Flags().StringVar(&submitArgs.DataDir, "dataDir", "", "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
-	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "the number of processes to run the distributed training.")
-	command.Flags().IntVar(&submitArgs.Retry, "retry", 0,
-		"retry times.")
-	// command.MarkFlagRequired("syncSource")
-	command.Flags().StringVar(&submitArgs.WorkingDir, "workingDir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
-	command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
-	command.Flags().StringVar(&submitArgs.WorkingDir, "working-dir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
+	// command.Flags().StringVar(&nameParameter, "name", "", "Job name")
+	// command.Flags().MarkDeprecated("name", "please use positional argument instead")
+	//
+	// flags.AddFloat64NullableFlagP(command.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
+	// command.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
+	// command.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M, .etc)")
+	// command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
+	// command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
+	// command.Flags().StringVarP(&(submitArgs.Image), "image", "i", "", "Image to use when creating the container for this Job.")
+	// command.Flags().StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	// command.Flags().StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
+	// command.Flags().MarkHidden("user")
+	// // Will not submit the job to the cluster, just print the template to the screen
+	// command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
+	// command.Flags().MarkHidden("dry-run")
 
-	// command.MarkFlagRequired("workingDir")
-	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
-	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
-	command.Flags().StringArrayVar(&dataDirs, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
-	command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
-	command.Flags().StringArrayVar(&dataDirs, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
-
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
-	// enable RDMA or not, support hostnetwork for now
-	command.Flags().BoolVar(&submitArgs.EnableRDMA, "rdma", false, "enable RDMA")
-	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "default", "Specifies the Run:AI project to use for this Job.")
-	command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
-
-	// use priority
-	// command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
-	// toleration
-	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
-	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 }
 
 var (
@@ -266,14 +261,7 @@ func NewSubmitCommand() *cobra.Command {
 		},
 	}
 
-	// command.AddCommand(NewSubmitTFJobCommand())
 	command.AddCommand(NewSubmitMPIJobCommand())
-	// command.AddCommand(NewSubmitHorovodJobCommand())
-	// // This will be deprecated soon.
-	// command.AddCommand(NewSubmitStandaloneJobCommand())
-	// command.AddCommand(NewSparkApplicationCommand())
-
-	// command.AddCommand(NewVolcanoJobCommand())
 	command.AddCommand(NewRunaiJobCommand())
 
 	return command

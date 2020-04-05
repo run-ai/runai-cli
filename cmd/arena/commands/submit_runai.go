@@ -37,14 +37,21 @@ const (
 )
 
 func NewRunaiJobCommand() *cobra.Command {
+
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "train [NAME]",
+		Use:     "submit [NAME]",
 		Short:   "Submit a Runai job.",
 		Aliases: []string{"ra"},
 		Run: func(cmd *cobra.Command, args []string) {
-
 			util.SetLogLevel(logLevel)
+			fmt.Println("yodar run has started len of args:", len(args))
+			if len(args) > 1 && args[0] == "mpi" {
+				name = args[1]
+				NewSubmitMPIJobCommandUnderRunaiJob(cmd, args, submitArgs)
+				return
+			}
+
 			if len(args) > 1 {
 				cmd.HelpFunc()(cmd, args)
 				fmt.Printf("\nAccepts 1 arg, received %d\n", len(args))
@@ -152,6 +159,8 @@ func NewRunaiJobCommand() *cobra.Command {
 		},
 	}
 
+	command.AddCommand(NewRunaiSubmitMPIJobCommand()) // hidden command
+
 	submitArgs.addFlags(command)
 
 	return command
@@ -258,6 +267,7 @@ type submitRunaiJobArgs struct {
 	Elastic             *bool             `yaml:"elastic,omitempty"`
 	LargeShm            *bool             `yaml:"shm,omitempty"`
 	EnvironmentVariable []string          `yaml:"environment,omitempty"`
+	NumberProcesses     int               `yaml:"numProcesses"` // --workers
 	LocalImage          *bool             `yaml:"localImage,omitempty"`
 	HostNetwork         *bool             `yaml:"hostNetwork,omitempty"`
 	TTL                 *int              `yaml:"ttlSecondsAfterFinished,omitempty"`

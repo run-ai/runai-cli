@@ -31,6 +31,76 @@ var (
 	mpijob_chart = path.Join(util.GetChartsFolder(), "mpijob")
 )
 
+func NewRunaiSubmitMPIJobCommand() *cobra.Command {
+	var (
+		submitArgs submitMPIJobArgs
+	)
+
+	submitArgs.Mode = "mpijob"
+
+	var command = &cobra.Command{
+		Use:     "submitmpi [NAME]",
+		Short:   "Submit a Runai MPI job.",
+		Aliases: []string{"mpi", "mj"},
+		Hidden:  true,
+		Run: func(cmd *cobra.Command, args []string) {
+			util.SetLogLevel(logLevel)
+			fmt.Println("yodar run has started len of args:", len(args))
+
+			if len(args) != 2 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Printf("\nAccepts 2 arg, received %d\n", len(args))
+				os.Exit(1)
+			}
+
+			name = args[0]
+			if name == "" {
+				fmt.Println("Name must be specified.")
+				os.Exit(1)
+			}
+
+			util.SetLogLevel(logLevel)
+			_, err := initKubeClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = updateNamespace(cmd)
+			if err != nil {
+				log.Debugf("Failed due to %v", err)
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = submitMPIJob(args, &submitArgs)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		},
+	}
+
+	command.Flags().StringVar(&submitArgs.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
+	command.Flags().StringVar(&submitArgs.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
+	// Tensorboard
+	command.Flags().BoolVar(&submitArgs.UseTensorboard, "tensorboard", false, "enable tensorboard")
+
+	msg := "the docker image for tensorboard"
+	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
+	command.Flags().MarkDeprecated("tensorboardImage", "please use --tensorboard-image instead")
+	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
+
+	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
+	command.Flags().StringVar(&(submitArgs.NodeName), "nodename", "", "Enforce node affinity by setting a nodeName label")
+
+	submitArgs.addCommonFlags(command)
+	submitArgs.addSyncFlags(command)
+
+	return command
+
+}
+
 func NewSubmitMPIJobCommand() *cobra.Command {
 	var (
 		submitArgs submitMPIJobArgs
@@ -87,6 +157,34 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 	submitArgs.addSyncFlags(command)
 
 	return command
+}
+
+func NewSubmitMPIJobCommandUnderRunaiJob(cmd *cobra.Command, args []string, submitArgsRunai *submitRunaiJobArgs) {
+	var (
+		submitArgs submitMPIJobArgs
+	)
+	submitArgs.Mode = "mpijob"
+	submitArgs.Image = submitArgsRunai.Image
+	submitArgs.NumberProcesses = submitArgsRunai.NumberProcesses
+	util.SetLogLevel(logLevel)
+	_, err := initKubeClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = updateNamespace(cmd)
+	if err != nil {
+		log.Debugf("Failed due to %v", err)
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = submitMPIJob(args, &submitArgs)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 type submitMPIJobArgs struct {
