@@ -36,14 +36,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 	if _, err = os.Stat(fileName); os.IsNotExist(err) {
 		return "", err
 	}
-	// content, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	//
-	// // Convert []byte to string and print to screen
-	// text := string(content)
-	// fmt.Println(text)
+
 	args := []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 	output := string(out)

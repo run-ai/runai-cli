@@ -263,23 +263,6 @@ Available Commands:
     `
 )
 
-// func NewSubmitCommand() *cobra.Command {
-// 	// // return NewRunaiJobCommand()
-// 	// var command = &cobra.Command{
-// 	// 	Use:   "submit",
-// 	// 	Short: "Submit a job.",
-// 	// 	Long:  submitLong,
-// 	// 	Run: func(cmd *cobra.Command, args []string) {
-// 	// 		cmd.HelpFunc()(cmd, args)
-// 	// 	},
-// 	// }
-// 	//
-// 	// command.AddCommand(NewSubmitMPIJobCommand())
-// 	// command.AddCommand(NewRunaiJobCommand())
-// 	//
-// 	// return command
-// }
-
 func transformSliceToMap(sets []string, split string) (valuesMap map[string]string) {
 	valuesMap = map[string]string{}
 	for _, member := range sets {

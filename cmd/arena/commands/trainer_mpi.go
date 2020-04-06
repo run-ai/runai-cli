@@ -117,7 +117,7 @@ func (mj *MPIJob) GetStatus() (status string) {
 
 // Get the start time
 func (mj *MPIJob) StartTime() *metav1.Time {
-	return &metav1.Time{}
+	return &mj.mpijob.CreationTimestamp
 }
 
 // Get the Job Age
@@ -606,11 +606,6 @@ func (mj *MPIJob) isPending() bool {
 		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
 		return true
 	}
-
-	// if len(mj.chiefPod.Name) == 0 || mj.chiefPod.Status.Phase == v1.PodPending {
-	// 	log.Debugf("The MPIJob is pending due to chiefPod is not ready")
-	// 	return true
-	// }
 
 	return false
 }

@@ -89,37 +89,10 @@ type submitMPIJobArgs struct {
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
-	// submitArgs.Command = strings.Join(args, " ")
-
 	err = submitArgs.check()
 	if err != nil {
 		return err
 	}
-
-	//
-	// commonArgs := &submitArgs.submitArgs
-	// err = commonArgs.transform()
-	// if err != nil {
-	// 	return nil
-	// }
-	//
-	// err = submitArgs.HandleSyncCode()
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// // process tensorboard
-	// submitArgs.processTensorboard(submitArgs.DataSet)
-	//
-	// if len(envs) > 0 {
-	// 	submitArgs.Envs = transformSliceToMap(envs, "=")
-	// }
-	// // add node labels,if given
-	// submitArgs.addMPINodeSelectors()
-	// // add tolerations, if given
-	// submitArgs.addMPITolerations()
-	// submitArgs.addMPIInfoToEnv()
-
 	return nil
 }
 
