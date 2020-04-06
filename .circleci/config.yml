@@ -103,13 +103,13 @@ workflows:
     jobs:
       - build: 
           name: build
-#      - test:
-#          name: test
+      - test:
+          name: test
       - push:
           name: push
           requires:
             - build
-#            - test
+            - test
           filters:
             branches:
               only:

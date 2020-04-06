@@ -53,7 +53,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiStatefulSetsList.Items) > 0 {
 		for _, item := range runaiStatefulSetsList.Items {
-			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName && item.Labels["app"] == "runaijob" {
 				return true
 			}
 		}
@@ -81,6 +81,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
 
 	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
+		LabelSelector: "app=runaijob",
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -101,6 +102,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	runaiStatufulsetList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{
+		LabelSelector: "app=runaijob",
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -121,6 +123,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	runaiReplicaSetsList, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{
+		LabelSelector: "app=runaijob",
 		FieldSelector: fieldSelectorByName(name),
 	})
 

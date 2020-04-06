@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"os/user"
-	"strconv"
 	"strings"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
@@ -28,6 +27,9 @@ import (
 )
 
 var (
+	nameParameter string
+	dryRun        bool
+
 	envs        []string
 	selectors   []string
 	tolerations []string
@@ -42,13 +44,11 @@ type submitArgs struct {
 	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
 	Tolerations   []string          `yaml:"tolerations"`   // --toleration
 	Image         string            `yaml:"image"`         // --image
-	GPUCount      int               `yaml:"gpuCount"`      // --gpuCount
 	Envs          map[string]string `yaml:"envs"`          // --envs
-	WorkingDir    string            `yaml:"workingDir"`    // --workingDir
-	Command       string            `yaml:"command"`
+	Command       []string          `yaml:"command"`
 	// for horovod
-	Mode            string `yaml:"mode"`         // --mode
-	NumberProcesses int    `yaml:"numProcesses"` // --workers
+	Mode string `yaml:"mode"`
+	// --mode
 	// SSHPort     int               `yaml:"sshPort"`  // --sshPort
 	Retry int `yaml:"retry"` // --retry
 	// DataDir  string            `yaml:"dataDir"`  // --dataDir
@@ -68,11 +68,7 @@ type submitArgs struct {
 	// Name       string   `yaml:"name"`       // --name
 	Name                string `yaml:"name,omitempty"`
 	GPU                 *float64
-	GPUInt              *int     `yaml:"gpuInt,omitempty"`
-	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
-	GPUFractionFixed    string   `yaml:"gpuFractionFixed,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
-	Ports               []string `yaml:"ports,omitempty"`
 	Args                []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
 	Memory              string   `yaml:"memory,omitempty"`
@@ -202,14 +198,6 @@ func (submitArgs *submitArgs) addTolerations() {
 	}
 }
 
-func (submitArgs *submitArgs) addJobInfoToEnv() {
-	if len(submitArgs.Envs) == 0 {
-		submitArgs.Envs = map[string]string{}
-	}
-	submitArgs.Envs["workers"] = strconv.Itoa(submitArgs.NumberProcesses)
-	submitArgs.Envs["gpus"] = strconv.Itoa(submitArgs.GPUCount)
-}
-
 func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	var defaultUser string
 	currentUser, err := user.Current()
@@ -219,22 +207,47 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 		defaultUser = currentUser.Username
 	}
 
-	// command.Flags().StringVar(&nameParameter, "name", "", "Job name")
-	// command.Flags().MarkDeprecated("name", "please use positional argument instead")
-	//
-	// flags.AddFloat64NullableFlagP(command.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
-	// command.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
-	// command.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M, .etc)")
-	// command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
-	// command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
-	// command.Flags().StringVarP(&(submitArgs.Image), "image", "i", "", "Image to use when creating the container for this Job.")
-	// command.Flags().StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
-	// command.Flags().StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
-	// command.Flags().MarkHidden("user")
-	// // Will not submit the job to the cluster, just print the template to the screen
-	// command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
-	// command.Flags().MarkHidden("dry-run")
+	command.Flags().StringVar(&nameParameter, "name", "", "Job name")
+	command.Flags().MarkDeprecated("name", "please use positional argument instead")
 
+	flags.AddFloat64NullableFlagP(command.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
+	command.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
+	command.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M, .etc)")
+	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
+	command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
+	command.Flags().StringVarP(&(submitArgs.Image), "image", "i", "", "Image to use when creating the container for this Job.")
+	command.Flags().StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	command.Flags().StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
+	command.Flags().StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
+	command.Flags().MarkHidden("user")
+	// Will not submit the job to the cluster, just print the template to the screen
+	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
+	command.Flags().MarkHidden("dry-run")
+
+}
+
+func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string) {
+	util.SetLogLevel(logLevel)
+	if len(args) >= 1 {
+		name = args[0]
+	} else {
+		name = nameParameter
+	}
+
+	submitArgs.Name = name
+
+	_, err := initKubeClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = updateNamespace(cmd)
+	if err != nil {
+		log.Debugf("Failed due to %v", err)
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 var (
@@ -250,22 +263,22 @@ Available Commands:
     `
 )
 
-func NewSubmitCommand() *cobra.Command {
-	// return NewRunaiJobCommand()
-	var command = &cobra.Command{
-		Use:   "submit",
-		Short: "Submit a job.",
-		Long:  submitLong,
-		Run: func(cmd *cobra.Command, args []string) {
-			cmd.HelpFunc()(cmd, args)
-		},
-	}
-
-	command.AddCommand(NewSubmitMPIJobCommand())
-	command.AddCommand(NewRunaiJobCommand())
-
-	return command
-}
+// func NewSubmitCommand() *cobra.Command {
+// 	// // return NewRunaiJobCommand()
+// 	// var command = &cobra.Command{
+// 	// 	Use:   "submit",
+// 	// 	Short: "Submit a job.",
+// 	// 	Long:  submitLong,
+// 	// 	Run: func(cmd *cobra.Command, args []string) {
+// 	// 		cmd.HelpFunc()(cmd, args)
+// 	// 	},
+// 	// }
+// 	//
+// 	// command.AddCommand(NewSubmitMPIJobCommand())
+// 	// command.AddCommand(NewRunaiJobCommand())
+// 	//
+// 	// return command
+// }
 
 func transformSliceToMap(sets []string, split string) (valuesMap map[string]string) {
 	valuesMap = map[string]string{}
