@@ -12,9 +12,6 @@ jobs:
     steps:
     - checkout
     - run:
-        name: install dependencies
-        command: dep ensure
-    - run:
         name: run test
         command: |
           ./test.sh
@@ -26,9 +23,6 @@ jobs:
     - run:
         name: general-prep
         command: rm .env
-    - run:
-        name: install dependencies
-        command: dep ensure
     - run:
         name: build-mac
         command: |
