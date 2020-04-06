@@ -55,6 +55,7 @@ spec:
                   {{- end}}
                   {{- if .Values.memory}}
                   memory: {{ .Values.memory }}
+                  {{- end }}
               env:
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
@@ -66,8 +67,7 @@ spec:
                 {{ $parts := split "=" $env }}
                 - name: {{ quote $parts._0 }}
                   value: {{ quote $parts._1}}
-                  {{- end }}
-    {{- end }}
+                {{- end }}
     Worker:
       replicas: {{ .Values.numProcesses }}
       template:
@@ -89,13 +89,13 @@ spec:
               resources:
                 limits:
                   nvidia.com/gpu: {{ .Values.gpuCount}}
-                  resources:
                 requests:
                   {{- if .Values.cpu}}
                   cpu: {{ .Values.cpu }}
                   {{- end}}
                   {{- if .Values.memory}}
                   memory: {{ .Values.memory }}
+                  {{- end }}
               env:
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
