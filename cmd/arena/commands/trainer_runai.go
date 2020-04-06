@@ -13,6 +13,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const runaijobLabelSelector = "app=runaijob"
+
 type RunaiTrainer struct {
 	client kubernetes.Interface
 }
@@ -82,7 +84,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
 
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		LabelSelector: "app=runaijob",
+		LabelSelector: runaijobLabelSelector,
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -103,7 +105,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	runaiStatufulsetList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
-		LabelSelector: "app=runaijob",
+		LabelSelector: runaijobLabelSelector,
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -124,7 +126,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	runaiReplicaSetsList, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{
-		LabelSelector: "app=runaijob",
+		LabelSelector: runaijobLabelSelector,
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -243,7 +245,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	// Get all pods running with runai scheduler
 	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", SchedulerName),
-		LabelSelector: "app=runaijob",
+		LabelSelector: runaijobLabelSelector,
 	})
 
 	if err != nil {
@@ -285,7 +287,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	// Get all different job stypes to one general job type with pod spec
 	jobsForListCommand := []*cmdTypes.PodTemplateJob{}
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		LabelSelector: "app=runaijob",
+		LabelSelector: runaijobLabelSelector,
 	})
 
 	for _, job := range runaiJobList.Items {
@@ -294,7 +296,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	}
 
 	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
-		LabelSelector: "app=runaijob",
+		LabelSelector: runaijobLabelSelector,
 	})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
@@ -303,7 +305,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	}
 
 	replicasetJobs, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{
-		LabelSelector: "app=runaijob",
+		LabelSelector: runaijobLabelSelector,
 	})
 
 	for _, replicaSet := range replicasetJobs.Items {
