@@ -13,6 +13,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const runaijobLabelSelector = "app=runaijob"
+
 type RunaiTrainer struct {
 	client kubernetes.Interface
 }
@@ -38,7 +40,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiJobList.Items) > 0 {
 		for _, item := range runaiJobList.Items {
-			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName && item.Labels["app"] == "runaijob" {
 				return true
 			}
 		}
@@ -54,7 +56,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiStatefulSetsList.Items) > 0 {
 		for _, item := range runaiStatefulSetsList.Items {
-			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName && item.Labels["app"] == "runaijob" {
 				return true
 			}
 		}
@@ -82,6 +84,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
 
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		LabelSelector: runaijobLabelSelector,
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -102,6 +105,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	runaiStatufulsetList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
+		LabelSelector: runaijobLabelSelector,
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -122,6 +126,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	runaiReplicaSetsList, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{
+		LabelSelector: runaijobLabelSelector,
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -149,7 +154,7 @@ func (rt *RunaiTrainer) Type() string {
 }
 
 func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob) (TrainingJob, error) {
-	if podSpecJob.Template.Spec.SchedulerName != SchedulerName {
+	if podSpecJob.Template.Spec.SchedulerName != SchedulerName || podSpecJob.Labels["app"] != "runaijob" {
 		return nil, nil
 	}
 
@@ -240,6 +245,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	// Get all pods running with runai scheduler
 	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", SchedulerName),
+		LabelSelector: runaijobLabelSelector,
 	})
 
 	if err != nil {
@@ -280,21 +286,27 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	// Get all different job stypes to one general job type with pod spec
 	jobsForListCommand := []*cmdTypes.PodTemplateJob{}
-	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
+	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		LabelSelector: runaijobLabelSelector,
+	})
 
 	for _, job := range runaiJobList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromJob(job)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{})
+	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
+		LabelSelector: runaijobLabelSelector,
+	})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromStatefulSet(statefulSet)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	replicasetJobs, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{})
+	replicasetJobs, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{
+		LabelSelector: runaijobLabelSelector,
+	})
 
 	for _, replicaSet := range replicasetJobs.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromReplicaSet(replicaSet)
@@ -302,7 +314,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	}
 
 	for _, job := range jobsForListCommand {
-		if job.Template.Spec.SchedulerName != SchedulerName {
+		if job.Template.Spec.SchedulerName != SchedulerName || job.Labels["app"] != "runaijob" {
 			continue
 		}
 
