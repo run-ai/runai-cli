@@ -82,7 +82,7 @@ func getRunaiJob() *batch.Job {
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"app": "runaijob",
-			},trainer_runai.go
+			},
 			Namespace: NAMESPACE,
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
