@@ -87,10 +87,6 @@ func (mj *MPIJob) CreatedByCLI() bool {
 	return true
 }
 
-func (mj *MPIJob) Interactive() (status string) {
-	return "false"
-}
-
 func (mj *MPIJob) Image() (status string) {
 	return mj.mpijob.Annotations["image"]
 }

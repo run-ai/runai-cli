@@ -269,6 +269,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 
 func printJobSummary(w io.Writer, job TrainingJob) {
 	fmt.Fprintf(w, "NAME: %s\n", job.Name())
+	fmt.Fprintf(w, "TYPE: %s\n", job.Trainer())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
 	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))
