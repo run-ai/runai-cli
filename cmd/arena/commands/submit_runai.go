@@ -313,12 +313,6 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	submitArgs.Name = name
-	isPreemptableFalse := false
-
-	if submitArgs.Interactive == nil || *submitArgs.Interactive == false {
-		submitArgs.IsPreemptable = &isPreemptableFalse
-	}
-
 	err = handleRequestedGPUs(submitArgs)
 	if err != nil {
 		return err
