@@ -188,7 +188,7 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob) 
 		ResourceType: podSpecJob.Type,
 		Name:         podSpecJob.Name,
 	}
-	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, rt.Type(), podSpecJob.Name, false, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, namespace, ownerResource), nil
+	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, rt.Type(), podSpecJob.Name, false, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, namespace, ownerResource), nil
 }
 
 type PodTemplateJob struct {
@@ -207,6 +207,7 @@ type RunaiJobInfo struct {
 	deleted           bool
 	podSpec           v1.PodSpec
 	podMetadata       metav1.ObjectMeta
+	ObjectMeta        metav1.ObjectMeta
 	owner             cmdTypes.Resource
 }
 
@@ -330,6 +331,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 			jobInfo.podMetadata = job.Template.ObjectMeta
 		}
 
+		jobInfo.ObjectMeta = job.ObjectMeta
 		jobInfo.creationTimestamp = job.CreationTimestamp
 		jobInfo.deleted = false
 		jobInfo.owner = cmdTypes.Resource{
@@ -358,7 +360,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 			}
 		}
 
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, namespace, jobInfo.owner))
+		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, namespace, jobInfo.owner))
 	}
 
 	return runaiJobs, nil

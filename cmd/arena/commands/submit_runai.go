@@ -227,6 +227,7 @@ type submitRunaiJobArgs struct {
 	TTL              *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Labels           map[string]string `yaml:"labels,omitempty"`
 	IsJupyter        bool
+	IsPreemptable    *bool  `yaml:"isPreemptable,omitempty"`
 	WorkingDir       string `yaml:"workingDir,omitempty"`
 }
 
@@ -275,6 +276,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(sa.WorkingDir), "working-dir", "", "Container's working directory.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptable), "preemptable", "Mark the job as preemptable.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
@@ -311,6 +313,12 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	submitArgs.Name = name
+	isPreemptableFalse := false
+
+	if submitArgs.Interactive == nil || *submitArgs.Interactive == false {
+		submitArgs.IsPreemptable = &isPreemptableFalse
+	}
+
 	err = handleRequestedGPUs(submitArgs)
 	if err != nil {
 		return err

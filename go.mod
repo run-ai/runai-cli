@@ -11,9 +11,9 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.1.1 // indirect
-	github.com/kubeflow/common v0.0.0-20200313171840-64f943084a05
+	github.com/kubeflow/common v0.0.0-20200313171840-64f943084a05 // indirect
 	github.com/kubeflow/mpi-operator v0.2.1
-	github.com/kubernetes-sigs/kube-batch v0.5.0
+	github.com/kubernetes-sigs/kube-batch v0.5.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
@@ -22,15 +22,13 @@ require (
 	github.com/sirupsen/logrus v1.4.1
 	github.com/spf13/cobra v0.0.0-20180319062004-c439c4fa0937
 	github.com/spf13/pflag v1.0.3
-	github.com/stretchr/testify v1.3.0
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.15.10
 	k8s.io/apimachinery v0.15.10
-	k8s.io/apiserver v0.15.10
 	k8s.io/client-go v10.0.0+incompatible
-	k8s.io/sample-controller v0.0.0-00010101000000-000000000000
+	k8s.io/sample-controller v0.0.0-00010101000000-000000000000 // indirect
 )
 
 replace (

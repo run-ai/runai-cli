@@ -59,6 +59,9 @@ spec:
         {{- if .Values.user }}
         user: {{ .Values.user }}
         {{- end }}
+        {{- if and .Values.interactive .Values.isPreemptable }}
+        priorityClassName: "preemptable-interactive"
+        {{- end}}
     spec:
       {{- if .Values.node_type }}
       nodeSelector:
