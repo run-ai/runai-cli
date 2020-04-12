@@ -233,6 +233,7 @@ type submitRunaiJobArgs struct {
 	GPUFractionFixed string            `yaml:"gpuFractionFixed,omitempty"`
 	Interactive      *bool             `yaml:"interactive,omitempty"`
 	Volumes          []string          `yaml:"volume,omitempty"`
+	Command          []string          `yaml:"command"`
 	Ports            []string          `yaml:"ports,omitempty"`
 	ServiceType      string            `yaml:"serviceType,omitempty"`
 	Elastic          *bool             `yaml:"elastic,omitempty"`
@@ -289,22 +290,23 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostIPC), "host-ipc", "Use the host's ipc namespace.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Interactive), "interactive", "Mark this Job as unattended or interactive.")
-	command.Flags().StringArrayVarP(&(sa.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
 	command.Flags().StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Service exposure method for interactive Job. Options are: portforward, loadbalancer, nodeport, ingress.")
 	command.Flags().StringVar(&(sa.WorkingDir), "working-dir", "", "Container's working directory.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark the job as preemptable.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark the job as preemptible.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
+	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(sa.RunAsCurrentUser), "run-as-user", false, "Run in the context of the current user running the Run:AI command rather than the root user.")
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
 
 	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job. (otherwise use the default one if exists)")
 
+	command.Flags().StringArrayVarP(&(sa.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
 	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 }

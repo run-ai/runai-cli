@@ -504,12 +504,17 @@ func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha2.MPIJob) bool {
 	return true
 }
 
-func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
+func (tt *MPIJobTrainer) isPodOfMPiJob(name, ns string, item v1.Pod) bool {
 	if value, ok := item.ObjectMeta.Labels["mpi_job_name"]; ok && (value == name) {
 		return true
 	}
 
 	return false
+}
+
+func IsMPIPod(item v1.Pod) bool {
+	_, ok := item.ObjectMeta.Labels["mpi_job_name"]
+	return ok
 }
 
 func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod) ([]cmdTypes.Resource, error) {
@@ -641,7 +646,7 @@ func (m *MPIJob) GetPriorityClass() string {
 func getPodsOfMPIJob(name string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
 	pods = []v1.Pod{}
 	for _, item := range podList {
-		if !tt.isMPIPod(name, namespace, item) {
+		if !tt.isPodOfMPiJob(name, namespace, item) {
 			continue
 		}
 		if tt.isChiefPod(item) && item.CreationTimestamp.After(chiefPod.CreationTimestamp.Time) {

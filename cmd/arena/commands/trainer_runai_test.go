@@ -31,9 +31,6 @@ func getRunaiReplicaSet() *appsv1.ReplicaSet {
 
 	return &appsv1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{
-				"app": "runaijob",
-			},
 			Namespace: NAMESPACE,
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
@@ -55,9 +52,6 @@ func getRunaiStatefulSet() *appsv1.StatefulSet {
 
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{
-				"app": "runaijob",
-			},
 			Namespace: NAMESPACE,
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
@@ -80,9 +74,6 @@ func getRunaiJob() *batch.Job {
 
 	return &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{
-				"app": "runaijob",
-			},
 			Namespace: NAMESPACE,
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
@@ -118,9 +109,6 @@ func TestJobInclusionInResourcesListCommand(t *testing.T) {
 func TestDontListNonRunaiJobs(t *testing.T) {
 	job := &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: map[string]string{
-				"app": "runaijob",
-			},
 			Namespace: NAMESPACE,
 			Name:      "name",
 			UID:       types.UID("jobUUID"),

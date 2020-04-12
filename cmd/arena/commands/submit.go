@@ -45,7 +45,6 @@ type submitArgs struct {
 	Tolerations   []string          `yaml:"tolerations"`   // --toleration
 	Image         string            `yaml:"image"`         // --image
 	Envs          map[string]string `yaml:"envs"`          // --envs
-	Command       []string          `yaml:"command"`
 	// for horovod
 	Mode string `yaml:"mode"`
 	// --mode
