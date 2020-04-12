@@ -73,6 +73,13 @@ spec:
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
+      securityContext:
+        {{- if .Values.runAsUser }}
+        runAsUser: {{ .Values.runAsUser }}
+        {{- end}}
+        {{- if .Values.runAsGroup }}
+        runAsGroup: {{ .Values.runAsGroup }}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}
           command:
