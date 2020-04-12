@@ -41,6 +41,7 @@ import (
 type eventAndName struct {
 	event v1.Event
 	name  string
+	index int
 }
 
 var output string
@@ -342,17 +343,20 @@ func getResourcesEvents(client *kubernetes.Clientset, namespace string, job Trai
 
 func getSortedEvents(items []v1.Event, resources []cmdTypes.Resource, podGroupName string) []eventAndName {
 	eventAndNames := []eventAndName{}
+	index := 0
 	for _, event := range items {
 		for _, resource := range resources {
 			if event.InvolvedObject.Kind == string(resource.ResourceType) && string(event.InvolvedObject.UID) == resource.Uid {
-				eventAndNames = append(eventAndNames, eventAndName{event, resource.Name})
+				eventAndNames = append(eventAndNames, eventAndName{event, resource.Name, index})
+				index++
 				break
 			}
 		}
 
 		// TODO: We should add pogGroup as a resource of a job and remove this part.
 		if len(podGroupName) > 0 && event.InvolvedObject.Name == podGroupName {
-			eventAndNames = append(eventAndNames, eventAndName{event, podGroupName})
+			eventAndNames = append(eventAndNames, eventAndName{event, podGroupName, index})
+			index++
 		}
 
 	}
@@ -360,7 +364,16 @@ func getSortedEvents(items []v1.Event, resources []cmdTypes.Resource, podGroupNa
 	sort.Slice(eventAndNames, func(i, j int) bool {
 		lv := eventAndNames[i]
 		rv := eventAndNames[j]
-		return lv.event.CreationTimestamp.Time.Before(rv.event.CreationTimestamp.Time)
+		if lv.event.CreationTimestamp.Time.Before(rv.event.CreationTimestamp.Time) {
+			return true
+		}
+
+		if lv.event.CreationTimestamp.Time.After(rv.event.CreationTimestamp.Time) {
+			return false
+
+		}
+
+		return lv.index < rv.index
 	})
 
 	return eventAndNames
