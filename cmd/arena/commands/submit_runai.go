@@ -2,6 +2,15 @@ package commands
 
 import (
 	"fmt"
+	"math"
+	"os"
+	"os/user"
+	"path"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
@@ -12,14 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"math"
-	"os"
-	"os/user"
-	"path"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -90,6 +91,14 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			if submitArgs.IsJupyter {
 				submitArgs.UseJupyterDefaultValues()
+			}
+
+			if submitArgs.RunAsCurrentUser {
+				currentUser, err := user.Current()
+				if err == nil {
+					submitArgs.RunAsUser = currentUser.Uid
+					submitArgs.RunAsGroup = currentUser.Gid
+				}
 			}
 
 			err = submitRunaiJob(args, submitArgs)
@@ -264,6 +273,9 @@ type submitRunaiJobArgs struct {
 	Labels              map[string]string `yaml:"labels,omitempty"`
 	IsJupyter           bool
 	WorkingDir          string `yaml:"workingDir,omitempty"`
+	RunAsUser           string `yaml:"runAsUser,omitempty"`
+	RunAsGroup          string `yaml:"runAsGroup,omitempty"`
+	RunAsCurrentUser    bool
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -333,6 +345,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
+	command.Flags().BoolVar(&(sa.RunAsCurrentUser), "run-as-user", false, "Run in the context of the current user running the Run:AI command rather than the root user.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
