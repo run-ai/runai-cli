@@ -88,7 +88,7 @@ spec:
               imagePullPolicy: {{ .Values.imagePullPolicy }}
               resources:
                 limits:
-                  nvidia.com/gpu: {{ .Values.gpuCount}}
+                  nvidia.com/gpu: {{ .Values.gpu}}
                 requests:
                   {{- if .Values.cpu}}
                   cpu: {{ .Values.cpu }}

@@ -66,8 +66,8 @@ type submitArgs struct {
 	User               string                    `yaml:"user,omitempty"`
 	PriorityClassName  string                    `yaml:"priorityClassName"`
 	// Name       string   `yaml:"name"`       // --name
-	Name                string `yaml:"name,omitempty"`
-	GPU                 *float64
+	Name                string   `yaml:"name,omitempty"`
+	GPU                 *float64 `yaml:"gpu,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	Args                []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
@@ -228,7 +228,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string) {
 	util.SetLogLevel(logLevel)
-	if len(args) >= 1 {
+	if nameParameter == "" && len(args) >= 1 {
 		name = args[0]
 	} else {
 		name = nameParameter
