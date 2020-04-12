@@ -70,6 +70,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			printJobInfoIfNeeded(submitArgs)
 			if submitArgs.IsJupyter || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(name, namespace)
 
@@ -128,6 +129,12 @@ func NewRunaiJobCommand() *cobra.Command {
 	submitArgs.addFlags(command)
 
 	return command
+}
+
+func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
+	if submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.IsPreemptable != nil && *submitArgs.IsPreemptable {
+		log.Infof("Using the preemptible flag may lead to your resources being preempted without notice")
+	}
 }
 
 func getJobIndex() (string, error) {
