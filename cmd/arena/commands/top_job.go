@@ -96,7 +96,7 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 		totalRequestedGPUs float64
 	)
 
-	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TRAINER", "AGE", "NODE"}
+	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
 
 	PrintLine(w, labelField...)
 
@@ -121,10 +121,10 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Total Allocated GPUs of Training Job:\n")
-	fmt.Fprintf(w, "%v \t\n", strconv.FormatFloat(totalAllocatedGPUs, 'f', -1, 32),)
+	fmt.Fprintf(w, "%v \t\n", strconv.FormatFloat(totalAllocatedGPUs, 'f', -1, 32))
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Total Requested GPUs of Training Job:\n")
-	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32),)
+	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32))
 
 	_ = w.Flush()
 }

@@ -27,8 +27,6 @@ var (
 	runaiChart       = path.Join(util.GetChartsFolder(), "runai")
 	ttlAfterFinished *time.Duration
 	configArg        string
-	nameParameter    string
-	dryRun           bool
 )
 
 const (
@@ -38,41 +36,15 @@ const (
 )
 
 func NewRunaiJobCommand() *cobra.Command {
+
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
 		Use:     "submit [NAME]",
 		Short:   "Submit a Runai job.",
 		Aliases: []string{"ra"},
+		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
-
-			util.SetLogLevel(logLevel)
-			if len(args) > 1 {
-				cmd.HelpFunc()(cmd, args)
-				fmt.Printf("\nAccepts 1 arg, received %d\n", len(args))
-				os.Exit(1)
-			} else if len(args) == 1 {
-				name = args[0]
-			} else {
-				name = nameParameter
-			}
-
-			if name == "" {
-				fmt.Println("Name must be specified.")
-				os.Exit(1)
-			}
-
-			_, err := initKubeClient()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			err = updateNamespace(cmd)
-			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			submitArgs.setCommonRun(cmd, args)
 
 			index, err := getJobIndex()
 
@@ -107,6 +79,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			printJobInfoIfNeeded(submitArgs)
 			if submitArgs.IsJupyter || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(name, namespace)
 
@@ -161,9 +134,16 @@ func NewRunaiJobCommand() *cobra.Command {
 		},
 	}
 
+	submitArgs.addCommonFlags(command)
 	submitArgs.addFlags(command)
 
 	return command
+}
+
+func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
+	if submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.IsPreemptible != nil && *submitArgs.IsPreemptible {
+		log.Infof("Using the preemptible flag may lead to your resources being preempted without notice")
+	}
 }
 
 func getJobIndex() (string, error) {
@@ -246,36 +226,29 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	Project             string `yaml:"project,omitempty"`
-	Name                string `yaml:"name,omitempty"`
-	GPU                 *float64
-	GPUInt              *int              `yaml:"gpuInt,omitempty"`
-	GPUFraction         string            `yaml:"gpuFraction,omitempty"`
-	GPUFractionFixed    string            `yaml:"gpuFractionFixed,omitempty"`
-	Image               string            `yaml:"image,omitempty"`
-	HostIPC             *bool             `yaml:"hostIPC,omitempty"`
-	Interactive         *bool             `yaml:"interactive,omitempty"`
-	Volumes             []string          `yaml:"volume,omitempty"`
-	NodeType            string            `yaml:"node_type,omitempty"`
-	User                string            `yaml:"user,omitempty"`
-	Ports               []string          `yaml:"ports,omitempty"`
-	ServiceType         string            `yaml:"serviceType,omitempty"`
-	Command             []string          `yaml:"command,omitempty"`
-	Args                []string          `yaml:"args,omitempty"`
-	CPU                 string            `yaml:"cpu,omitempty"`
-	Memory              string            `yaml:"memory,omitempty"`
-	Elastic             *bool             `yaml:"elastic,omitempty"`
-	LargeShm            *bool             `yaml:"shm,omitempty"`
-	EnvironmentVariable []string          `yaml:"environment,omitempty"`
-	LocalImage          *bool             `yaml:"localImage,omitempty"`
-	HostNetwork         *bool             `yaml:"hostNetwork,omitempty"`
-	TTL                 *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
-	Labels              map[string]string `yaml:"labels,omitempty"`
-	IsJupyter           bool
-	WorkingDir          string `yaml:"workingDir,omitempty"`
-	RunAsUser           string `yaml:"runAsUser,omitempty"`
-	RunAsGroup          string `yaml:"runAsGroup,omitempty"`
-	RunAsCurrentUser    bool
+	submitArgs       `yaml:",inline"`
+	HostIPC          *bool             `yaml:"hostIPC,omitempty"`
+	GPUInt           *int              `yaml:"gpuInt,omitempty"`
+	GPUFraction      string            `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed string            `yaml:"gpuFractionFixed,omitempty"`
+	Interactive      *bool             `yaml:"interactive,omitempty"`
+	Volumes          []string          `yaml:"volume,omitempty"`
+	Command          []string          `yaml:"command"`
+	Ports            []string          `yaml:"ports,omitempty"`
+	ServiceType      string            `yaml:"serviceType,omitempty"`
+	Elastic          *bool             `yaml:"elastic,omitempty"`
+	LargeShm         *bool             `yaml:"shm,omitempty"`
+	NumberProcesses  int               `yaml:"numProcesses"` // --workers
+	LocalImage       *bool             `yaml:"localImage,omitempty"`
+	HostNetwork      *bool             `yaml:"hostNetwork,omitempty"`
+	TTL              *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Labels           map[string]string `yaml:"labels,omitempty"`
+	IsJupyter        bool
+	IsPreemptible    *bool  `yaml:"isPreemptible,omitempty"`
+	WorkingDir       string `yaml:"workingDir,omitempty"`
+	RunAsUser        string `yaml:"runAsUser,omitempty"`
+	RunAsGroup       string `yaml:"runAsGroup,omitempty"`
+	RunAsCurrentUser bool
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -314,49 +287,26 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 
 // add flags to submit spark args
 func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
-	var defaultUser string
-	currentUser, err := user.Current()
-	if err != nil {
-		defaultUser = ""
-	} else {
-		defaultUser = currentUser.Username
-	}
 
-	command.Flags().StringVar(&nameParameter, "name", "", "Job name")
-	command.Flags().MarkDeprecated("name", "please use positional argument instead")
-
-	flags.AddFloat64NullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
-	command.Flags().StringVar(&(sa.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
-	command.Flags().StringVar(&(sa.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M, .etc)")
-	command.Flags().StringVarP(&(sa.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
-	command.Flags().StringVarP(&(sa.Image), "image", "i", "", "Image to use when creating the container for this Job.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostIPC), "host-ipc", "Use the host's ipc namespace.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Interactive), "interactive", "Mark this Job as unattended or interactive.")
-	command.Flags().StringArrayVarP(&(sa.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
-	command.Flags().StringVar(&(sa.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
-	command.Flags().StringVarP(&(sa.User), "user", "u", defaultUser, "Use different user to run the Job.")
 	command.Flags().StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Service exposure method for interactive Job. Options are: portforward, loadbalancer, nodeport, ingress.")
-	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
-	command.Flags().StringArrayVar(&(sa.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
 	command.Flags().StringVar(&(sa.WorkingDir), "working-dir", "", "Container's working directory.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark the job as preemptible.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
+	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(sa.RunAsCurrentUser), "run-as-user", false, "Run in the context of the current user running the Run:AI command rather than the root user.")
-	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
 
 	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job. (otherwise use the default one if exists)")
 
-	command.Flags().MarkHidden("user")
-	// Will not submit the job to the cluster, just print the template to the screen
-	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
-	command.Flags().MarkHidden("dry-run")
-
+	command.Flags().StringArrayVarP(&(sa.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
 	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 }
