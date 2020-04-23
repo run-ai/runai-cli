@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
@@ -21,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -30,7 +32,6 @@ var (
 )
 
 const (
-	defaultNamespace         = "default"
 	defaultRunaiTrainingType = "runai"
 	runaiNamespace           = "runai"
 )
@@ -44,9 +45,18 @@ func NewRunaiJobCommand() *cobra.Command {
 		Aliases: []string{"ra"},
 		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
-			submitArgs.setCommonRun(cmd, args)
 
-			index, err := getJobIndex()
+			kubeClient, err := client.GetClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			clientset := kubeClient.GetClientset()
+
+			submitArgs.setCommonRun(cmd, args, kubeClient)
+
+			index, err := getJobIndex(clientset)
 
 			if err != nil {
 				log.Debug("Could not get job index. Will not set a label.")
@@ -67,13 +77,13 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			if submitArgs.RunAsCurrentUser {
 				currentUser, err := user.Current()
-				if err == nil {
+				if err != nil {
 					submitArgs.RunAsUser = currentUser.Uid
 					submitArgs.RunAsGroup = currentUser.Gid
 				}
 			}
 
-			err = submitRunaiJob(args, submitArgs)
+			err = submitRunaiJob(args, submitArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -81,7 +91,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			printJobInfoIfNeeded(submitArgs)
 			if submitArgs.IsJupyter || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
-				err = kubectl.WaitForReadyStatefulSet(name, namespace)
+				err = kubectl.WaitForReadyStatefulSet(submitArgs.Name, submitArgs.Namespace)
 
 				if err != nil {
 					fmt.Println(err)
@@ -89,8 +99,8 @@ func NewRunaiJobCommand() *cobra.Command {
 				}
 
 				if submitArgs.IsJupyter {
-					runaiTrainer := NewRunaiTrainer(clientset)
-					job, err := runaiTrainer.GetTrainingJob(name, namespace)
+					runaiTrainer := NewRunaiTrainer(*kubeClient)
+					job, err := runaiTrainer.GetTrainingJob(submitArgs.Name, submitArgs.Namespace)
 
 					if err != nil {
 						fmt.Println(err)
@@ -104,7 +114,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 					if err != nil {
 						fmt.Println(err)
-						fmt.Printf("Please run '%s logs %s' to view the logs.\n", config.CLIName, name)
+						fmt.Printf("Please run '%s logs %s' to view the logs.\n", config.CLIName, submitArgs.Name)
 					}
 
 					fmt.Printf("Jupyter notebook token: %s\n", token)
@@ -124,7 +134,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 					accessPoints := strings.Join(localUrls, ",")
 					fmt.Printf("Open access point(s) to service from %s\n", accessPoints)
-					err = kubectl.PortForward(localPorts, name, namespace)
+					err = kubectl.PortForward(localPorts, submitArgs.Name, submitArgs.Namespace)
 					if err != nil {
 						fmt.Println(err)
 						os.Exit(1)
@@ -146,9 +156,9 @@ func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
 	}
 }
 
-func getJobIndex() (string, error) {
+func getJobIndex(clientset kubernetes.Interface) (string, error) {
 	for true {
-		index, shouldTryAgain, err := tryGetJobIndexOnce()
+		index, shouldTryAgain, err := tryGetJobIndexOnce(clientset)
 
 		if index != "" || !shouldTryAgain {
 			return index, err
@@ -158,7 +168,7 @@ func getJobIndex() (string, error) {
 	return "", nil
 }
 
-func tryGetJobIndexOnce() (string, bool, error) {
+func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	var (
 		indexKey      = "index"
 		configMapName = "runai-cli-index"
@@ -311,7 +321,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
+func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface) error {
 	configs := clusterConfig.NewClusterConfigs(clientset)
 
 	var configToUse *clusterConfig.ClusterConfig
@@ -334,18 +344,17 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 		configValues = configToUse.Values
 	}
 
-	submitArgs.Name = name
 	err = handleRequestedGPUs(submitArgs)
 	if err != nil {
 		return err
 	}
 
-	err = workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, configValues, runaiChart, clientset, dryRun)
+	err = workflow.SubmitJob(submitArgs.Name, defaultRunaiTrainingType, submitArgs.Namespace, submitArgs, configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("The Job %s has been submitted successfully", name)
-	log.Infof("You can run `%s get %s` to check the job status", config.CLIName, name)
+	log.Infof("The Job %s has been submitted successfully", submitArgs.Name)
+	log.Infof("You can run `%s get %s` to check the job status", config.CLIName, submitArgs.Name)
 	return nil
 }

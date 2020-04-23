@@ -20,14 +20,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 )
 
 // acquire all active pods from all namespaces
-func acquireAllActivePods(client *kubernetes.Clientset) ([]v1.Pod, error) {
+func acquireAllActivePods(client kubernetes.Interface) ([]v1.Pod, error) {
 	allPods := []v1.Pod{}
 
 	fieldSelector, err := fields.ParseSelector("status.phase!=" + string(v1.PodSucceeded) + ",status.phase!=" + string(v1.PodFailed))
@@ -45,13 +45,10 @@ func acquireAllActivePods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 	return allPods, nil
 }
 
-func acquireAllPods(client *kubernetes.Clientset) ([]v1.Pod, error) {
+func acquireAllPods(client kubernetes.Interface, namespace string) ([]v1.Pod, error) {
 	allPods := []v1.Pod{}
-	ns := namespace
-	if allNamespaces {
-		ns = metav1.NamespaceAll
-	}
-	podList, err := client.CoreV1().Pods(ns).List(metav1.ListOptions{})
+
+	podList, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return allPods, err
 	}
@@ -61,13 +58,10 @@ func acquireAllPods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 	return allPods, nil
 }
 
-func acquireAllJobs(client *kubernetes.Clientset) ([]batchv1.Job, error) {
+func acquireAllJobs(client kubernetes.Interface, namespace string) ([]batchv1.Job, error) {
 	allJobs := []batchv1.Job{}
-	ns := namespace
-	if allNamespaces {
-		ns = metav1.NamespaceAll
-	}
-	jobList, err := client.BatchV1().Jobs(ns).List(metav1.ListOptions{})
+
+	jobList, err := client.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return allJobs, err
 	}

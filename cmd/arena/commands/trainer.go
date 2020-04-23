@@ -17,14 +17,14 @@ package commands
 import (
 	"sort"
 
-	"k8s.io/client-go/kubernetes"
+	"github.com/kubeflow/arena/pkg/client"
 )
 
 // construct the trainer list
-func NewTrainers(client *kubernetes.Clientset) []Trainer {
+func NewTrainers(kubeClient *client.Client) []Trainer {
 
 	trainers := []Trainer{}
-	trainerInits := []func(client kubernetes.Interface) Trainer{
+	trainerInits := []func(kubeClient client.Client) Trainer{
 		// NewHorovodJobTrainer,
 		// NewStandaloneJobTrainer,
 		// NewTensorFlowJobTrainer,
@@ -34,7 +34,7 @@ func NewTrainers(client *kubernetes.Clientset) []Trainer {
 		NewRunaiTrainer}
 
 	for _, init := range trainerInits {
-		trainers = append(trainers, init(client))
+		trainers = append(trainers, init(*kubeClient))
 	}
 
 	return trainers

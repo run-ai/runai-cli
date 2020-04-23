@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
-	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -37,15 +38,14 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			util.SetLogLevel(logLevel)
-			// setupKubeconfig()
-			_, err := initKubeClient()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			err = updateNamespace(cmd)
+			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
@@ -53,7 +53,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(jobName, "")
+				err = deleteTrainingJob(kubeClient, jobName, namespace, "")
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
@@ -64,7 +64,7 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func deleteTrainingJob(jobName, trainingType string) error {
+func deleteTrainingJob(kubeClient *client.Client, jobName, namespace string, trainingType string) error {
 	var trainingTypes []string
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)
@@ -79,7 +79,7 @@ func deleteTrainingJob(jobName, trainingType string) error {
 	if trainingType == "" {
 		trainingTypes = getTrainingTypes(jobName, namespace)
 		if len(trainingTypes) == 0 {
-			runaiTrainer := NewRunaiTrainer(clientset)
+			runaiTrainer := NewRunaiTrainer(*kubeClient)
 			job, err := runaiTrainer.GetTrainingJob(jobName, namespace)
 			if err == nil && !job.CreatedByCLI() {
 				return fmt.Errorf("the job exists but was not created by the runai cli")
@@ -101,7 +101,7 @@ func deleteTrainingJob(jobName, trainingType string) error {
 		trainingTypes = []string{trainingType}
 	}
 
-	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0], clientset)
+	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0], kubeClient.GetClientset())
 	if err != nil {
 		return err
 	}
@@ -109,10 +109,6 @@ func deleteTrainingJob(jobName, trainingType string) error {
 	log.Infof("The Job %s has been deleted successfully", jobName)
 	// (TODO: cheyang)3. Handle training jobs created by others, to implement
 	return nil
-}
-
-func deleteTrainingJobWithHelm(jobName string) error {
-	return helm.DeleteRelease(jobName)
 }
 
 func isKnownTrainingType(trainingType string) bool {

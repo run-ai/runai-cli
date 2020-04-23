@@ -2,12 +2,14 @@ package commands
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/util"
+	"os"
+
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
-	"os"
 )
 
 func NewBashCommand() *cobra.Command {
@@ -60,21 +62,20 @@ func NewExecCommand() *cobra.Command {
 
 func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, runaiCommandName string) {
 
-	util.SetLogLevel(logLevel)
-	_, err := initKubeClient()
+	kubeClient, err := client.GetClient()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	err = updateNamespace(cmd)
+	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+
 	if err != nil {
-		log.Debugf("Failed due to %v", err)
-		fmt.Println(err)
+		log.Errorln(err)
 		os.Exit(1)
 	}
 
-	job, err := searchTrainingJob(name, "", namespace)
+	job, err := searchTrainingJob(kubeClient, name, "", namespace)
 	if err != nil {
 		log.Errorln(err)
 		os.Exit(1)

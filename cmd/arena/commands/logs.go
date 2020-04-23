@@ -20,12 +20,12 @@ import (
 	"path"
 	"time"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	podlogs "github.com/kubeflow/arena/pkg/podlogs"
 	tlogs "github.com/kubeflow/arena/pkg/printer/base/logs"
-	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
 )
 
 func NewLogsCommand() *cobra.Command {
@@ -34,24 +34,26 @@ func NewLogsCommand() *cobra.Command {
 		Use:   "logs training job",
 		Short: "print the logs for a task of the training job",
 		Run: func(cmd *cobra.Command, args []string) {
-			util.SetLogLevel(logLevel)
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
 			}
 			name = args[0]
-			conf, err := clientConfig.ClientConfig()
+
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			_, err = initKubeClient()
+			clientset := kubeClient.GetClientset()
+			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			outerArgs.KubeClient = kubernetes.NewForConfigOrDie(conf)
-			err = updateNamespace(cmd)
+
+			outerArgs.KubeClient = clientset
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
@@ -59,7 +61,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
-			job, err := searchTrainingJob(name, "", namespace)
+			job, err := searchTrainingJob(kubeClient, name, "", namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -97,6 +99,6 @@ func NewLogsCommand() *cobra.Command {
 	command.Flags().BoolVar(&outerArgs.Timestamps, "timestamps", false, "Include timestamps on each line in the log output")
 
 	// command.Flags().StringVar(&printer.pod, "instance", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().StringVarP(&outerArgs.PodName, "pod", "p", "", "Specify the pod to get log")
+	command.Flags().StringVar(&outerArgs.PodName, "pod", "", "Specify the pod to get log")
 	return command
 }

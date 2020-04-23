@@ -25,15 +25,17 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/config"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -62,27 +64,26 @@ func NewGetCommand() *cobra.Command {
 			}
 			name = args[0]
 
-			util.SetLogLevel(logLevel)
-			_, err := initKubeClient()
+			kubeClient, err := client.GetClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			clientset := kubeClient.GetClientset()
+			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			err = updateNamespace(cmd)
-			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			job, err := searchTrainingJob(name, "", namespace)
+			job, err := searchTrainingJob(kubeClient, name, "", namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			printTrainingJob(job, printArgs)
+			printTrainingJob(clientset, job, printArgs)
 		},
 	}
 
@@ -101,10 +102,10 @@ type PrintArgs struct {
 /*
 * search the training job with name and training type
  */
-func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob, err error) {
+func searchTrainingJob(kubeClient *client.Client, jobName, trainingType, namespace string) (job TrainingJob, err error) {
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
+			job, err = getTrainingJobByType(kubeClient, jobName, namespace, trainingType)
 			if err != nil {
 				if isTrainingConfigExist(jobName, trainingType, namespace) {
 					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s --type %s'.",
@@ -121,7 +122,7 @@ func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob
 				knownTrainingTypes)
 		}
 	} else {
-		jobs, err := getTrainingJobsByName(clientset, jobName, namespace)
+		jobs, err := getTrainingJobsByName(kubeClient, jobName, namespace)
 		if err != nil {
 			if len(getTrainingTypes(jobName, namespace)) > 0 {
 				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s'.",
@@ -145,10 +146,10 @@ func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob
 	return job, nil
 }
 
-func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job TrainingJob, err error) {
+func getTrainingJob(kubeClient *client.Client, name, namespace string) (job TrainingJob, err error) {
 	// trainers := NewTrainers(client, )
 
-	trainers := NewTrainers(client)
+	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.IsSupported(name, namespace) {
 			return trainer.GetTrainingJob(name, namespace)
@@ -160,10 +161,10 @@ func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job T
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
-func getTrainingJobByType(client *kubernetes.Clientset, name, namespace, trainingType string) (job TrainingJob, err error) {
+func getTrainingJobByType(kubeClient *client.Client, name, namespace, trainingType string) (job TrainingJob, err error) {
 	// trainers := NewTrainers(client, )
 
-	trainers := NewTrainers(client)
+	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.Type() == trainingType {
 			return trainer.GetTrainingJob(name, namespace)
@@ -179,9 +180,9 @@ func getTrainingJobByType(client *kubernetes.Clientset, name, namespace, trainin
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
-func getTrainingJobsByName(client *kubernetes.Clientset, name, namespace string) (jobs []TrainingJob, err error) {
+func getTrainingJobsByName(kubeClient *client.Client, name, namespace string) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
-	trainers := NewTrainers(client)
+	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.IsSupported(name, namespace) {
 			job, err := trainer.GetTrainingJob(name, namespace)
@@ -202,33 +203,33 @@ func getTrainingJobsByName(client *kubernetes.Clientset, name, namespace string)
 	return jobs, nil
 }
 
-func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
+func printTrainingJob(client kubernetes.Interface, job TrainingJob, printArgs PrintArgs) {
 	switch printArgs.Output {
 	case "name":
 		fmt.Println(job.Name())
 		// for future CRD support
 	case "json":
-		outBytes, err := json.MarshalIndent(BuildJobInfo(job), "", "    ")
+		outBytes, err := json.MarshalIndent(BuildJobInfo(job, client), "", "    ")
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Println(string(outBytes))
 		}
 	case "yaml":
-		outBytes, err := yaml.Marshal(BuildJobInfo(job))
+		outBytes, err := yaml.Marshal(BuildJobInfo(job, client))
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Println(string(outBytes))
 		}
 	case "wide", "":
-		printSingleJobHelper(job, printArgs)
+		printSingleJobHelper(client, job, printArgs)
 	default:
 		log.Fatalf("Unknown output format: %s", printArgs.Output)
 	}
 }
 
-func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
+func printSingleJobHelper(client kubernetes.Interface, job TrainingJob, printArgs PrintArgs) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	printJobSummary(w, job)
 
@@ -261,7 +262,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	}
 
 	if printArgs.ShowEvents {
-		printEvents(w, job.Namespace(), job)
+		printEvents(client, w, job.Namespace(), job)
 	}
 
 	_ = w.Flush()
@@ -279,7 +280,7 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 
 }
 
-func printEvents(w io.Writer, namespace string, job TrainingJob) {
+func printEvents(clientset kubernetes.Interface, w io.Writer, namespace string, job TrainingJob) {
 	fmt.Fprintf(w, "\nEvents: \n")
 	eventsMap, err := getResourcesEvents(clientset, namespace, job)
 	if err != nil {
@@ -327,7 +328,7 @@ func GetJobRealStatus(job TrainingJob) string {
 }
 
 // Get Event of the Job
-func getResourcesEvents(client *kubernetes.Clientset, namespace string, job TrainingJob) ([]eventAndName, error) {
+func getResourcesEvents(client kubernetes.Interface, namespace string, job TrainingJob) ([]eventAndName, error) {
 	events, err := client.CoreV1().Events(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return []eventAndName{}, err

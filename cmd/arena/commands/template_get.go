@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
-	"github.com/kubeflow/arena/pkg/util"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -18,13 +18,12 @@ func NewTemplateGetCommand() *cobra.Command {
 				os.Exit(0)
 			}
 
-			util.SetLogLevel(logLevel)
-
-			_, err := initKubeClient()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			clientset := kubeClient.GetClientset()
 
 			clusterConfigs := clusterConfig.NewClusterConfigs(clientset)
 			configName := args[0]

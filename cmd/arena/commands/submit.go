@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -65,7 +66,8 @@ type submitArgs struct {
 	User               string                    `yaml:"user,omitempty"`
 	PriorityClassName  string                    `yaml:"priorityClassName"`
 	// Name       string   `yaml:"name"`       // --name
-	Name                string   `yaml:"name,omitempty"`
+	Name                string
+	Namespace           string
 	GPU                 *float64 `yaml:"gpu,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	Args                []string `yaml:"args,omitempty"`
@@ -99,7 +101,7 @@ func (s submitArgs) check() error {
 	}
 
 	if s.PriorityClassName != "" {
-		err = util.ValidatePriorityClassName(clientset, s.PriorityClassName)
+		err = util.ValidatePriorityClassName(s.PriorityClassName)
 		if err != nil {
 			return err
 		}
@@ -225,7 +227,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 
 }
 
-func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string) {
+func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client) {
 	util.SetLogLevel(logLevel)
 	if nameParameter == "" && len(args) >= 1 {
 		name = args[0]
@@ -235,18 +237,14 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string) {
 
 	submitArgs.Name = name
 
-	_, err := initKubeClient()
+	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	err = updateNamespace(cmd)
-	if err != nil {
-		log.Debugf("Failed due to %v", err)
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	submitArgs.Namespace = namespace
 }
 
 var (

@@ -19,6 +19,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -47,9 +48,15 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Hidden:  true,
 		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
-			submitArgs.setCommonRun(cmd, args)
+			kubeClient, err := client.GetClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 
-			err := submitMPIJob(args, &submitArgs)
+			submitArgs.setCommonRun(cmd, args, kubeClient)
+
+			err = submitMPIJob(args, &submitArgs, kubeClient)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -126,14 +133,14 @@ func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 }
 
 // Submit MPIJob
-func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
+func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Client) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
 	}
 
-	trainer := NewMPIJobTrainer(clientset)
-	job, err := trainer.GetTrainingJob(name, namespace)
+	trainer := NewMPIJobTrainer(*client)
+	job, err := trainer.GetTrainingJob(name, submitArgs.Namespace)
 	if err != nil {
 		log.Debugf("Check %s exist due to error %v", name, err)
 	}
@@ -145,7 +152,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, "", mpijob_chart, clientset, dryRun)
+	err = workflow.SubmitJob(name, submitArgs.Mode, submitArgs.Namespace, submitArgs, "", mpijob_chart, client.GetClientset(), dryRun)
 	if err != nil {
 		return err
 	}

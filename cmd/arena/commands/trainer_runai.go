@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
+	"github.com/kubeflow/arena/pkg/client"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
@@ -23,9 +24,9 @@ type RunaiTrainer struct {
 	client kubernetes.Interface
 }
 
-func NewRunaiTrainer(client kubernetes.Interface) Trainer {
+func NewRunaiTrainer(client client.Client) Trainer {
 	return &RunaiTrainer{
-		client: client,
+		client: client.GetClientset(),
 	}
 }
 
@@ -95,7 +96,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 
 	if len(runaiJobList.Items) > 0 {
 		podSpecJob := cmdTypes.PodTemplateJobFromJob(runaiJobList.Items[0])
-		result, err := rt.getRunaiTrainingJob(*podSpecJob)
+		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
 		}
@@ -115,7 +116,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 
 	if len(runaiStatufulsetList.Items) > 0 {
 		podSpecJob := cmdTypes.PodTemplateJobFromStatefulSet(runaiStatufulsetList.Items[0])
-		result, err := rt.getRunaiTrainingJob(*podSpecJob)
+		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
 		}
@@ -135,7 +136,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 
 	if len(runaiReplicaSetsList.Items) > 0 {
 		podSpecJob := cmdTypes.PodTemplateJobFromReplicaSet(runaiReplicaSetsList.Items[0])
-		result, err := rt.getRunaiTrainingJob(*podSpecJob)
+		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
 		}
@@ -152,8 +153,8 @@ func (rt *RunaiTrainer) Type() string {
 	return defaultRunaiTrainingType
 }
 
-func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob) (TrainingJob, error) {
-	if !rt.isRunaiPodObject(podSpecJob.ObjectMeta, podSpecJob.Template) {
+func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, namespace string) (TrainingJob, error) {
+	if podSpecJob.Template.Spec.SchedulerName != SchedulerName {
 		return nil, nil
 	}
 
@@ -228,6 +229,10 @@ type RunaiOwnerInfo struct {
 	Name string
 	Type string
 	Uid  string
+}
+
+func (rt *RunaiTrainer) IsEnabled() bool {
+	return true
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error) {

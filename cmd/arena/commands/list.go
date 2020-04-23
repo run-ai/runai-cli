@@ -22,58 +22,50 @@ import (
 
 	"io"
 
-	"github.com/kubeflow/arena/pkg/types"
+	"strconv"
+
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/util/helm"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"strconv"
 )
 
 func NewListCommand() *cobra.Command {
+	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:   "list",
 		Short: "list all the training jobs",
 		Run: func(cmd *cobra.Command, args []string) {
-			util.SetLogLevel(logLevel)
+			kubeClient, err := client.GetClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 
-			client, err := initKubeClient()
 			if err != nil {
 				log.Errorf("Failed due to %v", err)
 				os.Exit(1)
 			}
 
-			err = updateNamespace(cmd)
+			namespace, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
+
 			if err != nil {
-				log.Errorf("Failed due to %v", err)
+				log.Error(err)
 				os.Exit(1)
 			}
 
-			// determine use cache
-			useCache = true
-			allPods, err = acquireAllPods(client)
-			if err != nil {
-				log.Errorf("Failed due to %v", err)
-				os.Exit(1)
-			}
-
-			allJobs, err = acquireAllJobs(client)
-			if err != nil {
-				log.Errorf("Failed due to %v", err)
-				os.Exit(1)
-			}
 			jobs := []TrainingJob{}
-			trainers := NewTrainers(client)
+			trainers := NewTrainers(kubeClient)
 			for _, trainer := range trainers {
-				trainingJobs, err := trainer.ListTrainingJobs(namespace)
-				if err != nil {
-					log.Errorf("Failed due to %v", err)
-					os.Exit(1)
+				if trainer.IsEnabled() {
+					trainingJobs, err := trainer.ListTrainingJobs(namespace)
+					if err != nil {
+						log.Errorf("Failed due to %v", err)
+						os.Exit(1)
+					}
+					jobs = append(jobs, trainingJobs...)
 				}
-				jobs = append(jobs, trainingJobs...)
 			}
 
 			jobs = makeTrainingJobOrderdByAge(jobs)
@@ -82,75 +74,9 @@ func NewListCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list from all projects")
 
 	return command
-}
-
-/**
-* original job list, deprecated
- */
-func trainingJobList(client *kubernetes.Clientset) ([]TrainingJob, error) {
-	useHelm := true
-	releaseMap, err := helm.ListReleaseMap()
-	// log.Printf("releaseMap %v", releaseMap)
-	if err != nil {
-		log.Debugf("Failed to helm list due to %v", err)
-		useHelm = false
-	}
-
-	trainers := NewTrainers(client)
-	jobs := []TrainingJob{}
-
-	// 1. search by using helm
-	if useHelm {
-		for name, ns := range releaseMap {
-			supportedChart := false
-			for _, trainer := range trainers {
-				if trainer.IsSupported(name, ns) {
-					job, err := trainer.GetTrainingJob(name, ns)
-					if err != nil {
-						log.Errorf("Failed due to %v", err)
-						return jobs, err
-					}
-					jobs = append(jobs, job)
-					supportedChart = true
-					break
-				}
-			}
-
-			if !supportedChart {
-				log.Debugf("Unknown chart %s\n", name)
-			}
-
-		}
-	}
-
-	// 2. search by using configmap
-	cms := []types.TrainingJobInfo{}
-	if allNamespaces {
-		cms, err = kubectl.ListAppConfigMaps(client, metav1.NamespaceAll, knownTrainingTypes)
-	} else {
-		cms, err = kubectl.ListAppConfigMaps(client, namespace, knownTrainingTypes)
-	}
-
-	if err != nil {
-		log.Errorf("Failed due to %v", err)
-		return jobs, err
-	}
-
-	log.Debugf("job config maps: %v", cms)
-
-	for _, cm := range cms {
-		job, err := searchTrainingJob(cm.Name, cm.Type, cm.Namespace)
-		if err != nil {
-			log.Errorf("Failed due to %v", err)
-			return jobs, err
-		}
-		jobs = append(jobs, job)
-	}
-
-	return jobs, nil
 }
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {

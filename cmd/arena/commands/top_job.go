@@ -20,27 +20,31 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 
 	"strconv"
 	"text/tabwriter"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
-	"k8s.io/api/core/v1"
 )
 
 func NewTopJobCommand() *cobra.Command {
+	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
-			util.SetLogLevel(logLevel)
-			client, err := initKubeClient()
+
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			client := kubeClient.GetClientset()
+			namespace, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
 
-			err = updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
@@ -52,18 +56,18 @@ func NewTopJobCommand() *cobra.Command {
 			)
 
 			useCache = true
-			allPods, err = acquireAllPods(client)
+			allPods, err = acquireAllPods(client, namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			allJobs, err = acquireAllJobs(client)
+			allJobs, err = acquireAllJobs(client, namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			trainers := NewTrainers(client)
+			trainers := NewTrainers(kubeClient)
 			for _, trainer := range trainers {
 				trainingJobs, err := trainer.ListTrainingJobs(namespace)
 				if err != nil {
@@ -84,7 +88,7 @@ func NewTopJobCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "show all projects.")
 
 	return command
 }
