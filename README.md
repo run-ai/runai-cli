@@ -6,7 +6,7 @@ Run:AI CLI is a command-line interface for the data scientists to run and monito
 ## Prerequisites
 * Kubernetes 1.15+
 * Kubectl installed and configured to access your cluster. Please refer to https://kubernetes.io/docs/tasks/tools/install-kubectl/
-* Install Helm. See https://v2.helm.sh/docs/using_helm/#quickstart . Run:AI currently supports Helm 2 only. Helm 3 (the default) is not supported
+* Install Helm 3
 * Run:AI software installed on your Kubernetes cluster. Please refer to https://support.run.ai/hc/en-us/articles/360010280179-Installing-Run-AI-on-an-on-premise-Kubernetes-Cluster for installation, if you haven't done so already.
 ## Setup
 
