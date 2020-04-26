@@ -252,6 +252,8 @@ type submitRunaiJobArgs struct {
 	LocalImage       *bool             `yaml:"localImage,omitempty"`
 	HostNetwork      *bool             `yaml:"hostNetwork,omitempty"`
 	TTL              *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Completions      *int              `yaml:"completions,omitempty"`
+	Parallelism      *int              `yaml:"parallelism,omitempty"`
 	Labels           map[string]string `yaml:"labels,omitempty"`
 	IsJupyter        bool
 	IsPreemptible    *bool  `yaml:"isPreemptible,omitempty"`
@@ -309,6 +311,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
+	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
+	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")
 	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(sa.RunAsCurrentUser), "run-as-user", false, "Run in the context of the current user running the Run:AI command rather than the root user.")
 
@@ -333,6 +337,11 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		if configToUse == nil {
 			return fmt.Errorf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
 		}
+	}
+
+	if submitArgs.Completions == nil && submitArgs.Parallelism != nil {
+		// Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
+		return fmt.Errorf("if the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)")
 	}
 
 	if err != nil {

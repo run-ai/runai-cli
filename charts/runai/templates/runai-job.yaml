@@ -43,6 +43,12 @@ spec:
     {{- if or .Values.ttlSecondsAfterFinished (eq (quote .Values.ttlSecondsAfterFinished) (quote 0))}}
   ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
     {{- end }}
+    {{- if .Values.parallelism }}
+  parallelism: {{ .Values.parallelism }}
+    {{- end }}
+    {{- if .Values.completions }}
+  completions: {{ .Values.completions }}
+    {{- end }}
   {{- end }}
   template:
     metadata:
