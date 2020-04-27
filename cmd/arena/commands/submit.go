@@ -221,8 +221,6 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 	command.Flags().StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 	command.Flags().MarkHidden("user")
-	command.Flags().MarkHidden("parallelism")
-	command.Flags().MarkHidden("completions")
 	// Will not submit the job to the cluster, just print the template to the screen
 	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
 	command.Flags().MarkHidden("dry-run")

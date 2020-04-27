@@ -313,6 +313,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")
+	command.Flags().MarkHidden("parallelism")
+	command.Flags().MarkHidden("completions")
 	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(sa.RunAsCurrentUser), "run-as-user", false, "Run in the context of the current user running the Run:AI command rather than the root user.")
 
