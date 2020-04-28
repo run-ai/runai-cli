@@ -335,7 +335,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	submitArgs.Name = name
-	err = handleRequestedGPUs(submitArgs)
+	err = handleRequestedGPUs(clientset, submitArgs)
 	if err != nil {
 		return err
 	}
