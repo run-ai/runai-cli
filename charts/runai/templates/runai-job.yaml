@@ -72,6 +72,7 @@ spec:
       restartPolicy: Never
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
+      hostPID: true
       hostNetwork: {{ .Values.hostNetwork }}
       securityContext:
         {{- if .Values.runAsUser }}
@@ -135,6 +136,12 @@ spec:
               {{- end}}
             {{- end}}
           env:
+            - name: RUNAI_JOB_NAME
+              value: "{{ .Values.name }}"
+            {{- if .Values.gpuFraction }}
+            - name: RUNAI_GPU_USER_FRACTION
+              value: "{{ .Values.gpuFraction }}"
+            {{- end }}
             {{- if .Values.gpuFraction }}
             - name: RUNAI_GPU_FRACTION
               value: "{{ .Values.gpuFractionFixed }}"
