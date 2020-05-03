@@ -32,7 +32,6 @@ func NewTopCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "top",
 		Short: "Display information about nodes and jobs.",
-		Long:  topLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
