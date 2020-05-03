@@ -35,7 +35,7 @@ func NewListCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: "list all the training jobs",
+		Short: "List all jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {

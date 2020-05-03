@@ -3,9 +3,6 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mholt/archiver"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"os"
@@ -13,6 +10,10 @@ import (
 	"path"
 	"runtime"
 	"strings"
+
+	"github.com/mholt/archiver"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -34,7 +35,7 @@ type Asset struct {
 func NewUpdateCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "update",
-		Short: "update cli to latest version.",
+		Short: "Update the Run:AI CLI to latest version.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if os.Getuid() != 0 {
 				log.Error("The command must be run as root")

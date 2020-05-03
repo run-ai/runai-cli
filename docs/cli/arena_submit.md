@@ -21,7 +21,7 @@ arena submit [flags]
 ### Options
 
 ```
-  -h, --help   help for submit
+  -h, --help   Help for submit
 ```
 
 ### Options inherited from parent commands

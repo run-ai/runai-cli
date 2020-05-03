@@ -7,7 +7,7 @@ import (
 func NewProjectCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "project",
-		Short: "project commands",
+		Short: "Project-related commands.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

@@ -44,7 +44,7 @@ func newSetProjectCommand() *cobra.Command {
 	commandWrapper := command.NewCommandWrapper(runSetCommand)
 	var command = &cobra.Command{
 		Use:   "set [PROJECT]",
-		Short: "Set default project",
+		Short: "Set a default project",
 		Run:   commandWrapper.Run,
 	}
 
