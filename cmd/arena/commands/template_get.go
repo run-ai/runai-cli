@@ -2,16 +2,17 @@ package commands
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func NewTemplateGetCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "get",
-		Short: "Get information on one of the templates in the system",
+		Short: "Get information about one of the templates in the cluster.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

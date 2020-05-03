@@ -34,7 +34,7 @@ func NewTopJobCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:   "job",
-		Short: "Display Resource (GPU) usage of jobs.",
+		Short: "Display information about jobs in the cluster.",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			kubeClient, err := client.GetClient()

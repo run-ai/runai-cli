@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	topLong = `Display Resource (GPU) usage.
+	topLong = `Display information about nodes and jobs.
 
 Available Commands:
   node        Display Resource (GPU) usage of nodes
@@ -31,7 +31,7 @@ Available Commands:
 func NewTopCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "top",
-		Short: "Display Resource (GPU) usage.",
+		Short: "Display information about nodes and jobs.",
 		Long:  topLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
