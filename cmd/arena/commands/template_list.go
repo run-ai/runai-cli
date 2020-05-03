@@ -13,7 +13,7 @@ import (
 func NewTemplateListCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: "Display informationo about templates.",
+		Short: "Display information about templates.",
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {
