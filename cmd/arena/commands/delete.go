@@ -30,7 +30,7 @@ import (
 // NewDeleteCommand
 func NewDeleteCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   "delete a training job",
+		Use:   "delete JOB_NAME",
 		Short: "Delete a job and its associated pods.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {

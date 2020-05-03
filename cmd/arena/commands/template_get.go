@@ -11,7 +11,7 @@ import (
 
 func NewTemplateGetCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   "get [TEMPLATE_NAME]",
+		Use:   "get TEMPLATE_NAME",
 		Short: "Get information about one of the templates in the cluster.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {

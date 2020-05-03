@@ -14,7 +14,7 @@ import (
 
 func NewBashCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   "bash",
+		Use:   "bash JOB_NAME",
 		Short: "Get a bash session inside a running job.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -38,7 +38,7 @@ func NewExecCommand() *cobra.Command {
 	)
 
 	var command = &cobra.Command{
-		Use:   "exec NAME COMMAND [ARG ...]",
+		Use:   "exec JOB_NAME COMMAND [ARG ...]",
 		Short: "Execute a command inside a running job.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {

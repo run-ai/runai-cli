@@ -31,7 +31,7 @@ import (
 func NewLogsCommand() *cobra.Command {
 	var outerArgs = &podlogs.OuterRequestArgs{}
 	var command = &cobra.Command{
-		Use:   "logs training job",
+		Use:   "logs JOB_NAME",
 		Short: "Print the logs of a job.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
