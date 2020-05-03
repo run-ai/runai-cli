@@ -547,11 +547,13 @@ func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Servic
 	for _, ingress := range ingresses {
 		rules := ingress.Spec.Rules
 		for _, rule := range rules {
-			paths := rule.HTTP.Paths
-			for _, path := range paths {
-				if path.Backend.ServiceName == service.Name && path.Backend.ServicePort.IntVal == port {
-					ingressPath = path.Path
-					return &ingressPath
+			if rule.HTTP != nil {
+				paths := rule.HTTP.Paths
+				for _, path := range paths {
+					if path.Backend.ServiceName == service.Name && path.Backend.ServicePort.IntVal == port {
+						ingressPath = path.Path
+						return &ingressPath
+					}
 				}
 			}
 		}
