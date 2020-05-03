@@ -23,3 +23,7 @@ func GetNamespaceFromProjectName(project string, kubeClient *client.Client) (str
 		return "", fmt.Errorf("project %s was not found. Please run '%s project list' to view all avaliable projects", project, config.CLIName)
 	}
 }
+
+func GetJobDoesNotExistsInNamespaceError(jobName string, namespace string) error {
+	return fmt.Errorf("The job %s does not exists in namespace %s. If the job exists in a different project, use -p <project name>.", jobName, namespace)
+}

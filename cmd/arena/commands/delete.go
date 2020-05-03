@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util/helm"
@@ -55,7 +56,7 @@ func NewDeleteCommand() *cobra.Command {
 			for _, jobName := range args {
 				err = deleteTrainingJob(kubeClient, jobName, namespace, "")
 				if err != nil {
-					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
+					log.Error(err)
 				}
 			}
 		},
@@ -85,10 +86,7 @@ func deleteTrainingJob(kubeClient *client.Client, jobName, namespace string, tra
 				return fmt.Errorf("the job exists but was not created by the runai cli")
 			}
 
-			return fmt.Errorf("There is no training job found with the name %s, please check it with `%s list | grep %s`",
-				jobName,
-				config.CLIName,
-				jobName)
+			return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespace)
 		} else if len(trainingTypes) > 1 {
 			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
 				jobName,

@@ -33,6 +33,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/config"
 	v1 "k8s.io/api/core/v1"
@@ -197,7 +198,7 @@ func getTrainingJobsByName(kubeClient *client.Client, name, namespace string) (j
 
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
-		return nil, fmt.Errorf("The job %s in namespace %s doesn't exist, please create it first. use '%s submit'\n", name, namespace, config.CLIName)
+		return nil, cmdUtil.GetJobDoesNotExistsInNamespaceError(name, namespace)
 	}
 
 	return jobs, nil

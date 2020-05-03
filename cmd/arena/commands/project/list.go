@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"text/tabwriter"
 
+	constants "github.com/kubeflow/arena/cmd/arena/commands/constants"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/command"
@@ -61,7 +62,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		runaiQueue := namespace.Labels[RUNAI_QUEUE_LABEL]
+		runaiQueue := namespace.Labels[constants.RUNAI_QUEUE_LABEL]
 
 		if runaiQueue != "" {
 			projects[runaiQueue] = &ProjectInfo{
