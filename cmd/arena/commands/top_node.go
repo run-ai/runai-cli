@@ -44,7 +44,7 @@ func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:   "node",
-		Short: "Display Resource (GPU) usage of nodes.",
+		Short: "Display information about nodes in the cluster.",
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {

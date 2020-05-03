@@ -32,7 +32,7 @@ func NewLogsCommand() *cobra.Command {
 	var outerArgs = &podlogs.OuterRequestArgs{}
 	var command = &cobra.Command{
 		Use:   "logs training job",
-		Short: "print the logs for a task of the training job",
+		Short: "Print the logs of a job.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
@@ -92,13 +92,13 @@ func NewLogsCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVarP(&outerArgs.Follow, "follow", "f", false, "Specify if the logs should be streamed.")
-	command.Flags().DurationVar(&outerArgs.SinceSeconds, "since", 0, "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().StringVar(&outerArgs.SinceTime, "since-time", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().IntVarP(&outerArgs.Tail, "tail", "t", -1, "Lines of recent log file to display. Defaults to -1 , showing all log lines.")
-	command.Flags().BoolVar(&outerArgs.Timestamps, "timestamps", false, "Include timestamps on each line in the log output")
+	command.Flags().BoolVarP(&outerArgs.Follow, "follow", "f", false, "Stream the logs.")
+	command.Flags().DurationVar(&outerArgs.SinceSeconds, "since", 0, "Return logs newer than a relative duration, like 5s, 2m, or 3h. Note that only one flag \"since-time\" or \"since\" may be used.")
+	command.Flags().StringVar(&outerArgs.SinceTime, "since-time", "", "Return logs after a specific date (e.g. 2019-10-12T07:20:50.52Z). Note that only one flag \"since-time\" or \"since\" may be used.")
+	command.Flags().IntVarP(&outerArgs.Tail, "tail", "t", -1, "Return a specific number of log lines.")
+	command.Flags().BoolVar(&outerArgs.Timestamps, "timestamps", false, "Include timestamps on each line in the log output.")
 
 	// command.Flags().StringVar(&printer.pod, "instance", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().StringVar(&outerArgs.PodName, "pod", "", "Specify the pod to get log")
+	command.Flags().StringVar(&outerArgs.PodName, "pod", "", "Specify a pod of a running job.")
 	return command
 }

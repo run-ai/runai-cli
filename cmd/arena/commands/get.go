@@ -55,7 +55,7 @@ func NewGetCommand() *cobra.Command {
 	printArgs := PrintArgs{}
 	var command = &cobra.Command{
 		Use:   "get training job",
-		Short: "display details of a training job",
+		Short: "Display details of a job.",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			if len(args) == 0 {

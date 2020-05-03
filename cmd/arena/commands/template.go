@@ -7,7 +7,7 @@ import (
 func NewTemplateCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "template",
-		Short: "Information about different templates in the cluster",
+		Short: "Get information about templates in the cluster.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

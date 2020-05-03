@@ -15,7 +15,7 @@ import (
 func NewBashCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "bash",
-		Short: "get a bash session inside a running job",
+		Short: "Get a bash session inside a running job.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
@@ -39,7 +39,7 @@ func NewExecCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:   "exec NAME COMMAND [ARG ...]",
-		Short: "execute a command inside a running job",
+		Short: "Execute a command inside a running job.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

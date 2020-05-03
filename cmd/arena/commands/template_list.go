@@ -2,17 +2,18 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
+
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/spf13/cobra"
-	"os"
-	"text/tabwriter"
 )
 
 func NewTemplateListCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: "List different templates in the cluster",
+		Short: "Display information about templates.",
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {
