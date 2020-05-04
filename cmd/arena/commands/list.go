@@ -25,6 +25,7 @@ import (
 	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
@@ -48,18 +49,20 @@ func NewListCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			namespace, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
+			namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
 
 			if err != nil {
 				log.Error(err)
 				os.Exit(1)
 			}
 
+			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
+
 			jobs := []TrainingJob{}
 			trainers := NewTrainers(kubeClient)
 			for _, trainer := range trainers {
 				if trainer.IsEnabled() {
-					trainingJobs, err := trainer.ListTrainingJobs(namespace)
+					trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
 					if err != nil {
 						log.Errorf("Failed due to %v", err)
 						os.Exit(1)

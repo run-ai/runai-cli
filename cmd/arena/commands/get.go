@@ -103,12 +103,12 @@ type PrintArgs struct {
 /*
 * search the training job with name and training type
  */
-func searchTrainingJob(kubeClient *client.Client, jobName, trainingType, namespace string) (job TrainingJob, err error) {
+func searchTrainingJob(kubeClient *client.Client, jobName string, trainingType string, namespaceInfo cmdTypes.NamespaceInfo) (job TrainingJob, err error) {
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(kubeClient, jobName, namespace, trainingType)
+			job, err = getTrainingJobByType(kubeClient, jobName, namespaceInfo.Namespace, trainingType)
 			if err != nil {
-				if isTrainingConfigExist(jobName, trainingType, namespace) {
+				if isTrainingConfigExist(jobName, trainingType, namespaceInfo.Namespace) {
 					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s --type %s'.",
 						jobName,
 						config.CLIName,
@@ -123,9 +123,9 @@ func searchTrainingJob(kubeClient *client.Client, jobName, trainingType, namespa
 				knownTrainingTypes)
 		}
 	} else {
-		jobs, err := getTrainingJobsByName(kubeClient, jobName, namespace)
+		jobs, err := getTrainingJobsByName(kubeClient, jobName, namespaceInfo)
 		if err != nil {
-			if len(getTrainingTypes(jobName, namespace)) > 0 {
+			if len(getTrainingTypes(jobName, namespaceInfo.Namespace)) > 0 {
 				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s'.",
 					jobName,
 					config.CLIName,
@@ -181,24 +181,24 @@ func getTrainingJobByType(kubeClient *client.Client, name, namespace, trainingTy
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
-func getTrainingJobsByName(kubeClient *client.Client, name, namespace string) (jobs []TrainingJob, err error) {
+func getTrainingJobsByName(kubeClient *client.Client, name string, namespaceInfo cmdTypes.NamespaceInfo) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
 	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
-		if trainer.IsSupported(name, namespace) {
-			job, err := trainer.GetTrainingJob(name, namespace)
+		if trainer.IsSupported(name, namespaceInfo.Namespace) {
+			job, err := trainer.GetTrainingJob(name, namespaceInfo.Namespace)
 			if err != nil {
 				return nil, err
 			}
 			jobs = append(jobs, job)
 		} else {
-			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
+			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespaceInfo.Namespace, trainer.Type())
 		}
 	}
 
 	if len(jobs) == 0 {
-		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
-		return nil, cmdUtil.GetJobDoesNotExistsInNamespaceError(name, namespace)
+		log.Debugf("Failed to find the training job %s in namespace %s", name, namespaceInfo.Namespace)
+		return nil, cmdUtil.GetJobDoesNotExistsInNamespaceError(name, namespaceInfo)
 	}
 
 	return jobs, nil

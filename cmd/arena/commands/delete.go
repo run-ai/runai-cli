@@ -20,6 +20,7 @@ import (
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
+	"github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util/helm"
@@ -45,7 +46,7 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+			namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
@@ -54,7 +55,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(kubeClient, jobName, namespace, "")
+				err = deleteTrainingJob(kubeClient, jobName, namespaceInfo, "")
 				if err != nil {
 					log.Error(err)
 				}
@@ -65,7 +66,7 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func deleteTrainingJob(kubeClient *client.Client, jobName, namespace string, trainingType string) error {
+func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo, trainingType string) error {
 	var trainingTypes []string
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)
@@ -78,15 +79,15 @@ func deleteTrainingJob(kubeClient *client.Client, jobName, namespace string, tra
 
 	// 2. Handle training jobs created by arena
 	if trainingType == "" {
-		trainingTypes = getTrainingTypes(jobName, namespace)
+		trainingTypes = getTrainingTypes(jobName, namespaceInfo.Namespace)
 		if len(trainingTypes) == 0 {
 			runaiTrainer := NewRunaiTrainer(*kubeClient)
-			job, err := runaiTrainer.GetTrainingJob(jobName, namespace)
+			job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
 			if err == nil && !job.CreatedByCLI() {
 				return fmt.Errorf("the job exists but was not created by the runai cli")
 			}
 
-			return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespace)
+			return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
 		} else if len(trainingTypes) > 1 {
 			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
 				jobName,
@@ -99,7 +100,7 @@ func deleteTrainingJob(kubeClient *client.Client, jobName, namespace string, tra
 		trainingTypes = []string{trainingType}
 	}
 
-	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0], kubeClient.GetClientset())
+	err = workflow.DeleteJob(jobName, namespaceInfo.Namespace, trainingTypes[0], kubeClient.GetClientset())
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 
+	"github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +25,20 @@ func GetNamespaceFromProjectName(project string, kubeClient *client.Client) (str
 	}
 }
 
-func GetJobDoesNotExistsInNamespaceError(jobName string, namespace string) error {
-	return fmt.Errorf("The job %s does not exists in namespace %s. If the job exists in a different project, use -p <project name>.", jobName, namespace)
+func GetJobDoesNotExistsInNamespaceError(jobName string, namespaceInfo types.NamespaceInfo) error {
+	if namespaceInfo.ProjectName != "" {
+		return fmt.Errorf("The job %s does not exists in project %s. If the job exists in a different project, use -p <project name>.", jobName, namespaceInfo.ProjectName)
+	} else {
+		return fmt.Errorf("The job %s does not exists in namespace %s. If the job exists in a different project, use -p <project name>.", jobName, namespaceInfo.Namespace)
+	}
+}
+
+func PrintShowingJobsInNamespaceMessage(namespaceInfo types.NamespaceInfo) {
+	if namespaceInfo.ProjectName != types.ALL_PROJECTS {
+		if namespaceInfo.ProjectName != "" {
+			fmt.Printf("Showing jobs for project %s\n", namespaceInfo.ProjectName)
+		} else {
+			fmt.Printf("Showing jobs for namespace %s\n", namespaceInfo.Namespace)
+		}
+	}
 }

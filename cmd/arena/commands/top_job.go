@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -43,7 +44,7 @@ func NewTopJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			client := kubeClient.GetClientset()
-			namespace, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
+			namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
 
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
@@ -55,21 +56,23 @@ func NewTopJobCommand() *cobra.Command {
 				jobs []TrainingJob
 			)
 
+			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
+
 			useCache = true
-			allPods, err = acquireAllPods(client, namespace)
+			allPods, err = acquireAllPods(client, namespaceInfo.Namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			allJobs, err = acquireAllJobs(client, namespace)
+			allJobs, err = acquireAllJobs(client, namespaceInfo.Namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 			trainers := NewTrainers(kubeClient)
 			for _, trainer := range trainers {
-				trainingJobs, err := trainer.ListTrainingJobs(namespace)
+				trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
 				if err != nil {
 					log.Errorf("Failed due to %v", err)
 					os.Exit(1)

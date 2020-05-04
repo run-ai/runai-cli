@@ -237,14 +237,14 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 
 	submitArgs.Name = name
 
-	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	submitArgs.Namespace = namespace
+	submitArgs.Namespace = namespaceInfo.Namespace
 }
 
 var (

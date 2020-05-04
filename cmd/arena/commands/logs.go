@@ -46,7 +46,7 @@ func NewLogsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			clientset := kubeClient.GetClientset()
-			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+			namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
 			if err != nil {
 				fmt.Println(err)
@@ -61,12 +61,12 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
-			job, err := searchTrainingJob(kubeClient, name, "", namespace)
+			job, err := searchTrainingJob(kubeClient, name, "", namespaceInfo)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			outerArgs.Namespace = namespace
+			outerArgs.Namespace = namespaceInfo.Namespace
 			outerArgs.RetryCount = 5
 			outerArgs.RetryTimeout = time.Millisecond
 			names := []string{}

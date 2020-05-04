@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/util"
+	"github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/spf13/cobra"
 
@@ -12,70 +13,78 @@ import (
 )
 
 // Return the namespace to use on first argument. on second argument get
-func GetNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Client) (string, error) {
-	namespace, related, err := getNamespaceToUseFromProjectFlagAndIfRelatedToProject(cmd, kubeClient)
+func GetNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
+	namespaceInfo, err := getNamespaceInfoToUseFromProjectFlag(cmd, kubeClient)
+
+	if err != nil {
+		return namespaceInfo, err
+	}
+
+	if namespaceInfo.ProjectName == "" {
+		fmt.Println("Please set a default project by running ‘runai project set <project-name>’ or use the flag -p to use a specific project.")
+	}
+
+	return namespaceInfo, nil
+}
+
+func getNamespaceInfoToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
+	flagValue := getFlagValue(cmd, ProjectFlag)
+	if flagValue != "" {
+		namespace, err := util.GetNamespaceFromProjectName(flagValue, kubeClient)
+		return types.NamespaceInfo{
+			Namespace:   namespace,
+			ProjectName: flagValue,
+		}, err
+	}
+
+	namespace := kubeClient.GetDefaultNamespace()
+	projectName, err := getProjectRelatedToNamespace(namespace, kubeClient)
+
+	if err != nil {
+		return types.NamespaceInfo{
+			Namespace:   "",
+			ProjectName: "",
+		}, err
+	}
+
+	return types.NamespaceInfo{
+		Namespace:   namespace,
+		ProjectName: projectName,
+	}, nil
+}
+
+func getProjectRelatedToNamespace(namespaceName string, kubeClient *client.Client) (string, error) {
+	namespace, err := kubeClient.GetClientset().CoreV1().Namespaces().Get(namespaceName, metav1.GetOptions{})
 
 	if err != nil {
 		return "", err
 	}
 
-	if !related {
-		fmt.Println("Please set a default project by running ‘runai project set <project-name>’ or use the flag -p to use a specific project.")
-	}
-
-	return namespace, nil
-}
-
-func getNamespaceToUseFromProjectFlagAndIfRelatedToProject(cmd *cobra.Command, kubeClient *client.Client) (string, bool, error) {
-	flagValue := getFlagValue(cmd, ProjectFlag)
-	if flagValue != "" {
-		namespace, err := util.GetNamespaceFromProjectName(flagValue, kubeClient)
-		return namespace, true, err
-	}
-
-	namespace := kubeClient.GetDefaultNamespace()
-	related, err := checkIfNamespaceRelatedToProject(namespace, kubeClient)
-
-	if err != nil {
-		return "", false, err
-	}
-
-	return namespace, related, nil
-}
-
-func checkIfNamespaceRelatedToProject(namespaceName string, kubeClient *client.Client) (bool, error) {
-	namespace, err := kubeClient.GetClientset().CoreV1().Namespaces().Get(namespaceName, metav1.GetOptions{})
-
-	if err != nil {
-		return false, err
-	}
-
 	if namespace.Labels == nil {
-		return false, nil
+		return "", nil
 	}
 
-	if namespace.Labels[constants.RUNAI_QUEUE_LABEL] == "" {
-		return false, nil
-	}
-
-	return true, nil
+	return namespace.Labels[constants.RUNAI_QUEUE_LABEL], nil
 }
 
-func GetNamespaceToUseFromProjectFlagIncludingAll(cmd *cobra.Command, kubeClient *client.Client, allFlag bool) (string, error) {
+func GetNamespaceToUseFromProjectFlagIncludingAll(cmd *cobra.Command, kubeClient *client.Client, allFlag bool) (types.NamespaceInfo, error) {
 	if allFlag {
-		return metav1.NamespaceAll, nil
+		return types.NamespaceInfo{
+			Namespace:   metav1.NamespaceAll,
+			ProjectName: types.ALL_PROJECTS,
+		}, nil
 	} else {
-		namespace, related, err := getNamespaceToUseFromProjectFlagAndIfRelatedToProject(cmd, kubeClient)
+		namespaceInfo, err := getNamespaceInfoToUseFromProjectFlag(cmd, kubeClient)
 
 		if err != nil {
-			return "", err
+			return namespaceInfo, err
 		}
 
-		if !related {
-			fmt.Println("Please set a default project by running ‘runai project set <project-name>’ or use the flag -A to view all projects, or use the flag -f to view a specific project.")
+		if namespaceInfo.ProjectName == "" {
+			fmt.Println("Please set a default project by running ‘runai project set <project-name>’ or use the flag -A to view all projects, or use the flag -p to view a specific project.")
 		}
 
-		return namespace, nil
+		return namespaceInfo, nil
 	}
 }
 
