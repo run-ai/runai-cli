@@ -91,10 +91,19 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	for _, jobInfo := range jobInfoList {
 		status := GetJobRealStatus(jobInfo)
 		hostIP := jobInfo.HostIPOfChief()
+
+		// For backward compatability. Indicat jobs on default namespace
+		var projectName string
+		if jobInfo.Namespace() == "default" {
+			projectName = fmt.Sprintf("%s (old)", jobInfo.Project())
+		} else {
+			projectName = jobInfo.Project()
+		}
+
 		PrintLine(w, jobInfo.Name(),
 			status,
 			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP, jobInfo.Image(), jobInfo.Trainer(), jobInfo.Project(), jobInfo.User(), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
+			hostIP, jobInfo.Image(), jobInfo.Trainer(), projectName, jobInfo.User(), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
 	}
 	_ = w.Flush()
 }

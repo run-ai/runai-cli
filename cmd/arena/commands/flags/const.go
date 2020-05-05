@@ -1,5 +1,6 @@
 package flags
 
 var (
-	ProjectFlag = "project"
+	ProjectFlag            = "project"
+	BackwardCompitableFlag = "backward-compatibility"
 )

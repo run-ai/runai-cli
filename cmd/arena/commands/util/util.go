@@ -29,7 +29,7 @@ func GetJobDoesNotExistsInNamespaceError(jobName string, namespaceInfo types.Nam
 	if namespaceInfo.ProjectName != "" {
 		return fmt.Errorf("The job %s does not exists in project %s. If the job exists in a different project, use -p <project name>.", jobName, namespaceInfo.ProjectName)
 	} else {
-		return fmt.Errorf("The job %s does not exists in namespace %s. If the job exists in a different project, use -p <project name>.", jobName, namespaceInfo.Namespace)
+		return fmt.Errorf("The job %s does not exists in backward compatability mode. If the job exists in a specific project, use -p <project name>.", jobName)
 	}
 }
 
@@ -38,7 +38,7 @@ func PrintShowingJobsInNamespaceMessage(namespaceInfo types.NamespaceInfo) {
 		if namespaceInfo.ProjectName != "" {
 			fmt.Printf("Showing jobs for project %s\n", namespaceInfo.ProjectName)
 		} else {
-			fmt.Printf("Showing jobs for namespace %s\n", namespaceInfo.Namespace)
+			fmt.Println("Showing old jobs")
 		}
 	}
 }
