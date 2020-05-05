@@ -158,6 +158,6 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Cl
 	}
 
 	log.Infof("The Job %s has been submitted successfully", name)
-	log.Infof("You can run `runai get %s --type %s` to check the job status", name, submitArgs.Mode)
+	log.Infof("You can run `runai get %s --type %s -p %s` to check the job status", name, submitArgs.Mode, submitArgs.Project)
 	return nil
 }

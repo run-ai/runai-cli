@@ -249,6 +249,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	submitArgs.Namespace = namespaceInfo.Namespace
+	submitArgs.Project = namespaceInfo.ProjectName
 }
 
 var (
