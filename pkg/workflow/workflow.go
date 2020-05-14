@@ -42,9 +42,10 @@ func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interf
 	}
 
 	err = kubectl.DeleteAppConfigMap(jobName, namespace)
+	// Because configmap is owned by Job resource, the configmap might be deleted by
+	// Kubernetes mechanism before we are able to do it.
 	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
+		log.Debugf("Delete configmap %s failed due to %v.", jobName, err)
 	}
 
 	return nil
