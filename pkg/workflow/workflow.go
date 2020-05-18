@@ -28,11 +28,10 @@ func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interf
 	}
 
 	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
-	if err != nil {
-		log.Warnf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
-		log.Warnln("manually delete the following resource:")
-	}
 	fmt.Printf("%s", result)
+	if err != nil {
+		log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
+	}
 
 	_, err = clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
 
@@ -42,10 +41,9 @@ func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interf
 	}
 
 	err = kubectl.DeleteAppConfigMap(jobName, namespace)
-	// Because configmap is owned by Job resource, the configmap might be deleted by
-	// Kubernetes mechanism before we are able to do it.
 	if err != nil {
-		log.Debugf("Delete configmap %s failed due to %v.", jobName, err)
+		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
+		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
 	}
 
 	return nil
@@ -72,49 +70,11 @@ func GetDefaultValuesFile(environmentValues string) (string, error) {
 	return valueFile.Name(), nil
 }
 
-func UpdateConfigmapWithOwnerReference(name string, trainingType string, namespace string, clientset kubernetes.Interface) error {
-	job, err := clientset.BatchV1().Jobs(namespace).Get(name, metav1.GetOptions{})
-
-	// If job not found than do nothing
-	if err != nil {
-		return nil
-	}
-
-	log.Debugf("Found main job %s to use as owner reference", name)
-
-	jobUID := job.UID
-
-	configMap, err := clientset.CoreV1().ConfigMaps(namespace).Get(fmt.Sprintf("%s-%s", name, trainingType), metav1.GetOptions{})
-
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("Found config map %s for updating", configMap.Name)
-
-	configMap.OwnerReferences = append(configMap.OwnerReferences, metav1.OwnerReference{
-		APIVersion: "batch/v1",
-		Name:       name,
-		UID:        jobUID,
-		Kind:       "Job",
-	})
-
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(configMap)
-
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("Updated owner reference of ConfigMap %s to Job %s", configMap.Name, name)
-
-	return nil
-}
-
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
 	if !dryRun {
 		found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 		if found {
-			return fmt.Errorf("the job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
+			return fmt.Errorf("The job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
 		}
 	}
 
@@ -191,11 +151,6 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		// clean configmap
 		log.Infof("clean up the config map %s because creating application failed.", name)
 		log.Warnf("Please clean up the training job by using `%s delete %s`", config.CLIName, name)
-		return err
-	}
-
-	err = UpdateConfigmapWithOwnerReference(name, trainingType, namespace, clientset)
-	if err != nil {
 		return err
 	}
 
