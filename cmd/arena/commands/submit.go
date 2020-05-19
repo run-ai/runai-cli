@@ -235,6 +235,13 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		name = nameParameter
 	}
 
+	if name == "" {
+		cmd.Help()
+		fmt.Println("")
+		fmt.Println("Name must be provided for the job.")
+		os.Exit(1)
+	}
+
 	submitArgs.Name = name
 
 	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagAndPrintError(cmd, kubeClient)
