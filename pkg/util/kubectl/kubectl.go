@@ -16,11 +16,12 @@ package kubectl
 
 import (
 	"fmt"
-	util "github.com/kubeflow/arena/pkg/util"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+
+	util "github.com/kubeflow/arena/pkg/util"
 
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
@@ -131,7 +132,7 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (output string,
 	if types.KubeConfig != "" {
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	log.Debugf("%s", string(out))
 
 	if err != nil {
