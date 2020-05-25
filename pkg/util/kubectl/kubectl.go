@@ -19,6 +19,8 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 
 	util "github.com/kubeflow/arena/pkg/util"
@@ -28,6 +30,44 @@ import (
 )
 
 var kubectlCmd = []string{"kubectl"}
+
+func SupportOldDryRun() (bool, error) {
+	args := []string{"version", "--client", "--short"}
+	out, err := kubectl(args)
+	if err != nil {
+		return false, err
+	}
+
+	output := string(out)
+
+	re, err := regexp.Compile("v(.*?)\\.(.*)\\..*")
+	if err != nil {
+		return false, err
+	}
+
+	errTemplate := fmt.Errorf("Could not find kubectl command version")
+
+	res := re.FindStringSubmatch(output)
+	if len(res) < 3 {
+		return false, errTemplate
+	}
+
+	majorVersion, err := strconv.Atoi(res[1])
+	if err != nil {
+		return false, errTemplate
+	}
+
+	minorVersion, err := strconv.Atoi(res[2])
+	if err != nil {
+		return false, errTemplate
+	}
+
+	if majorVersion < 1 || (majorVersion == 1 && minorVersion < 18) {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
 
 /**
 * dry-run creating kubernetes App Info for delete in future
@@ -39,7 +79,19 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 		return "", err
 	}
 
-	args := []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
+	supportOldDryRun, err := SupportOldDryRun()
+	if err != nil {
+		return "", err
+	}
+
+	var args []string
+
+	if supportOldDryRun {
+		args = []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
+	} else {
+		args = []string{"create", "--dry-run=client", "--namespace", namespace, "-f", fileName}
+	}
+
 	out, err := kubectl(args)
 	output := string(out)
 	result := []string{}
