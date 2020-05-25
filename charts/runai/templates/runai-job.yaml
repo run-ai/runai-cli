@@ -103,10 +103,16 @@ spec:
           workingDir: {{ .Values.workingDir }}
           {{- end}}
           resources:
-            {{- if .Values.gpuInt }}
-            limits: 
+            limits:
+              {{- if .Values.gpuInt }}
               nvidia.com/gpu: {{ .Values.gpuInt }}
-            {{- end}}
+              {{- end}}
+              {{- if .Values.cpuLimit}}
+              cpu: {{ .Values.cpuLimit }}
+              {{- end}}
+              {{- if .Values.memoryLimit}}
+              memory: {{ .Values.memoryLimit }}
+              {{- end }}
             requests:
               {{- if .Values.cpu}}
               cpu: {{ .Values.cpu }}

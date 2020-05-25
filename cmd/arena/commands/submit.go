@@ -72,7 +72,9 @@ type submitArgs struct {
 	NodeType            string   `yaml:"node_type,omitempty"`
 	Args                []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
+	CPULimit            string   `yaml:"cpuLimit,omitempty"`
 	Memory              string   `yaml:"memory,omitempty"`
+	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
 }
 
@@ -212,9 +214,11 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("name", "please use positional argument instead")
 
 	flags.AddFloat64NullableFlagP(command.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
-	command.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (e.g. 0.5, 1)")
-	command.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (e.g. 1G, 20M)")
-	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specify the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
+	command.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
+	command.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
+	command.Flags().StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
+	command.Flags().StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
+	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
 	command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 	command.Flags().StringVarP(&(submitArgs.Image), "image", "i", "", " Container image to use when creating the job .")
 	command.Flags().StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
