@@ -218,7 +218,7 @@ func InstallApps(fileName, namespace string) (output string, err error) {
 * This name should be <job-type>-<job-name>
 * create configMap by using name, namespace and configFile
 **/
-func CreateAppConfigmap(name, trainingType, namespace, configFileName, envValuesFile, appInfoFileName, chartName, chartVersion string) (err error) {
+func CreateAppConfigmap(jobName, namespace, configFileName, envValuesFile, appInfoFileName, chartName, chartVersion string) (err error) {
 	if _, err = os.Stat(configFileName); os.IsNotExist(err) {
 		return err
 	}
@@ -227,7 +227,7 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, envValues
 		return err
 	}
 
-	args := []string{"create", "configmap", fmt.Sprintf("%s-%s", name, trainingType),
+	args := []string{"create", "configmap", jobName,
 		"--namespace", namespace,
 		fmt.Sprintf("--from-file=%s=%s", "values", configFileName),
 		fmt.Sprintf("--from-file=%s=%s", "app", appInfoFileName),
@@ -247,8 +247,8 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, envValues
 	return err
 }
 
-func LabelAppConfigmap(name, trainingType, namespace, label string) (err error) {
-	args := []string{"label", "configmap", fmt.Sprintf("%s-%s", name, trainingType),
+func LabelAppConfigmap(jobName, namespace, label string) (err error) {
+	args := []string{"label", "configmap", jobName,
 		"--namespace", namespace,
 		label}
 	// "--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}

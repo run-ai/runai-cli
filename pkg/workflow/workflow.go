@@ -19,7 +19,7 @@ import (
 **/
 
 func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interface) error {
-	jobName := fmt.Sprintf("%s-%s", name, trainingType)
+	jobName := GetJobName(name, trainingType)
 
 	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
@@ -70,7 +70,13 @@ func GetDefaultValuesFile(environmentValues string) (string, error) {
 	return valueFile.Name(), nil
 }
 
+func GetJobName(name string, trainingType string) string {
+	return fmt.Sprintf("%s-%s", name, trainingType)
+}
+
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
+	jobName := GetJobName(name, trainingType)
+
 	if !dryRun {
 		found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 		if found {
@@ -123,8 +129,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
-	err = kubectl.CreateAppConfigmap(name,
-		trainingType,
+	err = kubectl.CreateAppConfigmap(jobName,
 		namespace,
 		valueFileName,
 		envValuesFile,
@@ -134,7 +139,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
-	err = kubectl.LabelAppConfigmap(name, trainingType, namespace, kubectl.JOB_CONFIG_LABEL)
+	err = kubectl.LabelAppConfigmap(jobName, namespace, kubectl.JOB_CONFIG_LABEL)
 	if err != nil {
 		return err
 	}
@@ -147,11 +152,22 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 
 	result, err := kubectl.InstallApps(template, namespace)
 	fmt.Printf("%s", result)
+
+	// Clean up because creation of application failed.
 	if err != nil {
-		// clean configmap
-		log.Infof("clean up the config map %s because creating application failed.", name)
-		log.Warnf("Please clean up the training job by using `%s delete %s`", config.CLIName, name)
-		return err
+		log.Warnf("Creation of job failed. Cleaning up...")
+
+		jobName := GetJobName(name, trainingType)
+		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+		if cleanUpErr != nil {
+			log.Debugf("Failed to uninstall app with configmap.")
+		}
+		cleanUpErr = kubectl.DeleteAppConfigMap(jobName, namespace)
+		if cleanUpErr != nil {
+			log.Debugf("Failed to cleanup configmap %s", jobName)
+		}
+
+		return fmt.Errorf("Failed submitting the job:\n %s", err.Error())
 	}
 
 	// 6. Clean up the template file
