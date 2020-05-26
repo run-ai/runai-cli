@@ -28,7 +28,7 @@ func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interf
 	}
 
 	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
-	fmt.Printf("%s", result)
+	log.Debugf("%s", result)
 	if err != nil {
 		log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
 	}
@@ -151,7 +151,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	result, err := kubectl.InstallApps(template, namespace)
-	fmt.Printf("%s", result)
+	log.Debugf("%s", result)
 
 	// Clean up because creation of application failed.
 	if err != nil {

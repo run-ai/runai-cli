@@ -239,7 +239,7 @@ func CreateAppConfigmap(jobName, namespace, configFileName, envValuesFile, appIn
 
 	out, err := kubectl(args)
 
-	fmt.Printf("%s", string(out))
+	log.Debugf("%s", string(out))
 	if err != nil {
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
@@ -254,7 +254,7 @@ func LabelAppConfigmap(jobName, namespace, label string) (err error) {
 	// "--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s", string(out))
+	log.Debugf("%s", string(out))
 	if err != nil {
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
@@ -274,7 +274,7 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 		log.Debugf("%s", string(out))
 	} else {
-		fmt.Printf("%s", string(out))
+		log.Debugf("%s", string(out))
 	}
 
 	return err

@@ -364,7 +364,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		return err
 	}
 
-	log.Infof("The Job %s has been submitted successfully", submitArgs.Name)
-	log.Infof("You can run `%s get %s -p %s` to check the job status", config.CLIName, submitArgs.Name, submitArgs.Project)
+	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
+	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 	return nil
 }

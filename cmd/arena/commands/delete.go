@@ -105,7 +105,7 @@ func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo 
 		return err
 	}
 
-	log.Infof("The Job %s has been deleted successfully", jobName)
+	fmt.Printf("The job '%s' has been deleted successfully\n", jobName)
 	// (TODO: cheyang)3. Handle training jobs created by others, to implement
 	return nil
 }
