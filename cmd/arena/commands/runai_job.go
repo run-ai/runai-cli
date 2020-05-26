@@ -1,10 +1,12 @@
 package commands
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -75,6 +77,98 @@ func (rj *RunaiJob) getStatus() v1.PodPhase {
 	return rj.chiefPod.Status.Phase
 }
 
+func hasPodReadyCondition(conditions []corev1.PodCondition) bool {
+	for _, condition := range conditions {
+		if condition.Type == corev1.PodReady && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func GetStatusColumnFromPodStatus(pod *corev1.Pod) string {
+	// This logic is copied from logic in kubectl
+	// Please see https://github.com/kubernetes/kubernetes/blob/a82d71c37621043382c77d00e6e8d47dfb66562e/pkg/printers/internalversion/printers.go#L705
+	// for more details
+
+	restarts := 0
+	readyContainers := 0
+
+	reason := string(pod.Status.Phase)
+	if pod.Status.Reason != "" {
+		reason = pod.Status.Reason
+	}
+
+	initializing := false
+	for i := range pod.Status.InitContainerStatuses {
+		container := pod.Status.InitContainerStatuses[i]
+		restarts += int(container.RestartCount)
+		switch {
+		case container.State.Terminated != nil && container.State.Terminated.ExitCode == 0:
+			continue
+		case container.State.Terminated != nil:
+			// initialization is failed
+			if len(container.State.Terminated.Reason) == 0 {
+				if container.State.Terminated.Signal != 0 {
+					reason = fmt.Sprintf("Init:Signal:%d", container.State.Terminated.Signal)
+				} else {
+					reason = fmt.Sprintf("Init:ExitCode:%d", container.State.Terminated.ExitCode)
+				}
+			} else {
+				reason = "Init:" + container.State.Terminated.Reason
+			}
+			initializing = true
+		case container.State.Waiting != nil && len(container.State.Waiting.Reason) > 0 && container.State.Waiting.Reason != "PodInitializing":
+			reason = "Init:" + container.State.Waiting.Reason
+			initializing = true
+		default:
+			reason = fmt.Sprintf("Init:%d/%d", i, len(pod.Spec.InitContainers))
+			initializing = true
+		}
+		break
+	}
+	if !initializing {
+		restarts = 0
+		hasRunning := false
+		for i := len(pod.Status.ContainerStatuses) - 1; i >= 0; i-- {
+			container := pod.Status.ContainerStatuses[i]
+
+			restarts += int(container.RestartCount)
+			if container.State.Waiting != nil && container.State.Waiting.Reason != "" {
+				reason = container.State.Waiting.Reason
+			} else if container.State.Terminated != nil && container.State.Terminated.Reason != "" {
+				reason = container.State.Terminated.Reason
+			} else if container.State.Terminated != nil && container.State.Terminated.Reason == "" {
+				if container.State.Terminated.Signal != 0 {
+					reason = fmt.Sprintf("Signal:%d", container.State.Terminated.Signal)
+				} else {
+					reason = fmt.Sprintf("ExitCode:%d", container.State.Terminated.ExitCode)
+				}
+			} else if container.Ready && container.State.Running != nil {
+				hasRunning = true
+				readyContainers++
+			}
+		}
+
+		// change pod status back to "Running" if there is at least one container still reporting as "Running" status
+		if reason == "Completed" && hasRunning {
+			if hasPodReadyCondition(pod.Status.Conditions) {
+				reason = "Running"
+			} else {
+				reason = "NotReady"
+			}
+		}
+	}
+
+	if pod.DeletionTimestamp != nil && pod.Status.Reason == "NodeLost" {
+		reason = "Unknown"
+	} else if pod.DeletionTimestamp != nil {
+		reason = "Terminating"
+	}
+
+	return reason
+}
+
 // Get the Status of the Job: RUNNING, PENDING,
 func (rj *RunaiJob) GetStatus() string {
 	if value, exists := rj.jobMetadata.Annotations["unschedulable"]; exists {
@@ -87,19 +181,7 @@ func (rj *RunaiJob) GetStatus() string {
 		return "Pending"
 	}
 
-	podStatus := rj.chiefPod.Status.Phase
-	if rj.deleted {
-		return "Terminating"
-	}
-	if podStatus == v1.PodPending {
-		for _, containerStatus := range rj.chiefPod.Status.ContainerStatuses {
-			if containerStatus.State.Waiting != nil {
-				return containerStatus.State.Waiting.Reason
-			}
-		}
-	}
-
-	return string(podStatus)
+	return GetStatusColumnFromPodStatus(rj.chiefPod)
 }
 
 // Return trainer Type, support MPI, standalone, tensorflow
