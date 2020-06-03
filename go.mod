@@ -8,7 +8,7 @@ require (
 	github.com/go-openapi/spec v0.19.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/kubeflow/mpi-operator v0.2.2
+	github.com/kubeflow/mpi-operator v0.2.2 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.2.2

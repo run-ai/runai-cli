@@ -363,8 +363,6 @@ func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatableGPU, allocatedGPU
 
 	fractionalGPUsUsedInNode := sharedGPUsUsedInNode(nodeInfo)
 	allocatedGPU += fractionalGPUsUsedInNode
-	totalGPU += fractionalGPUsUsedInNode
-
 	return totalGPU, allocatableGPU, allocatedGPU
 }
 
