@@ -80,9 +80,9 @@ jobs:
             echo <<pipeline.git.tag>> > darwin/VERSION
             echo <<pipeline.git.tag>> > linux/VERSION
             cd darwin
-            tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts VERSION
+            tar -czvf darwin-amd64.tar.gz runai install-runai.sh charts VERSION
             cd ../linux
-            tar -czvf linux-amd64.tar.gz bin install-runai.sh charts VERSION
+            tar -czvf linux-amd64.tar.gz runai install-runai.sh charts VERSION
             cd ../
       - run:
           name: upload-version
