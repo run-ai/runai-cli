@@ -2,17 +2,24 @@
 set -e
 
 SCRIPT_NAME=runai
-SCRIPT_FILES=/etc/runai
-SCRIPT_CHARTS=${SCRIPT_FILES}/charts
+OLD_SCRIPT_FILES=/etc/runai
+
+# If first argument is not empty,
+# use that for the installation path
+NEW_SCRIPT_FILES=${1:-/usr/local/runai}
 
 SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
 
-cp -rf "$SCRIPT_DIR/bin/runai" /usr/local/bin/${SCRIPT_NAME}
-
-if [ -d "${SCRIPT_FILES}" ]; then
-rm -rf ${SCRIPT_FILES}
+# Remove old version files
+if [ -d "${OLD_SCRIPT_FILES}" ]; then
+rm -rf ${OLD_SCRIPT_FILES}
 fi
 
-mkdir ${SCRIPT_FILES}
-cp -R "${SCRIPT_DIR}/charts" ${SCRIPT_CHARTS}
-cp "${SCRIPT_DIR}/VERSION" ${SCRIPT_FILES}
+# Remove new version files
+if [ -d "${NEW_SCRIPT_FILES}" ]; then
+rm -rf ${NEW_SCRIPT_FILES}
+fi
+
+cp -R $SCRIPT_DIR $NEW_SCRIPT_FILES
+
+ln -sf ${NEW_SCRIPT_FILES}/${SCRIPT_NAME} /usr/local/bin/${SCRIPT_NAME}

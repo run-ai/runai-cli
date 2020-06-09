@@ -8,13 +8,6 @@ OS_ARCH?=linux-amd64
 # Use .env file if exists - for local development
 -include .env
 
-ifndef RUNAI_CONFIG
-RUNAI_CONFIG=/etc/runai
-endif
-
-CHARTS_FOLDER=$(RUNAI_CONFIG)/charts
-VESRION_FILE=$(RUNAI_CONFIG)/VERSION
-
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT=$(shell git rev-parse HEAD)
 GIT_SHORT_COMMIT=$(shell git rev-parse --short HEAD)
@@ -34,8 +27,7 @@ BUILDER_CMD=docker run --rm \
 override LDFLAGS += \
   -X ${PACKAGE}/pkg/version.buildDate=${BUILD_DATE} \
   -X ${PACKAGE}/pkg/version.gitCommit=${GIT_COMMIT} \
-  -X ${PACKAGE}/pkg/version.versionFile=${VESRION_FILE} \
-  -X ${PACKAGE}/pkg/util.chartFolder=${CHARTS_FOLDER} \
+  -X ${PACKAGE}/pkg/util.configDir=${RUNAI_CONFIG} \
   -extldflags "-static"
 
 # docker image publishing options

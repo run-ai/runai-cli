@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	mpijob_chart = path.Join(util.GetChartsFolder(), "mpijob")
+	mpijob_chart string
 )
 
 func NewRunaiSubmitMPIJobCommand() *cobra.Command {
@@ -53,6 +53,14 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
+			chartPath, err := util.GetChartsFolder()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			mpijob_chart = path.Join(chartPath, "mpijob")
 
 			submitArgs.setCommonRun(cmd, args, kubeClient)
 

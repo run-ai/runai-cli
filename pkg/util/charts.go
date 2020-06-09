@@ -2,6 +2,7 @@ package util
 
 import (
 	"os"
+	"path"
 )
 
 func pathExists(path string) bool {
@@ -15,24 +16,20 @@ func pathExists(path string) bool {
 	return true
 }
 
-var chartFolder = ""
 var chartFolderEnv = os.Getenv("CHARTS_FOLDER")
 
-func GetChartsFolder() string {
+func GetChartsFolder() (string, error) {
 	if chartFolderEnv != "" {
-		return chartFolderEnv
+		return chartFolderEnv, nil
 	}
-	if chartFolder != "" {
-		return chartFolder
-	}
-	homeChartsFolder := os.Getenv("HOME") + "/charts"
-	if !pathExists(homeChartsFolder) {
-		chartFolder = "/charts"
 
-	} else {
-		chartFolder = homeChartsFolder
+	configDir, err := GetRunaiConfigDir()
+
+	if err != nil {
+		return "", err
 	}
-	return chartFolder
+
+	return path.Join(configDir, "charts"), nil
 }
 
 func StringInSlice(x string, list []string) bool {

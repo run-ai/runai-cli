@@ -17,32 +17,45 @@ package commands
 import (
 	"fmt"
 
+	"github.com/kubeflow/arena/pkg/util/command"
 	arenaVersion "github.com/kubeflow/arena/pkg/version"
 	"github.com/spf13/cobra"
 )
 
+var (
+	short bool
+)
+
+func printVersion(cmd *cobra.Command, args []string) error {
+	version, err := arenaVersion.GetVersion()
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Version: %s\n", version)
+	if short {
+		return nil
+	}
+	fmt.Printf("BuildDate: %s\n", version.BuildDate)
+	fmt.Printf("GitCommit: %s\n", version.GitCommit)
+	if version.GitTag != "" {
+		fmt.Printf("GitTag: %s\n", version.GitTag)
+	}
+	fmt.Printf("GoVersion: %s\n", version.GoVersion)
+	fmt.Printf("Compiler: %s\n", version.Compiler)
+	fmt.Printf("Platform: %s\n", version.Platform)
+
+	return nil
+}
+
 func NewVersionCmd() *cobra.Command {
-	var (
-		short bool
-	)
+	commandWrapper := command.NewCommandWrapper(printVersion)
+
 	versionCmd := cobra.Command{
 		Use:   "version",
 		Short: fmt.Sprintf("Print version information"),
-		Run: func(cmd *cobra.Command, args []string) {
-			version := arenaVersion.GetVersion()
-			fmt.Printf("Version: %s\n", version)
-			if short {
-				return
-			}
-			fmt.Printf("BuildDate: %s\n", version.BuildDate)
-			fmt.Printf("GitCommit: %s\n", version.GitCommit)
-			if version.GitTag != "" {
-				fmt.Printf("GitTag: %s\n", version.GitTag)
-			}
-			fmt.Printf("GoVersion: %s\n", version.GoVersion)
-			fmt.Printf("Compiler: %s\n", version.Compiler)
-			fmt.Printf("Platform: %s\n", version.Platform)
-		},
+		Run:   commandWrapper.Run,
 	}
 	versionCmd.Flags().BoolVar(&short, "short", false, "print just the version number")
 	return &versionCmd

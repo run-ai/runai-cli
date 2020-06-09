@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	runaiChart       = path.Join(util.GetChartsFolder(), "runai")
+	runaiChart       string
 	ttlAfterFinished *time.Duration
 	configArg        string
 )
@@ -44,6 +44,13 @@ func NewRunaiJobCommand() *cobra.Command {
 		Short: "Submit a new job.",
 		Args:  cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
+			chartsFolder, err := util.GetChartsFolder()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			runaiChart = path.Join(chartsFolder, "runai")
 
 			kubeClient, err := client.GetClient()
 			if err != nil {

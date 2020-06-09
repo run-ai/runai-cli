@@ -17,7 +17,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"runtime"
+
+	"github.com/kubeflow/arena/pkg/util"
 )
 
 // Version information set by link flags during build. We fall back to these sane
@@ -45,7 +48,12 @@ func (v Version) String() string {
 }
 
 // GetVersion returns the version information
-func GetVersion() Version {
+func GetVersion() (Version, error) {
+	configDir, err := util.GetRunaiConfigDir()
+	if err != nil {
+		return Version{}, err
+	}
+	versionFile := path.Join(configDir, "VERSION")
 	versionStr := ""
 	file, err := os.Open(versionFile)
 	if err == nil {
@@ -64,5 +72,5 @@ func GetVersion() Version {
 		GoVersion: runtime.Version(),
 		Compiler:  runtime.Compiler,
 		Platform:  fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
-	}
+	}, nil
 }
