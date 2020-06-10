@@ -83,7 +83,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			if submitArgs.RunAsCurrentUser {
 				currentUser, err := user.Current()
-				if err != nil {
+				if err == nil {
 					submitArgs.RunAsUser = currentUser.Uid
 					submitArgs.RunAsGroup = currentUser.Gid
 				}
