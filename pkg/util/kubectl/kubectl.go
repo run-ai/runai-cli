@@ -371,7 +371,7 @@ func Exec(podName string, namespace string, command string, commandArgs []string
 	return kubectlAttched(args)
 }
 
-func Logs(podName string, namespace string) ([]byte, error) {
+func Logs(podName string, namespace string) (string, error) {
 	args := []string{"logs", podName, "-n", namespace}
 	return kubectl(args)
 }
@@ -409,10 +409,10 @@ func kubectlAttched(args []string) error {
 	return nil
 }
 
-func kubectl(args []string) ([]byte, error) {
+func kubectl(args []string) (string, error) {
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// 1. prepare the arguments
@@ -428,5 +428,10 @@ func kubectl(args []string) ([]byte, error) {
 	// 2. execute the command
 	cmd := exec.Command(binary, args...)
 	cmd.Env = env
-	return cmd.CombinedOutput()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf(string(output))
+	} else {
+		return string(output), nil
+	}
 }
