@@ -20,7 +20,6 @@ import (
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -182,25 +181,9 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 
 	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(configMapName, metav1.GetOptions{})
 
-	// If configmap does not exists try to create it
+	// If configmap does not exists than cannot get a job index for the job
 	if err != nil {
-		data := make(map[string]string)
-		data[indexKey] = "1"
-		configMap := &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: configMapName,
-			},
-			Data: data,
-		}
-
-		_, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Create(configMap)
-
-		// Might be someone already created this configmap. Try the process again.
-		if err != nil {
-			return "", true, nil
-		}
-
-		return "1", false, nil
+		return "", false, err
 	}
 
 	lastIndex, err := strconv.Atoi(configMap.Data[indexKey])
