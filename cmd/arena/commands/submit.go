@@ -25,6 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 var (
@@ -243,6 +244,13 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		cmd.Help()
 		fmt.Println("")
 		fmt.Println("Name must be provided for the job.")
+		os.Exit(1)
+	}
+
+	var errs = validation.IsDNS1035Label(name)
+	if len(errs) > 0 {
+		fmt.Println("")
+		fmt.Println("Job names must consist of lower case alphanumeric characters or '-' and start with an alphabetic character (e.g. 'my-name',  or 'abc-123')")
 		os.Exit(1)
 	}
 
