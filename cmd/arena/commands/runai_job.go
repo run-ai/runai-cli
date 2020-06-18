@@ -323,26 +323,24 @@ func (rj *RunaiJob) ServiceURLs() []string {
 
 // IMPORTANT!!! This function is a duplication of GetPodGroupName in runai-scheduler repo.
 // Do not make changes without changing it in runai-scheduler as well!
-func (rj *RunaiJob) GetPodGroupName() string {
+func (rj *RunaiJob) getPodGroupName() string {
+	pgName := PodGroupNamePrefix
 	pod := rj.chiefPod
+	// This part is different in arena, it was added in order to get the podgroup of statefulsets with 0 replicas
 	if pod == nil || pod.Spec.SchedulerName != SchedulerName {
-		// This line is different in arena, it was added in order to get the podgroup of statefulsets with 0 replicas
-		return PodGroupNamePrefix + rj.Name()
+		pgName += rj.Name() + "-" + string(rj.jobMetadata.UID)
+		return pgName
 	}
 
-	if jobName, found := pod.Labels["job-name"]; found && len(jobName) != 0 {
-		return PodGroupNamePrefix + jobName
-	}
-
-	if pod.OwnerReferences == nil {
-		return ""
-	}
-
-	for _, ownerRef := range pod.OwnerReferences {
-		if ownerRef.Kind == "StatefulSet" {
-			return PodGroupNamePrefix + ownerRef.Name
+	if len(pod.OwnerReferences) != 0 {
+		for _, ownerReference := range pod.OwnerReferences {
+			if ownerReference.Controller != nil && *ownerReference.Controller {
+				pgName += ownerReference.Name + "-" + string(ownerReference.UID)
+				return pgName
+			}
 		}
 	}
 
-	return ""
+	pgName += pod.Name + "-" + string(pod.UID)
+	return pgName
 }

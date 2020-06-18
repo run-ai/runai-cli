@@ -337,7 +337,7 @@ func getResourcesEvents(client kubernetes.Interface, namespace string, job Train
 
 	podGroupName := ""
 	if reflect.TypeOf(job) == reflect.TypeOf(&RunaiJob{}) {
-		podGroupName = job.(*RunaiJob).GetPodGroupName()
+		podGroupName = job.(*RunaiJob).getPodGroupName()
 	}
 
 	return getSortedEvents(events.Items, job.Resources(), podGroupName), nil
