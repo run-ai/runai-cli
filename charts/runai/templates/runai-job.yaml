@@ -98,6 +98,8 @@ spec:
           image: {{ .Values.image }}
           {{- if .Values.localImage}}
           imagePullPolicy: Never
+          {{- else if .Values.alwaysPullImage }}
+          imagePullPolicy: Always
           {{- end }}
           {{- if .Values.workingDir }}
           workingDir: {{ .Values.workingDir }}

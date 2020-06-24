@@ -239,6 +239,7 @@ type submitRunaiJobArgs struct {
 	LargeShm         *bool             `yaml:"shm,omitempty"`
 	NumberProcesses  int               `yaml:"numProcesses"` // --workers
 	LocalImage       *bool             `yaml:"localImage,omitempty"`
+	AlwaysPullImage  *bool             `yaml:"alwaysPullImage,omitempty"`
 	HostNetwork      *bool             `yaml:"hostNetwork,omitempty"`
 	TTL              *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Completions      *int              `yaml:"completions,omitempty"`
@@ -299,6 +300,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")

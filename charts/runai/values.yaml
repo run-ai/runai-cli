@@ -12,6 +12,7 @@ elastic: false
 interactive: false
 shm: false
 localImage: false
+alwaysPullImage: false
 hostNetwork: false
 # workingDir: /path/to/working/dir
 # labels:
