@@ -103,7 +103,6 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 			interactiveNodeTypeString := ""
 			arrayLen := len(queue.Spec.NodeAffinityInteractiveTypes)
 			for i := 0; i < arrayLen; i++ {
-				fmt.Println(queue.Spec.NodeAffinityInteractiveTypes[i])
 				interactiveNodeTypeString += queue.Spec.NodeAffinityInteractiveTypes[i]
 				if i != arrayLen-1 {
 					interactiveNodeTypeString += ","
@@ -114,7 +113,6 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 			arrayLen = len(queue.Spec.NodeAffinityTrainTypes)
 			trainingNodeTypeString := ""
 			for i := 0; i < arrayLen; i++ {
-				fmt.Println(queue.Spec.NodeAffinityTrainTypes[i])
 				trainingNodeTypeString += queue.Spec.NodeAffinityTrainTypes[i]
 				if i != arrayLen-1 {
 					trainingNodeTypeString += ","
