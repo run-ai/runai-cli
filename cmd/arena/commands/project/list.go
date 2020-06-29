@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"text/tabwriter"
+	"time"
 
 	constants "github.com/kubeflow/arena/cmd/arena/commands/constants"
 	"github.com/kubeflow/arena/pkg/client"
@@ -27,14 +28,21 @@ var (
 )
 
 type ProjectInfo struct {
-	name           string
-	deservedGPUs   string
-	defaultProject bool
+	name                        string
+	deservedGPUs                string
+	defaultProject              bool
+	interactiveJobTimeLimitSecs string
+	nodeAffinityInteractive     string
+	nodeAffinityTraining        string
 }
 
 type Queue struct {
 	Spec struct {
-		DeservedGpus int `mapstructure:"deservedGpus,omitempty"`
+		DeservedGpus                 int      `mapstructure:"deservedGpus,omitempty"`
+		InteractiveJobTimeLimitSecs  int      `mapstructure:"interactiveJobTimeLimitSecs,omitempty"`
+		Department                   string   `json:"department,omitempty" protobuf:"bytes,1,opt,name=department"`
+		NodeAffinityInteractiveTypes []string `json:"nodeAffinityInteractiveTypes,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityInteractiveTypes"`
+		NodeAffinityTrainTypes       []string `json:"nodeAffinityTrainTypes,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityTrainTypes"`
 	} `mapstructure:"spec,omitempty"`
 	Metadata struct {
 		Name string `mapstructure:"name,omitempty"`
@@ -90,6 +98,30 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 
 		if project, found := projects[queue.Metadata.Name]; found {
 			project.deservedGPUs = strconv.Itoa(queue.Spec.DeservedGpus)
+			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
+
+			interactiveNodeTypeString := ""
+			arrayLen := len(queue.Spec.NodeAffinityInteractiveTypes)
+			for i := 0; i < arrayLen; i++ {
+				fmt.Println(queue.Spec.NodeAffinityInteractiveTypes[i])
+				interactiveNodeTypeString += queue.Spec.NodeAffinityInteractiveTypes[i]
+				if i != arrayLen-1 {
+					interactiveNodeTypeString += ","
+				}
+			}
+			project.nodeAffinityInteractive = interactiveNodeTypeString
+
+			arrayLen = len(queue.Spec.NodeAffinityTrainTypes)
+			trainingNodeTypeString := ""
+			for i := 0; i < arrayLen; i++ {
+				fmt.Println(queue.Spec.NodeAffinityTrainTypes[i])
+				trainingNodeTypeString += queue.Spec.NodeAffinityTrainTypes[i]
+				if i != arrayLen-1 {
+					trainingNodeTypeString += ","
+				}
+			}
+			project.nodeAffinityTraining = trainingNodeTypeString
+
 		}
 	}
 
@@ -117,13 +149,20 @@ func getSortedProjects(projects map[string]*ProjectInfo) []*ProjectInfo {
 func printProjects(infos []*ProjectInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	util.PrintLine(w, "NAME", "DESERVED GPUs")
+	util.PrintLine(w, "NAME", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
 
 	for _, info := range infos {
 		deservedInfo := "deleted"
 
 		if info.deservedGPUs != "" {
 			deservedInfo = info.deservedGPUs
+		}
+
+		interactiveJobTimeLimitFmt := "-"
+		if info.interactiveJobTimeLimitSecs != "" && info.interactiveJobTimeLimitSecs != "0" {
+			i, _ := strconv.Atoi(info.interactiveJobTimeLimitSecs)
+			t := time.Duration(i * 1000 * 1000 * 1000)
+			interactiveJobTimeLimitFmt = fmt.Sprintf(t.String())
 		}
 
 		var name string
@@ -133,7 +172,7 @@ func printProjects(infos []*ProjectInfo) {
 			name = info.name
 		}
 
-		util.PrintLine(w, name, deservedInfo)
+		util.PrintLine(w, name, deservedInfo, interactiveJobTimeLimitFmt, info.nodeAffinityInteractive, info.nodeAffinityTraining)
 	}
 
 	_ = w.Flush()
