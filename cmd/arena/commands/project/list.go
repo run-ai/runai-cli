@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -99,26 +100,8 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		if project, found := projects[queue.Metadata.Name]; found {
 			project.deservedGPUs = strconv.Itoa(queue.Spec.DeservedGpus)
 			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
-
-			interactiveNodeTypeString := ""
-			arrayLen := len(queue.Spec.NodeAffinityInteractiveTypes)
-			for i := 0; i < arrayLen; i++ {
-				interactiveNodeTypeString += queue.Spec.NodeAffinityInteractiveTypes[i]
-				if i != arrayLen-1 {
-					interactiveNodeTypeString += ","
-				}
-			}
-			project.nodeAffinityInteractive = interactiveNodeTypeString
-
-			arrayLen = len(queue.Spec.NodeAffinityTrainTypes)
-			trainingNodeTypeString := ""
-			for i := 0; i < arrayLen; i++ {
-				trainingNodeTypeString += queue.Spec.NodeAffinityTrainTypes[i]
-				if i != arrayLen-1 {
-					trainingNodeTypeString += ","
-				}
-			}
-			project.nodeAffinityTraining = trainingNodeTypeString
+			project.nodeAffinityInteractive = strings.Join(queue.Spec.NodeAffinityInteractiveTypes, ",")
+			project.nodeAffinityTraining = strings.Join(queue.Spec.NodeAffinityTrainTypes, ",")
 
 		}
 	}
@@ -160,7 +143,7 @@ func printProjects(infos []*ProjectInfo) {
 		if info.interactiveJobTimeLimitSecs != "" && info.interactiveJobTimeLimitSecs != "0" {
 			i, _ := strconv.Atoi(info.interactiveJobTimeLimitSecs)
 			t := time.Duration(i * 1000 * 1000 * 1000)
-			interactiveJobTimeLimitFmt = fmt.Sprintf(t.String())
+			interactiveJobTimeLimitFmt = t.String()
 		}
 
 		var name string
