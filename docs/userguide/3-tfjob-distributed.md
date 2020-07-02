@@ -55,8 +55,6 @@ Your tensorboard will be available on:
 
 3\. Check the tensorboard
 
-![](3-tensorboard.jpg)
-
 
 4\. Get the TFJob dashboard
 
@@ -66,7 +64,5 @@ Your LogViewer will be available on:
 192.168.1.120:8080/tfjobs/ui/#/default/tf-dist-git-tfjob
 ```
 
-
-![](4-tfjob-logviewer-distributed.jpg)
 
 Congratulations! You've run the distributed training job with `arena` successfully. 

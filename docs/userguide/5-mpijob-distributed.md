@@ -39,8 +39,6 @@ Your tensorboard will be available on:
 
 3\. Check the tensorboard
 
-![](5-mpi-tensorboard.jpg)
-
 
 4\. Get the MPI dashboard
 
@@ -50,7 +48,5 @@ Your LogViewer will be available on:
 192.168.1.119:9090/#!/log/default/mpi-dist-mpijob-launcher-ndnw8/mpi?namespace=default
 ```
 
-
-![](5-mpijob-logviewer.jpg)
 
 Congratulations! You've run the distributed MPI training job with `arena` successfully. 

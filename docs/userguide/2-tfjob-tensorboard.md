@@ -104,6 +104,4 @@ Your tensorboard will be available on:
 > Notice: you can access the tensorboard by using `192.168.1.117:30670`. You can consider `sshuttle` if you can't access the tensorboard directly from your laptop. For example: `sshuttle -r root@47.89.59.51 192.168.0.0/16`
 
 
-![](2-tensorboard.jpg)
-
 Congratulations! You've run the training job with `arena` successfully, and you can also check the tensorboard easily.

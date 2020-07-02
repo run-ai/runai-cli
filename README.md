@@ -1,4 +1,4 @@
-# Run:AI
+# Run:AI [![CircleCI](https://circleci.com/gh/run-ai/runai-cli.svg?style=svg)](https://circleci.com/gh/run-ai/runai-cli)
 ## Overview
 
 Run:AI CLI is a command-line interface for the data scientists to run and monitor machine learning jobs on top of the Run:AI software and Kubernestes.

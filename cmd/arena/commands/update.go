@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	url    = "https://api.github.com/repos/run-ai/arena/releases/latest"
+	url    = "https://api.github.com/repos/run-ai/runai-cli/releases/latest"
 	osName = runtime.GOOS
 	arch   = runtime.GOARCH
 )

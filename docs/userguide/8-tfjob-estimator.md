@@ -136,5 +136,3 @@ Your tensorboard will be available on:
 ```
 
 7\. Check the tensorboard from 192.168.1.117:31366 in this sample
-
-![](8-tfjob-estimator-tensorboard.jpg)

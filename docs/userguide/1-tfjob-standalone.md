@@ -133,7 +133,4 @@ Your LogViewer will be available on:
 192.168.1.120:8080/tfjobs/ui/#/default/tf-git-tfjob
 ```
 
-![](1-tfjob-logviewer.jpg)
-
-
 Congratulations! You've run the first training job with `arena` successfully. 
