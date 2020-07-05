@@ -103,7 +103,7 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 		totalRequestedGPUs float64
 	)
 
-	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
+	labelField := []string{"NAME", "PROJECT", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
 
 	PrintLine(w, labelField...)
 
@@ -116,6 +116,7 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 		totalAllocatedGPUs += allocatedGPU
 		totalRequestedGPUs += requestedGPU
 		PrintLine(w, jobInfo.Name(),
+			jobInfo.Project(),
 			strconv.FormatFloat(requestedGPU, 'f', -1, 64),
 			strconv.FormatFloat(allocatedGPU, 'f', -1, 64),
 			jobInfo.GetStatus(),
