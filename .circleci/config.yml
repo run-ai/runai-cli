@@ -60,7 +60,6 @@ jobs:
     executor: runai-executor
     working_directory: /tmp/runai-cli-packages
     steps:
-      - checkout
       - run:
           name: get-packages
           command: |
