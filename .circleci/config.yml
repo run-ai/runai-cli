@@ -64,8 +64,6 @@ jobs:
           name: get-packages
           command: |
             set -ex 
-            mkdir -p /tmp/runai-cli-packages
-            cd /tmp/runai-cli-packages
             echo $GCP_SERVICE_ACCOUNT >> ./key_file
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
             gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/runai-cli-packages/darwin-amd64.tar.gz
@@ -74,21 +72,19 @@ jobs:
           name: update-version
           command: |
             set -ex
-            mkdir /tmp/runai-cli-packages/darwin
-            mkdir /tmp/runai-cli-packages/linux
-            tar -C /tmp/runai-cli-packages/darwin -zxvf /tmp/runai-cli-packages/darwin-amd64.tar.gz
-            tar -C /tmp/runai-cli-packages/linux -zxvf /tmp/runai-cli-packages/linux-amd64.tar.gz
-            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/darwin/VERSION
-            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/linux/VERSION
-            cd darwin
-            tar -czvf /tmp/runai-cli-packages/darwin-amd64.tar.gz runai install-runai.sh charts VERSION
-            cd ../linux
-            tar -czvf linux-amd64.tar.gz runai install-runai.sh charts VERSION
-            cd ../
+            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/VERSION
+            gzip -d darwin-amd64.tar.gz
+            gzip -d linux-amd64.tar.gz
+            tar --delete --file=darwin-amd64.tar VERSION
+            tar --delete --file=linux-amd64.tar VERSION
+            tar -uf darwin-amd64.tar VERSION
+            tar -uf linux-amd64.tar VERSION
+            gzip darwin-amd64.tar
+            gzip linux-amd64.tar
       - run:
           name: upload-version
           command: |
-            hub release edit -a darwin/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a linux/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
+            hub release edit -a darwin-amd64.tar.gz#darwin-amd64.tar.gz -a linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
 
 
 workflows:
