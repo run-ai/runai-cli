@@ -58,29 +58,31 @@ jobs:
             gsutil cp ./latest gs://cli-artifacts/branch-versions/<<pipeline.git.branch>>
   release:
     executor: runai-executor
+    working_directory: /tmp/runai-cli-packages
     steps:
       - checkout
       - run:
           name: get-packages
           command: |
             set -ex 
-            mkdir -p /tmp/packages
+            mkdir -p /tmp/runai-cli-packages
+            cd /tmp/runai-cli-packages
             echo $GCP_SERVICE_ACCOUNT >> ./key_file
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/packages/darwin-amd64.tar.gz
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/packages/linux-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/runai-cli-packages/darwin-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/runai-cli-packages/linux-amd64.tar.gz
       - run:
           name: update-version
           command: |
             set -ex
-            mkdir darwin
-            mkdir linux
-            tar -C darwin -zxvf /tmp/packages/darwin-amd64.tar.gz
-            tar -C linux -zxvf /tmp/packages/linux-amd64.tar.gz
-            echo <<pipeline.git.tag>> > darwin/VERSION
-            echo <<pipeline.git.tag>> > linux/VERSION
+            mkdir /tmp/runai-cli-packages/darwin
+            mkdir /tmp/runai-cli-packages/linux
+            tar -C /tmp/runai-cli-packages/darwin -zxvf /tmp/runai-cli-packages/darwin-amd64.tar.gz
+            tar -C /tmp/runai-cli-packages/linux -zxvf /tmp/runai-cli-packages/linux-amd64.tar.gz
+            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/darwin/VERSION
+            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/linux/VERSION
             cd darwin
-            tar -czvf darwin-amd64.tar.gz runai install-runai.sh charts VERSION
+            tar -czvf /tmp/runai-cli-packages/darwin-amd64.tar.gz runai install-runai.sh charts VERSION
             cd ../linux
             tar -czvf linux-amd64.tar.gz runai install-runai.sh charts VERSION
             cd ../
