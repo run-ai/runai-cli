@@ -127,10 +127,10 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Total Allocated GPUs of Training Job:\n")
+	fmt.Fprintf(w, "Total Allocated GPUs: ")
 	fmt.Fprintf(w, "%v \t\n", strconv.FormatFloat(totalAllocatedGPUs, 'f', -1, 32))
 	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Total Requested GPUs of Training Job:\n")
+	fmt.Fprintf(w, "Total Requested GPUs: ")
 	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32))
 
 	_ = w.Flush()
