@@ -58,33 +58,36 @@ jobs:
             gsutil cp ./latest gs://cli-artifacts/branch-versions/<<pipeline.git.branch>>
   release:
     executor: runai-executor
-    working_directory: /tmp/runai-cli-packages
     steps:
+      - checkout
       - run:
           name: get-packages
           command: |
-            set -ex 
+            set -ex
+            mkdir -p /tmp/packages
             echo $GCP_SERVICE_ACCOUNT >> ./key_file
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/runai-cli-packages/darwin-amd64.tar.gz
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/runai-cli-packages/linux-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/packages/darwin-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/packages/linux-amd64.tar.gz
       - run:
           name: update-version
           command: |
             set -ex
-            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/VERSION
-            gzip -d darwin-amd64.tar.gz
-            gzip -d linux-amd64.tar.gz
-            tar --delete --file=darwin-amd64.tar VERSION
-            tar --delete --file=linux-amd64.tar VERSION
-            tar -uf darwin-amd64.tar VERSION
-            tar -uf linux-amd64.tar VERSION
-            gzip darwin-amd64.tar
-            gzip linux-amd64.tar
+            mkdir darwin
+            mkdir linux
+            tar -C darwin -zxvf /tmp/packages/darwin-amd64.tar.gz
+            tar -C linux -zxvf /tmp/packages/linux-amd64.tar.gz
+            echo <<pipeline.git.tag>> > darwin/VERSION
+            echo <<pipeline.git.tag>> > linux/VERSION
+            cd darwin
+            tar -czvf darwin-amd64.tar.gz runai install-runai.sh charts VERSION
+            cd ../linux
+            tar -czvf linux-amd64.tar.gz runai install-runai.sh charts VERSION
+            cd ../
       - run:
           name: upload-version
           command: |
-            hub release edit -a darwin-amd64.tar.gz#darwin-amd64.tar.gz -a linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
+            hub release edit -a darwin/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a linux/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
 
 
 workflows:

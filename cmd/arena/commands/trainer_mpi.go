@@ -81,23 +81,12 @@ func (mj *MPIJob) Image() (status string) {
 }
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
-func (mj *MPIJob) GetStatus() (status string) {
-	status = "UNKNOWN"
+func (mj *MPIJob) GetStatus() string {
 	if mj.mpijob.Name == "" {
-		return status
+		return "UNKNOWN"
 	}
 
-	if mj.isSucceeded() {
-		status = "Succeeded"
-	} else if mj.isFailed() {
-		status = "Failed"
-	} else if mj.isPending() {
-		status = "Pending"
-	} else {
-		status = string(mj.chiefPod.Status.Phase)
-	}
-
-	return status
+	return string(mj.chiefPod.Status.Phase)
 }
 
 // Get the start time
@@ -576,24 +565,9 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string) (jobs []TrainingJob,
 	return jobs, nil
 }
 
-func (mj *MPIJob) isSucceeded() bool {
-	return hasCondition(mj.mpijob.Status, common.JobSucceeded)
-	// return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherSucceeded
-}
-
 func (mj *MPIJob) isFailed() bool {
 	return hasCondition(mj.mpijob.Status, common.JobFailed)
 	// return mj.mpijob.Status.LauncherStatus == v1alpha2.LauncherFailed
-}
-
-func (mj *MPIJob) isPending() bool {
-	// return false
-	if len(mj.chiefjob.Name) == 0 {
-		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
-		return true
-	}
-
-	return false
 }
 
 func hasCondition(status common.JobStatus, condType common.JobConditionType) bool {
