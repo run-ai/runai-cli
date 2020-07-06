@@ -60,19 +60,22 @@ jobs:
     executor: runai-executor
     working_directory: /tmp/runai-cli-packages
     steps:
+      - checkout
       - run:
           name: get-packages
           command: |
-            set -ex 
+            set -ex
+            mkdir bin
             echo $GCP_SERVICE_ACCOUNT >> ./key_file
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/runai-cli-packages/darwin-amd64.tar.gz
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/runai-cli-packages/linux-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/runai-cli-packages/bin/darwin-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/runai-cli-packages/bin/linux-amd64.tar.gz
       - run:
           name: update-version
           command: |
             set -ex
-            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/VERSION
+            cd /tmp/runai-cli-packages/bin
+            echo <<pipeline.git.tag>> > /tmp/runai-cli-packages/bin/VERSION
             gzip -d darwin-amd64.tar.gz
             gzip -d linux-amd64.tar.gz
             tar --delete --file=darwin-amd64.tar VERSION
