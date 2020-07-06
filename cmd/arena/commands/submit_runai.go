@@ -157,7 +157,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
 	if submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.IsPreemptible != nil && *submitArgs.IsPreemptible {
-		log.Infof("Using the preemptible flag may lead to your resources being preempted without notice")
+		fmt.Println("Warning: Using the preemptible flag may lead to your resources being preempted without notice")
 	}
 }
 
