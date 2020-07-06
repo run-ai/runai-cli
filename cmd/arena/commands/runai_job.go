@@ -26,11 +26,12 @@ type RunaiJob struct {
 	jobMetadata       metav1.ObjectMeta
 	namespace         string
 	pods              []v1.Pod
+	status            string
 }
 
 const PodGroupNamePrefix = "pg-"
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource, status string) *RunaiJob {
 	resources := append(cmdTypes.PodResources(pods), ownerResource)
 	return &RunaiJob{
 		pods:              pods,
@@ -45,6 +46,7 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1
 		podMetadata:       podMetadata,
 		jobMetadata:       jobMetadata,
 		namespace:         namespace,
+		status:            status,
 	}
 }
 
@@ -177,8 +179,12 @@ func (rj *RunaiJob) GetStatus() string {
 		}
 	}
 
+	if rj.status != "" {
+		return rj.status
+	}
+
 	if rj.chiefPod == nil {
-		return "Pending"
+		return "Unknown"
 	}
 
 	return GetStatusColumnFromPodStatus(rj.chiefPod)

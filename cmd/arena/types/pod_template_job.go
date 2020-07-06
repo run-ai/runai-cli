@@ -8,27 +8,44 @@ import (
 )
 
 type PodTemplateJob struct {
-	Type ResourceType
+	ExtraStatus string
+	Type        ResourceType
 	metav1.ObjectMeta
 	Selector *metav1.LabelSelector
 	Template v1.PodTemplateSpec
 }
 
 func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
+	extraStatus := ""
+	if job.Status.CompletionTime != nil {
+		extraStatus = "Completed"
+	} else if job.Status.Failed >= *job.Spec.BackoffLimit {
+		extraStatus = "Failed"
+	} else if job.Status.Active == 0 {
+		extraStatus = "Pending"
+	}
+
 	return &PodTemplateJob{
-		ObjectMeta: job.ObjectMeta,
-		Type:       ResourceTypeJob,
-		Template:   job.Spec.Template,
-		Selector:   job.Spec.Selector,
+		ExtraStatus: extraStatus,
+		ObjectMeta:  job.ObjectMeta,
+		Type:        ResourceTypeJob,
+		Template:    job.Spec.Template,
+		Selector:    job.Spec.Selector,
 	}
 }
 
 func PodTemplateJobFromStatefulSet(statefulSet appsv1.StatefulSet) *PodTemplateJob {
+	extraStatus := ""
+	if statefulSet.Status.Replicas == 0 {
+		extraStatus = "Pending"
+	}
+
 	return &PodTemplateJob{
-		ObjectMeta: statefulSet.ObjectMeta,
-		Type:       ResourceTypeStatefulSet,
-		Template:   statefulSet.Spec.Template,
-		Selector:   statefulSet.Spec.Selector,
+		ExtraStatus: extraStatus,
+		ObjectMeta:  statefulSet.ObjectMeta,
+		Type:        ResourceTypeStatefulSet,
+		Template:    statefulSet.Spec.Template,
+		Selector:    statefulSet.Spec.Selector,
 	}
 }
 
