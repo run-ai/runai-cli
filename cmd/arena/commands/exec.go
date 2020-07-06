@@ -84,7 +84,7 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 	chiefPod := job.ChiefPod()
 
 	if chiefPod == nil || chiefPod.Status.Phase != v1.PodRunning {
-		log.Errorf("Cannot %s into the job. It is still pending execution.", runaiCommandName)
+		fmt.Printf("Job '%s' is still in '%s' state. Please wait until the job is running and try again.\n", job.Name(), chiefPod.Status.Phase)
 		os.Exit(1)
 	}
 
