@@ -68,6 +68,7 @@ func getRunaiStatefulSet() *appsv1.StatefulSet {
 				MatchLabels: labelSelector,
 			},
 		},
+		Status: appsv1.StatefulSetStatus{},
 	}
 }
 
@@ -90,6 +91,7 @@ func getRunaiJob() *batch.Job {
 				MatchLabels: labelSelector,
 			},
 		},
+		Status: batch.JobStatus{},
 	}
 }
 
