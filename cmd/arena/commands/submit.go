@@ -241,10 +241,13 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	if name == "" {
-		cmd.Help()
-		fmt.Println("")
-		fmt.Println("Name must be provided for the job.")
-		os.Exit(1)
+		currentUser, err := user.Current()
+		if err != nil {
+			name = "runai" + "-" + util.RandomInt32()
+		} else {
+			name = currentUser.Username + "-" + util.RandomInt32()
+		}
+
 	}
 
 	var errs = validation.IsDNS1035Label(name)
