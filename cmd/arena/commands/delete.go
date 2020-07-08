@@ -84,7 +84,7 @@ func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo 
 			runaiTrainer := NewRunaiTrainer(*kubeClient)
 			job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
 			if err == nil && !job.CreatedByCLI() {
-				return fmt.Errorf("the job %s exists but was not created by the runai cli", jobName)
+				return fmt.Errorf("the job '%s' exists but was not created using the runai cli", jobName)
 			}
 
 			return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
