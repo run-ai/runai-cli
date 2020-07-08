@@ -95,6 +95,20 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			printJobInfoIfNeeded(submitArgs)
+
+			if submitArgs.IsShell {
+				if submitArgs.Interactive != nil && *submitArgs.Interactive {
+					err = kubectl.WaitForReadyStatefulSet(submitArgs.Name, submitArgs.Namespace)
+
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+					execute(cmd, submitArgs.Name, "/bin/bash", []string{}, true, true, "bash")
+				} else {
+					fmt.Println("The flag --bash only works with interactive jobs. Ignoring flag")
+				}
+			}
 			if submitArgs.IsJupyter || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(submitArgs.Name, submitArgs.Namespace)
 
@@ -251,6 +265,7 @@ type submitRunaiJobArgs struct {
 	RunAsUser        string `yaml:"runAsUser,omitempty"`
 	RunAsGroup       string `yaml:"runAsGroup,omitempty"`
 	RunAsCurrentUser bool
+	IsShell          bool
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -308,6 +323,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().MarkHidden("completions")
 	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(sa.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	command.Flags().BoolVar(&(sa.IsShell), "bash", false, "Wait for interactive job to start and open a shell to the container")
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
 
