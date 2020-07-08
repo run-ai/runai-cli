@@ -1,6 +1,6 @@
 package types
 
-import "k8s.io/api/core/v1"
+import v1 "k8s.io/api/core/v1"
 
 type Resource struct {
 	Name         string
@@ -9,10 +9,12 @@ type Resource struct {
 }
 type ResourceType string
 
-const ResourceTypePod = ResourceType("Pod")
-const ResourceTypeStatefulSet = ResourceType("StatefulSet")
-const ResourceTypeReplicaset = ResourceType("ReplicaSet")
-const ResourceTypeJob = ResourceType("Job")
+const (
+	ResourceTypePod         = ResourceType("Pod")
+	ResourceTypeJob         = ResourceType("Job")
+	ResourceTypeStatefulSet = ResourceType("StatefulSet")
+	ResourceTypeReplicaset  = ResourceType("ReplicaSet")
+)
 
 func PodResources(pods []v1.Pod) []Resource {
 	resources := []Resource{}
@@ -64,4 +66,8 @@ func (*BasicJobInfo) CreatedByCLI() bool {
 
 func (*BasicJobInfo) ServiceURLs() []string {
 	return []string{}
+}
+
+func (j *BasicJobInfo) GetPodGroupName() string {
+	return ""
 }

@@ -76,6 +76,18 @@ func (mj *MPIJob) CreatedByCLI() bool {
 	return true
 }
 
+func (mj *MPIJob) GetPodGroupName() string {
+	if len(mj.chiefPod.Labels) == 0 {
+		return ""
+	}
+
+	if mj.chiefPod.Spec.SchedulerName != SchedulerName {
+		return ""
+	}
+
+	return mj.chiefPod.Labels[PodGroupLabel]
+}
+
 func (mj *MPIJob) Image() (status string) {
 	return mj.mpijob.Annotations["image"]
 }

@@ -79,6 +79,8 @@ type TrainingJob interface {
 	CreatedByCLI() bool
 
 	ServiceURLs() []string
+
+	GetPodGroupName() string
 }
 
 type Trainer interface {

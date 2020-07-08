@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -47,9 +46,14 @@ type eventAndName struct {
 	index int
 }
 
-var output string
+var (
+	output       string
+	dashboardURL string
+)
 
-var dashboardURL string
+const (
+	PodGroupLabel = "pod-group-name"
+)
 
 // NewGetCommand
 func NewGetCommand() *cobra.Command {
@@ -335,12 +339,7 @@ func getResourcesEvents(client kubernetes.Interface, namespace string, job Train
 		return []eventAndName{}, err
 	}
 
-	podGroupName := ""
-	if reflect.TypeOf(job) == reflect.TypeOf(&RunaiJob{}) {
-		podGroupName = job.(*RunaiJob).getPodGroupName()
-	}
-
-	return getSortedEvents(events.Items, job.Resources(), podGroupName), nil
+	return getSortedEvents(events.Items, job.Resources(), job.GetPodGroupName()), nil
 }
 
 func getSortedEvents(items []v1.Event, resources []cmdTypes.Resource, podGroupName string) []eventAndName {

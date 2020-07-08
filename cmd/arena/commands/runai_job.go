@@ -29,10 +29,6 @@ type RunaiJob struct {
 	status            string
 }
 
-const (
-	PodGroupAnnotationForPod = "pod-group-name"
-)
-
 func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource, status string) *RunaiJob {
 	resources := append(cmdTypes.PodResources(pods), ownerResource)
 	return &RunaiJob{
@@ -253,6 +249,25 @@ func (rj *RunaiJob) StartTime() *metav1.Time {
 	return nil
 }
 
+func (rj *RunaiJob) GetPodGroupName() string {
+	pod := rj.chiefPod
+	if pod == nil {
+		if len(rj.jobMetadata.Labels) > 0 {
+			return rj.jobMetadata.Labels[PodGroupLabel]
+		}
+		return ""
+	}
+
+	if pod.Spec.SchedulerName != SchedulerName {
+		return ""
+	}
+
+	if len(pod.Labels) > 0 {
+		return pod.Labels[PodGroupLabel]
+	}
+	return ""
+}
+
 // Get Dashboard
 func (rj *RunaiJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
 	return []string{}, nil
@@ -327,26 +342,4 @@ func (rj *RunaiJob) User() string {
 
 func (rj *RunaiJob) ServiceURLs() []string {
 	return rj.serviceUrls
-}
-
-// IMPORTANT!!! This function is a duplication of GetPodGroupName in runai-scheduler repo.
-// Do not make changes without changing it in runai-scheduler as well!
-func (rj *RunaiJob) getPodGroupName() string {
-	pod := rj.chiefPod
-	// This part is different in arena, it was added in order to get the podgroup of statefulsets with 0 replicas
-	if pod == nil {
-		if len(rj.jobMetadata.Labels) > 0 {
-			return rj.jobMetadata.Labels[PodGroupAnnotationForPod]
-		}
-		return ""
-	}
-
-	if pod.Spec.SchedulerName != SchedulerName {
-		return ""
-	}
-
-	if len(pod.Labels) > 0 {
-		return pod.Labels[PodGroupAnnotationForPod]
-	}
-	return ""
 }
