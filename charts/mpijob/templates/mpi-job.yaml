@@ -14,13 +14,10 @@ metadata:
     {{- if .Values.user }}
     user: {{ .Values.user }}
     {{- end }}
+    {{- if .Values.interactive }}
+    priorityClassName: "build"
+    {{- end}}
 spec:
-  template:
-    metadata:
-      labels:
-      {{- if .Values.interactive }}
-        priorityClassName: "build"
-      {{- end}}
   slotsPerWorker: 1
   cleanPodPolicy: Running
   mpiReplicaSpecs:
