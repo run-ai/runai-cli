@@ -328,15 +328,24 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 	if err != nil {
 		return nil, err
 	}
+
 	return &MPIJob{
 		BasicJobInfo: cmdTypes.NewBasicJobInfo(name, resources),
 		mpijob:       mpijob,
 		chiefPod:     chiefPod,
 		chiefjob:     job,
 		pods:         pods,
-		trainerType:  tt.Type(),
+		trainerType:  tt.getJobType(&mpijob),
 	}, nil
 
+}
+
+func (tt *MPIJobTrainer) getJobType(mpijob *mpi.MPIJob) string {
+	if mpijob != nil && mpijob.Labels != nil && mpijob.Labels["priorityClassName"] == "build" {
+		return runaiInteractiveType
+	}
+
+	return runaiTrainType
 }
 
 // Get the training job from Cache
@@ -364,7 +373,7 @@ func (tt *MPIJobTrainer) getTrainingJobInfo(name string, ns string, mpiJob mpi.M
 		chiefPod:     chiefPod,
 		pods:         pods,
 		chiefjob:     job,
-		trainerType:  tt.Type(),
+		trainerType:  tt.getJobType(&mpiJob),
 	}, nil
 }
 

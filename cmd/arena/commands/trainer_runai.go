@@ -385,7 +385,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
 	if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
-		if job.Template.ObjectMeta.Labels["priorityClassName"] == "interactive-preemptible" {
+		if job.Labels["priorityClassName"] == "interactive-preemptible" {
 			return runaiPreemptibleInteractiveType
 		}
 		return runaiInteractiveType

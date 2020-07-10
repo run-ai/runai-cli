@@ -64,6 +64,7 @@ type submitArgs struct {
 	IsNonRoot          bool                      `yaml:"isNonRoot"`
 	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
 	Project            string                    `yaml:"project,omitempty"`
+	Interactive        *bool                     `yaml:"interactive,omitempty"`
 	User               string                    `yaml:"user,omitempty"`
 	PriorityClassName  string                    `yaml:"priorityClassName"`
 	// Name       string   `yaml:"name"`       // --name
@@ -215,6 +216,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("name", "please use positional argument instead")
 
 	flags.AddFloat64NullableFlagP(command.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.Interactive), "interactive", "Mark this Job as interactive.")
 	command.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	command.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
 	command.Flags().StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
