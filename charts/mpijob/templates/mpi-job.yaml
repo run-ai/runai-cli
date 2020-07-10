@@ -5,6 +5,9 @@ metadata:
   annotations:
     image: "{{ .Values.image }}"
   labels:
+    {{- if .Values.interactive }}
+    priorityClassName: "build"
+    {{- end}}
     app: {{ template "mpijob.name" . }}
     chart: {{ template "mpijob.chart" . }}
     release: {{ .Release.Name }}

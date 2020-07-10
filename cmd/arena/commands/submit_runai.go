@@ -230,7 +230,6 @@ type submitRunaiJobArgs struct {
 	GPUInt           *int              `yaml:"gpuInt,omitempty"`
 	GPUFraction      string            `yaml:"gpuFraction,omitempty"`
 	GPUFractionFixed string            `yaml:"gpuFractionFixed,omitempty"`
-	Interactive      *bool             `yaml:"interactive,omitempty"`
 	Volumes          []string          `yaml:"volume,omitempty"`
 	Command          []string          `yaml:"command"`
 	Ports            []string          `yaml:"ports,omitempty"`
@@ -291,7 +290,6 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostIPC), "host-ipc", "Use the host's ipc namespace.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.Interactive), "interactive", "Mark this Job as interactive.")
 	command.Flags().StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	command.Flags().StringVar(&(sa.WorkingDir), "working-dir", "", "Set the container's working directory.")
