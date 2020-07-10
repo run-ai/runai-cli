@@ -335,7 +335,7 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 		chiefPod:     chiefPod,
 		chiefjob:     job,
 		pods:         pods,
-		trainerType:  tt.getJobType(mpijob),
+		trainerType:  tt.getJobType(&mpijob),
 	}, nil
 
 }
