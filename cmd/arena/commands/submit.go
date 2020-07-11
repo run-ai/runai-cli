@@ -79,7 +79,6 @@ type submitArgs struct {
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
 
-	Command          []string `yaml:"command"`
 	AlwaysPullImage  *bool    `yaml:"alwaysPullImage,omitempty"`
 	Volumes          []string `yaml:"volume,omitempty"`
 	WorkingDir       string   `yaml:"workingDir,omitempty"`
@@ -248,7 +247,6 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
 	command.Flags().MarkHidden("dry-run")
 
-	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
 	command.Flags().StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
 	command.Flags().StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")

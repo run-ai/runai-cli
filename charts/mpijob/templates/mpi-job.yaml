@@ -72,9 +72,9 @@ spec:
               workingDir: {{ .Values.workingDir }}
               {{- end}}
               command:
-              {{ range $index, $command := .Values.command }}
-              - {{ quote $command }}
-              {{- end}}
+                - "sh"
+                - "-c"
+                - "{{ .Values.command }}"
               args:
               {{ range $index, $arg := .Values.args }}
               - {{ quote $arg }}

@@ -96,8 +96,9 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	// Command         string `yaml:"command"`
-	NumberProcesses int `yaml:"numProcesses"` // --workers
+	// Command         string `yaml:"command"
+	Command         string `yaml:"command"`
+	NumberProcesses int    `yaml:"numProcesses"` // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
