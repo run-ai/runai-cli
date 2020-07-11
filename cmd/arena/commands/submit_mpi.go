@@ -86,7 +86,6 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "the number of processes to run the distributed training.")
 
 	submitArgs.addCommonFlags(command)
-	submitArgs.addSyncFlags(command)
 
 	return command
 
@@ -97,12 +96,9 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	submitTensorboardArgs `yaml:",inline"`
-	Command               string `yaml:"command"`
-	NodeName              string `yaml:"nodeName,omitempty"`
-	NumberProcesses       int    `yaml:"numProcesses"` // --workers
-	// for sync up source code
-	submitSyncCodeArgs `yaml:",inline"`
+	Command         string `yaml:"command"`
+	NodeName        string `yaml:"nodeName,omitempty"`
+	NumberProcesses int    `yaml:"numProcesses"` // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
@@ -123,7 +119,7 @@ func (submitArgs submitMPIJobArgs) check() error {
 		return fmt.Errorf("--image must be set")
 	}
 
-	if float64(int(*submitArgs.GPU)) != *submitArgs.GPU {
+	if submitArgs.GPU != nil && float64(int(*submitArgs.GPU)) != *submitArgs.GPU {
 		return fmt.Errorf("--gpu must be an integer")
 	}
 
