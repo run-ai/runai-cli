@@ -78,6 +78,14 @@ type submitArgs struct {
 	Memory              string   `yaml:"memory,omitempty"`
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
+
+	Command          []string `yaml:"command"`
+	AlwaysPullImage  *bool    `yaml:"alwaysPullImage,omitempty"`
+	Volumes          []string `yaml:"volume,omitempty"`
+	WorkingDir       string   `yaml:"workingDir,omitempty"`
+	RunAsUser        string   `yaml:"runAsUser,omitempty"`
+	RunAsGroup       string   `yaml:"runAsGroup,omitempty"`
+	RunAsCurrentUser bool
 }
 
 type dataDirVolume struct {
@@ -173,6 +181,14 @@ func (s *submitArgs) transform() (err error) {
 		}
 		log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
 	}
+
+	if s.RunAsCurrentUser {
+		currentUser, err := user.Current()
+		if err == nil {
+			s.RunAsUser = currentUser.Uid
+			s.RunAsGroup = currentUser.Gid
+		}
+	}
 	return nil
 }
 
@@ -232,6 +248,12 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
 	command.Flags().MarkHidden("dry-run")
 
+	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
+	command.Flags().StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
+	command.Flags().StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
+	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
+	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 }
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client) {

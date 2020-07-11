@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"os/user"
 	"path"
 	"regexp"
 	"strconv"
@@ -78,14 +77,6 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			if submitArgs.IsJupyter {
 				submitArgs.UseJupyterDefaultValues()
-			}
-
-			if submitArgs.RunAsCurrentUser {
-				currentUser, err := user.Current()
-				if err == nil {
-					submitArgs.RunAsUser = currentUser.Uid
-					submitArgs.RunAsGroup = currentUser.Gid
-				}
 			}
 
 			err = submitRunaiJob(args, submitArgs, clientset)
@@ -230,7 +221,6 @@ type submitRunaiJobArgs struct {
 	GPUInt           *int              `yaml:"gpuInt,omitempty"`
 	GPUFraction      string            `yaml:"gpuFraction,omitempty"`
 	GPUFractionFixed string            `yaml:"gpuFractionFixed,omitempty"`
-	Volumes          []string          `yaml:"volume,omitempty"`
 	Command          []string          `yaml:"command"`
 	Ports            []string          `yaml:"ports,omitempty"`
 	ServiceType      string            `yaml:"serviceType,omitempty"`
@@ -238,18 +228,13 @@ type submitRunaiJobArgs struct {
 	LargeShm         *bool             `yaml:"shm,omitempty"`
 	NumberProcesses  int               `yaml:"numProcesses"` // --workers
 	LocalImage       *bool             `yaml:"localImage,omitempty"`
-	AlwaysPullImage  *bool             `yaml:"alwaysPullImage,omitempty"`
 	HostNetwork      *bool             `yaml:"hostNetwork,omitempty"`
 	TTL              *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Completions      *int              `yaml:"completions,omitempty"`
 	Parallelism      *int              `yaml:"parallelism,omitempty"`
 	Labels           map[string]string `yaml:"labels,omitempty"`
 	IsJupyter        bool
-	IsPreemptible    *bool  `yaml:"isPreemptible,omitempty"`
-	WorkingDir       string `yaml:"workingDir,omitempty"`
-	RunAsUser        string `yaml:"runAsUser,omitempty"`
-	RunAsGroup       string `yaml:"runAsGroup,omitempty"`
-	RunAsCurrentUser bool
+	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -292,28 +277,21 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostIPC), "host-ipc", "Use the host's ipc namespace.")
 	command.Flags().StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
-	command.Flags().StringVar(&(sa.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")
 	command.Flags().MarkHidden("parallelism")
 	command.Flags().MarkHidden("completions")
-	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(sa.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
 
 	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-
-	command.Flags().StringArrayVarP(&(sa.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
-	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
-	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface) error {

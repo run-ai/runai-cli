@@ -82,7 +82,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 	// command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
 	// command.Flags().StringVar(&(submitArgs.NodeName), "nodename", "", "Enforce node affinity by setting a nodeName label")
-	command.Flags().StringVar(&submitArgs.Command, "command", "", "Run this command on container start. Use together with --args.")
+	// command.Flags().StringVar(&submitArgs.Command, "command", "", "Run this command on container start. Use together with --args.")
 	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "the number of processes to run the distributed training.")
 
 	submitArgs.addCommonFlags(command)
@@ -96,9 +96,8 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	Command         string `yaml:"command"`
-	NodeName        string `yaml:"nodeName,omitempty"`
-	NumberProcesses int    `yaml:"numProcesses"` // --workers
+	// Command         string `yaml:"command"`
+	NumberProcesses int `yaml:"numProcesses"` // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
