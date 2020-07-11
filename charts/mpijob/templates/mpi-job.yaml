@@ -1,3 +1,20 @@
+# Not using concat to support previous version of helm
+{{- $combinedVolume := list }}
+{{- range $volume := (.Values.volume | default list) }}
+{{- $combinedVolume = append $combinedVolume $volume }}
+{{- end}}
+{{- range $volume := (.Values.volumeDefault | default list) }}
+{{- $combinedVolume = append $combinedVolume $volume }}
+{{- end}}
+# Not using concat to support previous version of helm
+{{- $combinedPorts := list }}
+{{- range $port := (.Values.ports | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+{{- range $port := (.Values.portsDefault | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+
 apiVersion: kubeflow.org/v1alpha2
 kind: MPIJob
 metadata:
@@ -18,6 +35,17 @@ metadata:
     priorityClassName: "build"
     {{- end}}
 spec:
+  {{- if .Values.node_type }}
+  nodeSelector:
+    run.ai/type: {{ .Values.node_type }}
+  {{- end}}
+  securityContext:
+    {{- if .Values.runAsUser }}
+    runAsUser: {{ .Values.runAsUser }}
+    {{- end}}
+    {{- if .Values.runAsGroup }}
+    runAsGroup: {{ .Values.runAsGroup }}
+  {{- end }}
   slotsPerWorker: 1
   cleanPodPolicy: Running
   mpiReplicaSpecs:
@@ -35,21 +63,28 @@ spec:
           nodeSelector:
             run.ai/type: {{ .Values.node_type }}
           {{- end}}
-          {{- if .Values.nodeName}}
-          nodeName: {{ .Values.nodeName }}
-          {{- end }}
           schedulerName: runai-scheduler
           containers:
             - image: "{{ .Values.image }}"
               name: mpi
-              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              {{- if .Values.localImage}}
+              imagePullPolicy: Never
+              {{- else if .Values.alwaysPullImage }}
+              imagePullPolicy: Always
+              {{- end }}
+              {{- if .Values.workingDir }}
+              workingDir: {{ .Values.workingDir }}
+              {{- end}}
               command:
-                - "sh"
-                - "-c"
-                - "{{ .Values.command }}"
+              {{ range $index, $command := .Values.command }}
+              - {{ quote $command }}
+              {{- end}}
               args:
               {{ range $index, $arg := .Values.args }}
               - {{ quote $arg }}
+              {{- end}}
+              {{- if .Values.workingDir }}
+              workingDir: {{ .Values.workingDir }}
               {{- end}}
               resources:
                 requests:
@@ -59,6 +94,31 @@ spec:
                   {{- if .Values.memory}}
                   memory: {{ .Values.memory }}
                   {{- end }}
+              volumeMounts:
+                {{- range $index, $volume := $combinedVolume}}
+                {{ $parts := split ":" $volume }}
+                - mountPath: {{ $parts._1 }}
+                  name: "volume-{{ $index }}"
+                  {{- if eq $parts._2 "ro" }}
+                  readOnly: true
+                {{- end}}
+                {{- end }}
+                {{- if .Values.shm }}
+                - mountPath: /dev/shm
+                  name: dshm
+                {{- end }}
+              ports:
+                {{- range $port := $combinedPorts}}
+                # float will be the type when it's not quoted
+                {{- if kindIs "float64" $port }}
+                - protocol: 'TCP'
+                  containerPort: {{$port}}
+                {{- else }}
+                {{ $parts := split ":" $port }}
+                - protocol: 'TCP'
+                  containerPort: {{ $parts._1 | default $parts._0 }}
+                  {{- end}}
+                {{- end}}
               env:
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
@@ -71,6 +131,19 @@ spec:
                 - name: {{ quote $parts._0 }}
                   value: {{ quote $parts._1}}
                 {{- end }}
+          volumes:
+            {{- range $index, $volume := $combinedVolume}}
+            {{ $parts := split ":" $volume }}
+            - name: "volume-{{ $index }}"
+              hostPath:
+                path: {{ $parts._0 }}
+                type: Directory
+            {{- end }}
+            {{- if .Values.shm }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+    {{- end }}
     Worker:
       replicas: {{ .Values.numProcesses }}
       template:
@@ -81,9 +154,10 @@ spec:
             user: {{ .Values.user }}
             {{- end }}
         spec:
-          {{- if .Values.nodeName}}
-          nodeName: {{ .Values.nodeName }}
-          {{- end }}
+          {{- if .Values.node_type }}
+          nodeSelector:
+            run.ai/type: {{ .Values.node_type }}
+          {{- end}}
           schedulerName: runai-scheduler
           containers:
             - image: "{{ .Values.image }}"

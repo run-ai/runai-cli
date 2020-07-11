@@ -78,6 +78,17 @@ type submitArgs struct {
 	Memory              string   `yaml:"memory,omitempty"`
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
+
+	AlwaysPullImage  *bool    `yaml:"alwaysPullImage,omitempty"`
+	Volumes          []string `yaml:"volume,omitempty"`
+	WorkingDir       string   `yaml:"workingDir,omitempty"`
+	RunAsUser        string   `yaml:"runAsUser,omitempty"`
+	RunAsGroup       string   `yaml:"runAsGroup,omitempty"`
+	RunAsCurrentUser bool
+	Command          []string `yaml:"command"`
+	LocalImage       *bool    `yaml:"localImage,omitempty"`
+	LargeShm         *bool    `yaml:"shm,omitempty"`
+	Ports            []string `yaml:"ports,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -173,6 +184,14 @@ func (s *submitArgs) transform() (err error) {
 		}
 		log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
 	}
+
+	if s.RunAsCurrentUser {
+		currentUser, err := user.Current()
+		if err == nil {
+			s.RunAsUser = currentUser.Uid
+			s.RunAsGroup = currentUser.Gid
+		}
+	}
 	return nil
 }
 
@@ -232,6 +251,16 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
 	command.Flags().MarkHidden("dry-run")
 
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
+	command.Flags().StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
+	command.Flags().StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
+	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
+	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
+	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
+	command.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
+	command.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
 }
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client) {

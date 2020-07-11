@@ -72,21 +72,8 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		},
 	}
 
-	// Tensorboard
-	// command.Flags().BoolVar(&submitArgs.UseTensorboard, "tensorboard", false, "enable tensorboard")
-
-	// msg := "the docker image for tensorboard"
-	// command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
-	// command.Flags().MarkDeprecated("tensorboardImage", "please use --tensorboard-image instead")
-	// command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
-
-	// command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
-	// command.Flags().StringVar(&(submitArgs.NodeName), "nodename", "", "Enforce node affinity by setting a nodeName label")
-	command.Flags().StringVar(&submitArgs.Command, "command", "", "Run this command on container start. Use together with --args.")
 	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "the number of processes to run the distributed training.")
-
 	submitArgs.addCommonFlags(command)
-
 	return command
 
 }
@@ -96,9 +83,7 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	Command         string `yaml:"command"`
-	NodeName        string `yaml:"nodeName,omitempty"`
-	NumberProcesses int    `yaml:"numProcesses"` // --workers
+	NumberProcesses int `yaml:"numProcesses"` // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
