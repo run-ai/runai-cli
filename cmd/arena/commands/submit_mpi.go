@@ -20,6 +20,7 @@ import (
 	"path"
 
 	"github.com/kubeflow/arena/pkg/client"
+	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -27,7 +28,7 @@ import (
 )
 
 const (
-	SubmitMpiCommand = "submitmpi"
+	SubmitMpiCommand = "submit-mpi"
 )
 
 var (
@@ -43,9 +44,8 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     SubmitMpiCommand + " [NAME]",
-		Short:   "Submit a Runai MPI job.",
+		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
-		Hidden:  true,
 		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
@@ -146,7 +146,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Cl
 		return err
 	}
 
-	fmt.Printf("The job '%s' has been submitted successfully\n", name)
-	fmt.Printf("You can run `runai get %s --type %s -p %s` to check the job status\n", name, submitArgs.Mode, submitArgs.Project)
+	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
+	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 	return nil
 }

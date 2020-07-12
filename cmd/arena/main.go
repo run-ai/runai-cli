@@ -26,14 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	indexOfMPI    = 2
-	indexOfSubmit = 1
-)
-
 func main() {
-	setSubmitMpiCommandIfNeeded()
-
 	if isPProfEnabled() {
 		cpuf, err := os.Create("/tmp/cpu_profile")
 		if err != nil {
@@ -96,15 +89,4 @@ func isTraceEnabled() (enable bool) {
 	}
 
 	return
-}
-
-// This method is used in order to hide "runai submit mpi" command - it was added this way in order to not change the way we run runai jobs "runai submit"
-// Probably in the future this part will be removed.
-func setSubmitMpiCommandIfNeeded() {
-	if len(os.Args) > indexOfMPI && os.Args[indexOfSubmit] == "submit" && os.Args[indexOfMPI] == "mpi" {
-		os.Args[1] = commands.SubmitMpiCommand
-		copy(os.Args[indexOfMPI:], os.Args[indexOfMPI+1:]) // Shift a[i+1:] left one index.
-		os.Args[len(os.Args)-1] = ""                       // Erase last element (write zero value).
-		os.Args = os.Args[:len(os.Args)-1]                 // Truncate slice.
-	}
 }

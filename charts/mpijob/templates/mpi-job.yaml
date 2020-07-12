@@ -131,6 +131,8 @@ spec:
                 - name: {{ quote $parts._0 }}
                   value: {{ quote $parts._1}}
                 {{- end }}
+                - name: RUNAI_MPI_NUM_WORKERS
+                  value: "{{ .Values.numProcesses }}"
           volumes:
             {{- range $index, $volume := $combinedVolume}}
             {{ $parts := split ":" $volume }}
