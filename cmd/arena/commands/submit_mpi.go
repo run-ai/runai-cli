@@ -72,7 +72,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "Number of  distributed training processes.")
+	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "Number of distributed training processes.")
 	submitArgs.addCommonFlags(command)
 	return command
 
