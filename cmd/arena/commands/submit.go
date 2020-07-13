@@ -100,6 +100,8 @@ type submitArgs struct {
 	LargeShm         *bool             `yaml:"shm,omitempty"`
 	Ports            []string          `yaml:"ports,omitempty"`
 	Labels           map[string]string `yaml:"labels,omitempty"`
+	HostIPC          *bool             `yaml:"hostIPC,omitempty"`
+	HostNetwork      *bool             `yaml:"hostNetwork,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -207,6 +209,8 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
 	command.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
 	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job (otherwise use the default template if exists).")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.HostIPC), "host-ipc", "Use the host's ipc namespace.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.HostNetwork), "host-network", "Use the host's network stack inside the container.")
 }
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) {

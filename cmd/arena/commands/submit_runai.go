@@ -159,14 +159,12 @@ type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
 	submitArgs       `yaml:",inline"`
-	HostIPC          *bool  `yaml:"hostIPC,omitempty"`
 	GPUInt           *int   `yaml:"gpuInt,omitempty"`
 	GPUFraction      string `yaml:"gpuFraction,omitempty"`
 	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
 	ServiceType      string `yaml:"serviceType,omitempty"`
 	Elastic          *bool  `yaml:"elastic,omitempty"`
 	NumberProcesses  int    `yaml:"numProcesses"` // --workers
-	HostNetwork      *bool  `yaml:"hostNetwork,omitempty"`
 	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Completions      *int   `yaml:"completions,omitempty"`
 	Parallelism      *int   `yaml:"parallelism,omitempty"`
@@ -211,12 +209,10 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 // add flags to submit spark args
 func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostIPC), "host-ipc", "Use the host's ipc namespace.")
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")
 	command.Flags().MarkHidden("parallelism")

@@ -48,13 +48,6 @@ spec:
   nodeSelector:
     run.ai/type: {{ .Values.node_type }}
   {{- end}}
-  securityContext:
-    {{- if .Values.runAsUser }}
-    runAsUser: {{ .Values.runAsUser }}
-    {{- end}}
-    {{- if .Values.runAsGroup }}
-    runAsGroup: {{ .Values.runAsGroup }}
-  {{- end }}
   slotsPerWorker: 1
   cleanPodPolicy: Running
   mpiReplicaSpecs:
@@ -72,6 +65,15 @@ spec:
           nodeSelector:
             run.ai/type: {{ .Values.node_type }}
           {{- end}}
+          hostIPC: {{ .Values.hostIPC }}
+          hostNetwork: {{ .Values.hostNetwork }}
+          securityContext:
+          {{- if .Values.runAsUser }}
+          runAsUser: {{ .Values.runAsUser }}
+          {{- end}}
+          {{- if .Values.runAsGroup }}
+          runAsGroup: {{ .Values.runAsGroup }}
+          {{- end }}
           schedulerName: runai-scheduler
           containers:
             - image: "{{ .Values.image }}"
