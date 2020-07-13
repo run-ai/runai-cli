@@ -6,32 +6,27 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 var (
 	runaiChart       string
 	ttlAfterFinished *time.Duration
-	configArg        string
 )
 
 const (
 	defaultRunaiTrainingType = "runai"
-	runaiNamespace           = "runai"
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -57,17 +52,8 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			clientset := kubeClient.GetClientset()
-
-			submitArgs.setCommonRun(cmd, args, kubeClient)
-
-			index, err := getJobIndex(clientset)
-
-			if err != nil {
-				log.Debug("Could not get job index. Will not set a label.")
-			} else {
-				submitArgs.Labels = make(map[string]string)
-				submitArgs.Labels["runai/job-index"] = index
-			}
+			configValues := ""
+			submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
 
 			if ttlAfterFinished != nil {
 				ttlSeconds := int(math.Round(ttlAfterFinished.Seconds()))
@@ -79,7 +65,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
-			err = submitRunaiJob(args, submitArgs, clientset)
+			err = submitRunaiJob(args, submitArgs, clientset, &configValues)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -152,50 +138,6 @@ func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
 	}
 }
 
-func getJobIndex(clientset kubernetes.Interface) (string, error) {
-	for true {
-		index, shouldTryAgain, err := tryGetJobIndexOnce(clientset)
-
-		if index != "" || !shouldTryAgain {
-			return index, err
-		}
-	}
-
-	return "", nil
-}
-
-func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
-	var (
-		indexKey      = "index"
-		configMapName = "runai-cli-index"
-	)
-
-	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(configMapName, metav1.GetOptions{})
-
-	// If configmap does not exists than cannot get a job index for the job
-	if err != nil {
-		return "", false, err
-	}
-
-	lastIndex, err := strconv.Atoi(configMap.Data[indexKey])
-
-	if err != nil {
-		return "", false, err
-	}
-
-	newIndex := fmt.Sprintf("%d", lastIndex+1)
-	configMap.Data[indexKey] = newIndex
-
-	_, err = clientset.CoreV1().ConfigMaps(runaiNamespace).Update(configMap)
-
-	// Might be someone already updated this configmap. Try the process again.
-	if err != nil {
-		return "", true, err
-	}
-
-	return newIndex, false, nil
-}
-
 func getTokenFromJupyterLogs(logs string) (string, error) {
 	re, err := regexp.Compile(`\?token=(.*)\n`)
 	if err != nil {
@@ -217,18 +159,17 @@ type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
 	submitArgs       `yaml:",inline"`
-	HostIPC          *bool             `yaml:"hostIPC,omitempty"`
-	GPUInt           *int              `yaml:"gpuInt,omitempty"`
-	GPUFraction      string            `yaml:"gpuFraction,omitempty"`
-	GPUFractionFixed string            `yaml:"gpuFractionFixed,omitempty"`
-	ServiceType      string            `yaml:"serviceType,omitempty"`
-	Elastic          *bool             `yaml:"elastic,omitempty"`
-	NumberProcesses  int               `yaml:"numProcesses"` // --workers
-	HostNetwork      *bool             `yaml:"hostNetwork,omitempty"`
-	TTL              *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
-	Completions      *int              `yaml:"completions,omitempty"`
-	Parallelism      *int              `yaml:"parallelism,omitempty"`
-	Labels           map[string]string `yaml:"labels,omitempty"`
+	HostIPC          *bool  `yaml:"hostIPC,omitempty"`
+	GPUInt           *int   `yaml:"gpuInt,omitempty"`
+	GPUFraction      string `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
+	ServiceType      string `yaml:"serviceType,omitempty"`
+	Elastic          *bool  `yaml:"elastic,omitempty"`
+	NumberProcesses  int    `yaml:"numProcesses"` // --workers
+	HostNetwork      *bool  `yaml:"hostNetwork,omitempty"`
+	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Completions      *int   `yaml:"completions,omitempty"`
+	Parallelism      *int   `yaml:"parallelism,omitempty"`
 	IsJupyter        bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 }
@@ -283,43 +224,20 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
 
-	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface) error {
-	configs := clusterConfig.NewClusterConfigs(clientset)
-
-	var configToUse *clusterConfig.ClusterConfig
-	var err error
-	if configArg == "" {
-		configToUse, err = configs.GetClusterDefaultConfig()
-	} else {
-		configToUse, err = configs.GetClusterConfig(configArg)
-		if configToUse == nil {
-			return fmt.Errorf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
-		}
-	}
-
+func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, configValues *string) error {
 	if submitArgs.Completions == nil && submitArgs.Parallelism != nil {
 		// Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
 		return fmt.Errorf("if the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)")
 	}
 
+	err := handleRequestedGPUs(submitArgs)
 	if err != nil {
 		return err
 	}
 
-	configValues := ""
-	if configToUse != nil {
-		configValues = configToUse.Values
-	}
-
-	err = handleRequestedGPUs(submitArgs)
-	if err != nil {
-		return err
-	}
-
-	err = workflow.SubmitJob(submitArgs.Name, defaultRunaiTrainingType, submitArgs.Namespace, submitArgs, configValues, runaiChart, clientset, dryRun)
+	err = workflow.SubmitJob(submitArgs.Name, defaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}

@@ -18,14 +18,23 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strconv"
 	"strings"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
+	"github.com/kubeflow/arena/pkg/clusterConfig"
+	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	runaiNamespace = "runai"
 )
 
 var (
@@ -38,6 +47,7 @@ var (
 	dataset     []string
 	dataDirs    []string
 	annotations []string
+	configArg   string
 )
 
 // The common parts of the submitAthd
@@ -85,10 +95,11 @@ type submitArgs struct {
 	RunAsUser        string   `yaml:"runAsUser,omitempty"`
 	RunAsGroup       string   `yaml:"runAsGroup,omitempty"`
 	RunAsCurrentUser bool
-	Command          []string `yaml:"command"`
-	LocalImage       *bool    `yaml:"localImage,omitempty"`
-	LargeShm         *bool    `yaml:"shm,omitempty"`
-	Ports            []string `yaml:"ports,omitempty"`
+	Command          []string          `yaml:"command"`
+	LocalImage       *bool             `yaml:"localImage,omitempty"`
+	LargeShm         *bool             `yaml:"shm,omitempty"`
+	Ports            []string          `yaml:"ports,omitempty"`
+	Labels           map[string]string `yaml:"labels,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -126,72 +137,6 @@ func (s submitArgs) check() error {
 	// 	return fmt.Errorf("--dataDir must be set")
 	// }
 
-	return nil
-}
-
-// transform common parts of submitArgs
-func (s *submitArgs) transform() (err error) {
-	// 1. handle data dirs
-	log.Debugf("dataDir: %v", dataDirs)
-	if len(dataDirs) > 0 {
-		s.DataDirs = []dataDirVolume{}
-		for i, dataDir := range dataDirs {
-			hostPath, containerPath, err := util.ParseDataDirRaw(dataDir)
-			if err != nil {
-				return err
-			}
-			s.DataDirs = append(s.DataDirs, dataDirVolume{
-				Name:          fmt.Sprintf("training-data-%d", i),
-				HostPath:      hostPath,
-				ContainerPath: containerPath,
-			})
-		}
-	}
-	// 2. handle data sets
-	log.Debugf("dataset: %v", dataset)
-	if len(dataset) > 0 {
-		err = util.ValidateDatasets(dataset)
-		if err != nil {
-			return err
-		}
-		s.DataSet = transformSliceToMap(dataset, ":")
-	}
-	// 3. handle annotations
-	log.Debugf("annotations: %v", annotations)
-	if len(annotations) > 0 {
-		s.Annotations = transformSliceToMap(annotations, "=")
-		if value, _ := s.Annotations[aliyunENIAnnotation]; value == "true" {
-			s.UseENI = true
-		}
-	}
-	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
-	callerUid := os.Getuid()
-	callerGid := os.Getgid()
-	log.Debugf("Current user: %d", callerUid)
-	if callerUid != 0 {
-		// only config PodSecurityContext for non-root user
-		s.IsNonRoot = true
-		s.PodSecurityContext.RunAsNonRoot = true
-		s.PodSecurityContext.RunAsUser = int64(callerUid)
-		s.PodSecurityContext.RunAsGroup = int64(callerGid)
-		groups, _ := os.Getgroups()
-		if len(groups) > 0 {
-			sg := make([]int64, 0)
-			for _, group := range groups {
-				sg = append(sg, int64(group))
-			}
-			s.PodSecurityContext.SupplementalGroups = sg
-		}
-		log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
-	}
-
-	if s.RunAsCurrentUser {
-		currentUser, err := user.Current()
-		if err == nil {
-			s.RunAsUser = currentUser.Uid
-			s.RunAsGroup = currentUser.Gid
-		}
-	}
 	return nil
 }
 
@@ -261,9 +206,10 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
 	command.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
+	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 }
 
-func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client) {
+func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) {
 	util.SetLogLevel(logLevel)
 	if nameParameter == "" && len(args) >= 1 {
 		name = args[0]
@@ -300,6 +246,45 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 
 	submitArgs.Namespace = namespaceInfo.Namespace
 	submitArgs.Project = namespaceInfo.ProjectName
+	if submitArgs.RunAsCurrentUser {
+		currentUser, err := user.Current()
+		if err == nil {
+			submitArgs.RunAsUser = currentUser.Uid
+			submitArgs.RunAsGroup = currentUser.Gid
+		}
+	}
+
+	index, err := getJobIndex(clientset)
+
+	if err != nil {
+		log.Debug("Could not get job index. Will not set a label.")
+	} else {
+		submitArgs.Labels = make(map[string]string)
+		submitArgs.Labels["runai/job-index"] = index
+	}
+
+	if err != nil {
+		log.Debug("Could not get job index. Will not set a label.")
+	} else {
+		submitArgs.Labels = make(map[string]string)
+		submitArgs.Labels["runai/job-index"] = index
+	}
+
+	configs := clusterConfig.NewClusterConfigs(clientset)
+	var configToUse *clusterConfig.ClusterConfig
+	if configArg == "" {
+		configToUse, err = configs.GetClusterDefaultConfig()
+	} else {
+		configToUse, err = configs.GetClusterConfig(configArg)
+		if configToUse == nil {
+			fmt.Println("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
+			os.Exit(1)
+		}
+	}
+
+	if configToUse != nil {
+		*configValues = configToUse.Values
+	}
 }
 
 var (
@@ -325,4 +310,48 @@ func transformSliceToMap(sets []string, split string) (valuesMap map[string]stri
 	}
 
 	return valuesMap
+}
+
+func getJobIndex(clientset kubernetes.Interface) (string, error) {
+	for true {
+		index, shouldTryAgain, err := tryGetJobIndexOnce(clientset)
+
+		if index != "" || !shouldTryAgain {
+			return index, err
+		}
+	}
+
+	return "", nil
+}
+
+func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
+	var (
+		indexKey      = "index"
+		configMapName = "runai-cli-index"
+	)
+
+	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(configMapName, metav1.GetOptions{})
+
+	// If configmap does not exists than cannot get a job index for the job
+	if err != nil {
+		return "", false, err
+	}
+
+	lastIndex, err := strconv.Atoi(configMap.Data[indexKey])
+
+	if err != nil {
+		return "", false, err
+	}
+
+	newIndex := fmt.Sprintf("%d", lastIndex+1)
+	configMap.Data[indexKey] = newIndex
+
+	_, err = clientset.CoreV1().ConfigMaps(runaiNamespace).Update(configMap)
+
+	// Might be someone already updated this configmap. Try the process again.
+	if err != nil {
+		return "", true, err
+	}
+
+	return newIndex, false, nil
 }

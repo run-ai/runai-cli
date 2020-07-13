@@ -34,6 +34,15 @@ metadata:
     {{- if .Values.interactive }}
     priorityClassName: "build"
     {{- end}}
+    labels:
+    {{- include "charts.label-addition" . | indent 4 }}
+    {{- if and .Values.interactive .Values.isPreemptible }}
+    {{- end}}
+    {{- if .Values.labels }}
+    {{- range $key, $val := .Values.labels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}
+    {{- end}}
 spec:
   {{- if .Values.node_type }}
   nodeSelector:

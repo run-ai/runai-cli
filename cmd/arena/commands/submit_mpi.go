@@ -62,9 +62,11 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 			mpijob_chart = path.Join(chartPath, "mpijob")
 
-			submitArgs.setCommonRun(cmd, args, kubeClient)
+			clientset := kubeClient.GetClientset()
+			configValues := ""
+			submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
 
-			err = submitMPIJob(args, &submitArgs, kubeClient)
+			err = submitMPIJob(args, &submitArgs, kubeClient, &configValues)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -122,7 +124,7 @@ func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 }
 
 // Submit MPIJob
-func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Client) (err error) {
+func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Client, configValues *string) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
@@ -141,7 +143,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Cl
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, submitArgs.Namespace, submitArgs, "", mpijob_chart, client.GetClientset(), dryRun)
+	err = workflow.SubmitJob(name, submitArgs.Mode, submitArgs.Namespace, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
 	if err != nil {
 		return err
 	}
