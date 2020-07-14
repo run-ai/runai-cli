@@ -465,6 +465,10 @@ func (tt *MPIJobTrainer) isMPIJob(name, ns string, item mpi.MPIJob) bool {
 }
 
 func (tt *MPIJobTrainer) isPodOfMPIJob(name, ns string, item v1.Pod) bool {
+	if item.Namespace != ns {
+		return false
+	}
+
 	if value, ok := item.ObjectMeta.Labels["mpi_job_name"]; ok && (value == name) {
 		return true
 	}
@@ -576,6 +580,7 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string) (jobs []TrainingJob,
 			jobInfo.Name = mpijob.Name
 		}
 
+		jobInfo.Namespace = mpijob.Namespace
 		job, err := tt.getTrainingJobInfo(jobInfo.Name, jobInfo.Namespace, mpijob, podsList.Items, jobsList.Items)
 		if err != nil {
 			return jobs, err
