@@ -77,7 +77,7 @@ func (mj *MPIJob) CreatedByCLI() bool {
 }
 
 func (mj *MPIJob) GetPodGroupName() string {
-	if len(mj.chiefPod.Labels) == 0 {
+	if len(mj.chiefPod.Annotations) == 0 {
 		return ""
 	}
 
@@ -85,7 +85,7 @@ func (mj *MPIJob) GetPodGroupName() string {
 		return ""
 	}
 
-	return mj.chiefPod.Labels[PodGroupLabel]
+	return mj.chiefPod.Annotations[PodGroupAnnotationForPod]
 }
 
 func (mj *MPIJob) Image() (status string) {
@@ -464,7 +464,7 @@ func (tt *MPIJobTrainer) isMPIJob(name, ns string, item mpi.MPIJob) bool {
 	return true
 }
 
-func (tt *MPIJobTrainer) isPodOfMPiJob(name, ns string, item v1.Pod) bool {
+func (tt *MPIJobTrainer) isPodOfMPIJob(name, ns string, item v1.Pod) bool {
 	if value, ok := item.ObjectMeta.Labels["mpi_job_name"]; ok && (value == name) {
 		return true
 	}
@@ -626,7 +626,7 @@ func (m *MPIJob) GetPriorityClass() string {
 func getPodsOfMPIJob(name string, namespace string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
 	pods = []v1.Pod{}
 	for _, item := range podList {
-		if !tt.isPodOfMPiJob(name, namespace, item) {
+		if !tt.isPodOfMPIJob(name, namespace, item) {
 			continue
 		}
 		if tt.isChiefPod(item) && item.CreationTimestamp.After(chiefPod.CreationTimestamp.Time) {

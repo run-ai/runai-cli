@@ -252,8 +252,8 @@ func (rj *RunaiJob) StartTime() *metav1.Time {
 func (rj *RunaiJob) GetPodGroupName() string {
 	pod := rj.chiefPod
 	if pod == nil {
-		if len(rj.jobMetadata.Labels) > 0 {
-			return rj.jobMetadata.Labels[PodGroupLabel]
+		if len(rj.jobMetadata.Annotations) > 0 {
+			return rj.jobMetadata.Annotations[PodGroupAnnotationForPod]
 		}
 		return ""
 	}
@@ -263,7 +263,7 @@ func (rj *RunaiJob) GetPodGroupName() string {
 	}
 
 	if len(pod.Labels) > 0 {
-		return pod.Labels[PodGroupLabel]
+		return pod.Annotations[PodGroupAnnotationForPod]
 	}
 	return ""
 }

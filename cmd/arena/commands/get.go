@@ -52,7 +52,7 @@ var (
 )
 
 const (
-	PodGroupLabel = "pod-group-name"
+	PodGroupAnnotationForPod = "pod-group-name"
 )
 
 // NewGetCommand
