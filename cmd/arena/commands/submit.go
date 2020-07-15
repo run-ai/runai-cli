@@ -281,7 +281,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	} else {
 		configToUse, err = configs.GetClusterConfig(configArg)
 		if configToUse == nil {
-			fmt.Println("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
+			fmt.Printf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
 			os.Exit(1)
 		}
 	}
