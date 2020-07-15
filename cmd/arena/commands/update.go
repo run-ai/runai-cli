@@ -152,7 +152,7 @@ func downloadFile(url string, assetName string) (string, error) {
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
 
-	log.Infof("Downloaded arena archive to %s", downloadPath)
+	log.Infof("Downloaded archive to %s", downloadPath)
 
 	return downloadPath, nil
 }
