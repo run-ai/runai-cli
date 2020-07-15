@@ -129,7 +129,11 @@ func searchTrainingJob(kubeClient *client.Client, jobName string, trainingType s
 	} else {
 		jobs, err := getTrainingJobsByName(kubeClient, jobName, namespaceInfo)
 		if err != nil {
-			if len(getTrainingTypes(jobName, namespaceInfo.Namespace)) > 0 {
+			traningTypes, err := getTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
+			if err != nil {
+				return nil, err
+			}
+			if len(traningTypes) > 0 {
 				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s'.",
 					jobName,
 					config.CLIName,

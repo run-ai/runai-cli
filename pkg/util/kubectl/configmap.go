@@ -24,7 +24,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const JOB_CONFIG_LABEL = "createdBy=arena"
+const JOB_CONFIG_LABEL_KEY = "createdBy"
+const JOB_CONFIG_LABEL_VALUES = "arena"
 
 /**
 *
@@ -33,7 +34,7 @@ const JOB_CONFIG_LABEL = "createdBy=arena"
 func ListAppConfigMaps(clientset *kubernetes.Clientset, namespace string, trainingTypes []string) (jobs []types.TrainingJobInfo, err error) {
 
 	jobs = []types.TrainingJobInfo{}
-	cmList, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: JOB_CONFIG_LABEL})
+	cmList, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", JOB_CONFIG_LABEL_KEY, JOB_CONFIG_LABEL_VALUES)})
 	if err != nil {
 		return nil, err
 	}

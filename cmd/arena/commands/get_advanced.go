@@ -22,22 +22,29 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 /*
 * get App Configs by name, which is created by arena
  */
-func getTrainingTypes(name, namespace string) (cms []string) {
+func getTrainingTypes(name, namespace string, clientset kubernetes.Interface) (cms []string, err error) {
+	configMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return []string{}, err
+	}
 	cms = []string{}
 	for _, trainingType := range knownTrainingTypes {
-		found := isTrainingConfigExist(name, trainingType, namespace)
-		if found {
-			cms = append(cms, trainingType)
+		configName := fmt.Sprintf("%s-%s", name, trainingType)
+		for _, configMap := range configMaps.Items {
+			if configName == configMap.Name {
+				cms = append(cms, trainingType)
+			}
 		}
 	}
 
-	return cms
+	return cms, nil
 }
 
 /*
