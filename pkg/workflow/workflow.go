@@ -10,6 +10,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -78,8 +79,8 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	jobName := GetJobName(name, trainingType)
 
 	if !dryRun {
-		found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
-		if found {
+		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
+		if found != nil && found.Name != "" {
 			return fmt.Errorf("The job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
 		}
 	}
@@ -129,17 +130,16 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
-	err = kubectl.CreateAppConfigmap(jobName,
+	err = createConfigMap(
+		jobName,
 		namespace,
 		valueFileName,
 		envValuesFile,
 		appInfoFileName,
 		chartName,
-		chartVersion)
-	if err != nil {
-		return err
-	}
-	err = kubectl.LabelAppConfigmap(jobName, namespace, kubectl.JOB_CONFIG_LABEL)
+		chartVersion,
+		clientset,
+	)
 	if err != nil {
 		return err
 	}
@@ -189,4 +189,51 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	return nil
+}
+
+func createConfigMap(jobName string,
+	namespace string,
+	valueFileName string,
+	envValuesFile string,
+	appInfoFileName string,
+	chartName string,
+	chartVersion string, clientset kubernetes.Interface) error {
+	lables := make(map[string]string)
+	data := make(map[string]string)
+	data["app"] = appInfoFileName
+	data[chartName] = chartVersion
+	if envValuesFile != "" {
+		envFileContent, err := ioutil.ReadFile(envValuesFile)
+		if err != nil {
+			return err
+		}
+
+		data["env-values"] = string(envFileContent)
+	}
+
+	valuesFileContent, err := ioutil.ReadFile(valueFileName)
+	if err != nil {
+		return err
+	}
+
+	data["values"] = string(valuesFileContent)
+
+	appFileContent, err := ioutil.ReadFile(appInfoFileName)
+	if err != nil {
+		return err
+	}
+
+	data["app"] = string(appFileContent)
+
+	lables[kubectl.JOB_CONFIG_LABEL_KEY] = kubectl.JOB_CONFIG_LABEL_VALUES
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   jobName,
+			Labels: lables,
+		},
+		Data: data,
+	}
+
+	_, err = clientset.CoreV1().ConfigMaps(namespace).Create(&configMap)
+	return err
 }

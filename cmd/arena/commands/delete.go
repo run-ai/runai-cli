@@ -79,7 +79,12 @@ func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo 
 
 	// 2. Handle training jobs created by arena
 	if trainingType == "" {
-		trainingTypes = getTrainingTypes(jobName, namespaceInfo.Namespace)
+		trainingTypes, err = getTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
+
+		if err != nil {
+			return err
+		}
+
 		if len(trainingTypes) == 0 {
 			runaiTrainer := NewRunaiTrainer(*kubeClient)
 			job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
