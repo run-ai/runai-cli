@@ -168,7 +168,7 @@ type submitRunaiJobArgs struct {
 	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Completions      *int   `yaml:"completions,omitempty"`
 	Parallelism      *int   `yaml:"parallelism,omitempty"`
-	BackoffLimit     *int   `yaml:"parallelism,omitempty"`
+	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
 	IsJupyter        bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 }
