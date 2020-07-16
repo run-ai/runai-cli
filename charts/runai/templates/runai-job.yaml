@@ -52,6 +52,9 @@ spec:
     {{- if .Values.completions }}
   completions: {{ .Values.completions }}
     {{- end }}
+    {{- if .Values.backoffLimit }}
+  backoffLimit: {{ .Values.backoffLimit }}
+    {{- end }}
   {{- end }}
   template:
     metadata:
