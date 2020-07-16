@@ -168,6 +168,7 @@ type submitRunaiJobArgs struct {
 	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Completions      *int   `yaml:"completions,omitempty"`
 	Parallelism      *int   `yaml:"parallelism,omitempty"`
+	BackoffLimit     *int   `yaml:"parallelism,omitempty"`
 	IsJupyter        bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 }
@@ -215,6 +216,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")
+	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of retries before considering this job as failed (does not apply to jobs marked as --interactive.")
 	command.Flags().MarkHidden("parallelism")
 	command.Flags().MarkHidden("completions")
 
