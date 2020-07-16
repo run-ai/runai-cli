@@ -16,6 +16,8 @@ package commands
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
@@ -204,19 +206,31 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 		return float64(mj.allocatedGPU)
 	}
 	for _, pod := range mj.pods {
-		mj.allocatedGPU += int64(gpuInActivePod(pod))
+		if pod.Status.Phase == v1.PodRunning {
+			mj.allocatedGPU += int64(gpuInActivePod(pod))
+		}
 	}
 	return float64(mj.allocatedGPU)
 }
 
 // Get the hostIP of the chief Pod
 func (mj *MPIJob) HostIPOfChief() (hostIP string) {
-	hostIP = "N/A"
-	if mj.GetStatus() == "RUNNING" {
-		hostIP = mj.chiefPod.Status.HostIP
+	nodeUsedByJob := map[string]bool{}
+	var nodeNamesArray []string
+	for _, pod := range mj.pods {
+		if _, found := nodeUsedByJob[pod.Spec.NodeName]; !found {
+			nodeUsedByJob[pod.Spec.NodeName] = true
+			nodeNamesArray = append(nodeNamesArray, pod.Spec.NodeName)
+		}
 	}
 
-	return hostIP
+	if len(nodeNamesArray) == 0 {
+		return "N/A"
+	}
+
+	sort.Strings(nodeNamesArray)
+	nodeNamesUsedByJob := strings.Join(nodeNamesArray, ", ")
+	return nodeNamesUsedByJob
 }
 
 func (mj *MPIJob) Namespace() string {
