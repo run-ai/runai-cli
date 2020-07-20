@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -98,6 +99,11 @@ func (mj *MPIJob) Image() (status string) {
 func (mj *MPIJob) GetStatus() string {
 	if mj.mpijob.Name == "" {
 		return "UNKNOWN"
+	}
+	if value, exists := mj.mpijob.Annotations["unschedulable"]; exists {
+		if value == "true" {
+			return "Unschedulable"
+		}
 	}
 
 	return string(mj.chiefPod.Status.Phase)
@@ -191,13 +197,15 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 
 // Requested GPU count of the Job
 func (mj *MPIJob) RequestedGPU() float64 {
-	if mj.requestedGPU > 0 {
-		return float64(mj.requestedGPU)
+	value, found := mj.mpijob.Annotations["totalGPUs"]
+	if !found {
+		return 0
 	}
-	for _, pod := range mj.pods {
-		mj.requestedGPU += gpuInPod(pod)
+	f, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0
 	}
-	return float64(mj.requestedGPU)
+	return f
 }
 
 // Requested GPU count of the Job
@@ -620,11 +628,11 @@ func hasCondition(status common.JobStatus, condType common.JobConditionType) boo
 }
 
 func (mj *MPIJob) Project() string {
-	return mj.chiefPod.ObjectMeta.Labels["project"]
+	return mj.mpijob.ObjectMeta.Labels["project"]
 }
 
 func (mj *MPIJob) User() string {
-	return mj.chiefPod.ObjectMeta.Labels["user"]
+	return mj.mpijob.ObjectMeta.Labels["user"]
 }
 
 // Get all the pods of the Training Job

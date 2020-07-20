@@ -86,6 +86,7 @@ type submitMPIJobArgs struct {
 
 	// for tensorboard
 	NumberProcesses int `yaml:"numProcesses"` // --workers
+	TotalGPUs       int `yaml:"totalGpus"`    // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
@@ -93,6 +94,7 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	if err != nil {
 		return err
 	}
+	submitArgs.TotalGPUs = submitArgs.NumberProcesses * int(*submitArgs.GPU)
 	return nil
 }
 
