@@ -393,6 +393,7 @@ func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
 	return runaiTrainType
 }
 
+// Prefer address type by this order: external dns, external ip, internal dns, internal ip
 func (rt *RunaiTrainer) getNodeIp() (string, error) {
 	nodesList, err := rt.client.CoreV1().Nodes().List(metav1.ListOptions{})
 
@@ -400,65 +401,91 @@ func (rt *RunaiTrainer) getNodeIp() (string, error) {
 		return "", err
 	}
 
-	if len(nodesList.Items) != 0 {
-		for _, node := range nodesList.Items {
-			addresses := node.Status.Addresses
-			for _, address := range addresses {
-				if address.Type == v1.NodeInternalIP {
-					return address.Address, nil
-				}
+	var externalDNS, internalDNS, externalIP, internalIP string
+
+	for _, node := range nodesList.Items {
+		addresses := node.Status.Addresses
+		for _, address := range addresses {
+			if address.Type == v1.NodeExternalDNS {
+				externalDNS = address.Address
+			} else if address.Type == v1.NodeExternalIP {
+				externalIP = address.Address
+			} else if address.Type == v1.NodeInternalDNS {
+				internalDNS = address.Address
+			} else if address.Type == v1.NodeInternalIP {
+				internalIP = address.Address
 			}
 		}
+		if len(externalDNS) != 0 {
+			return externalDNS, nil
+		} else if len(externalIP) != 0 {
+			return externalIP, nil
+		}
 	}
-
-	return "", nil
+	externalIPFromAnnotation := getExternalIPFromAnnotationHack(nodesList)
+	if externalIPFromAnnotation != "" {
+		return externalIPFromAnnotation, nil
+	} else  if len(internalDNS) != 0 {
+		return internalDNS, nil
+	} else {
+		return internalIP, nil
+	}
 }
 
-func getServiceEndpoints(nodeIp string, service v1.Service) []string {
+// The following is an intermediate patch to support cases where a node is not assigned an external IP by k8a although it has one available
+// Setting the annotation 'runai/external-node-ip' on the nodes will override internal addresses.
+func getExternalIPFromAnnotationHack(nodesList *v1.NodeList) string {
+	for _, node := range nodesList.Items {
+		if overrideExternalIP, found := node.Annotations["runai/external-node-ip"]; found {
+			return overrideExternalIP
+		}
+	}
+	return ""
+}
+
+func getServiceEndpoints(nodeIp string, service v1.Service) (urls []string) {
 	if service.Status.LoadBalancer.Ingress != nil && len(service.Status.LoadBalancer.Ingress) != 0 {
-		urls := []string{}
 		for _, port := range service.Spec.Ports {
-			serviceIp := service.Status.LoadBalancer.Ingress[0].IP
+			serviceHostOrIP := ingressHostOrIP(service)
 			var url string
 			if port.Port == 80 {
-				url = fmt.Sprintf("http://%s", serviceIp)
+				url = fmt.Sprintf("http://%s", serviceHostOrIP)
 			} else if port.Port == 443 {
-				url = fmt.Sprintf("https://%s", serviceIp)
+				url = fmt.Sprintf("https://%s", serviceHostOrIP)
 			} else {
-				url = fmt.Sprintf("http://%s:%d", serviceIp, port.Port)
+				url = fmt.Sprintf("http://%s:%d", serviceHostOrIP, port.Port)
 			}
 			urls = append(urls, url)
 		}
-
-		return urls
-	}
-
-	if service.Spec.Type == v1.ServiceTypeLoadBalancer {
-		return []string{"<pending>"}
-	}
-
-	if service.Spec.Type == v1.ServiceTypeNodePort {
-		urls := []string{}
+	} else if service.Spec.Type == v1.ServiceTypeLoadBalancer {
+		urls = []string{"<pending>"}
+	} else if service.Spec.Type == v1.ServiceTypeNodePort {
 		for _, port := range service.Spec.Ports {
 			urls = append(urls, fmt.Sprintf("http://%s:%d", nodeIp, port.NodePort))
 		}
-
-		return urls
 	}
-
-	return []string{}
+	return urls
 }
 
-func getServiceUrls(ingressService *v1.Service, ingresses []extensionsv1.Ingress, nodeIp string, service v1.Service) []string {
-	ingressEndpoints := []string{}
-	if ingressService != nil {
-		ingressEndpoints = getServiceEndpoints(nodeIp, *ingressService)
+func ingressHostOrIP(service v1.Service) (hostOrIp string){
+	if service.Status.LoadBalancer.Ingress != nil && len(service.Status.LoadBalancer.Ingress) != 0 {
+		if service.Status.LoadBalancer.Ingress[0].Hostname != "" {
+			hostOrIp = service.Status.LoadBalancer.Ingress[0].Hostname
+		} else {
+			hostOrIp = service.Status.LoadBalancer.Ingress[0].IP
+		}
 	}
+	return hostOrIp
+}
 
+func getServiceUrls(ingressService *v1.Service, ingresses []extensionsv1.Ingress, nodeIp string, service v1.Service) (urls []string) {
 	if service.Spec.Type == v1.ServiceTypeNodePort || service.Spec.Type == v1.ServiceTypeLoadBalancer {
-		return getServiceEndpoints(nodeIp, service)
+		urls = getServiceEndpoints(nodeIp, service)
 	} else {
-		urls := []string{}
+		var ingressEndpoints []string
+		if ingressService != nil {
+			ingressEndpoints = getServiceEndpoints(nodeIp, *ingressService)
+		}
 		for _, servicePortConfig := range service.Spec.Ports {
 			servicePort := servicePortConfig.Port
 			ingressPathForService := getIngressPathOfService(ingresses, service, servicePort)
@@ -475,11 +502,8 @@ func getServiceUrls(ingressService *v1.Service, ingresses []extensionsv1.Ingress
 				urls = append(urls, fmt.Sprintf("%s%s", ingressEndpoint, *ingressPathForService))
 			}
 		}
-
-		return urls
 	}
-
-	return []string{}
+	return urls
 }
 
 func getLastCreatedPod(pods []v1.Pod) *v1.Pod {
