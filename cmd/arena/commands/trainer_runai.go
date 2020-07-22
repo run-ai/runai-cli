@@ -95,7 +95,8 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	if len(runaiJobList.Items) > 0 {
-		podSpecJob := cmdTypes.PodTemplateJobFromJob(runaiJobList.Items[0])
+		job := runaiJobList.Items[0]
+		podSpecJob := cmdTypes.GetPodTemplateJob(job.ObjectMeta, job.Spec.Template, job.Spec.Selector, cmdTypes.ResourceTypeJob)
 		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
@@ -115,7 +116,8 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	if len(runaiStatufulsetList.Items) > 0 {
-		podSpecJob := cmdTypes.PodTemplateJobFromStatefulSet(runaiStatufulsetList.Items[0])
+		job := runaiStatufulsetList.Items[0]
+		podSpecJob := cmdTypes.GetPodTemplateJob(job.ObjectMeta, job.Spec.Template, job.Spec.Selector, cmdTypes.ResourceTypeStatefulSet)
 		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
@@ -135,7 +137,8 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	}
 
 	if len(runaiReplicaSetsList.Items) > 0 {
-		podSpecJob := cmdTypes.PodTemplateJobFromReplicaSet(runaiReplicaSetsList.Items[0])
+		job := runaiReplicaSetsList.Items[0]
+		podSpecJob := cmdTypes.GetPodTemplateJob(job.ObjectMeta, job.Spec.Template, job.Spec.Selector, cmdTypes.ResourceTypeReplicaset)
 		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
@@ -189,8 +192,9 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 		Name:         podSpecJob.Name,
 	}
 
+	status := getTrainingStatus(podSpecJob.Annotations, lastCreatedPod)
 	jobType := rt.getJobType(&podSpecJob)
-	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, podSpecJob.ExtraStatus), nil
+	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status), nil
 }
 
 func (rt *RunaiTrainer) isRunaiPodObject(metadata metav1.ObjectMeta, template v1.PodTemplateSpec) bool {
@@ -313,21 +317,21 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
 
 	for _, job := range runaiJobList.Items {
-		podTemplateJob := cmdTypes.PodTemplateJobFromJob(job)
+		podTemplateJob := cmdTypes.GetPodTemplateJob(job.ObjectMeta, job.Spec.Template, job.Spec.Selector, cmdTypes.ResourceTypeJob)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
 	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
-		podTemplateJob := cmdTypes.PodTemplateJobFromStatefulSet(statefulSet)
+		podTemplateJob := cmdTypes.GetPodTemplateJob(statefulSet.ObjectMeta, statefulSet.Spec.Template, statefulSet.Spec.Selector, cmdTypes.ResourceTypeStatefulSet)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
 	replicasetJobs, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{})
 
 	for _, replicaSet := range replicasetJobs.Items {
-		podTemplateJob := cmdTypes.PodTemplateJobFromReplicaSet(replicaSet)
+		podTemplateJob := cmdTypes.GetPodTemplateJob(replicaSet.ObjectMeta, replicaSet.Spec.Template, replicaSet.Spec.Selector, cmdTypes.ResourceTypeReplicaset)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
@@ -363,7 +367,6 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		}
 
 		jobInfo.jobType = rt.getJobType(job)
-		jobInfo.status = job.ExtraStatus
 	}
 
 	for _, jobInfo := range jobPodMap {
@@ -376,8 +379,8 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 				serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
 			}
 		}
-
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, jobInfo.status))
+		status := getTrainingStatus(jobInfo.ObjectMeta.Annotations, lastCreatedPod)
+		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, status))
 	}
 
 	return runaiJobs, nil
