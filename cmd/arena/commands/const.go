@@ -37,7 +37,6 @@ const (
 	nodeLabelRole = "kubernetes.io/role"
 
 	workloadCalculatedStatus = "runai-calculated-status"
-	unschedulableStatus      = "unschedulable"
 
 	aliyunENIAnnotation = "k8s.aliyun.com/eni"
 )

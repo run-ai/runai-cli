@@ -41,12 +41,6 @@ func getAllTrainingTypes(kubeClient *client.Client) []string {
 }
 
 func getTrainingStatus(trainingAnnotations map[string]string, chiefPod *v1.Pod) string {
-	if value, exists := trainingAnnotations[unschedulableStatus]; exists {
-		if value == "true" {
-			return "Unschedulable"
-		}
-	}
-
 	if value, exists := trainingAnnotations[workloadCalculatedStatus]; exists {
 		return value
 	}
