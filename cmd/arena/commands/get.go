@@ -127,8 +127,8 @@ func searchTrainingJob(kubeClient *client.Client, jobName string, trainingType s
 				knownTrainingTypes)
 		}
 	} else {
-		jobs, err := getTrainingJobsByName(kubeClient, jobName, namespaceInfo)
-		if err != nil {
+		jobs, errorGetByName := getTrainingJobsByName(kubeClient, jobName, namespaceInfo)
+		if errorGetByName != nil {
 			traningTypes, err := getTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
 			if err != nil {
 				return nil, err
@@ -139,7 +139,7 @@ func searchTrainingJob(kubeClient *client.Client, jobName string, trainingType s
 					config.CLIName,
 					jobName)
 			}
-			return nil, err
+			return nil, errorGetByName
 		}
 
 		if len(jobs) > 1 {
