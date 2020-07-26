@@ -168,7 +168,6 @@ spec:
           - name: "volume-{{ $index }}"
             hostPath:
               path: {{ $parts._0 }}
-              type: Directory
         {{- end }}
         {{- if .Values.shm }}
           - name: dshm
