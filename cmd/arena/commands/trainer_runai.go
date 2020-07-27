@@ -190,7 +190,7 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 	}
 
 	jobType := rt.getJobType(&podSpecJob)
-	status := getTrainingStatus(podSpecJob.Annotations, lastCreatedPod, podSpecJob.ExtraStatus)
+	status := getTrainingStatus(podSpecJob.ObjectMeta.Annotations, lastCreatedPod, podSpecJob.ExtraStatus)
 	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status), nil
 }
 
