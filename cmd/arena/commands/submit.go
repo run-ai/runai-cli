@@ -89,19 +89,20 @@ type submitArgs struct {
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
 
-	AlwaysPullImage  *bool    `yaml:"alwaysPullImage,omitempty"`
-	Volumes          []string `yaml:"volume,omitempty"`
-	WorkingDir       string   `yaml:"workingDir,omitempty"`
-	RunAsUser        string   `yaml:"runAsUser,omitempty"`
-	RunAsGroup       string   `yaml:"runAsGroup,omitempty"`
-	RunAsCurrentUser bool
-	Command          []string          `yaml:"command"`
-	LocalImage       *bool             `yaml:"localImage,omitempty"`
-	LargeShm         *bool             `yaml:"shm,omitempty"`
-	Ports            []string          `yaml:"ports,omitempty"`
-	Labels           map[string]string `yaml:"labels,omitempty"`
-	HostIPC          *bool             `yaml:"hostIPC,omitempty"`
-	HostNetwork      *bool             `yaml:"hostNetwork,omitempty"`
+	AlwaysPullImage    *bool    `yaml:"alwaysPullImage,omitempty"`
+	Volumes            []string `yaml:"volume,omitempty"`
+	WorkingDir         string   `yaml:"workingDir,omitempty"`
+	RunAsUser          string   `yaml:"runAsUser,omitempty"`
+	RunAsGroup         string   `yaml:"runAsGroup,omitempty"`
+	SupplementalGroups []int    `yaml:"supplementalGroups,omitempty"`
+	RunAsCurrentUser   bool
+	Command            []string          `yaml:"command"`
+	LocalImage         *bool             `yaml:"localImage,omitempty"`
+	LargeShm           *bool             `yaml:"shm,omitempty"`
+	Ports              []string          `yaml:"ports,omitempty"`
+	Labels             map[string]string `yaml:"labels,omitempty"`
+	HostIPC            *bool             `yaml:"hostIPC,omitempty"`
+	HostNetwork        *bool             `yaml:"hostNetwork,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -253,6 +254,15 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if submitArgs.RunAsCurrentUser {
 		currentUser, err := user.Current()
 		if err == nil {
+			groups, err := currentUser.GroupIds()
+			if err == nil {
+				for _, group := range groups {
+					groupID, _ := strconv.Atoi(group)
+					submitArgs.SupplementalGroups = append(submitArgs.SupplementalGroups, groupID)
+				}
+			} else {
+				log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
+			}
 			submitArgs.RunAsUser = currentUser.Uid
 			submitArgs.RunAsGroup = currentUser.Gid
 		}

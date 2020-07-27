@@ -50,6 +50,9 @@ user: ""
 
 # runAsUser: 5000
 # runAsGroup: 6000
+# supplementalGroups:
+#  - 0
+#  - 1
 
 # will be overriden by cli argument
 # volume:

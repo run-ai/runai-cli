@@ -88,6 +88,10 @@ spec:
         {{- if .Values.runAsGroup }}
         runAsGroup: {{ .Values.runAsGroup }}
         {{- end }}
+        {{- if .Values.supplementalGroups }}
+        supplementalGroups:
+{{ toYaml .Values.supplementalGroups | indent 10}}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}
           command:
