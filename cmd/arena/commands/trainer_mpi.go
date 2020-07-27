@@ -97,7 +97,7 @@ func (mj *MPIJob) Image() string {
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (mj *MPIJob) GetStatus() string {
-	return getTrainingStatus(mj.mpijob.Annotations, &mj.chiefPod)
+	return getTrainingStatus(mj.mpijob.Annotations, &mj.chiefPod, "")
 }
 
 // Get the start time

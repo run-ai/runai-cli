@@ -5,7 +5,6 @@ import (
 	"time"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -74,15 +73,6 @@ func (rj *RunaiJob) Resources() []cmdTypes.Resource {
 
 func (rj *RunaiJob) getStatus() v1.PodPhase {
 	return rj.chiefPod.Status.Phase
-}
-
-func hasPodReadyCondition(conditions []corev1.PodCondition) bool {
-	for _, condition := range conditions {
-		if condition.Type == corev1.PodReady && condition.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-	return false
 }
 
 // Get the Status of the Job: RUNNING, PENDING,
