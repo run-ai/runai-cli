@@ -36,6 +36,8 @@ const (
 	// nodeLabelRole specifies the role of a node
 	nodeLabelRole = "kubernetes.io/role"
 
+	workloadCalculatedStatus = "runai-calculated-status"
+
 	aliyunENIAnnotation = "k8s.aliyun.com/eni"
 )
 

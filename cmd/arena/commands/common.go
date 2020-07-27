@@ -39,3 +39,14 @@ func getAllTrainingTypes(kubeClient *client.Client) []string {
 
 	return trainerNames
 }
+
+func getTrainingStatus(trainingAnnotations map[string]string, chiefPod *v1.Pod) string {
+	if value, exists := trainingAnnotations[workloadCalculatedStatus]; exists {
+		return value
+	}
+
+	if chiefPod == nil {
+		return "Unknown"
+	}
+	return string(chiefPod.Status.Phase)
+}

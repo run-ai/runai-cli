@@ -281,7 +281,7 @@ func TestJobIsNotInteractive(t *testing.T) {
 
 	jobType := jobs[0].Trainer()
 	if jobType != "Train" {
-		t.Errorf("Expected job to be interactive, got %s", jobType)
+		t.Errorf("Expected job to be train, got %s", jobType)
 	}
 }
 

@@ -91,22 +91,13 @@ func (mj *MPIJob) GetPodGroupName() string {
 	return mj.chiefPod.Annotations[PodGroupAnnotationForPod]
 }
 
-func (mj *MPIJob) Image() (status string) {
+func (mj *MPIJob) Image() string {
 	return mj.mpijob.Annotations["image"]
 }
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (mj *MPIJob) GetStatus() string {
-	if mj.mpijob.Name == "" {
-		return "UNKNOWN"
-	}
-	if value, exists := mj.mpijob.Annotations["unschedulable"]; exists {
-		if value == "true" {
-			return "Unschedulable"
-		}
-	}
-
-	return string(mj.chiefPod.Status.Phase)
+	return getTrainingStatus(mj.mpijob.Annotations, &mj.chiefPod)
 }
 
 // Get the start time
