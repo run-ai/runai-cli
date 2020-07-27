@@ -58,3 +58,7 @@ user: ""
 # will be merged with cli argument
 # volumeDefault:
 #   - /path/on/host:/dest/container/path
+
+persistentVolumes: []
+#  - my-storage-class:1Gi:/dest/container/path  #  --> with non-default storage class
+#  - :2Gi:/dest/container/path2                 #  --> with default storage class
