@@ -94,9 +94,11 @@ spec:
           {{ range $index, $command := .Values.command }}
           - {{ quote $command }}
           {{- end}}
+          {{- if .Values.args}}
           args: 
           {{ range $index, $arg := .Values.args }}
           - {{ quote $arg }}
+          {{- end}}
           {{- end}}
           image: {{ .Values.image }}
           {{- if .Values.localImage}}
@@ -126,10 +128,10 @@ spec:
               memory: {{ .Values.memory }}
               {{- end }}
           volumeMounts:
-            {{- range $index, $volume := $combinedVolume}}
+            {{- range $index, $volume := $combinedVolume -}}
             {{ $parts := split ":" $volume }}
             - mountPath: {{ $parts._1 }}
-              name: "volume-{{ $index }}"
+              name: {{ include "host.path.volume.name" (dict "volumeIndex" $index) }}
             {{- if eq $parts._2 "ro" }}
               readOnly: true
             {{- end}}
@@ -137,6 +139,16 @@ spec:
             {{- if .Values.shm }}
             - mountPath: /dev/shm
               name: dshm
+            {{- end }}
+            {{- if .Values.persistentVolumes }}
+            {{- range $index, $pv := .Values.persistentVolumes }}
+            {{- $pvParts := split ":" $pv }}
+            - mountPath: {{ $pvParts._2 }}
+              name: {{ include "pvc.volume.name" (dict "volumeIndex" $index) }}
+              {{- if and (eq (len $pvParts) 4) (eq $pvParts._3 "ro")}}
+              readOnly: true
+              {{- end }}
+            {{- end }}
             {{- end }}
           ports:
             {{- range $port := $combinedPorts}}
@@ -161,16 +173,24 @@ spec:
             {{ $parts := split "=" $env }}
             - name: {{ quote $parts._0 }}
               value: {{ quote $parts._1}}
-            {{- end }}  
+            {{- end }}
+      {{- if or (.Values.persistentVolumes) (gt (len $combinedVolume) 0) }}
       volumes:
-        {{- range $index, $volume := $combinedVolume}}
+        {{- range $index, $volume := $combinedVolume -}}
         {{ $parts := split ":" $volume }}
-          - name: "volume-{{ $index }}"
-            hostPath:
-              path: {{ $parts._0 }}
+        - name: {{ include "host.path.volume.name" (dict "volumeIndex" $index) }}
+          hostPath:
+            path: {{ $parts._0 }}
         {{- end }}
         {{- if .Values.shm }}
-          - name: dshm
-            emptyDir:
-              medium: Memory
+        - name: dshm
+          emptyDir:
+            medium: Memory
         {{- end }}
+        {{- $releaseName := .Release.Name }}
+        {{- range $index, $pv := .Values.persistentVolumes }}
+        - name: {{ include "pvc.volume.name" (dict "volumeIndex" $index) }}
+          persistentVolumeClaim:
+            claimName: {{ include "pvc.claim.name" (dict "pvcIndex" $index "releaseName" $releaseName) }}
+        {{- end }}
+      {{- end }}

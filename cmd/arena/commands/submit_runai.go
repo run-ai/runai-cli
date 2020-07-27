@@ -158,19 +158,20 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	submitArgs       `yaml:",inline"`
-	GPUInt           *int   `yaml:"gpuInt,omitempty"`
-	GPUFraction      string `yaml:"gpuFraction,omitempty"`
-	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
-	ServiceType      string `yaml:"serviceType,omitempty"`
-	Elastic          *bool  `yaml:"elastic,omitempty"`
-	NumberProcesses  int    `yaml:"numProcesses"` // --workers
-	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
-	Completions      *int   `yaml:"completions,omitempty"`
-	Parallelism      *int   `yaml:"parallelism,omitempty"`
-	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
-	IsJupyter        bool
-	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
+	submitArgs        `yaml:",inline"`
+	GPUInt            *int   `yaml:"gpuInt,omitempty"`
+	GPUFraction       string `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed  string `yaml:"gpuFractionFixed,omitempty"`
+	ServiceType       string `yaml:"serviceType,omitempty"`
+	Elastic           *bool  `yaml:"elastic,omitempty"`
+	NumberProcesses   int    `yaml:"numProcesses"` // --workers
+	TTL               *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Completions       *int   `yaml:"completions,omitempty"`
+	Parallelism       *int   `yaml:"parallelism,omitempty"`
+	BackoffLimit      *int   `yaml:"backoffLimit,omitempty"`
+	IsJupyter         bool
+	IsPreemptible     *bool    `yaml:"isPreemptible,omitempty"`
+	PersistentVolumes []string `yaml:"persistentVolumes,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -219,9 +220,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
 	command.Flags().MarkHidden("parallelism")
 	command.Flags().MarkHidden("completions")
-
+	command.Flags().StringArrayVar(&(sa.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
-
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, configValues *string) error {
@@ -231,6 +231,11 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	}
 
 	err := handleRequestedGPUs(submitArgs)
+	if err != nil {
+		return err
+	}
+
+	err = handlePvc(submitArgs)
 	if err != nil {
 		return err
 	}

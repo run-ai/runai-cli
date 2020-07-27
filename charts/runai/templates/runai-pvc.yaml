@@ -1,0 +1,22 @@
+{{ $dot := . }}
+{{- $releaseName := .Release.Name }}
+{{- range $index, $pv := .Values.persistentVolumes }}
+{{ $pvParts := split ":" $pv }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "pvc.claim.name" (dict "pvcIndex" $index "releaseName" $releaseName) }}
+  labels:
+  {{- include "charts.label-addition" $dot | indent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $pvParts._1 }}
+  volumeMode: Filesystem
+  {{- if len $pvParts._0 }}
+  storageClassName: {{ $pvParts._0 }}
+  {{- end }}
+{{- end }}
