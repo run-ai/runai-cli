@@ -264,7 +264,7 @@ func printSingleJobHelper(client kubernetes.Interface, job TrainingJob, printArg
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", pod.Name,
-			strings.ToUpper(string(pod.Status.Phase)),
+			strings.ToUpper(job.GetStatus()),
 			strings.ToUpper(job.Trainer()),
 			util.ShortHumanDuration(job.Age()),
 			hostIP)
