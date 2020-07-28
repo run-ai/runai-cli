@@ -20,6 +20,7 @@ import (
 	"os/user"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
@@ -254,12 +255,9 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if submitArgs.RunAsCurrentUser {
 		currentUser, err := user.Current()
 		if err == nil {
-			groups, err := currentUser.GroupIds()
+			groups, err := syscall.Getgroups()
 			if err == nil {
-				for _, group := range groups {
-					groupID, _ := strconv.Atoi(group)
-					submitArgs.SupplementalGroups = append(submitArgs.SupplementalGroups, groupID)
-				}
+				submitArgs.SupplementalGroups = groups
 			} else {
 				log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
 			}
