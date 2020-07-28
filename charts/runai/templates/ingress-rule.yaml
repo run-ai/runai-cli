@@ -19,7 +19,7 @@ spec:
     - http:
         paths:
           {{- if eq (len $combinedPorts) 1}}
-          - path: /{{ .Release.Name }}
+          - path: /{{ $.Values.project }}-{{ .Release.Name }}
             backend:
               {{ $port := index $combinedPorts 0 }}
               serviceName: {{ .Release.Name }}
@@ -32,13 +32,13 @@ spec:
           {{-  else}}
           {{- range $port := $combinedPorts }}
             {{- if kindIs "float64" $port }}
-          - path: /{{ $.Release.Name }}-{{ $port }}
+          - path: /{{ $.Values.project }}-{{ $.Release.Name }}-{{ $port }}
             backend:
               serviceName: {{ $.Release.Name }}
               servicePort: {{ $port }}
             {{- else}}
           {{ $parts := split ":" $port}}
-          - path: /{{ $.Release.Name }}-{{ $parts._0 }}
+          - path: /{{ $.Values.project }}-{{ $.Release.Name }}-{{ $parts._0 }}
             backend:
               serviceName: {{ $.Release.Name }}
               servicePort: {{ $parts._0 }}
