@@ -26,6 +26,7 @@ import (
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
+	"github.com/kubeflow/arena/pkg/templates"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -250,9 +251,15 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		os.Exit(1)
 	}
 
+	clusterConfig, err := clusterConfig.GetClusterConfig(clientset)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	submitArgs.Namespace = namespaceInfo.Namespace
 	submitArgs.Project = namespaceInfo.ProjectName
-	if submitArgs.RunAsCurrentUser {
+	if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser {
 		currentUser, err := user.Current()
 		if err == nil {
 			groups, err := syscall.Getgroups()
@@ -282,12 +289,12 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		submitArgs.Labels["runai/job-index"] = index
 	}
 
-	configs := clusterConfig.NewClusterConfigs(clientset)
-	var configToUse *clusterConfig.ClusterConfig
+	configs := templates.NewTemplates(clientset)
+	var configToUse *templates.Template
 	if configArg == "" {
-		configToUse, err = configs.GetClusterDefaultConfig()
+		configToUse, err = configs.GetDefaultTemplate()
 	} else {
-		configToUse, err = configs.GetClusterConfig(configArg)
+		configToUse, err = configs.GetTemplate(configArg)
 		if configToUse == nil {
 			fmt.Printf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
 			os.Exit(1)

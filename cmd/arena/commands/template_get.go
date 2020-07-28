@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/clusterConfig"
+	"github.com/kubeflow/arena/pkg/templates"
 	"github.com/spf13/cobra"
 )
 
@@ -26,9 +26,9 @@ func NewTemplateGetCommand() *cobra.Command {
 			}
 			clientset := kubeClient.GetClientset()
 
-			clusterConfigs := clusterConfig.NewClusterConfigs(clientset)
+			templates := templates.NewTemplates(clientset)
 			configName := args[0]
-			config, err := clusterConfigs.GetClusterConfig(configName)
+			config, err := templates.GetTemplate(configName)
 
 			if err != nil {
 				fmt.Println(err)

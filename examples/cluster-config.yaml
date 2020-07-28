@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  config: |
+    enforceRunAsUser: true
+kind: ConfigMap
+metadata:
+  name: cluster-config
+  namespace: runai
+  labels:
+    runai/cluster-config: "true"

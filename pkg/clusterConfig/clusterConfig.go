@@ -3,90 +3,46 @@ package clusterConfig
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 type ClusterConfig struct {
-	Name        string
-	Description string
-	Values      string
-	IsDefault   bool
+	EnforceRunAsUser bool `yaml:"enforceRunAsUser"`
 }
 
-type ClusterConfigs struct {
-	clientset kubernetes.Interface
-}
-
-var (
-	runaiNamespace         = "runai"
-	runaiConfigLabel       = "runai/template"
-	runaiNameLabel         = "runai/name"
-	runaiDefaultAnnotation = "runai/default"
+const (
+	runaiNamespace          = "runai"
+	runaiClusterConfigLabel = "runai/cluster-config"
+	runaiConfigKey          = "config"
 )
 
-func NewClusterConfigs(clientset kubernetes.Interface) ClusterConfigs {
-	return ClusterConfigs{
-		clientset: clientset,
-	}
-}
-
-func (cg *ClusterConfigs) ListClusterConfigs() ([]ClusterConfig, error) {
-	configsList, err := cg.clientset.CoreV1().ConfigMaps(runaiNamespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=true", runaiConfigLabel),
+func GetClusterConfig(clientset kubernetes.Interface) (*ClusterConfig, error) {
+	configsList, err := clientset.CoreV1().ConfigMaps(runaiNamespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=true", runaiClusterConfigLabel),
 	})
 
 	if err != nil {
-		return []ClusterConfig{}, err
-	}
-
-	log.Debugf("Found %d templates", len(configsList.Items))
-
-	clusterConfigs := []ClusterConfig{}
-
-	for _, config := range configsList.Items {
-		clusterConfig := ClusterConfig{}
-
-		if config.Annotations != nil {
-			clusterConfig.IsDefault = config.Annotations[runaiDefaultAnnotation] == "true"
-		}
-
-		clusterConfig.Name = config.Data["name"]
-		clusterConfig.Description = config.Data["description"]
-		clusterConfig.Values = config.Data["values"]
-		clusterConfigs = append(clusterConfigs, clusterConfig)
-	}
-
-	return clusterConfigs, nil
-}
-
-func (cg *ClusterConfigs) GetClusterConfig(name string) (*ClusterConfig, error) {
-	configs, err := cg.ListClusterConfigs()
-	if err != nil {
 		return nil, err
 	}
 
-	for _, config := range configs {
-		if config.Name == name {
-			return &config, err
+	defaultConfig := ClusterConfig{}
+
+	if configsList == nil || len(configsList.Items) == 0 {
+		return &defaultConfig, nil
+	}
+
+	configMap := configsList.Items[0]
+
+	if configString, ok := configMap.Data[runaiConfigKey]; ok {
+		err := yaml.Unmarshal([]byte(configString), &defaultConfig)
+		if err != nil {
+			return &defaultConfig, err
+		} else {
+			return &defaultConfig, nil
 		}
+	} else {
+		return &defaultConfig, fmt.Errorf("Error reading cluster configuration, could not find %s key on configmap data", runaiConfigKey)
 	}
-
-	return nil, nil
-}
-
-func (cg *ClusterConfigs) GetClusterDefaultConfig() (*ClusterConfig, error) {
-	configs, err := cg.ListClusterConfigs()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, config := range configs {
-		if config.IsDefault {
-			return &config, err
-		}
-	}
-
-	return nil, nil
 }

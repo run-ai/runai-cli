@@ -6,7 +6,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/clusterConfig"
+	"github.com/kubeflow/arena/pkg/templates"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +22,8 @@ func NewTemplateListCommand() *cobra.Command {
 			}
 			clientset := kubeClient.GetClientset()
 
-			clusterConfigs := clusterConfig.NewClusterConfigs(clientset)
-			configs, err := clusterConfigs.ListClusterConfigs()
+			templates := templates.NewTemplates(clientset)
+			configs, err := templates.ListTemplates()
 
 			if err != nil {
 				fmt.Println(err)
@@ -37,13 +37,13 @@ func NewTemplateListCommand() *cobra.Command {
 	return command
 }
 
-func PrintTemplates(configs []clusterConfig.ClusterConfig) {
+func PrintTemplates(templates []templates.Template) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	labelField := []string{"NAME", "DESCRIPTION"}
 
 	PrintLine(w, labelField...)
 
-	for _, config := range configs {
+	for _, config := range templates {
 		configName := config.Name
 		if config.IsDefault {
 			configName = fmt.Sprintf("%s (default)", config.Name)
