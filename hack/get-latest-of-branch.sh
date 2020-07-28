@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Get branch to work on
-DEFAULT_BRANCH=runai-master
+DEFAULT_BRANCH=master
 if [ $# -eq 0 ] 
   then
     echo "Using default branch $DEFAULT_BRANCH"
