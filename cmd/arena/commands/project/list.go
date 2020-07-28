@@ -35,6 +35,7 @@ type ProjectInfo struct {
 	interactiveJobTimeLimitSecs string
 	nodeAffinityInteractive     string
 	nodeAffinityTraining        string
+	department                  string
 }
 
 type Queue struct {
@@ -102,7 +103,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
 			project.nodeAffinityInteractive = strings.Join(queue.Spec.NodeAffinityInteractiveTypes, ",")
 			project.nodeAffinityTraining = strings.Join(queue.Spec.NodeAffinityTrainTypes, ",")
-
+			project.department = queue.Spec.Department
 		}
 	}
 
@@ -130,7 +131,7 @@ func getSortedProjects(projects map[string]*ProjectInfo) []*ProjectInfo {
 func printProjects(infos []*ProjectInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	util.PrintLine(w, "NAME", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
+	util.PrintLine(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
 
 	for _, info := range infos {
 		deservedInfo := "deleted"
@@ -153,7 +154,7 @@ func printProjects(infos []*ProjectInfo) {
 			name = info.name
 		}
 
-		util.PrintLine(w, name, deservedInfo, interactiveJobTimeLimitFmt, info.nodeAffinityInteractive, info.nodeAffinityTraining)
+		util.PrintLine(w, name, info.department, deservedInfo, interactiveJobTimeLimitFmt, info.nodeAffinityInteractive, info.nodeAffinityTraining)
 	}
 
 	_ = w.Flush()
