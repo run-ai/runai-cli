@@ -179,7 +179,7 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		jupyterPort        = "8888"
 		jupyterImage       = "jupyter/scipy-notebook"
 		jupyterCommand     = "start-notebook.sh"
-		jupyterArgs        = "--NotebookApp.base_url=/%s"
+		jupyterArgs        = "--NotebookApp.base_url=/%s-%s"
 		jupyterServiceType = "portforward"
 	)
 
@@ -202,7 +202,7 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		log.Infof("Using default jupyter notebook command for using ingress service \"%s\"", jupyterCommand)
 	}
 	if len(sa.Args) == 0 && sa.ServiceType == "ingress" {
-		baseUrlArg := fmt.Sprintf(jupyterArgs, name)
+		baseUrlArg := fmt.Sprintf(jupyterArgs, sa.Project, sa.Name)
 		sa.Args = []string{baseUrlArg}
 		log.Infof("Using default jupyter notebook command argument for using ingress service \"%s\"", baseUrlArg)
 	}
