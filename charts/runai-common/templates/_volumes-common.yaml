@@ -1,0 +1,71 @@
+{{- define "runai-common.job.volume.mounts" }}
+
+# Not using concat to support previous version of helm
+{{- $combinedVolume := list }}
+{{- range $volume := (.Values.volume | default list) }}
+{{- $combinedVolume = append $combinedVolume $volume }}
+{{- end}}
+{{- range $volume := (.Values.volumeDefault | default list) }}
+{{- $combinedVolume = append $combinedVolume $volume }}
+{{- end}}
+
+{{- if or $combinedVolume .Values.shm .Values.persistentVolumes }}
+volumeMounts:
+  {{- range $index, $volume := $combinedVolume -}}
+  {{ $parts := split ":" $volume }}
+  - mountPath: {{ $parts._1 }}
+    name: {{ include "host.path.volume.name" (dict "volumeIndex" $index) }}
+    {{- if eq $parts._2 "ro" }}
+    readOnly: true
+  {{- end}}
+  {{- end }}
+  {{- if .Values.shm }}
+  - mountPath: /dev/shm
+    name: dshm
+  {{- end }}
+  {{- if .Values.persistentVolumes }}
+  {{- range $index, $pv := .Values.persistentVolumes }}
+  {{- $pvParts := split ":" $pv }}
+  - mountPath: {{ $pvParts._2 }}
+    name: {{ include "pvc.volume.name" (dict "volumeIndex" $index) }}
+    {{- if and (eq (len $pvParts) 4) (eq $pvParts._3 "ro")}}
+    readOnly: true
+  {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end -}}
+{{- end -}}
+
+
+{{- define "runai-common.job.volumes" }}
+
+# Not using concat to support previous version of helm
+  {{- $combinedVolume := list }}
+  {{- range $volume := (.Values.volume | default list) }}
+  {{- $combinedVolume = append $combinedVolume $volume }}
+  {{- end}}
+  {{- range $volume := (.Values.volumeDefault | default list) }}
+  {{- $combinedVolume = append $combinedVolume $volume }}
+  {{- end}}
+
+{{- if or (.Values.persistentVolumes) (gt (len $combinedVolume) 0) }}
+volumes:
+  {{- range $index, $volume := $combinedVolume -}}
+  {{ $parts := split ":" $volume }}
+  - name: {{ include "host.path.volume.name" (dict "volumeIndex" $index) }}
+    hostPath:
+      path: {{ $parts._0 }}
+  {{- end }}
+  {{- if .Values.shm }}
+  - name: dshm
+    emptyDir:
+      medium: Memory
+  {{- end }}
+  {{- range $index, $pv := .Values.persistentVolumes }}
+  - name: {{ include "pvc.volume.name" (dict "volumeIndex" $index) }}
+    persistentVolumeClaim:
+      claimName: {{ include "pvc.claim.name" (dict "pvcIndex" $index "releaseName" $.Release.Name) }}
+{{- end }}
+{{- end }}
+
+{{- end -}}

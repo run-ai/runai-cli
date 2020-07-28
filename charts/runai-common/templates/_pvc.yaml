@@ -1,14 +1,13 @@
-{{ $dot := . }}
-{{- $releaseName := .Release.Name }}
+{{- define "runai-common.pvc" }}
 {{- range $index, $pv := .Values.persistentVolumes }}
-{{ $pvParts := split ":" $pv }}
+{{- $pvParts := split ":" $pv }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "pvc.claim.name" (dict "pvcIndex" $index "releaseName" $releaseName) }}
+  name: {{ include "pvc.claim.name" (dict "pvcIndex" $index "releaseName" $.Release.Name) }}
   labels:
-  {{- include "charts.label-addition" $dot | indent 4 }}
+  {{- include "runai-common.charts.label-addition" $ | indent 4 }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -16,7 +15,8 @@ spec:
     requests:
       storage: {{ $pvParts._1 }}
   volumeMode: Filesystem
-  {{- if len $pvParts._0 }}
+    {{- if len $pvParts._0 }}
   storageClassName: {{ $pvParts._0 }}
+    {{- end }}
   {{- end }}
 {{- end }}

@@ -12,14 +12,14 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
 
 # Remove old version files
 if [ -d "${OLD_SCRIPT_FILES}" ]; then
-rm -rf ${OLD_SCRIPT_FILES}
+  rm -rf "${OLD_SCRIPT_FILES}"
 fi
 
 # Remove new version files
 if [ -d "${NEW_SCRIPT_FILES}" ]; then
-rm -rf ${NEW_SCRIPT_FILES}
+  rm -rf "${NEW_SCRIPT_FILES}"
 fi
 
-cp -R $SCRIPT_DIR $NEW_SCRIPT_FILES
+cp -R "$SCRIPT_DIR" "$NEW_SCRIPT_FILES"
 
-ln -sf ${NEW_SCRIPT_FILES}/${SCRIPT_NAME} /usr/local/bin/${SCRIPT_NAME}
+ln -sf "${NEW_SCRIPT_FILES}"/"${SCRIPT_NAME}" /usr/local/bin/"${SCRIPT_NAME}"
