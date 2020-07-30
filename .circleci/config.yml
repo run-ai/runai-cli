@@ -28,6 +28,9 @@ jobs:
         command: |
           helm dep update charts/runai --skip-refresh
           helm dep update charts/mpijob --skip-refresh
+    - restore_cache:
+        keys:
+          runai-cli-{{ .Branch }}-{{ checksum "go.sum" }}
     - run:
         name: build-mac
         command: |
@@ -46,6 +49,11 @@ jobs:
           - binaries
     - store_artifacts:
         path: workspace/binaries
+    - save_cache:
+        key: runai-cli-{{ .Branch }}-{{ checksum "go.sum" }}
+        paths:
+          - "/go/pkg/mod"
+          - "/root/.cache/go-build"
 
   push:
     executor: runai-executor

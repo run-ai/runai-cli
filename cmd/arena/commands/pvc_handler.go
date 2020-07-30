@@ -2,12 +2,22 @@ package commands
 
 import (
 	"fmt"
+	validate "github.com/kubeflow/arena/pkg/util"
 	"strings"
 )
 
 //input:
 //      [0]          [1]  [2]                [3]
 // --pvc StorageClass[optional]:Size:ContainerMountPath:AccessMode[optional]
+func HandleVolumesAndPvc(args *submitArgs) error {
+	 if err := handlePvc(args); err != nil {
+	 	return err
+	 } else if err := handleVolumes(args); err != nil {
+	 	return err
+	 }
+	return nil
+}
+
 func handlePvc(args *submitArgs) error {
 	var rebuiltDirectives []string
 	for _, mountDirective := range args.PersistentVolumes {
@@ -34,5 +44,22 @@ func splitDirectiveAndValidate(mountDirective string) ([]string, error) {
 	if len(mountDirectiveParts) == 3 {
 		mountDirectiveParts = append(mountDirectiveParts, "")
 	}
+	if err := validate.ValidateStorageClassName(mountDirectiveParts[0]); err != nil {
+		return nil, err
+	} else if err := validate.ValidateMountReadOnlyFlag(mountDirectiveParts[3]); err != nil {
+		return nil, err
+	} else if err := validate.ValidateStorageResourceRequest(mountDirectiveParts[1]); err != nil {
+		return nil, err
+	}
 	return mountDirectiveParts, nil
+}
+
+func handleVolumes(args *submitArgs) error {
+	for _, volumeDirective := range args.Volumes {
+		volumeDirectiveParts := strings.Split(volumeDirective, ":")
+		if len(volumeDirectiveParts) == 3 && volumeDirectiveParts[2] != "" {
+			return validate.ValidateMountReadOnlyFlag(volumeDirectiveParts[2])
+		}
+	}
+	return nil
 }

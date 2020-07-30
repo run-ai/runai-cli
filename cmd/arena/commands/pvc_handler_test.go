@@ -9,7 +9,7 @@ func TestNoPvcRequested(t *testing.T) {
 	args := &submitArgs{
 		PersistentVolumes: []string{},
 	}
-	err := handlePvc(args)
+	err := HandleVolumesAndPvc(args)
 
 	if err != nil {
 		t.Errorf("Unexpected error %+v", err)
@@ -27,7 +27,7 @@ func TestWrongDirectiveLength(t *testing.T) {
 }
 
 func assertWrongDirectiveLengthError(t *testing.T, args *submitArgs) {
-	err := handlePvc(args)
+	err := HandleVolumesAndPvc(args)
 	if err == nil {
 		t.Error("Expected to get 'wrong length of args in directive' error, but received non")
 	} else if !strings.Contains(err.Error(), "--pvc directives must be given in the form of") {
@@ -56,7 +56,7 @@ func TestNoContainerMountPathGiven(t *testing.T) {
 }
 
 func assertMissingMountPathError(t *testing.T, args *submitArgs) {
-	err := handlePvc(args)
+	err := HandleVolumesAndPvc(args)
 	if err == nil {
 		t.Error("Error expected when not passing container mount path")
 	} else if !strings.Contains(err.Error(), "container mount path must be specified") {
@@ -88,7 +88,7 @@ func TestNoCapacityGiven(t *testing.T) {
 }
 
 func assertMissingCapacityError(t *testing.T, args *submitArgs) {
-	err := handlePvc(args)
+	err := HandleVolumesAndPvc(args)
 	if err == nil {
 		t.Error("Expected to get a 'missing capacity' error")
 	} else if !strings.Contains(err.Error(), "persistent volume size must be specified") {
@@ -108,7 +108,7 @@ func TestGoodDirectives(t *testing.T) {
 			":2Gi:/path/to/mount6:ro",
 		},
 	}
-	err := handlePvc(args)
+	err := HandleVolumesAndPvc(args)
 	if err != nil {
 		t.Errorf("Unexpected error: %+v", err)
 	}
@@ -125,3 +125,30 @@ func assertPvDirective(t *testing.T, expected string, actual string) {
 		t.Errorf("Expected persistent volume directive '%s' but got '%s'", expected, actual)
 	}
 }
+
+func TestStorageClassValidation(t *testing.T) {
+	args := &submitArgs{PersistentVolumes: []string{"~oops:2Gi:path:ro"}}
+	assertValidation(t, args, "A Storage Class name must consist of")
+
+	args = &submitArgs{PersistentVolumes: []string{"/a:2Gi:path:ro"}}
+	assertValidation(t, args, "A Storage Class name must consist of")
+
+	args = &submitArgs{PersistentVolumes: []string{":/2Gi:path:ro"}}
+	assertValidation(t, args, "Badly formatted resource request")
+
+	args = &submitArgs{PersistentVolumes: []string{":2Gi~:path:ro"}}
+	assertValidation(t, args, "Badly formatted resource request")
+
+	args = &submitArgs{PersistentVolumes: []string{":2Gi:path:ra"}}
+	assertValidation(t, args, "invalid readonly directive given")
+}
+
+func assertValidation(t *testing.T, args *submitArgs, expectedErr string) {
+	err := HandleVolumesAndPvc(args)
+	if err == nil {
+		t.Errorf("Storage Class validation error expected")
+	} else if !strings.Contains(err.Error(), expectedErr) {
+		t.Errorf("Expected error message like '%s' but got '%s'", expectedErr, err.Error())
+	}
+}
+

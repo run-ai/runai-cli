@@ -38,6 +38,8 @@ var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
 
 var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
 
+var resourceRequestRegex = regexp.MustCompile("^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$")
+
 // ValidateJobName validates the job name, its length should less than 63, and match dns1123LabelFmt
 func ValidateJobName(value string) error {
 	if len(value) > JobMaxLength {
@@ -66,4 +68,26 @@ func ValidatePriorityClassName(name string) error {
 	}
 
 	return err
+}
+
+func ValidateStorageClassName(storageClassName string) error {
+	if storageClassName != "" && !dns1123LabelRegexp.MatchString(storageClassName) {
+		return fmt.Errorf("A Storage Class name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character")
+	}
+	return nil
+}
+
+func ValidateMountReadOnlyFlag(roFlag string) error {
+	if roFlag != "" && roFlag != "ro" {
+		return fmt.Errorf("invalid readonly directive given in params: %s. this directive may either be empty or ':ro'", roFlag)
+	}
+	return nil
+}
+
+func ValidateStorageResourceRequest(resourceRequest string) error {
+	if resourceRequest != "" && !resourceRequestRegex.MatchString(resourceRequest) {
+		return fmt.Errorf("Badly formatted resource request for volume size requierment.\nYou can read on how to request storage resorces here: " +
+			"https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#setting-requests-and-limits-for-local-ephemeral-storage")
+	}
+	return nil
 }

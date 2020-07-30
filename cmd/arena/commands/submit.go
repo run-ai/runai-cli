@@ -139,10 +139,6 @@ func (s submitArgs) check() error {
 		}
 	}
 
-	// if s.DataDir == "" {
-	// 	return fmt.Errorf("--dataDir must be set")
-	// }
-
 	return nil
 }
 
@@ -275,7 +271,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		}
 	}
 
-	err = handlePvc(submitArgs)
+	err = HandleVolumesAndPvc(submitArgs)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
