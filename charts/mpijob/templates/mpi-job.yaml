@@ -1,19 +1,6 @@
-# Not using concat to support previous version of helm
-{{- $combinedVolume := list }}
-{{- range $volume := (.Values.volume | default list) }}
-{{- $combinedVolume = append $combinedVolume $volume }}
-{{- end}}
-{{- range $volume := (.Values.volumeDefault | default list) }}
-{{- $combinedVolume = append $combinedVolume $volume }}
-{{- end}}
-# Not using concat to support previous version of helm
-{{- $combinedPorts := list }}
-{{- range $port := (.Values.ports | default list) }}
-{{- $combinedPorts = append $combinedPorts $port }}
-{{- end}}
-{{- range $port := (.Values.portsDefault | default list) }}
-{{- $combinedPorts = append $combinedPorts $port }}
-{{- end}}
+{{- include "runai-common.pvc" . }}
+
+---
 
 apiVersion: kubeflow.org/v1alpha2
 kind: MPIJob
@@ -108,31 +95,6 @@ spec:
                   {{- if .Values.memory}}
                   memory: {{ .Values.memory }}
                   {{- end }}
-              volumeMounts:
-                {{- range $index, $volume := $combinedVolume}}
-                {{ $parts := split ":" $volume }}
-                - mountPath: {{ $parts._1 }}
-                  name: "volume-{{ $index }}"
-                  {{- if eq $parts._2 "ro" }}
-                  readOnly: true
-                {{- end}}
-                {{- end }}
-                {{- if .Values.shm }}
-                - mountPath: /dev/shm
-                  name: dshm
-                {{- end }}
-              ports:
-                {{- range $port := $combinedPorts}}
-                # float will be the type when it's not quoted
-                {{- if kindIs "float64" $port }}
-                - protocol: 'TCP'
-                  containerPort: {{$port}}
-                {{- else }}
-                {{ $parts := split ":" $port }}
-                - protocol: 'TCP'
-                  containerPort: {{ $parts._1 | default $parts._0 }}
-                  {{- end}}
-                {{- end}}
               env:
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
@@ -147,19 +109,9 @@ spec:
                 {{- end }}
                 - name: RUNAI_MPI_NUM_WORKERS
                   value: "{{ .Values.numProcesses }}"
-          volumes:
-            {{- range $index, $volume := $combinedVolume}}
-            {{ $parts := split ":" $volume }}
-            - name: "volume-{{ $index }}"
-              hostPath:
-                path: {{ $parts._0 }}
-                type: Directory
-            {{- end }}
-            {{- if .Values.shm }}
-            - name: dshm
-              emptyDir:
-                medium: Memory
-    {{- end }}
+              {{- include "runai-common.job.ports" . | indent 14 }}
+              {{- include "runai-common.job.volume.mounts" . | indent 14 }}
+            {{- include "runai-common.job.volumes" . | indent 10 }}
     Worker:
       replicas: {{ .Values.numProcesses }}
       template:

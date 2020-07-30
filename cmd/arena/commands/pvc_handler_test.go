@@ -6,7 +6,7 @@ import (
 )
 
 func TestNoPvcRequested(t *testing.T) {
-	args := &submitRunaiJobArgs{
+	args := &submitArgs{
 		PersistentVolumes: []string{},
 	}
 	err := handlePvc(args)
@@ -19,43 +19,43 @@ func TestNoPvcRequested(t *testing.T) {
 }
 
 func TestWrongDirectiveLength(t *testing.T) {
-	args := &submitRunaiJobArgs{PersistentVolumes: []string{":"}}
+	args := &submitArgs{PersistentVolumes: []string{":"}}
 	assertWrongDirectiveLengthError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"::::"}}
+	args = &submitArgs{PersistentVolumes: []string{"::::"}}
 	assertWrongDirectiveLengthError(t, args)
 }
 
-func assertWrongDirectiveLengthError(t *testing.T, args *submitRunaiJobArgs) {
+func assertWrongDirectiveLengthError(t *testing.T, args *submitArgs) {
 	err := handlePvc(args)
 	if err == nil {
 		t.Error("Expected to get 'wrong length of args in directive' error, but received non")
-	} else if !strings.Contains(err.Error(), "--pv directives must be given in the form of") {
+	} else if !strings.Contains(err.Error(), "--pvc directives must be given in the form of") {
 		t.Errorf("Unexpected error: '%+v", err)
 	}
 }
 
 func TestNoContainerMountPathGiven(t *testing.T) {
-	args := &submitRunaiJobArgs{PersistentVolumes: []string{":1Gi:"}}
+	args := &submitArgs{PersistentVolumes: []string{":1Gi:"}}
 	assertMissingMountPathError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"storage-class:1Gi:"}}
+	args = &submitArgs{PersistentVolumes: []string{"storage-class:1Gi:"}}
 	assertMissingMountPathError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"storage-class:1Gi::"}}
+	args = &submitArgs{PersistentVolumes: []string{"storage-class:1Gi::"}}
 	assertMissingMountPathError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"storage-class:1Gi::ro"}}
+	args = &submitArgs{PersistentVolumes: []string{"storage-class:1Gi::ro"}}
 	assertMissingMountPathError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{":1Gi::"}}
+	args = &submitArgs{PersistentVolumes: []string{":1Gi::"}}
 	assertMissingMountPathError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{":1Gi::ro"}}
+	args = &submitArgs{PersistentVolumes: []string{":1Gi::ro"}}
 	assertMissingMountPathError(t, args)
 }
 
-func assertMissingMountPathError(t *testing.T, args *submitRunaiJobArgs) {
+func assertMissingMountPathError(t *testing.T, args *submitArgs) {
 	err := handlePvc(args)
 	if err == nil {
 		t.Error("Error expected when not passing container mount path")
@@ -65,29 +65,29 @@ func assertMissingMountPathError(t *testing.T, args *submitRunaiJobArgs) {
 }
 
 func TestNoCapacityGiven(t *testing.T) {
-	args := &submitRunaiJobArgs{PersistentVolumes: []string{"::/path/to"}}
+	args := &submitArgs{PersistentVolumes: []string{"::/path/to"}}
 	assertMissingCapacityError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"::/path/to:"}}
+	args = &submitArgs{PersistentVolumes: []string{"::/path/to:"}}
 	assertMissingCapacityError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"my-storage-class:::"}}
+	args = &submitArgs{PersistentVolumes: []string{"my-storage-class:::"}}
 	assertMissingCapacityError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"my-storage-class::/path/to:"}}
+	args = &submitArgs{PersistentVolumes: []string{"my-storage-class::/path/to:"}}
 	assertMissingCapacityError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"my-storage-class::/path/to:ro"}}
+	args = &submitArgs{PersistentVolumes: []string{"my-storage-class::/path/to:ro"}}
 	assertMissingCapacityError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"::/path/to:ro"}}
+	args = &submitArgs{PersistentVolumes: []string{"::/path/to:ro"}}
 	assertMissingCapacityError(t, args)
 
-	args = &submitRunaiJobArgs{PersistentVolumes: []string{"::/path/to:ro"}}
+	args = &submitArgs{PersistentVolumes: []string{"::/path/to:ro"}}
 	assertMissingCapacityError(t, args)
 }
 
-func assertMissingCapacityError(t *testing.T, args *submitRunaiJobArgs) {
+func assertMissingCapacityError(t *testing.T, args *submitArgs) {
 	err := handlePvc(args)
 	if err == nil {
 		t.Error("Expected to get a 'missing capacity' error")
@@ -97,8 +97,8 @@ func assertMissingCapacityError(t *testing.T, args *submitRunaiJobArgs) {
 }
 
 func TestGoodDirectives(t *testing.T) {
-	args := &submitRunaiJobArgs{
-		submitArgs: submitArgs{Name: "MyJob"},
+	args := &submitArgs{
+		Name: "MyJob",
 		PersistentVolumes: []string{
 			"storage-class:16Gi:/path/to/mount1",
 			"storage-class:16Gi:/path/to/mount2:",

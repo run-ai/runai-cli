@@ -24,6 +24,11 @@ jobs:
         name: general-prep
         command: rm .env
     - run:
+        name: pack runai-common chart
+        command: |
+          helm dep update charts/runai --skip-refresh
+          helm dep update charts/mpijob --skip-refresh
+    - run:
         name: build-mac
         command: |
           make cli-darwin-amd64
@@ -39,6 +44,9 @@ jobs:
         root: workspace
         paths:
           - binaries
+    - store_artifacts:
+        path: workspace/binaries
+
   push:
     executor: runai-executor
     steps:

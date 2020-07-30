@@ -93,6 +93,7 @@ type submitArgs struct {
 
 	AlwaysPullImage    *bool    `yaml:"alwaysPullImage,omitempty"`
 	Volumes            []string `yaml:"volume,omitempty"`
+	PersistentVolumes  []string `yaml:"persistentVolumes,omitempty"`
 	WorkingDir         string   `yaml:"workingDir,omitempty"`
 	RunAsUser          string   `yaml:"runAsUser,omitempty"`
 	RunAsGroup         string   `yaml:"runAsGroup,omitempty"`
@@ -203,6 +204,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
 	command.Flags().StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
+	command.Flags().StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
 	command.Flags().StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
@@ -271,6 +273,12 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 			submitArgs.RunAsUser = currentUser.Uid
 			submitArgs.RunAsGroup = currentUser.Gid
 		}
+	}
+
+	err = handlePvc(submitArgs)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	index, err := getJobIndex(clientset)

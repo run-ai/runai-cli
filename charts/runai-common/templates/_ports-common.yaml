@@ -1,0 +1,27 @@
+{{- define "runai-common.job.ports" }}
+
+# Not using concat to support previous version of helm
+{{- $combinedPorts := list }}
+{{- range $port := (.Values.ports | default list) }}
+  {{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+{{- range $port := (.Values.portsDefault | default list) }}
+  {{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+
+{{- if gt (len $combinedPorts) 0 }}
+ports:
+  {{- range $port := $combinedPorts }}
+  # float will be the type when it's not quoted
+    {{- if kindIs "float64" $port }}
+  - protocol: 'TCP'
+    containerPort: {{$port}}
+    {{- else }}
+      {{ $parts := split ":" $port }}
+  - protocol: 'TCP'
+    containerPort: {{ $parts._1 | default $parts._0 }}
+    {{- end}}
+  {{- end }}
+{{- end }}
+
+{{- end -}}

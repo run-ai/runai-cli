@@ -138,6 +138,9 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 	} else {
 		args = append(args, "--name", name)
 	}
+	if log.GetLevel() == log.DebugLevel {
+		args = append(args, "--debug")
+	}
 
 	args = util.AddNamespaceToArgs(args, namespace)
 	args = append(args, chartName, defaultValuesFileArg, "-f", valueFileName, ">", templateFileName)

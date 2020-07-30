@@ -8,7 +8,7 @@ import (
 //input:
 //      [0]          [1]  [2]                [3]
 // --pvc StorageClass[optional]:Size:ContainerMountPath:AccessMode[optional]
-func handlePvc(args *submitRunaiJobArgs) error {
+func handlePvc(args *submitArgs) error {
 	var rebuiltDirectives []string
 	for _, mountDirective := range args.PersistentVolumes {
 		mountDirectiveParts, err := splitDirectiveAndValidate(mountDirective)
@@ -24,7 +24,7 @@ func handlePvc(args *submitRunaiJobArgs) error {
 func splitDirectiveAndValidate(mountDirective string) ([]string, error) {
 	mountDirectiveParts := strings.Split(mountDirective, ":")
 	if len(mountDirectiveParts) < 3 || len(mountDirectiveParts) > 4 {
-		return nil, fmt.Errorf("--pv directives must be given in the form of StorageClass[optional]:Size:ContainerMountPath:AccessMode[optional], if any field is left blank the delimiting ':' must still be passed")
+		return nil, fmt.Errorf("--pvc directives must be given in the form of StorageClass[optional]:Size:ContainerMountPath:AccessMode[optional], if any field is left blank the delimiting ':' must still be passed")
 	} else if mountDirectiveParts[1] == "" {
 		return nil, fmt.Errorf("persistent volume size must be specified")
 	} else if mountDirectiveParts[2] == "" {
