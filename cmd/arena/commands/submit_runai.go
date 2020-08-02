@@ -158,19 +158,19 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	submitArgs        `yaml:",inline"`
-	GPUInt            *int   `yaml:"gpuInt,omitempty"`
-	GPUFraction       string `yaml:"gpuFraction,omitempty"`
-	GPUFractionFixed  string `yaml:"gpuFractionFixed,omitempty"`
-	ServiceType       string `yaml:"serviceType,omitempty"`
-	Elastic           *bool  `yaml:"elastic,omitempty"`
-	NumberProcesses   int    `yaml:"numProcesses"` // --workers
-	TTL               *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
-	Completions       *int   `yaml:"completions,omitempty"`
-	Parallelism       *int   `yaml:"parallelism,omitempty"`
-	BackoffLimit      *int   `yaml:"backoffLimit,omitempty"`
-	IsJupyter         bool
-	IsPreemptible     *bool    `yaml:"isPreemptible,omitempty"`
+	submitArgs       `yaml:",inline"`
+	GPUInt           *int   `yaml:"gpuInt,omitempty"`
+	GPUFraction      string `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
+	ServiceType      string `yaml:"serviceType,omitempty"`
+	Elastic          *bool  `yaml:"elastic,omitempty"`
+	NumberProcesses  int    `yaml:"numProcesses"` // --workers
+	TTL              *int   `yaml:"ttlAfterFinish,omitempty"`
+	Completions      *int   `yaml:"completions,omitempty"`
+	Parallelism      *int   `yaml:"parallelism,omitempty"`
+	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
+	IsJupyter        bool
+	IsPreemptible    *bool `yaml:"preemptible,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {

@@ -83,7 +83,7 @@ type submitArgs struct {
 	Name                string
 	Namespace           string
 	GPU                 *float64 `yaml:"gpu,omitempty"`
-	NodeType            string   `yaml:"node_type,omitempty"`
+	NodeType            string   `yaml:"nodeType,omitempty"`
 	Args                []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
 	CPULimit            string   `yaml:"cpuLimit,omitempty"`
@@ -101,7 +101,7 @@ type submitArgs struct {
 	RunAsCurrentUser   bool
 	Command            []string          `yaml:"command"`
 	LocalImage         *bool             `yaml:"localImage,omitempty"`
-	LargeShm           *bool             `yaml:"shm,omitempty"`
+	LargeShm           *bool             `yaml:"largeShm,omitempty"`
 	Ports              []string          `yaml:"ports,omitempty"`
 	Labels             map[string]string `yaml:"labels,omitempty"`
 	HostIPC            *bool             `yaml:"hostIPC,omitempty"`
