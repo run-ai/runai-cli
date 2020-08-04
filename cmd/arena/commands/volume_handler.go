@@ -34,7 +34,7 @@ func handlePvc(args *submitArgs) error {
 func splitDirectiveAndValidate(mountDirective string) ([]string, error) {
 	mountDirectiveParts := strings.Split(mountDirective, ":")
 	if len(mountDirectiveParts) < 3 || len(mountDirectiveParts) > 4 {
-		return nil, fmt.Errorf("--pvc directives must be given in the form of StorageClass[optional]:Size:ContainerMountPath:AccessMode[optional], if any field is left blank the delimiting ':' must still be passed")
+		return nil, fmt.Errorf("the --pvc parameter must be given in the form of <storage_class>[optional]:<size>>:<container_mount_path>:<access_mode>[optional], if any field is left blank the delimiting ':' must still be passed")
 	} else if mountDirectiveParts[1] == "" {
 		return nil, fmt.Errorf("persistent volume size must be specified")
 	} else if mountDirectiveParts[2] == "" {
@@ -57,6 +57,9 @@ func splitDirectiveAndValidate(mountDirective string) ([]string, error) {
 func handleVolumes(args *submitArgs) error {
 	for _, volumeDirective := range args.Volumes {
 		volumeDirectiveParts := strings.Split(volumeDirective, ":")
+		if len(volumeDirectiveParts) != 2 && len(volumeDirectiveParts) != 3 {
+			return fmt.Errorf("the -v parameter must be given in the form of <host_path>:<container_path>:<access_mode>[optional]")
+		}
 		if len(volumeDirectiveParts) == 3 && volumeDirectiveParts[2] != "" {
 			return validate.ValidateMountReadOnlyFlag(volumeDirectiveParts[2])
 		}

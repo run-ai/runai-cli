@@ -78,8 +78,8 @@ func ValidateStorageClassName(storageClassName string) error {
 }
 
 func ValidateMountReadOnlyFlag(roFlag string) error {
-	if roFlag != "" && roFlag != "ro" {
-		return fmt.Errorf("invalid readonly directive given in params: %s. this directive may either be empty or ':ro'", roFlag)
+	if roFlag != "" && roFlag != "ro" && roFlag != "rw" {
+		return fmt.Errorf("invalid readonly parameter given: '%s'. this parameter may either be empty, ':ro' or ':rw'", roFlag)
 	}
 	return nil
 }
