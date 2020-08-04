@@ -47,7 +47,8 @@ spec:
     {{- if .Values.completions }}
   completions: {{ .Values.completions }}
     {{- end }}
-    {{- if .Values.backoffLimit }}
+    {{- /* need to test specifically for non-null values. 0 values is ok too */ -}}
+    {{- if not (kindIs "invalid" .Values.backoffLimit) }}
   backoffLimit: {{ .Values.backoffLimit }}
     {{- end }}
   {{- end }}
