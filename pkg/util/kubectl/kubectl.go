@@ -262,6 +262,45 @@ func LabelAppConfigmap(jobName, namespace, label string) (err error) {
 	return err
 }
 
+func CheckIfAppInfofileContentsExists(appFileName string, namespace string) (bool, error) {
+	binary, err := exec.LookPath(kubectlCmd[0])
+	if err != nil {
+		return false, err
+	}
+
+	if _, err = os.Stat(appFileName); err != nil {
+		return false, err
+	}
+
+	resourcesString, err := ioutil.ReadFile(appFileName)
+	if err != nil {
+		return false, err
+	}
+
+	resources := strings.Split(string(resourcesString), " ")
+
+	args := []string{"get"}
+	args = append(args, resources...)
+
+	args = util.AddNamespaceToArgs(args, namespace)
+
+	log.Debugf("kubectl %v", args)
+
+	cmd := exec.Command(binary, args...)
+	env := os.Environ()
+	if types.KubeConfig != "" {
+		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
+	}
+
+	err = cmd.Run()
+	// Error should be returned if one of the resources does not exists on kubernetes
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 /**
 *
 * delete configMap by using name, namespace

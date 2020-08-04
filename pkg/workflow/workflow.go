@@ -75,20 +75,17 @@ func GetJobName(name string, trainingType string) string {
 	return fmt.Sprintf("%s-%s", name, trainingType)
 }
 
-func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
-	jobName := GetJobName(name, trainingType)
+type JobFiles struct {
+	valueFileName   string
+	envValuesFile   string
+	template        string
+	appInfoFileName string
+}
 
-	if !dryRun {
-		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
-		if found != nil && found.Name != "" {
-			return fmt.Errorf("The job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
-		}
-	}
-
-	// 1. Generate value file
+func generateJobFiles(name string, namespace string, values interface{}, environmentValues string, chart string) (*JobFiles, error) {
 	valueFileName, err := helm.GenerateValueFile(values)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	envValuesFile := ""
@@ -96,31 +93,91 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		envValuesFile, err = GetDefaultValuesFile(environmentValues)
 		if err != nil {
 			log.Debugln(err)
-			return fmt.Errorf("Error getting default values file of cluster")
+			return nil, fmt.Errorf("Error getting default values file of cluster")
 		}
 	}
 
 	if err != nil {
 		log.Debugln(err)
-		return fmt.Errorf("Error getting default values file of cluster")
+		return nil, fmt.Errorf("Error getting default values file of cluster")
 	}
 
 	// 2. Generate Template file
 	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, envValuesFile, chart)
 	if err != nil {
-		return err
-	}
-
-	if dryRun {
-		fmt.Println("Generate the template on:")
-		fmt.Println(template)
-		return nil
+		return nil, err
 	}
 
 	// 3. Generate AppInfo file
 	appInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	jobFiles := &JobFiles{
+		valueFileName:   valueFileName,
+		envValuesFile:   envValuesFile,
+		template:        template,
+		appInfoFileName: appInfoFileName,
+	}
+
+	return jobFiles, nil
+
+}
+
+func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
+	jobName := GetJobName(name, trainingType)
+
+	var jobFiles *JobFiles
+
+	if !dryRun {
+		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
+
+		if found != nil && found.Name != "" {
+			generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
+			if err != nil {
+				return err
+			}
+
+			jobFiles = generatedJobFiles
+
+			jobExists, err := kubectl.CheckIfAppInfofileContentsExists(jobFiles.appInfoFileName, namespace)
+
+			if err != nil {
+				return err
+			}
+
+			if jobExists {
+				return fmt.Errorf("The job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
+			} else {
+				// Delete the configmap of the job and continue for the creation of the new one.
+
+				log.Debugf("Configmap for job exists but job itself does not for job %s on namespace %s. Deleting the configmap", name, namespace)
+				err := clientset.CoreV1().ConfigMaps(namespace).Delete(jobName, &metav1.DeleteOptions{})
+
+				if err != nil {
+					log.Debugf("Could not delete configmap for job %s on namespace %s", name, namespace)
+					return fmt.Errorf("Error submitting the job.")
+				}
+
+			}
+		}
+	}
+
+	// Create job files only if did not create them yet
+	if jobFiles == nil {
+		generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
+		if err != nil {
+			return err
+		}
+
+		jobFiles = generatedJobFiles
+	}
+
+	if dryRun {
+		fmt.Println("Generate the template on:")
+		fmt.Println(jobFiles.template)
+		return nil
 	}
 
 	// 4. Keep value file in configmap
@@ -133,9 +190,9 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	err = createConfigMap(
 		jobName,
 		namespace,
-		valueFileName,
-		envValuesFile,
-		appInfoFileName,
+		jobFiles.valueFileName,
+		jobFiles.envValuesFile,
+		jobFiles.appInfoFileName,
 		chartName,
 		chartVersion,
 		clientset,
@@ -145,12 +202,12 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 5. Create Application
-	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	_, err = kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 	}
 
-	result, err := kubectl.InstallApps(template, namespace)
+	result, err := kubectl.InstallApps(jobFiles.template, namespace)
 	log.Debugf("%s", result)
 
 	// Clean up because creation of application failed.
@@ -158,7 +215,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		log.Warnf("Creation of job failed. Cleaning up...")
 
 		jobName := GetJobName(name, trainingType)
-		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
 		if cleanUpErr != nil {
 			log.Debugf("Failed to uninstall app with configmap.")
 		}
@@ -172,19 +229,19 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 
 	// 6. Clean up the template file
 	if log.GetLevel() != log.DebugLevel {
-		err = os.Remove(valueFileName)
+		err = os.Remove(jobFiles.valueFileName)
 		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", valueFileName, err)
+			log.Warnf("Failed to delete %s due to %v", jobFiles.valueFileName, err)
 		}
 
-		err = os.Remove(template)
+		err = os.Remove(jobFiles.template)
 		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", template, err)
+			log.Warnf("Failed to delete %s due to %v", jobFiles.template, err)
 		}
 
-		err = os.Remove(appInfoFileName)
+		err = os.Remove(jobFiles.appInfoFileName)
 		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", appInfoFileName, err)
+			log.Warnf("Failed to delete %s due to %v", jobFiles.appInfoFileName, err)
 		}
 	}
 
