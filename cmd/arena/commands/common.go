@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/constants"
 	"github.com/kubeflow/arena/pkg/client"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -43,27 +44,37 @@ func getAllTrainingTypes(kubeClient *client.Client) []string {
 	return trainerNames
 }
 
-func getTrainingStatus(trainingAnnotations map[string]string, chiefPod *v1.Pod, extraStatus string) string {
-	if value, exists := trainingAnnotations[workloadCalculatedStatus]; exists {
-		return value
+// TODO: This method currently take the status from both scheduler, workload and pod's status - The statuses logic should be calculated in 1 place in the future and the logic shouldn't remain as it is today.
+func getTrainingStatus(trainingAnnotations map[string]string, chiefPod *v1.Pod, workloadStatus string) string {
+	statusValue, statusExists := trainingAnnotations[workloadCalculatedStatus]
+	// We start by checking finished statuses to identify statuses such as Preempted and TimedOut
+	if statusExists && isFinishedStatus(statusValue) {
+		return statusValue
 	}
 
 	// Backward compatibility
-	if value, exists := trainingAnnotations["unschedulable"]; exists {
-		if value == "true" {
+	if unschedulableValue, isUnschedulableExists := trainingAnnotations["unschedulable"]; isUnschedulableExists {
+		if unschedulableValue == "true" {
 			return "Unschedulable"
 		}
 	}
 
-	// Backward compatibility
-	if extraStatus != "" {
-		return extraStatus
+	// We set the status according to the workload before reading the annotation.
+	// We do this due to a case where the scheduler wasn't running, the job was completed, pod was deleted - in this case the job annotation will show running.
+	// Also there can be a case where the scheduler didn't set the annotation yet but the job already exists.
+	if workloadStatus != "" {
+		return workloadStatus
+	}
+
+	if statusExists {
+		return statusValue
 	}
 
 	if chiefPod == nil {
-		return "Unknown"
+		return constants.Status.Unknown
 	}
 
+	// Backward compatibility
 	return getStatusColumnFromPodStatus(chiefPod)
 }
 
@@ -157,4 +168,8 @@ func hasPodReadyCondition(conditions []corev1.PodCondition) bool {
 		}
 	}
 	return false
+}
+
+func isFinishedStatus(status string) bool {
+	return status == constants.Status.Succeeded || status == constants.Status.Failed || status == constants.Status.Deleted || status == constants.Status.Preempted || status == constants.Status.TimedOut
 }

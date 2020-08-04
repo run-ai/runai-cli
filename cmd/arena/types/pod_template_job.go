@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/kubeflow/arena/cmd/arena/commands/constants"
 	appsv1 "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -18,11 +19,11 @@ type PodTemplateJob struct {
 func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 	extraStatus := ""
 	if job.Status.CompletionTime != nil {
-		extraStatus = "Completed"
+		extraStatus = constants.Status.Succeeded
 	} else if job.Spec.BackoffLimit != nil && job.Status.Failed >= *job.Spec.BackoffLimit {
-		extraStatus = "Failed"
+		extraStatus = constants.Status.Failed
 	} else if job.Status.Active == 0 {
-		extraStatus = "Pending"
+		extraStatus = constants.Status.Pending
 	}
 
 	return &PodTemplateJob{
@@ -37,7 +38,7 @@ func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 func PodTemplateJobFromStatefulSet(statefulSet appsv1.StatefulSet) *PodTemplateJob {
 	extraStatus := ""
 	if statefulSet.Status.Replicas == 0 {
-		extraStatus = "Pending"
+		extraStatus = constants.Status.Pending
 	}
 
 	return &PodTemplateJob{
