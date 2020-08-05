@@ -18,11 +18,16 @@ type PodTemplateJob struct {
 
 func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 	extraStatus := ""
-	if job.Status.CompletionTime != nil {
-		extraStatus = constants.Status.Succeeded
-	} else if job.Spec.BackoffLimit != nil && job.Status.Failed > *job.Spec.BackoffLimit {
-		extraStatus = constants.Status.Failed
-	} else if job.Status.Active == 0 {
+
+	// We don't set the status to succeeded here because of a bug that exists in k8s' job controller, where a pod can be running but the job turns to completed with no reason:
+	// this was fixed in: https://github.com/kubernetes/kubernetes/pull/88440 but was not merged to all releases yet.
+	for _, event := range job.Status.Conditions {
+		if event.Type == "Failed" && event.Status == "True" {
+			extraStatus = constants.Status.Failed
+			break
+		}
+	}
+	if job.Status.CompletionTime == nil && job.Status.Active == 0 {
 		extraStatus = constants.Status.Pending
 	}
 
