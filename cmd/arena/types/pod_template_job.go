@@ -20,7 +20,7 @@ func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 	extraStatus := ""
 	if job.Status.CompletionTime != nil {
 		extraStatus = constants.Status.Succeeded
-	} else if job.Spec.BackoffLimit != nil && job.Status.Failed >= *job.Spec.BackoffLimit {
+	} else if job.Spec.BackoffLimit != nil && job.Status.Failed > *job.Spec.BackoffLimit {
 		extraStatus = constants.Status.Failed
 	} else if job.Status.Active == 0 {
 		extraStatus = constants.Status.Pending
