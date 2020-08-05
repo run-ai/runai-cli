@@ -30,7 +30,7 @@ jobs:
           helm dep update charts/mpijob --skip-refresh
     - restore_cache:
         keys:
-          runai-cli-{{ .Branch }}-{{ checksum "go.sum" }}
+          - runai-cli-{{ .Branch }}-{{ checksum "go.sum" }}
     - run:
         name: build-mac
         command: |
