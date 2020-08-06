@@ -141,9 +141,9 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	}
 
 	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tGPU (Unhealthy)\tCPU (Total)\tCPU (Allocated)\tMem (Total)\tMem (Allocated)\n")
+		fmt.Fprintf(w, "NAME\tIP ADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tGPU (Unhealthy)\tCPU (Total)\tCPU (Allocated)\tMem (Total)\tMem (Allocated)\n")
 	} else {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tCPU (Total)\tCPU (Allocated)\tMem (Total)\tMem (Allocated)\n")
+		fmt.Fprintf(w, "NAME\tIP ADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tCPU (Total)\tCPU (Allocated)\tMem (Total)\tMem (Allocated)\n")
 	}
 
 	for _, nodeInfo := range nodeInfos {
