@@ -141,9 +141,9 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	}
 
 	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)\n")
+		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tGPU (Unhealthy)\tCPU (Total)\tCPU (Allocated)\tMem (Total)\tMem (Allocated)\n")
 	} else {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\n")
+		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tCPU (Total)\tCPU (Allocated)\tMem (Total)\tMem (Allocated)\n")
 	}
 
 	for _, nodeInfo := range nodeInfos {
@@ -176,20 +176,28 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		}
 
 		if hasUnhealthyGPUNode {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 				address,
 				role,
 				status,
 				strconv.FormatInt(totalGPU, 10),
 				strconv.FormatInt(allocatedGPU, 10),
-				strconv.FormatInt(unhealthGPU, 10))
+				strconv.FormatInt(unhealthGPU, 10),
+				getTotalNodeCPU(nodeInfo),
+				getAlloctableNodeCPU(nodeInfo),
+				getTotalNodeMemory(nodeInfo),
+				getAlloctableNodeMemory(nodeInfo))
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 				address,
 				role,
 				status,
 				strconv.FormatInt(totalGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10))
+				strconv.FormatInt(allocatedGPU, 10),
+				getTotalNodeCPU(nodeInfo),
+				getAlloctableNodeCPU(nodeInfo),
+				getTotalNodeMemory(nodeInfo),
+				getAlloctableNodeMemory(nodeInfo))
 
 		}
 	}
@@ -366,6 +374,40 @@ func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatableGPU, allocatedGPU
 	totalGPU += fractionalGPUsUsedInNode
 
 	return totalGPU, allocatableGPU, allocatedGPU
+}
+
+func getTotalNodeCPU(nodeInfo NodeInfo) (totalCPU string) {
+
+	valTotal, ok := nodeInfo.node.Status.Capacity["cpu"]
+	if !ok {
+		return ""
+	}
+	return valTotal.String()
+}
+func getAlloctableNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
+
+	valAllocatable, ok := nodeInfo.node.Status.Allocatable["cpu"]
+	if !ok {
+		return ""
+	}
+	return valAllocatable.String()
+}
+
+func getTotalNodeMemory(nodeInfo NodeInfo) (totalMemory string) {
+
+	valTotal, ok := nodeInfo.node.Status.Capacity["memory"]
+	if !ok {
+		return ""
+	}
+	return valTotal.String()
+}
+func getAlloctableNodeMemory(nodeInfo NodeInfo) (AllocatableMemory string) {
+
+	valAllocatable, ok := nodeInfo.node.Status.Allocatable["memory"]
+	if !ok {
+		return ""
+	}
+	return valAllocatable.String()
 }
 
 // Does the node have unhealthy GPU
