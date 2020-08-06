@@ -16,7 +16,6 @@ package commands
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -186,7 +185,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 				strconv.FormatInt(allocatedGPU, 10),
 				strconv.FormatInt(unhealthGPU, 10),
 				getTotalNodeCPU(nodeInfo),
-				getRequestedNodeCPU(w, nodeInfo),
+				getRequestedNodeCPU(nodeInfo),
 				getTotalNodeMemory(nodeInfo),
 				getRequestedNodeMemory(nodeInfo))
 		} else {
@@ -197,7 +196,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 				strconv.FormatInt(totalGPU, 10),
 				strconv.FormatInt(allocatedGPU, 10),
 				getTotalNodeCPU(nodeInfo),
-				getRequestedNodeCPU(w, nodeInfo),
+				getRequestedNodeCPU(nodeInfo),
 				getTotalNodeMemory(nodeInfo),
 				getRequestedNodeMemory(nodeInfo))
 
@@ -387,7 +386,7 @@ func getTotalNodeCPU(nodeInfo NodeInfo) (totalCPU string) {
 	return valTotal.String()
 }
 
-func getRequestedNodeCPU(w io.Writer, nodeInfo NodeInfo) (AllocatableCPU string) {
+func getRequestedNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
 	var cpuTotal resource.Quantity
 	cpuTotal.Set(0)
 
