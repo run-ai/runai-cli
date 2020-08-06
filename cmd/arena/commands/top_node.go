@@ -411,6 +411,7 @@ func getTotalNodeMemory(nodeInfo NodeInfo) (totalMemory string) {
 	if !ok {
 		return ""
 	}
+
 	return valTotal.String()
 }
 
