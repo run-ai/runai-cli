@@ -399,7 +399,6 @@ func getRequestedNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
 		}
 	}
 
-	cpuTotal.Format = "BinarySI"
 	return cpuTotal.String()
 }
 
