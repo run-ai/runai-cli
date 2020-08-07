@@ -380,10 +380,10 @@ func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatableGPU, allocatedGPU
 func getTotalNodeCPU(nodeInfo NodeInfo) (totalCPU string) {
 
 	valTotal, ok := nodeInfo.node.Status.Capacity["cpu"]
-	if !ok {
-		return ""
+	if ok {
+		return valTotal.String()
 	}
-	return valTotal.String()
+	return ""
 }
 
 func getRequestedNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
@@ -393,11 +393,9 @@ func getRequestedNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
 	for _, pod := range nodeInfo.pods {
 		for _, container := range pod.Spec.Containers {
 			quantity, ok := container.Resources.Requests["cpu"]
-			if !ok {
-				continue
+			if ok {
+				cpuTotal.Add(quantity)
 			}
-
-			cpuTotal.Add(quantity)
 		}
 	}
 
@@ -408,11 +406,11 @@ func getRequestedNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
 func getTotalNodeMemory(nodeInfo NodeInfo) (totalMemory string) {
 
 	valTotal, ok := nodeInfo.node.Status.Capacity["memory"]
-	if !ok {
-		return ""
+	if ok {
+		return valTotal.String()
 	}
 
-	return valTotal.String()
+	return ""
 }
 
 func getRequestedNodeMemory(nodeInfo NodeInfo) (AllocatableMemory string) {
@@ -423,10 +421,10 @@ func getRequestedNodeMemory(nodeInfo NodeInfo) (AllocatableMemory string) {
 	for _, pod := range nodeInfo.pods {
 		for _, container := range pod.Spec.Containers {
 			quantity, ok := container.Resources.Requests["memory"]
-			if !ok {
-				continue
+			if ok {
+				memTotal.Add(quantity)
 			}
-			memTotal.Add(quantity)
+
 		}
 	}
 
