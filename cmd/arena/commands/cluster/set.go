@@ -24,8 +24,19 @@ func runSetCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	config.CurrentContext = clusterName
+	exists := false
+	for name := range config.Contexts {
+		if clusterName == name {
+			exists = true
+		}
+	}
+	if !exists {
+		fmt.Printf("Cluster %s does not exist\n", clusterName)
+		return nil
+	}
 
+	// set current cluster, then modify and save kubeconfig
+	config.CurrentContext = clusterName
 	err = clientcmd.ModifyConfig(configAccess, *config, true)
 	if err != nil {
 		fmt.Printf("%s", err)
