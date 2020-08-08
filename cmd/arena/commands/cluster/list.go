@@ -1,0 +1,57 @@
+package cluster
+
+import (
+	"fmt"
+	"os"
+	"text/tabwriter"
+
+	"github.com/kubeflow/arena/pkg/util/command"
+	"github.com/spf13/cobra"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+func runListCommand(cmd *cobra.Command, args []string) error {
+
+	configAccess := clientcmd.DefaultClientConfig.ConfigAccess()
+	config, err := configAccess.GetStartingConfig()
+
+	if err != nil {
+		return err
+	}
+
+	currentContext := config.CurrentContext
+
+	fmt.Printf("Configured clusters on this computer are:\n")
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintf(w, "CLUSTER\tCURRENT PROJECT\n")
+
+	for name, context := range config.Contexts {
+		namespace := context.Namespace
+		project := ""
+		if len(namespace) > 6 && namespace[0:6] == "runai-" {
+			project = namespace[6:len(namespace)]
+		}
+
+		if name == currentContext {
+			fmt.Fprintf(w, "%s (current)\t%s\n", name, project)
+		} else {
+			fmt.Fprintf(w, "%s\t%s\n", name, project)
+		}
+	}
+	_ = w.Flush()
+
+	return nil
+}
+
+func newListClustersCommand() *cobra.Command {
+	commandWrapper := command.NewCommandWrapper(runListCommand)
+
+	var command = &cobra.Command{
+		Use:   "list",
+		Short: "List all avaliable clusters",
+		Run:   commandWrapper.Run,
+	}
+
+	return command
+}

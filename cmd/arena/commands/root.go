@@ -15,6 +15,7 @@
 package commands
 
 import (
+	"github.com/kubeflow/arena/cmd/arena/commands/cluster"
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/cmd/arena/commands/project"
 
@@ -76,6 +77,8 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewExecCommand())
 	command.AddCommand(NewTemplateCommand())
 	command.AddCommand(project.NewProjectCommand())
+	command.AddCommand(cluster.NewClusterCommand())
+
 	// command.AddCommand(NewWaitCommand())
 	// command.AddCommand(cmd.NewVersionCmd(CLIName))
 
