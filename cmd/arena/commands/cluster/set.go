@@ -9,12 +9,7 @@ import (
 )
 
 func runSetCommand(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		cmd.HelpFunc()(cmd, args)
-		return nil
-	} else if len(args) > 1 {
-		return fmt.Errorf("Accepts 1 argument, received %d", len(args))
-	}
+
 	clusterName := args[0]
 
 	configAccess := clientcmd.DefaultClientConfig.ConfigAccess()
@@ -54,6 +49,7 @@ func newSetClusterCommand() *cobra.Command {
 		Use:   "set [cluster]",
 		Short: "Set current cluster",
 		Run:   commandWrapper.Run,
+		Args:  cobra.RangeArgs(1, 1),
 	}
 
 	return command
