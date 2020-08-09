@@ -34,6 +34,9 @@ const DNS1123LabelMaxLength int = 63
 // Job Max lenth should be 49
 const JobMaxLength int = 49
 
+const AccessModeReadOnlyParam = "ro"
+const AccessModeReadWriteParam = "rw"
+
 var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
 
 var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
@@ -78,14 +81,14 @@ func ValidateStorageClassName(storageClassName string) error {
 }
 
 func ValidateMountReadOnlyFlag(roFlag string) error {
-	if roFlag != "" && roFlag != "ro" && roFlag != "rw" {
+	if roFlag != "" && roFlag != AccessModeReadOnlyParam && roFlag != AccessModeReadWriteParam {
 		return fmt.Errorf("invalid readonly parameter given: '%s'. this parameter may either be empty, ':ro' or ':rw'", roFlag)
 	}
 	return nil
 }
 
 func ValidateStorageResourceRequest(resourceRequest string) error {
-	if resourceRequest != "" && !resourceRequestRegex.MatchString(resourceRequest) {
+	if !resourceRequestRegex.MatchString(resourceRequest) {
 		return fmt.Errorf("Badly formatted resource request for volume size requierment.\nYou can read on how to request storage resorces here: " +
 			"https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#setting-requests-and-limits-for-local-ephemeral-storage")
 	}
