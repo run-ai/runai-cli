@@ -26,6 +26,7 @@ import (
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
@@ -141,9 +142,9 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	}
 
 	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)\n")
+		fmt.Fprintf(w, "NAME\tIP ADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tGPU (Unhealthy)\tCPU (Total)\tCPU (Requested)\tMem (Total)\tMem (Requested)\n")
 	} else {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\n")
+		fmt.Fprintf(w, "NAME\tIP ADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tCPU (Total)\tCPU (Requested)\tMem (Total)\tMem (Requested)\n")
 	}
 
 	for _, nodeInfo := range nodeInfos {
@@ -176,20 +177,28 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		}
 
 		if hasUnhealthyGPUNode {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 				address,
 				role,
 				status,
 				strconv.FormatInt(totalGPU, 10),
 				strconv.FormatInt(allocatedGPU, 10),
-				strconv.FormatInt(unhealthGPU, 10))
+				strconv.FormatInt(unhealthGPU, 10),
+				getTotalNodeCPU(nodeInfo),
+				getRequestedNodeCPU(nodeInfo),
+				getTotalNodeMemory(nodeInfo),
+				getRequestedNodeMemory(nodeInfo))
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 				address,
 				role,
 				status,
 				strconv.FormatInt(totalGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10))
+				strconv.FormatInt(allocatedGPU, 10),
+				getTotalNodeCPU(nodeInfo),
+				getRequestedNodeCPU(nodeInfo),
+				getTotalNodeMemory(nodeInfo),
+				getRequestedNodeMemory(nodeInfo))
 
 		}
 	}
@@ -235,8 +244,6 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 			strconv.FormatInt(totalGPUsInCluster, 10),
 			int64(gpuUnhealthyPercentage))
 	}
-
-	// fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
 
 	_ = w.Flush()
 }
@@ -366,6 +373,59 @@ func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatableGPU, allocatedGPU
 	totalGPU += fractionalGPUsUsedInNode
 
 	return totalGPU, allocatableGPU, allocatedGPU
+}
+
+func getTotalNodeCPU(nodeInfo NodeInfo) (totalCPU string) {
+
+	valTotal, ok := nodeInfo.node.Status.Capacity["cpu"]
+	if ok {
+		return valTotal.String()
+	}
+	return ""
+}
+
+func getRequestedNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
+	var cpuTotal resource.Quantity
+	cpuTotal.Set(0)
+
+	for _, pod := range nodeInfo.pods {
+		for _, container := range pod.Spec.Containers {
+			quantity, ok := container.Resources.Requests["cpu"]
+			if ok {
+				cpuTotal.Add(quantity)
+			}
+		}
+	}
+
+	return fmt.Sprintf("%.1f", float64(cpuTotal.MilliValue())/1000)
+}
+
+func getTotalNodeMemory(nodeInfo NodeInfo) (totalMemory string) {
+
+	valTotal, ok := nodeInfo.node.Status.Capacity["memory"]
+	if ok {
+		return fmt.Sprintf("%dM", valTotal.ScaledValue(resource.Mega))
+	}
+
+	return ""
+}
+
+func getRequestedNodeMemory(nodeInfo NodeInfo) (AllocatableMemory string) {
+
+	var memTotal resource.Quantity
+	memTotal.Set(0)
+
+	for _, pod := range nodeInfo.pods {
+		for _, container := range pod.Spec.Containers {
+			quantity, ok := container.Resources.Requests["memory"]
+			if ok {
+				memTotal.Add(quantity)
+			}
+
+		}
+	}
+
+	return fmt.Sprintf("%dM", memTotal.ScaledValue(resource.Mega))
 }
 
 // Does the node have unhealthy GPU
