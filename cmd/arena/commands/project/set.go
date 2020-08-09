@@ -10,12 +10,6 @@ import (
 )
 
 func runSetCommand(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		cmd.HelpFunc()(cmd, args)
-		return nil
-	} else if len(args) > 1 {
-		return fmt.Errorf("Accepts 1 argument, received %d", len(args))
-	}
 
 	project := args[0]
 	kubeClient, err := client.GetClient()
@@ -46,6 +40,7 @@ func newSetProjectCommand() *cobra.Command {
 		Use:   "set [PROJECT]",
 		Short: "Set a default project",
 		Run:   commandWrapper.Run,
+		Args:  cobra.RangeArgs(1, 1),
 	}
 
 	return command
