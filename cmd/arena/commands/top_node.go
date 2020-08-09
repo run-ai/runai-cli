@@ -245,8 +245,6 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 			int64(gpuUnhealthyPercentage))
 	}
 
-	// fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
-
 	_ = w.Flush()
 }
 
@@ -399,14 +397,14 @@ func getRequestedNodeCPU(nodeInfo NodeInfo) (AllocatableCPU string) {
 		}
 	}
 
-	return cpuTotal.String()
+	return fmt.Sprintf("%.1f", float64(cpuTotal.MilliValue())/1000)
 }
 
 func getTotalNodeMemory(nodeInfo NodeInfo) (totalMemory string) {
 
 	valTotal, ok := nodeInfo.node.Status.Capacity["memory"]
 	if ok {
-		return valTotal.String()
+		return fmt.Sprintf("%dM", valTotal.ScaledValue(resource.Mega))
 	}
 
 	return ""
@@ -427,7 +425,7 @@ func getRequestedNodeMemory(nodeInfo NodeInfo) (AllocatableMemory string) {
 		}
 	}
 
-	return memTotal.String()
+	return fmt.Sprintf("%dM", memTotal.ScaledValue(resource.Mega))
 }
 
 // Does the node have unhealthy GPU
