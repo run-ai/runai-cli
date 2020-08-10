@@ -22,7 +22,7 @@ echo "Getting latest revision for branch $BRANCH"
 gsutil cp gs://cli-artifacts/branch-versions/$BRANCH $TMP_FOLDER
 REVISION=$(cat $TMP_FOLDER/$BRANCH)
 echo "Downloading revision $REVISION"
-ARCHIVE_VERSION=darwin-amd64.tar.gz
+ARCHIVE_VERSION=runai-cli-darwin-amd64.tar.gz
 gsutil cp gs://cli-artifacts/$REVISION/$ARCHIVE_VERSION $TMP_FOLDER
 echo "Unarchiving version"
 INSTALL_FOLDER=$TMP_FOLDER/install

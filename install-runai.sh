@@ -20,6 +20,12 @@ if [ -d "${NEW_SCRIPT_FILES}" ]; then
   rm -rf "${NEW_SCRIPT_FILES}"
 fi
 
-cp -R "$SCRIPT_DIR" "$NEW_SCRIPT_FILES"
+# Create copy destination if it doesn't exist to have directories copied under the folder.
+if [ ! -d "${NEW_SCRIPT_FILES}" ]; then
+  mkdir "${NEW_SCRIPT_FILES}"
+fi
+
+cp "${SCRIPT_DIR}"/runai "${NEW_SCRIPT_FILES}"
+cp -R "${SCRIPT_DIR}"/charts "${NEW_SCRIPT_FILES}"
 
 ln -sf "${NEW_SCRIPT_FILES}"/"${SCRIPT_NAME}" /usr/local/bin/"${SCRIPT_NAME}"

@@ -35,14 +35,14 @@ jobs:
         name: build-mac
         command: |
           make cli-darwin-amd64
-          tar --transform "s,bin/runai,runai," -czvf darwin-amd64.tar.gz bin/runai install-runai.sh charts VERSION
-          mv darwin-amd64.tar.gz workspace/binaries
+          tar --transform "s,bin/runai,runai," -czvf runai-cli-darwin-amd64.tar.gz bin/runai install-runai.sh charts VERSION
+          mv runai-cli-darwin-amd64.tar.gz workspace/binaries/runai-cli-darwin-amd64.tar.gz
     - run: 
         name: build-linux
         command: |
           make cli-linux-amd64
-          tar --transform "s,bin/runai,runai," -czvf linux-amd64.tar.gz bin/runai install-runai.sh charts VERSION
-          mv linux-amd64.tar.gz workspace/binaries
+          tar --transform "s,bin/runai,runai," -czvf runai-cli-linux-amd64.tar.gz bin/runai install-runai.sh charts VERSION
+          mv runai-cli-linux-amd64.tar.gz workspace/binaries/runai-cli-linux-amd64.tar.gz
     - persist_to_workspace:
         root: workspace
         paths:
@@ -67,8 +67,8 @@ jobs:
             set -ex 
             echo $GCP_SERVICE_ACCOUNT >> ./key_file
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
-            gsutil cp /tmp/workspace/binaries/darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz
-            gsutil cp /tmp/workspace/binaries/linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz
+            gsutil cp /tmp/workspace/binaries/runai-cli-darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/runai-cli-darwin-amd64.tar.gz
+            gsutil cp /tmp/workspace/binaries/runai-cli-linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/runai-cli-linux-amd64.tar.gz
             # Update latest version for branch
             echo <<pipeline.git.revision>> > ./latest
             gsutil cp ./latest gs://cli-artifacts/branch-versions/<<pipeline.git.branch>>
@@ -83,27 +83,27 @@ jobs:
             mkdir -p /tmp/packages
             echo $GCP_SERVICE_ACCOUNT >> ./key_file
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/packages/darwin-amd64.tar.gz
-            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/packages/linux-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/runai-cli-darwin-amd64.tar.gz /tmp/packages/runai-cli-darwin-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/runai-cli-linux-amd64.tar.gz /tmp/packages/runai-cli-linux-amd64.tar.gz
       - run:
           name: update-version
           command: |
             set -ex
             mkdir darwin
             mkdir linux
-            tar -C darwin -zxvf /tmp/packages/darwin-amd64.tar.gz
-            tar -C linux -zxvf /tmp/packages/linux-amd64.tar.gz
+            tar -C darwin -zxvf /tmp/packages/runai-cli-darwin-amd64.tar.gz
+            tar -C linux -zxvf /tmp/packages/runai-cli-linux-amd64.tar.gz
             echo <<pipeline.git.tag>> > darwin/VERSION
             echo <<pipeline.git.tag>> > linux/VERSION
             cd darwin
-            tar -czvf darwin-amd64.tar.gz runai install-runai.sh charts VERSION
+            tar -czvf runai-cli-<<pipeline.git.tag>>-darwin-amd64.tar.gz runai install-runai.sh charts VERSION
             cd ../linux
-            tar -czvf linux-amd64.tar.gz runai install-runai.sh charts VERSION
+            tar -czvf runai-cli-<<pipeline.git.tag>>-linux-amd64.tar.gz runai install-runai.sh charts VERSION
             cd ../
       - run:
           name: upload-version
           command: |
-            hub release edit -a darwin/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a linux/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
+            hub release edit -a darwin/runai-cli-<<pipeline.git.tag>>-darwin-amd64.tar.gz#runai-cli-<<pipeline.git.tag>>-darwin-amd64.tar.gz -a linux/runai-cli-<<pipeline.git.tag>>-linux-amd64.tar.gz#runai-cli-<<pipeline.git.tag>>-linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
 
 
 workflows:
