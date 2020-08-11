@@ -34,6 +34,11 @@ createdBy: "RunaiJob"
 {{- define "pvc.claim.name" -}}
 {{- $pvcIndex := (get . "pvcIndex") -}}
 {{- $releaseName := (get . "releaseName") -}}
+{{- $pvcParam := (get . "pvcParam") -}}
+{{- $pvcParamParts := split ":" $pvcParam -}}
+{{- if eq (len $pvcParamParts) 3 -}}
+{{ printf "%s" $pvcParamParts._0 }}
+{{- else -}}
 {{ printf "pvc-%s-%d" $releaseName $pvcIndex }}
 {{- end -}}
-
+{{- end -}}
