@@ -26,6 +26,7 @@ if [ ! -d "${NEW_SCRIPT_FILES}" ]; then
 fi
 
 cp "${SCRIPT_DIR}"/runai "${NEW_SCRIPT_FILES}"
+cp "${SCRIPT_DIR}"/VERSION "${NEW_SCRIPT_FILES}"
 cp -R "${SCRIPT_DIR}"/charts "${NEW_SCRIPT_FILES}"
 
 ln -sf "${NEW_SCRIPT_FILES}"/"${SCRIPT_NAME}" /usr/local/bin/"${SCRIPT_NAME}"
