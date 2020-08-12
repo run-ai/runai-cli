@@ -27,7 +27,7 @@ func GetNamespaceFromProjectName(project string, kubeClient *client.Client) (str
 
 func GetJobDoesNotExistsInNamespaceError(jobName string, namespaceInfo types.NamespaceInfo) error {
 	if namespaceInfo.ProjectName != "" {
-		return fmt.Errorf("The job %s does not exists in project %s. If the job exists in a different project, use -p <project name>.", jobName, namespaceInfo.ProjectName)
+		return fmt.Errorf("The job %s does not exist in project %s. If the job exists in a different project, use -p <project name>.", jobName, namespaceInfo.ProjectName)
 	} else {
 		return fmt.Errorf("The job %s does not exist in backward compatability mode. If the job exists in a specific project, use -p <project name>.", jobName)
 	}

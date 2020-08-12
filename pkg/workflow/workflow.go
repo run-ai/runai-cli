@@ -37,7 +37,7 @@ func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interf
 	_, err = clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
 
 	if err != nil {
-		log.Debugf("Skip deletion of ConfigMap %s, because the ConfigMap does not exists.", jobName)
+		log.Debugf("Skip deletion of ConfigMap %s, because the ConfigMap does not exist.", jobName)
 		return nil
 	}
 
