@@ -195,6 +195,12 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 
 // Requested GPU count of the Job
 func (mj *MPIJob) RequestedGPU() float64 {
+	requestedGPUs, ok := getRequestedGPUsPerPodGroup(mj.mpijob.Annotations)
+	if ok {
+		return requestedGPUs
+	}
+
+	// backward compatibility
 	value, found := mj.mpijob.Annotations["totalGPUs"]
 	if !found {
 		return 0
@@ -221,6 +227,12 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 
 // Get the hostIP of the chief Pod
 func (mj *MPIJob) HostIPOfChief() (hostIP string) {
+	nodeName, ok := getNodeName(mj.mpijob.Annotations)
+	if ok {
+		return nodeName
+	}
+
+	// backward compatibility
 	nodeUsedByJob := map[string]bool{}
 	var nodeNamesArray []string
 	for _, pod := range mj.pods {
@@ -237,6 +249,83 @@ func (mj *MPIJob) HostIPOfChief() (hostIP string) {
 	sort.Strings(nodeNamesArray)
 	nodeNamesUsedByJob := strings.Join(nodeNamesArray, ", ")
 	return nodeNamesUsedByJob
+}
+func (mj *MPIJob) RunningPods() int32 {
+	runningPods, ok := getRunningPods(mj.mpijob.Annotations)
+	if ok {
+		return runningPods
+	}
+
+	// backward compatibility
+	runningPods = 0
+	for _, pod := range mj.pods {
+		if pod.Status.Phase == v1.PodRunning {
+			runningPods++
+		}
+	}
+	return runningPods
+}
+
+func (mj *MPIJob) PendingPods() int32 {
+	pendingPods, ok := getPendingPods(mj.mpijob.Annotations)
+	if ok {
+		return pendingPods
+	}
+
+	// backward compatibility
+	pendingPods = 0
+	for _, pod := range mj.pods {
+		if pod.Status.Phase == v1.PodPending {
+			pendingPods++
+		}
+	}
+	return pendingPods
+}
+
+func (mj *MPIJob) Completions() int32 {
+	return 1
+}
+
+func (mj *MPIJob) Parallelism() int32 {
+	return 1
+}
+
+func (mj *MPIJob) Succeeded() int32 {
+	if mj.GetStatus() == constants.Status.Succeeded {
+		return 1
+	}
+	return 0
+}
+
+func (mj *MPIJob) Failed() int32 {
+	failedPods := int32(0)
+	for _, pod := range mj.pods {
+		if pod.Status.Phase == v1.PodFailed {
+			failedPods++
+		}
+	}
+
+	return failedPods
+}
+
+func (mj *MPIJob) TotalRequestedGPUs() float64 {
+	totalRequestedGPUs, ok := getTotalRequestedGPUs(mj.mpijob.Annotations)
+	if ok {
+		return totalRequestedGPUs
+	}
+
+	// backward compatibility
+	return mj.RequestedGPU()
+}
+
+func (mj *MPIJob) TotalAllocatedGPUs() float64 {
+	totalRequestedGPUs, ok := getTotalAllocatedGPUs(mj.mpijob.Annotations)
+	if ok {
+		return totalRequestedGPUs
+	}
+
+	// backward compatibility
+	return mj.RequestedGPU()
 }
 
 func (mj *MPIJob) Namespace() string {

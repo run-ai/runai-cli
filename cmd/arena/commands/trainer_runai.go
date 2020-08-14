@@ -191,7 +191,7 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 
 	jobType := rt.getJobType(&podSpecJob)
 	status := getTrainingStatus(podSpecJob.ObjectMeta.Annotations, lastCreatedPod, podSpecJob.ExtraStatus)
-	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status), nil
+	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
 }
 
 func (rt *RunaiTrainer) isRunaiPodObject(metadata metav1.ObjectMeta, template v1.PodTemplateSpec) bool {
@@ -226,6 +226,10 @@ type RunaiJobInfo struct {
 	ObjectMeta        metav1.ObjectMeta
 	owner             cmdTypes.Resource
 	status            string
+	parallelism       int32
+	completions       int32
+	failed            int32
+	succeeded         int32
 }
 
 type RunaiOwnerInfo struct {
@@ -364,6 +368,10 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		}
 		jobInfo.jobType = rt.getJobType(job)
 		jobInfo.status = job.ExtraStatus
+		jobInfo.parallelism = job.Parallelism
+		jobInfo.completions = job.Completions
+		jobInfo.failed = job.Failed
+		jobInfo.succeeded = job.Succeeded
 	}
 
 	for _, jobInfo := range jobPodMap {
@@ -377,7 +385,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 			}
 		}
 		jobInfo.status = getTrainingStatus(jobInfo.ObjectMeta.Annotations, lastCreatedPod, jobInfo.status)
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, jobInfo.status))
+		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, jobInfo.status, jobInfo.parallelism, jobInfo.completions, jobInfo.failed, jobInfo.succeeded))
 	}
 
 	return runaiJobs, nil

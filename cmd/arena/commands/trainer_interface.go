@@ -81,6 +81,15 @@ type TrainingJob interface {
 	ServiceURLs() []string
 
 	GetPodGroupName() string
+
+	RunningPods() int32
+	PendingPods() int32
+	Completions() int32
+	Parallelism() int32
+	Succeeded() int32
+	Failed() int32
+	TotalRequestedGPUs() float64
+	TotalAllocatedGPUs() float64
 }
 
 type Trainer interface {

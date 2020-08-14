@@ -263,10 +263,20 @@ func printSingleJobHelper(client kubernetes.Interface, job TrainingJob, printArg
 			hostIP = "N/A"
 		}
 
+		podStatus, ok := pod.Annotations[workloadCalculatedStatus]
+		if !ok {
+			podStatus = string(pod.Status.Phase)
+		}
+		var podCreationTime time.Duration
+		if pod.CreationTimestamp.IsZero() {
+			podCreationTime = 0
+		}
+		podCreationTime = metav1.Now().Sub(pod.CreationTimestamp.Time)
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", pod.Name,
-			strings.ToUpper(job.GetStatus()),
+			strings.ToUpper(podStatus),
 			strings.ToUpper(job.Trainer()),
-			util.ShortHumanDuration(job.Age()),
+			util.ShortHumanDuration(podCreationTime),
 			hostIP)
 	}
 
@@ -283,8 +293,13 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 	fmt.Fprintf(w, "TYPE: %s\n", job.Trainer())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
-	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))
 	fmt.Fprintf(w, "TRAINING DURATION: %s\n", util.ShortHumanDuration(job.Duration()))
+	fmt.Fprintf(w, "TOTAL REQUESTED GPUS: %g\n", job.TotalRequestedGPUs())
+	fmt.Fprintf(w, "TOTAL ALLOCATED GPUS: %g\n", job.TotalAllocatedGPUs())
+	fmt.Fprintf(w, "PARALLELISM: %d\n", job.Parallelism())
+	fmt.Fprintf(w, "COMPLETIONS: %d\n", job.Completions())
+	fmt.Fprintf(w, "SUCCEEDED: %d\n", job.Succeeded())
+	fmt.Fprintf(w, "FAILED: %d\n", job.Failed())
 	fmt.Fprintln(w, "")
 
 }

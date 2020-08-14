@@ -84,7 +84,7 @@ func NewListCommand() *cobra.Command {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs", "CREATED BY CLI", "SERVICE URL(S)"}
+	labelField := []string{"NAME", "STATUS", "RUNNING PODS", "PENDING PODS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs", "CREATED BY CLI", "SERVICE URL(S)"}
 
 	PrintLine(w, labelField...)
 
@@ -102,6 +102,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 
 		PrintLine(w, jobInfo.Name(),
 			status,
+			strconv.Itoa(int(jobInfo.RunningPods())), strconv.Itoa(int(jobInfo.PendingPods())),
 			util.ShortHumanDuration(jobInfo.Age()),
 			hostIP, jobInfo.Image(), jobInfo.Trainer(), projectName, jobInfo.User(), fmt.Sprintf("%g", jobInfo.RequestedGPU()), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
 	}
