@@ -25,9 +25,15 @@ type RunaiJob struct {
 	namespace         string
 	pods              []v1.Pod
 	status            string
+	parallelism       int32
+	completions       int32
+	failed            int32
+	succeeded         int32
+	workloadType      cmdTypes.ResourceType
 }
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource, status string) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource, status string, parallelism, completions, failed, succeeded int32) *RunaiJob {
+	workloadType := ownerResource.ResourceType
 	resources := append(cmdTypes.PodResources(pods), ownerResource)
 	return &RunaiJob{
 		pods:              pods,
@@ -43,6 +49,11 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1
 		jobMetadata:       jobMetadata,
 		namespace:         namespace,
 		status:            status,
+		parallelism:       parallelism,
+		completions:       completions,
+		failed:            failed,
+		succeeded:         succeeded,
+		workloadType:      workloadType,
 	}
 }
 
@@ -167,7 +178,12 @@ func (rj *RunaiJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, er
 
 // Requested GPU count of the Job
 func (rj *RunaiJob) RequestedGPU() float64 {
-	requestedGPUs := float64(0)
+	requestedGPUs, ok := getRequestedGPUsPerPodGroup(rj.jobMetadata.Annotations)
+	if ok {
+		return requestedGPUs
+	}
+
+	// backward compatibility
 	for _, pod := range rj.pods {
 		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[runaiGPUFraction], 64)
 		if GPUFractionErr == nil {
@@ -208,11 +224,16 @@ func (rj *RunaiJob) HostIPOfChief() string {
 		return ""
 	}
 
+	nodeName, ok := getNodeName(rj.jobMetadata.Annotations)
+	if ok {
+		return nodeName
+	}
+
 	// This will hold the node name even if not actually specified on pod spec by the user.
 	// Copied from describe function of kubectl.
 	// https://github.com/kubernetes/kubectl/blob/a20db94d5b5f052d991eaf29d626fb730b4886b7/pkg/describe/versioned/describe.go
 
-	return rj.ChiefPod().Spec.NodeName
+	return rj.ChiefPod().Spec.NodeName // backward compatibility
 }
 
 // The priority class name of the training job
@@ -234,4 +255,104 @@ func (rj *RunaiJob) User() string {
 
 func (rj *RunaiJob) ServiceURLs() []string {
 	return rj.serviceUrls
+}
+
+func (rj *RunaiJob) RunningPods() int32 {
+	runningPods, ok := getRunningPods(rj.jobMetadata.Annotations)
+	if ok {
+		return runningPods
+	}
+
+	// backward compatibility
+	runningPods = 0
+	for _, pod := range rj.pods {
+		if pod.Status.Phase == v1.PodRunning {
+			runningPods++
+		}
+	}
+	return runningPods
+}
+
+func (rj *RunaiJob) PendingPods() int32 {
+	pendingPods, ok := getPendingPods(rj.jobMetadata.Annotations)
+	if ok {
+		return pendingPods
+	}
+
+	// backward compatibility
+	pendingPods = 0
+	for _, pod := range rj.pods {
+		if pod.Status.Phase == v1.PodPending {
+			pendingPods++
+		}
+	}
+	return pendingPods
+}
+
+func (rj *RunaiJob) Completions() int32 {
+	return rj.completions
+}
+
+func (rj *RunaiJob) Parallelism() int32 {
+	return rj.parallelism
+}
+
+func (rj *RunaiJob) Succeeded() int32 {
+	return rj.succeeded
+
+}
+
+func (rj *RunaiJob) Failed() int32 {
+	return rj.failed
+}
+
+func (rj *RunaiJob) CurrentRequestedGPUs() float64 {
+	totalRequestedGPUs, ok := getCurrentRequestedGPUs(rj.jobMetadata.Annotations)
+	if ok {
+		return totalRequestedGPUs
+	}
+
+	// backward compatibility
+	if isFinishedStatus(rj.GetStatus()) {
+		return 0
+	}
+
+	if rj.chiefPod == nil {
+		return 0
+	}
+
+	if rj.chiefPod.Status.Phase != v1.PodRunning && rj.chiefPod.Status.Phase != v1.PodPending {
+		return 0
+	}
+	return rj.RequestedGPU()
+}
+
+func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
+	totalRequestedGPUs, ok := getAllocatedRequestedGPUs(rj.jobMetadata.Annotations)
+	if ok {
+		return totalRequestedGPUs
+	}
+
+	// backward compatibility
+	if rj.chiefPod == nil {
+		return 0
+	}
+
+	if rj.chiefPod.Status.Phase != v1.PodRunning {
+		return 0
+	}
+	return rj.RequestedGPU()
+}
+
+func (rj *RunaiJob) WorkloadType() string {
+	return string(rj.workloadType)
+}
+
+func (rj *RunaiJob) TotalRequestedGPUs() float64 {
+	totalRequestedGPUs, ok := getTotalAllocatedGPUs(rj.jobMetadata.Annotations)
+	if ok {
+		return totalRequestedGPUs
+	}
+
+	return rj.RequestedGPU() * float64(rj.Completions())
 }

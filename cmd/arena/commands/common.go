@@ -16,6 +16,7 @@ package commands
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/constants"
 	"github.com/kubeflow/arena/pkg/client"
@@ -172,4 +173,71 @@ func hasPodReadyCondition(conditions []corev1.PodCondition) bool {
 
 func isFinishedStatus(status string) bool {
 	return status == constants.Status.Succeeded || status == constants.Status.Failed || status == constants.Status.Deleted || status == constants.Status.Preempted || status == constants.Status.TimedOut
+}
+
+func getRequestedGPUsPerPodGroup(trainingAnnotations map[string]string) (float64, bool) {
+	if len(trainingAnnotations[podGroupRequestedGPUs]) > 0 {
+		requestedGPUs, err := strconv.ParseFloat(trainingAnnotations[podGroupRequestedGPUs], 64)
+		if err == nil {
+			return requestedGPUs, true
+		}
+	}
+	return 0, false
+}
+
+func getNodeName(trainingAnnotations map[string]string) (string, bool) {
+	if len(trainingAnnotations[workloadUsedNodes]) > 0 {
+		return trainingAnnotations[workloadUsedNodes], true
+	}
+	return "", false
+}
+
+func getRunningPods(trainingAnnotations map[string]string) (int32, bool) {
+	if len(trainingAnnotations[workloadRunningPods]) > 0 {
+		runningPods, err := strconv.ParseInt(trainingAnnotations[workloadRunningPods], 10, 32)
+		if err == nil {
+			return int32(runningPods), true
+		}
+	}
+	return 0, false
+}
+
+func getPendingPods(trainingAnnotations map[string]string) (int32, bool) {
+	if len(trainingAnnotations[workloadPendingPods]) > 0 {
+		runningPods, err := strconv.ParseInt(trainingAnnotations[workloadPendingPods], 10, 32)
+		if err == nil {
+			return int32(runningPods), true
+		}
+	}
+	return 0, false
+}
+
+func getCurrentRequestedGPUs(trainingAnnotations map[string]string) (float64, bool) {
+	if len(trainingAnnotations[workloadCurrentRequestedGPUs]) > 0 {
+		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[workloadCurrentRequestedGPUs], 64)
+		if err == nil {
+			return totalAllocatedGPUs, true
+		}
+	}
+	return 0, false
+}
+
+func getAllocatedRequestedGPUs(trainingAnnotations map[string]string) (float64, bool) {
+	if len(trainingAnnotations[workloadCurrentAllocatedGPUs]) > 0 {
+		currentAllocated, err := strconv.ParseFloat(trainingAnnotations[workloadCurrentAllocatedGPUs], 64)
+		if err == nil {
+			return currentAllocated, true
+		}
+	}
+	return 0, false
+}
+
+func getTotalAllocatedGPUs(trainingAnnotations map[string]string) (float64, bool) {
+	if len(trainingAnnotations[WorkloadTotalRequestedGPUs]) > 0 {
+		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[WorkloadTotalRequestedGPUs], 64)
+		if err == nil {
+			return totalAllocatedGPUs, true
+		}
+	}
+	return 0, false
 }

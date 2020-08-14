@@ -103,22 +103,22 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 		totalRequestedGPUs float64
 	)
 
-	labelField := []string{"NAME", "PROJECT", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
+	labelField := []string{"NAME", "PROJECT", "GPU(Current Requests)", "GPU(Current Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
 
 	PrintLine(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
 
 		hostIP := jobInfo.HostIPOfChief()
-		requestedGPU := jobInfo.RequestedGPU()
-		allocatedGPU := jobInfo.AllocatedGPU()
+		requestedGPU := jobInfo.CurrentRequestedGPUs()
+		allocatedGPU := jobInfo.CurrentAllocatedGPUs()
 		// status, hostIP := jobInfo.getStatus()
 		totalAllocatedGPUs += allocatedGPU
 		totalRequestedGPUs += requestedGPU
 		PrintLine(w, jobInfo.Name(),
 			jobInfo.Project(),
-			strconv.FormatFloat(requestedGPU, 'f', -1, 64),
-			strconv.FormatFloat(allocatedGPU, 'f', -1, 64),
+			strconv.FormatFloat(jobInfo.CurrentRequestedGPUs(), 'f', -1, 64),
+			strconv.FormatFloat(jobInfo.CurrentAllocatedGPUs(), 'f', -1, 64),
 			jobInfo.GetStatus(),
 			jobInfo.Trainer(),
 			util.ShortHumanDuration(jobInfo.Age()),

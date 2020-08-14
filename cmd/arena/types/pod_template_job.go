@@ -12,8 +12,12 @@ type PodTemplateJob struct {
 	ExtraStatus string // This field is used for backward compatibility, where the scheduler didn't set the real status
 	Type        ResourceType
 	metav1.ObjectMeta
-	Selector *metav1.LabelSelector
-	Template v1.PodTemplateSpec
+	Selector    *metav1.LabelSelector
+	Template    v1.PodTemplateSpec
+	Parallelism int32
+	Completions int32
+	Failed      int32
+	Succeeded   int32
 }
 
 func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
@@ -31,12 +35,25 @@ func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 		extraStatus = constants.Status.Pending
 	}
 
+	parallelism := int32(1)
+	if job.Spec.Parallelism != nil {
+		parallelism = *job.Spec.Parallelism
+	}
+
+	completions := int32(1)
+	if job.Spec.Parallelism != nil {
+		completions = *job.Spec.Completions
+	}
 	return &PodTemplateJob{
 		ExtraStatus: extraStatus,
 		ObjectMeta:  job.ObjectMeta,
 		Type:        ResourceTypeJob,
 		Template:    job.Spec.Template,
 		Selector:    job.Spec.Selector,
+		Parallelism: parallelism,
+		Completions: completions,
+		Failed:      job.Status.Failed,
+		Succeeded:   job.Status.Succeeded,
 	}
 }
 
@@ -52,14 +69,22 @@ func PodTemplateJobFromStatefulSet(statefulSet appsv1.StatefulSet) *PodTemplateJ
 		Type:        ResourceTypeStatefulSet,
 		Template:    statefulSet.Spec.Template,
 		Selector:    statefulSet.Spec.Selector,
+		Parallelism: 1,
+		Completions: 1,
+		Failed:      0,
+		Succeeded:   0,
 	}
 }
 
 func PodTemplateJobFromReplicaSet(replicaSet appsv1.ReplicaSet) *PodTemplateJob {
 	return &PodTemplateJob{
-		ObjectMeta: replicaSet.ObjectMeta,
-		Type:       ResourceTypeReplicaset,
-		Template:   replicaSet.Spec.Template,
-		Selector:   replicaSet.Spec.Selector,
+		ObjectMeta:  replicaSet.ObjectMeta,
+		Type:        ResourceTypeReplicaset,
+		Template:    replicaSet.Spec.Template,
+		Selector:    replicaSet.Spec.Selector,
+		Parallelism: 1,
+		Completions: 1,
+		Failed:      0,
+		Succeeded:   0,
 	}
 }

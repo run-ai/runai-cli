@@ -20,6 +20,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -244,7 +245,7 @@ func printSingleJobHelper(client kubernetes.Interface, job TrainingJob, printArg
 
 	// apply a dummy FgDefault format to align tabwriter with the rest of the columns
 	fmt.Fprintf(w, "Pods:\n")
-	fmt.Fprintf(w, "POD\tSTATUS\tTRAINER\tAGE\tNODE\n")
+	fmt.Fprintf(w, "POD\tSTATUS\tTYPE\tAGE\tNODE\n")
 	pods := job.AllPods()
 
 	for _, pod := range pods {
@@ -263,10 +264,20 @@ func printSingleJobHelper(client kubernetes.Interface, job TrainingJob, printArg
 			hostIP = "N/A"
 		}
 
+		podStatus, ok := pod.Annotations[workloadCalculatedStatus]
+		if !ok {
+			podStatus = string(pod.Status.Phase)
+		}
+		var podCreationTime time.Duration
+		if pod.CreationTimestamp.IsZero() {
+			podCreationTime = 0
+		}
+
+		podCreationTime = metav1.Now().Sub(pod.CreationTimestamp.Time)
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", pod.Name,
-			strings.ToUpper(job.GetStatus()),
+			strings.ToUpper(podStatus),
 			strings.ToUpper(job.Trainer()),
-			util.ShortHumanDuration(job.Age()),
+			util.ShortHumanDuration(podCreationTime),
 			hostIP)
 	}
 
@@ -283,8 +294,19 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 	fmt.Fprintf(w, "TYPE: %s\n", job.Trainer())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
-	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))
 	fmt.Fprintf(w, "TRAINING DURATION: %s\n", util.ShortHumanDuration(job.Duration()))
+	fmt.Fprintf(w, "TOTAL REQUESTED GPUS: %g\n", job.TotalRequestedGPUs())
+	fmt.Fprintf(w, "CURRENT REQUESTED GPUS: %g\n", job.CurrentRequestedGPUs())
+	fmt.Fprintf(w, "CURRENT ALLOCATED GPUS: %g\n", job.CurrentAllocatedGPUs())
+	fmt.Fprintf(w, "RUNNING PODS: %d\n", job.RunningPods())
+	fmt.Fprintf(w, "PENDING PODS: %d\n", job.PendingPods())
+	fmt.Fprintf(w, "PARALLELISM: %d\n", job.Parallelism())
+	fmt.Fprintf(w, "COMPLETIONS: %d\n", job.Completions())
+	fmt.Fprintf(w, "SUCCEEDED: %d\n", job.Succeeded())
+	fmt.Fprintf(w, "FAILED: %d\n", job.Failed())
+	fmt.Fprintf(w, "IS DISTRIBUTED WORKLOAD: %s\n", strconv.FormatBool(job.WorkloadType() == "MPIJob"))
+	fmt.Fprintf(w, "CREATED BY CLI: %s\n", strconv.FormatBool(job.CreatedByCLI()))
+	fmt.Fprintf(w, "SERVICE URL(S): %s\n", strings.Join(job.ServiceURLs(), ", "))
 	fmt.Fprintln(w, "")
 
 }

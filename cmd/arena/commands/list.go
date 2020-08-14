@@ -16,13 +16,10 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
-
-	"io"
-
-	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
@@ -84,13 +81,16 @@ func NewListCommand() *cobra.Command {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs", "CREATED BY CLI", "SERVICE URL(S)"}
+	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs (Allocated/Requested)", "PODs (Running/Active)", "SERVICE URL(S)"}
 
 	PrintLine(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
 		status := GetJobRealStatus(jobInfo)
-		hostIP := jobInfo.HostIPOfChief()
+		nodeName := jobInfo.HostIPOfChief()
+		if strings.Contains(nodeName, ", ") {
+			nodeName = "<multiple>"
+		}
 
 		// For backward compatability. Indicat jobs on default namespace
 		var projectName string
@@ -100,10 +100,18 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 			projectName = jobInfo.Project()
 		}
 
+		allocatedGPUs := jobInfo.CurrentAllocatedGPUs()
+		allocatedFromRequestedGPUs := fmt.Sprintf("%g/%g", allocatedGPUs, jobInfo.CurrentRequestedGPUs())
+		runningPods := int(jobInfo.RunningPods())
+		runningOfActivePods := fmt.Sprintf("%d/%d", runningPods, runningPods+int(jobInfo.PendingPods()))
+
 		PrintLine(w, jobInfo.Name(),
 			status,
 			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP, jobInfo.Image(), jobInfo.Trainer(), projectName, jobInfo.User(), fmt.Sprintf("%g", jobInfo.RequestedGPU()), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
+			nodeName, jobInfo.Image(), jobInfo.Trainer(), projectName, jobInfo.User(),
+			allocatedFromRequestedGPUs,
+			runningOfActivePods,
+			strings.Join(jobInfo.ServiceURLs(), ", "))
 	}
 	_ = w.Flush()
 }
