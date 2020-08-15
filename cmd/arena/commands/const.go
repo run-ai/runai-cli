@@ -36,14 +36,14 @@ const (
 	// nodeLabelRole specifies the role of a node
 	nodeLabelRole = "kubernetes.io/role"
 
-	workloadCalculatedStatus   = "runai-calculated-status"
-	workloadRunningPods        = "runai-running-pods"
-	workloadPendingPods        = "runai-pending-pods"
-	workloadUsedNodes          = "runai-used-nodes"
-	podGroupRequestedGPUs      = "runai-podgroup-requested-gpus"
-	workloadTotalAllocatedGPUs = "runai-total-allocated-gpus"
-	workloadTotalRequestedGPUs = "runai-total-requested-gpus"
-	aliyunENIAnnotation        = "k8s.aliyun.com/eni"
+	workloadCalculatedStatus     = "runai-calculated-status"
+	workloadRunningPods          = "runai-running-pods"
+	workloadPendingPods          = "runai-pending-pods"
+	workloadUsedNodes            = "runai-used-nodes"
+	podGroupRequestedGPUs        = "runai-podgroup-requested-gpus"
+	workloadCurrentAllocatedGPUs = "runai-current-allocated-gpus"
+	workloadCurrentRequestedGPUs = "runai-current-requested-gpus"
+	aliyunENIAnnotation          = "k8s.aliyun.com/eni"
 )
 
 var (

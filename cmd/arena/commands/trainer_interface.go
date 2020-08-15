@@ -88,8 +88,10 @@ type TrainingJob interface {
 	Parallelism() int32
 	Succeeded() int32
 	Failed() int32
+	CurrentRequestedGPUs() float64
+	CurrentAllocatedGPUs() float64
+	WorkloadType() string
 	TotalRequestedGPUs() float64
-	TotalAllocatedGPUs() float64
 }
 
 type Trainer interface {

@@ -212,9 +212,9 @@ func getPendingPods(trainingAnnotations map[string]string) (int32, bool) {
 	return 0, false
 }
 
-func getTotalRequestedGPUs(trainingAnnotations map[string]string) (float64, bool) {
-	if len(trainingAnnotations[workloadTotalAllocatedGPUs]) > 0 {
-		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[workloadTotalAllocatedGPUs], 64)
+func getCurrentRequestedGPUs(trainingAnnotations map[string]string) (float64, bool) {
+	if len(trainingAnnotations[workloadCurrentRequestedGPUs]) > 0 {
+		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[workloadCurrentRequestedGPUs], 64)
 		if err == nil {
 			return totalAllocatedGPUs, true
 		}
@@ -223,8 +223,8 @@ func getTotalRequestedGPUs(trainingAnnotations map[string]string) (float64, bool
 }
 
 func getTotalAllocatedGPUs(trainingAnnotations map[string]string) (float64, bool) {
-	if len(trainingAnnotations[workloadTotalRequestedGPUs]) > 0 {
-		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[workloadTotalRequestedGPUs], 64)
+	if len(trainingAnnotations[workloadCurrentAllocatedGPUs]) > 0 {
+		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[workloadCurrentAllocatedGPUs], 64)
 		if err == nil {
 			return totalAllocatedGPUs, true
 		}

@@ -29,9 +29,11 @@ type RunaiJob struct {
 	completions       int32
 	failed            int32
 	succeeded         int32
+	workloadType      cmdTypes.ResourceType
 }
 
 func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource, status string, parallelism, completions, failed, succeeded int32) *RunaiJob {
+	workloadType := ownerResource.ResourceType
 	resources := append(cmdTypes.PodResources(pods), ownerResource)
 	return &RunaiJob{
 		pods:              pods,
@@ -51,6 +53,7 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1
 		completions:       completions,
 		failed:            failed,
 		succeeded:         succeeded,
+		workloadType:      workloadType,
 	}
 }
 
@@ -303,22 +306,36 @@ func (rj *RunaiJob) Failed() int32 {
 	return rj.failed
 }
 
-func (rj *RunaiJob) TotalRequestedGPUs() float64 {
-	totalRequestedGPUs, ok := getTotalRequestedGPUs(rj.jobMetadata.Annotations)
+func (rj *RunaiJob) CurrentRequestedGPUs() float64 {
+	totalRequestedGPUs, ok := getCurrentRequestedGPUs(rj.jobMetadata.Annotations)
 	if ok {
 		return totalRequestedGPUs
 	}
 
 	// backward compatibility
+	if isFinishedStatus(rj.GetStatus()) {
+		return 0
+	}
 	return rj.RequestedGPU()
 }
 
-func (rj *RunaiJob) TotalAllocatedGPUs() float64 {
+func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
 	totalRequestedGPUs, ok := getTotalAllocatedGPUs(rj.jobMetadata.Annotations)
 	if ok {
 		return totalRequestedGPUs
 	}
 
 	// backward compatibility
+	if rj.chiefPod.Status.Phase != v1.PodRunning {
+		return 0
+	}
 	return rj.RequestedGPU()
+}
+
+func (rj *RunaiJob) WorkloadType() string {
+	return string(rj.workloadType)
+}
+
+func (rj *RunaiJob) TotalRequestedGPUs() float64 {
+	return rj.RequestedGPU() * float64(rj.Parallelism())
 }

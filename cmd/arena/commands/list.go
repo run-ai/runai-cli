@@ -16,13 +16,11 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
-
-	"io"
-
-	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
@@ -84,7 +82,7 @@ func NewListCommand() *cobra.Command {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "RUNNING PODS", "PENDING PODS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs", "CREATED BY CLI", "SERVICE URL(S)"}
+	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "WORKLOAD TYPE", "PROJECT", "USER", "CURRENT ALLOCATED GPUs", "CURRENT REQUESTED GPUs", "TOTAL REQUESTED GPUS", "RUNNING PODS", "PENDING PODS"}
 
 	PrintLine(w, labelField...)
 
@@ -102,9 +100,10 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 
 		PrintLine(w, jobInfo.Name(),
 			status,
-			strconv.Itoa(int(jobInfo.RunningPods())), strconv.Itoa(int(jobInfo.PendingPods())),
 			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP, jobInfo.Image(), jobInfo.Trainer(), projectName, jobInfo.User(), fmt.Sprintf("%g", jobInfo.RequestedGPU()), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
+			hostIP, jobInfo.Image(), jobInfo.Trainer(), jobInfo.WorkloadType(), projectName, jobInfo.User(),
+			fmt.Sprintf("%g", jobInfo.CurrentAllocatedGPUs()), fmt.Sprintf("%g", jobInfo.CurrentRequestedGPUs()), fmt.Sprintf("%g", jobInfo.TotalRequestedGPUs()),
+			strconv.Itoa(int(jobInfo.RunningPods())), strconv.Itoa(int(jobInfo.PendingPods())))
 	}
 	_ = w.Flush()
 }

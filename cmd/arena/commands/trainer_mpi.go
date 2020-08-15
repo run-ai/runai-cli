@@ -282,6 +282,10 @@ func (mj *MPIJob) PendingPods() int32 {
 	return pendingPods
 }
 
+func (mj *MPIJob) WorkloadType() string {
+	return "MPIJob"
+}
+
 func (mj *MPIJob) Completions() int32 {
 	return 1
 }
@@ -297,6 +301,10 @@ func (mj *MPIJob) Succeeded() int32 {
 	return 0
 }
 
+func (mj *MPIJob) TotalRequestedGPUs() float64 {
+	return mj.RequestedGPU() * float64(mj.Parallelism())
+}
+
 func (mj *MPIJob) Failed() int32 {
 	failedPods := int32(0)
 	for _, pod := range mj.pods {
@@ -308,8 +316,8 @@ func (mj *MPIJob) Failed() int32 {
 	return failedPods
 }
 
-func (mj *MPIJob) TotalRequestedGPUs() float64 {
-	totalRequestedGPUs, ok := getTotalRequestedGPUs(mj.mpijob.Annotations)
+func (mj *MPIJob) CurrentRequestedGPUs() float64 {
+	totalRequestedGPUs, ok := getCurrentRequestedGPUs(mj.mpijob.Annotations)
 	if ok {
 		return totalRequestedGPUs
 	}
@@ -318,7 +326,7 @@ func (mj *MPIJob) TotalRequestedGPUs() float64 {
 	return mj.RequestedGPU()
 }
 
-func (mj *MPIJob) TotalAllocatedGPUs() float64 {
+func (mj *MPIJob) CurrentAllocatedGPUs() float64 {
 	totalRequestedGPUs, ok := getTotalAllocatedGPUs(mj.mpijob.Annotations)
 	if ok {
 		return totalRequestedGPUs
