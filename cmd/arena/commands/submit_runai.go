@@ -158,19 +158,19 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	submitArgs        `yaml:",inline"`
-	GPUInt            *int   `yaml:"gpuInt,omitempty"`
-	GPUFraction       string `yaml:"gpuFraction,omitempty"`
-	GPUFractionFixed  string `yaml:"gpuFractionFixed,omitempty"`
-	ServiceType       string `yaml:"serviceType,omitempty"`
-	Elastic           *bool  `yaml:"elastic,omitempty"`
-	NumberProcesses   int    `yaml:"numProcesses"` // --workers
-	TTL               *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
-	Completions       *int   `yaml:"completions,omitempty"`
-	Parallelism       *int   `yaml:"parallelism,omitempty"`
-	BackoffLimit      *int   `yaml:"backoffLimit,omitempty"`
-	IsJupyter         bool
-	IsPreemptible     *bool    `yaml:"isPreemptible,omitempty"`
+	submitArgs       `yaml:",inline"`
+	GPUInt           *int   `yaml:"gpuInt,omitempty"`
+	GPUFraction      string `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
+	ServiceType      string `yaml:"serviceType,omitempty"`
+	Elastic          *bool  `yaml:"elastic,omitempty"`
+	NumberProcesses  int    `yaml:"numProcesses"` // --workers
+	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Completions      *int   `yaml:"completions,omitempty"`
+	Parallelism      *int   `yaml:"parallelism,omitempty"`
+	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
+	IsJupyter        bool
+	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -223,9 +223,17 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, configValues *string) error {
-	if submitArgs.Completions == nil && submitArgs.Parallelism != nil {
-		// Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
-		return fmt.Errorf("if the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)")
+	if submitArgs.Parallelism != nil && *submitArgs.Parallelism > 1 {
+		if submitArgs.Completions == nil {
+			// Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
+			return fmt.Errorf("if the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)")
+		}
+		if submitArgs.Elastic != nil {
+			return fmt.Errorf("elasitc jobs can't run with Parallelism")
+		}
+		if submitArgs.Interactive != nil {
+			return fmt.Errorf("interactive jobs can't run with Parallelism")
+		}
 	}
 
 	err := handleRequestedGPUs(submitArgs)
