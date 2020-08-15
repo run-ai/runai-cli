@@ -82,7 +82,7 @@ func NewListCommand() *cobra.Command {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "WORKLOAD TYPE", "PROJECT", "USER", "CURRENT ALLOCATED GPUs", "CURRENT REQUESTED GPUs", "TOTAL REQUESTED GPUS", "RUNNING PODS", "PENDING PODS"}
+	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "WORKLOAD TYPE", "PROJECT", "USER", "CURRENT ALLOCATED GPUs", "CURRENT REQUESTED GPUs", "TOTAL REQUESTED GPUS", "RUNNING PODS", "PENDING PODS", "SERVICE URL(S)"}
 
 	PrintLine(w, labelField...)
 
@@ -103,7 +103,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 			util.ShortHumanDuration(jobInfo.Age()),
 			hostIP, jobInfo.Image(), jobInfo.Trainer(), jobInfo.WorkloadType(), projectName, jobInfo.User(),
 			fmt.Sprintf("%g", jobInfo.CurrentAllocatedGPUs()), fmt.Sprintf("%g", jobInfo.CurrentRequestedGPUs()), fmt.Sprintf("%g", jobInfo.TotalRequestedGPUs()),
-			strconv.Itoa(int(jobInfo.RunningPods())), strconv.Itoa(int(jobInfo.PendingPods())))
+			strconv.Itoa(int(jobInfo.RunningPods())), strconv.Itoa(int(jobInfo.PendingPods())), strings.Join(jobInfo.ServiceURLs(), ", "))
 	}
 	_ = w.Flush()
 }

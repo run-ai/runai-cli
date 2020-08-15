@@ -217,23 +217,13 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any instant.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
-	command.Flags().MarkHidden("parallelism")
-	command.Flags().MarkHidden("completions")
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, configValues *string) error {
-	if submitArgs.Parallelism != nil && *submitArgs.Parallelism > 1 {
-		if submitArgs.Completions == nil {
-			// Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
-			return fmt.Errorf("if the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)")
-		}
-		if submitArgs.Elastic != nil {
-			return fmt.Errorf("elasitc jobs can't run with Parallelism")
-		}
-		if submitArgs.Interactive != nil {
-			return fmt.Errorf("interactive jobs can't run with Parallelism")
-		}
+	err2 := verifyHPOFlags(submitArgs)
+	if err2 != nil {
+		return err2
 	}
 
 	err := handleRequestedGPUs(submitArgs)
@@ -248,5 +238,21 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 
 	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+	return nil
+}
+
+func verifyHPOFlags(submitArgs *submitRunaiJobArgs) error {
+	if submitArgs.Parallelism != nil && *submitArgs.Parallelism > 1 {
+		if submitArgs.Completions == nil {
+			// Setting parallelism without setting completions causes kubernetes to treat this job as having a work queue. For more info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
+			return fmt.Errorf("if the parallelism flag is set, you must also set the number of successful pod completions required for this job to complete (use --completions <number_of_required_completions>)")
+		}
+		if submitArgs.Elastic != nil {
+			return fmt.Errorf("elasitc jobs can't run with Parallelism")
+		}
+		if submitArgs.Interactive != nil {
+			return fmt.Errorf("interactive jobs can't run with Parallelism")
+		}
+	}
 	return nil
 }
