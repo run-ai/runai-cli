@@ -13,6 +13,7 @@ import (
 )
 
 func NewBashCommand() *cobra.Command {
+	var podName string
 	var command = &cobra.Command{
 		Use:   "bash JOB_NAME",
 		Short: "Get a bash session inside a running job.",
@@ -24,43 +25,42 @@ func NewBashCommand() *cobra.Command {
 
 			name = args[0]
 
-			execute(cmd, name, "/bin/bash", []string{}, true, true, "bash")
+			execute(cmd, name, "/bin/bash", []string{}, true, true, podName, "bash")
 		},
 	}
+
+	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job.")
 
 	return command
 }
 
 func NewExecCommand() *cobra.Command {
-	var (
-		interactive bool
-		TTY         bool
-	)
+	var interactive bool
+	var TTY bool
+	var podName string
 
 	var command = &cobra.Command{
 		Use:   "exec JOB_NAME COMMAND [ARG ...]",
 		Short: "Execute a command inside a running job.",
+		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				os.Exit(1)
-			}
 
 			name = args[0]
 			command := args[1]
 			commandArgs := args[2:]
 
-			execute(cmd, name, command, commandArgs, interactive, TTY, "exec")
+			execute(cmd, name, command, commandArgs, interactive, TTY, podName, "exec")
 		},
 	}
 
+	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job.")
 	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
 	command.Flags().BoolVarP(&TTY, "tty", "t", false, "Stdin is a TTY")
 
 	return command
 }
 
-func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, runaiCommandName string) {
+func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, podName string, runaiCommandName string) {
 
 	kubeClient, err := client.GetClient()
 	if err != nil {
@@ -81,12 +81,27 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 		os.Exit(1)
 	}
 
-	chiefPod := job.ChiefPod()
+	var podToExec *v1.Pod
+	if len(podName) == 0 {
+		podToExec = job.ChiefPod()
+	} else {
+		pods := job.AllPods()
+		for _, pod := range pods {
+			if podName == pod.Name {
+				podToExec = &pod
+				break
+			}
+		}
+		if podToExec == nil {
+			fmt.Printf("Failed to find pod: '%s' of job: '%s'\n", podName, job.Name())
+			os.Exit(1)
+		}
+	}
 
-	if chiefPod == nil || chiefPod.Status.Phase != v1.PodRunning {
-		fmt.Printf("Job '%s' is still in '%s' state. Please wait until the job is running and try again.\n", job.Name(), chiefPod.Status.Phase)
+	if podToExec == nil || podToExec.Status.Phase != v1.PodRunning {
+		fmt.Printf("Job '%s' is still in '%s' state. Please wait until the job is running and try again.\n", job.Name(), podToExec.Status.Phase)
 		os.Exit(1)
 	}
 
-	kubectl.Exec(chiefPod.Name, chiefPod.Namespace, command, commandArgs, interactive, TTY)
+	kubectl.Exec(podToExec.Name, podToExec.Namespace, command, commandArgs, interactive, TTY)
 }
