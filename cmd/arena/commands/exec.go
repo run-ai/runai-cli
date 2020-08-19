@@ -29,7 +29,7 @@ func NewBashCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job.")
+	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command")
 
 	return command
 }
@@ -53,7 +53,7 @@ func NewExecCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job.")
+	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command")
 	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
 	command.Flags().BoolVarP(&TTY, "tty", "t", false, "Stdin is a TTY")
 

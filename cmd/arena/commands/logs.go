@@ -99,6 +99,6 @@ func NewLogsCommand() *cobra.Command {
 	command.Flags().BoolVar(&outerArgs.Timestamps, "timestamps", false, "Include timestamps on each line in the log output.")
 
 	// command.Flags().StringVar(&printer.pod, "instance", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().StringVar(&outerArgs.PodName, "pod", "", "Specify a pod of a running job.")
+	command.Flags().StringVar(&outerArgs.PodName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command")
 	return command
 }
