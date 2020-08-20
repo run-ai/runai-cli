@@ -111,25 +111,13 @@ func (rj *RunaiJob) Duration() time.Duration {
 		return 0
 	}
 
-	status := rj.getStatus()
 	startTime := rj.StartTime()
 
 	if startTime == nil {
 		return 0
 	}
 
-	var finishTime metav1.Time = metav1.Now()
-
-	if status == v1.PodSucceeded || status == v1.PodFailed {
-		// The transition time of ready will be when the pod finished executing
-		for _, condition := range rj.ChiefPod().Status.Conditions {
-			if condition.Type == v1.PodReady {
-				finishTime = condition.LastTransitionTime
-			}
-		}
-	}
-
-	return finishTime.Sub(startTime.Time)
+	return rj.FinishTime().Sub(startTime.Time)
 }
 
 func (rj *RunaiJob) CreatedByCLI() bool {
@@ -138,18 +126,64 @@ func (rj *RunaiJob) CreatedByCLI() bool {
 
 // Get start time
 func (rj *RunaiJob) StartTime() *metav1.Time {
-	if rj.chiefPod == nil {
-		return nil
+	if rj.parallelism > 1 {
+		var earliestStartTime *metav1.Time
+		for _, pod := range rj.pods {
+			startTimeOfPod := getStartTimeOfPod(&pod)
+			if startTimeOfPod != nil && (earliestStartTime == nil || earliestStartTime.After(startTimeOfPod.Time)) {
+				earliestStartTime = startTimeOfPod
+			}
+		}
+		return earliestStartTime
 	}
 
-	pod := rj.ChiefPod()
+	return getStartTimeOfPod(rj.chiefPod)
+}
+
+// Get start time
+func (rj *RunaiJob) FinishTime() *metav1.Time {
+	if rj.parallelism > 1 {
+		now := metav1.Now()
+		latestEndTimeOfPod := &now
+		for _, pod := range rj.pods {
+			endTimeOfPod := getEndTimeOfPod(&pod)
+			if endTimeOfPod != nil && (latestEndTimeOfPod == nil || latestEndTimeOfPod.Before(endTimeOfPod)) {
+				latestEndTimeOfPod = endTimeOfPod
+			}
+		}
+		return latestEndTimeOfPod
+	}
+
+	return getEndTimeOfPod(rj.chiefPod)
+}
+
+func getStartTimeOfPod(pod *v1.Pod) *metav1.Time {
+	if pod == nil {
+		return nil
+	}
 	for _, condition := range pod.Status.Conditions {
 		if condition.Type == v1.PodInitialized && condition.Status == v1.ConditionTrue {
 			return &condition.LastTransitionTime
 		}
 	}
-
 	return nil
+}
+
+func getEndTimeOfPod(pod *v1.Pod) *metav1.Time {
+	finishTime := metav1.Now()
+	if pod == nil {
+		return &finishTime
+	}
+
+	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+		// The transition time of ready will be when the pod finished executing
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == v1.PodReady {
+				return &condition.LastTransitionTime
+			}
+		}
+	}
+	return &finishTime
 }
 
 func (rj *RunaiJob) GetPodGroupName() string {
