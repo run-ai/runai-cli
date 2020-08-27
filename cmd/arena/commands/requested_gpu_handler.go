@@ -31,10 +31,6 @@ func handleRequestedGPUs(submitArgs *submitRunaiJobArgs) error {
 }
 
 func validateFractionalGPUTask(submitArgs *submitRunaiJobArgs) error {
-	if submitArgs.Interactive == nil || *submitArgs.Interactive == false {
-		return fmt.Errorf("Jobs that require a fractional number of GPUs must be interactive. Run the job with flag '--interactive'")
-	}
-
 	if submitArgs.Elastic != nil && *submitArgs.Elastic == true {
 		return fmt.Errorf("Jobs that require a fractional number of GPUs can't be elastic jobs. Run the job without flag '--elastic'")
 	}
