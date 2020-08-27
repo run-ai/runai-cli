@@ -13,7 +13,6 @@ type testArgs struct {
 
 func TestGPUSharingManager(t *testing.T) {
 	interactiveTrue := true
-	interactiveFalse := false
 	elasticJobTrue := true
 	elasticJobFalse := false
 	fractionalGPU := 0.2
@@ -43,15 +42,6 @@ func TestGPUSharingManager(t *testing.T) {
 				elastic:     &elasticJobFalse,
 			},
 			wantErr: false,
-		},
-		{
-			name: "Non interactive fractional GPU job",
-			args: &testArgs{
-				interactive: &interactiveFalse,
-				gpu:         &fractionalGPU,
-				elastic:     &elasticJobFalse,
-			},
-			wantErr: true,
 		},
 		{
 			name: "Elastic fractional GPU job",
