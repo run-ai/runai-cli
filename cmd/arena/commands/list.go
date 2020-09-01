@@ -81,7 +81,7 @@ func NewListCommand() *cobra.Command {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs Allocated (Requested)", "PODs Running (Pending)", "SERVICE URL(S)"}
+	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs (Allocated/Requested)", "PODs Running (Pending)", "SERVICE URL(S)"}
 
 	PrintLine(w, labelField...)
 
@@ -105,7 +105,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 		if currentAllocatedGPUs == 0 && isFinishedStatus(status) {
 			currentAllocatedGPUsAsString = "-"
 		}
-		allocatedFromRequestedGPUs := fmt.Sprintf("%s (%g)", currentAllocatedGPUsAsString, jobInfo.TotalRequestedGPUs())
+		allocatedFromRequestedGPUs := fmt.Sprintf("%s/%g", currentAllocatedGPUsAsString, jobInfo.TotalRequestedGPUs())
 		runningOfActivePods := fmt.Sprintf("%d (%d)", int(jobInfo.RunningPods()), int(jobInfo.PendingPods()))
 
 		PrintLine(w, jobInfo.Name(),

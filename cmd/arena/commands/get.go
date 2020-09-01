@@ -303,7 +303,7 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 	fmt.Fprintf(w, "PARALLELISM: %d\n", job.Parallelism())
 	fmt.Fprintf(w, "COMPLETIONS: %d\n", job.Completions())
 	fmt.Fprintf(w, "SUCCEEDED PODS: %d\n", job.Succeeded())
-	fmt.Fprintf(w, "FAILED PODS: %d\n", job.Failed())
+	fmt.Fprintf(w, "FAILED pods: %d\n", job.Failed())
 	fmt.Fprintf(w, "IS DISTRIBUTED WORKLOAD: %s\n", strconv.FormatBool(job.WorkloadType() == "MPIJob"))
 	fmt.Fprintf(w, "CREATED BY CLI: %s\n", strconv.FormatBool(job.CreatedByCLI()))
 	fmt.Fprintf(w, "SERVICE URL(S): %s\n", strings.Join(job.ServiceURLs(), ", "))
