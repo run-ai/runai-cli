@@ -95,7 +95,7 @@ type submitArgs struct {
 	Volumes                  []string `yaml:"volume,omitempty"`
 	PersistentVolumes        []string `yaml:"persistentVolumes,omitempty"`
 	WorkingDir               string   `yaml:"workingDir,omitempty"`
-	PreventPrivilegeEscalation bool     `yaml:preventPrivilegeEscalation,omitempty`
+	PreventPrivilegeEscalation bool     `yaml:"preventPrivilegeEscalation"`
 	RunAsUser                string   `yaml:"runAsUser,omitempty"`
 	RunAsGroup               string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups       []int    `yaml:"supplementalGroups,omitempty"`
