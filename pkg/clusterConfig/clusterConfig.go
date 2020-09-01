@@ -10,7 +10,7 @@ import (
 
 type ClusterConfig struct {
 	EnforceRunAsUser bool `yaml:"enforceRunAsUser"`
-	NotAllowPrivilegeEscalation bool `yaml:"notAllowPrivilegeEscalation"`
+	EnforcePreventPrivilegeEscalation bool `yaml:"enforcePreventPrivilegeEscalation"`
 }
 
 const (

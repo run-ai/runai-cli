@@ -110,7 +110,7 @@ spec:
           workingDir: {{ .Values.workingDir }}
           {{- end}}
           securityContext:
-            allowPrivilegeEscalation: {{ .Values.allowPrivilegeEscalation }}
+            allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
           resources:
             limits:
               {{- if .Values.gpuInt }}
