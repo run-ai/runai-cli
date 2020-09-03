@@ -76,6 +76,8 @@ spec:
               {{ range $index, $command := .Values.command }}
               - {{ quote $command }}
               {{- end}}
+              securityContext:
+                allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               args:
               {{ range $index, $arg := .Values.args }}
               - {{ quote $arg }}
