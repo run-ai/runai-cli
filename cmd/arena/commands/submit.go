@@ -91,21 +91,22 @@ type submitArgs struct {
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
 
-	AlwaysPullImage    *bool    `yaml:"alwaysPullImage,omitempty"`
-	Volumes            []string `yaml:"volume,omitempty"`
-	PersistentVolumes  []string `yaml:"persistentVolumes,omitempty"`
-	WorkingDir         string   `yaml:"workingDir,omitempty"`
-	RunAsUser          string   `yaml:"runAsUser,omitempty"`
-	RunAsGroup         string   `yaml:"runAsGroup,omitempty"`
-	SupplementalGroups []int    `yaml:"supplementalGroups,omitempty"`
-	RunAsCurrentUser   bool
-	Command            []string          `yaml:"command"`
-	LocalImage         *bool             `yaml:"localImage,omitempty"`
-	LargeShm           *bool             `yaml:"shm,omitempty"`
-	Ports              []string          `yaml:"ports,omitempty"`
-	Labels             map[string]string `yaml:"labels,omitempty"`
-	HostIPC            *bool             `yaml:"hostIPC,omitempty"`
-	HostNetwork        *bool             `yaml:"hostNetwork,omitempty"`
+	AlwaysPullImage          *bool    `yaml:"alwaysPullImage,omitempty"`
+	Volumes                  []string `yaml:"volume,omitempty"`
+	PersistentVolumes        []string `yaml:"persistentVolumes,omitempty"`
+	WorkingDir               string   `yaml:"workingDir,omitempty"`
+	PreventPrivilegeEscalation bool     `yaml:"preventPrivilegeEscalation"`
+	RunAsUser                string   `yaml:"runAsUser,omitempty"`
+	RunAsGroup               string   `yaml:"runAsGroup,omitempty"`
+	SupplementalGroups       []int    `yaml:"supplementalGroups,omitempty"`
+	RunAsCurrentUser         bool
+	Command                  []string          `yaml:"command"`
+	LocalImage               *bool             `yaml:"localImage,omitempty"`
+	LargeShm                 *bool             `yaml:"shm,omitempty"`
+	Ports                    []string          `yaml:"ports,omitempty"`
+	Labels                   map[string]string `yaml:"labels,omitempty"`
+	HostIPC                  *bool             `yaml:"hostIPC,omitempty"`
+	HostNetwork              *bool             `yaml:"hostNetwork,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -206,6 +207,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	command.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
 	command.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
@@ -271,6 +273,10 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		}
 	}
 
+	if clusterConfig.EnforcePreventPrivilegeEscalation {
+		submitArgs.PreventPrivilegeEscalation = true;
+	}
+
 	err = HandleVolumesAndPvc(submitArgs)
 	if err != nil {
 		fmt.Println(err)
@@ -278,13 +284,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	index, err := getJobIndex(clientset)
-
-	if err != nil {
-		log.Debug("Could not get job index. Will not set a label.")
-	} else {
-		submitArgs.Labels = make(map[string]string)
-		submitArgs.Labels["runai/job-index"] = index
-	}
 
 	if err != nil {
 		log.Debug("Could not get job index. Will not set a label.")
