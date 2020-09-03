@@ -54,12 +54,16 @@ spec:
           hostIPC: {{ .Values.hostIPC }}
           hostNetwork: {{ .Values.hostNetwork }}
           securityContext:
-          {{- if .Values.runAsUser }}
-          runAsUser: {{ .Values.runAsUser }}
-          {{- end}}
-          {{- if .Values.runAsGroup }}
-          runAsGroup: {{ .Values.runAsGroup }}
-          {{- end }}
+            {{- if .Values.runAsUser }}
+            runAsUser: {{ .Values.runAsUser }}
+            {{- end}}
+            {{- if .Values.runAsGroup }}
+            runAsGroup: {{ .Values.runAsGroup }}
+            {{- end }}
+            {{- if .Values.supplementalGroups }}
+            supplementalGroups:
+{{ toYaml .Values.supplementalGroups | indent 14}}
+            {{- end }}
           schedulerName: runai-scheduler
           containers:
             - image: "{{ .Values.image }}"
@@ -125,8 +129,21 @@ spec:
             run.ai/type: {{ .Values.node_type }}
           {{- end}}
           schedulerName: runai-scheduler
+          securityContext:
+            {{- if .Values.runAsUser }}
+            runAsUser: {{ .Values.runAsUser }}
+            {{- end}}
+            {{- if .Values.runAsGroup }}
+            runAsGroup: {{ .Values.runAsGroup }}
+            {{- end }}
+            {{- if .Values.supplementalGroups }}
+            supplementalGroups:
+{{ toYaml .Values.supplementalGroups | indent 14}}
+            {{- end }}
           containers:
             - image: "{{ .Values.image }}"
+              securityContext:
+                allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               name: mpi
               imagePullPolicy: {{ .Values.imagePullPolicy }}
               resources:
