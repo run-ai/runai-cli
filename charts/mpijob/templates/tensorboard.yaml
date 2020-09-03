@@ -73,9 +73,9 @@
 {{/*        {{- end }}*/}}
 {{/*      containers:*/}}
 {{/*      - name: tensorboard   */}}
-{{/*        {{- if .Values.isLocalLogging }}*/}}
 {{/*        securityContext:*/}}
 {{/*          allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}*/}}
+{{/*        {{- if .Values.isLocalLogging }}*/}}
 {{/*        command: ["tensorboard", "--logdir", "/output/training_logs",  "--host",  "0.0.0.0"]*/}}
 {{/*        {{- else}}*/}}
 {{/*        command: ["tensorboard", "--logdir", "{{ .Values.trainingLogdir }}",  "--host",  "0.0.0.0"]*/}}

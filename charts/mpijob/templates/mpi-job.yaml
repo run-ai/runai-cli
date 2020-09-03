@@ -64,6 +64,8 @@ spec:
           containers:
             - image: "{{ .Values.image }}"
               name: mpi
+              securityContext:
+                allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               {{- if .Values.localImage}}
               imagePullPolicy: Never
               {{- else if .Values.alwaysPullImage }}
@@ -76,8 +78,6 @@ spec:
               {{ range $index, $command := .Values.command }}
               - {{ quote $command }}
               {{- end}}
-              securityContext:
-                allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               args:
               {{ range $index, $arg := .Values.args }}
               - {{ quote $arg }}
