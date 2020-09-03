@@ -102,13 +102,6 @@ func (mj *MPIJob) GetStatus() string {
 	if mj.mpijob.Status.ReplicaStatuses == nil {
 		return "Pending"
 	}
-	if mj.mpijob.Status.ReplicaStatuses != nil {
-		if mj.mpijob.Status.ReplicaStatuses["Launcher"].Succeeded == 1 {
-			jobStatus = constants.Status.Succeeded
-		} else if mj.mpijob.Status.ReplicaStatuses["Launcher"].Failed == 1 {
-			jobStatus = constants.Status.Failed
-		}
-	}
 	return getTrainingStatus(mj.mpijob.Annotations, &mj.chiefPod, jobStatus)
 }
 
