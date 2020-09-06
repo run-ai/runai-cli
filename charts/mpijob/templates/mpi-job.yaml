@@ -109,7 +109,7 @@ spec:
                   {{- end }}
               env:
                 {{- if .Values.runAsUsername }}
-                - name: "$HOME"
+                - name: "HOME"
                   value: /home/{{ .Values.runAsUsername }}
                 {{- end }}
                 # Not using concat to support previous version of helm
