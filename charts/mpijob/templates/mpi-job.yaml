@@ -59,6 +59,7 @@ spec:
             {{- end}}
             {{- if .Values.runAsGroup }}
             runAsGroup: {{ .Values.runAsGroup }}
+            fsGroup: {{ .Values.runAsGroup }}
             {{- end }}
             {{- if .Values.supplementalGroups }}
             supplementalGroups:
