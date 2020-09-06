@@ -65,9 +65,19 @@ spec:
 {{ toYaml .Values.supplementalGroups | indent 14}}
             {{- end }}
           schedulerName: runai-scheduler
+          {{- if  .Values.runAsUsername }}
+          volumes:
+            - name: user-data
+              emptyDir: {}
+          {{- end }}
           containers:
             - image: "{{ .Values.image }}"
               name: mpi
+              {{- if  .Values.runAsUsername }}
+              volumeMounts:
+                - mountPath: /home/{{ .Values.runAsUsername }}
+                  name: user-data
+              {{- end }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               {{- if .Values.localImage}}
@@ -98,6 +108,10 @@ spec:
                   memory: {{ .Values.memory }}
                   {{- end }}
               env:
+                {{- if .Values.runAsUsername }}
+                - name: "$HOME"
+                  value: /home/{{ .Values.runAsUsername }}
+                {{- end }}
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
                 {{ $parts := split "=" $env }}

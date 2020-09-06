@@ -96,6 +96,7 @@ type submitArgs struct {
 	PersistentVolumes        []string `yaml:"persistentVolumes,omitempty"`
 	WorkingDir               string   `yaml:"workingDir,omitempty"`
 	PreventPrivilegeEscalation bool     `yaml:"preventPrivilegeEscalation"`
+	RunAsUsername			 string   `yaml:"runAsUsername,omitempty"`
 	RunAsUser                string   `yaml:"runAsUser,omitempty"`
 	RunAsGroup               string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups       []int    `yaml:"supplementalGroups,omitempty"`
@@ -276,6 +277,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 			} else {
 				log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
 			}
+			submitArgs.RunAsUsername = currentUser.Username
 			submitArgs.RunAsUser = currentUser.Uid
 			submitArgs.RunAsGroup = currentUser.Gid
 		}
