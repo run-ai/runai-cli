@@ -404,6 +404,12 @@ func WaitForReadyStatefulSet(name string, namespace string) error {
 	return nil
 }
 
+func Attach(podName string, namespace string, commandArgs []string, interactive bool, TTY bool) error {
+	args := []string{"attach", podName, fmt.Sprintf("-i=%t", interactive), fmt.Sprintf("-t=%t", TTY), "-n", namespace}
+	args = append(args, commandArgs...)
+	return kubectlAttched(args)
+}
+
 func Exec(podName string, namespace string, command string, commandArgs []string, interactive bool, TTY bool) error {
 	args := []string{"exec", podName, fmt.Sprintf("-i=%t", interactive), fmt.Sprintf("-t=%t", TTY), "-n", namespace, command}
 	args = append(args, commandArgs...)
