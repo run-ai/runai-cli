@@ -105,7 +105,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 		if currentAllocatedGPUs == 0 && isFinishedStatus(status) {
 			currentAllocatedGPUsAsString = "-"
 		}
-		allocatedFromRequestedGPUs := fmt.Sprintf("%s (%g)", currentAllocatedGPUsAsString, jobInfo.TotalRequestedGPUs())
+		allocatedFromRequestedGPUs := fmt.Sprintf("%s (%g)", currentAllocatedGPUsAsString, jobInfo.RequestedGPU())
 		runningOfActivePods := fmt.Sprintf("%d (%d)", int(jobInfo.RunningPods()), int(jobInfo.PendingPods()))
 
 		PrintLine(w, jobInfo.Name(),
