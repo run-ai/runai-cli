@@ -9,9 +9,11 @@ import (
 	// "github.com/kubeflow/arena/pkg/util/kubectl"
 	// log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	// "k8s.io/client-go/tools/remotecommand"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
+	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	// "github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	kubeAttach "k8s.io/kubectl/pkg/cmd/attach"
 	// restclient "k8s.io/client-go/rest"
 	// v1 "k8s.io/api/core/v1"
 )
@@ -35,7 +37,7 @@ func NewAttachCommand() *cobra.Command {
 			jobName := args[0]
 
 			fmt.Println(`hi from attach command`, args)
-			Attach(cmd, jobName)
+			Attach(cmd, jobName, true, true, "")
 		},
 	}
 
@@ -43,53 +45,57 @@ func NewAttachCommand() *cobra.Command {
 }
 
 // Attach to a running job name
-func Attach(cmd *cobra.Command, interactive bool, name string,commandArgs []string, TTY bool,  podName string ) error {
-
+func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string ) error {
+	
 	kubeClient, err := client.GetClient()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	podToExec, err := GetPodFromCmd(cmd, kubeClient, podName)
+	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
 
 	if err != nil {
 		log.Errorln(err)
 		os.Exit(1)
 	}
-	
 
-	kubectl.Attach(podToExec.Name, podToExec.Namespace, commandArgs, interactive, TTY)
+	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 
+	o := kubeAttach.NewAttachOptions(ioStream)
 
-	// restClient, err := restclient.RESTClientFor(o.Config)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	req := restClient.Post().
-	// 		Resource("pods").
-	// 		Name(o.Pod.Name).
-	// 		Namespace(o.Pod.Namespace).
-	// 		SubResource("attach")
-	// 	req.VersionedParams(&corev1.PodAttachOptions{
-	// 		Container: containerToAttach.Name,
-	// 		Stdin:     o.Stdin,
-	// 		Stdout:    o.Out != nil,
-	// 		Stderr:    !o.DisableStderr,
-	// 		TTY:       raw,
-	// 	}, scheme.ParameterCodec)
-	
-	
-	// // method string, url *url.URL, config *restclient.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool, terminalSizeQueue remotecommand.TerminalSizeQueue) 
-	// exec, err := remotecommand.NewSPDYExecutor(config, method, url)
-	// if err != nil {
-	// 	return err
-	// }
-	// return exec.Stream(remotecommand.StreamOptions{
-	// 	Stdin:             stdin,
-	// 	Stdout:            stdout,
-	// 	Stderr:            stderr,
-	// 	Tty:               tty,
-	// 	TerminalSizeQueue: terminalSizeQueue,
-	// })
+	var sizeQueue remotecommand.TerminalSizeQueue
+	t := o.SetupTTY()
+
+	o.Pod = podToExec
+	o.Namespace = podToExec.Namespace
+	o.PodName = podToExec.Name
+	o.TTY = true
+	o.Stdin = true
+
+	if t.Raw {
+		if size := t.GetSize(); size != nil {
+			// fake resizing +1 and then back to normal so that attach-detach-reattach will result in the
+			// screen being redrawn
+			sizePlusOne := *size
+			sizePlusOne.Width++
+			sizePlusOne.Height++
+
+			// this call spawns a goroutine to monitor/update the terminal size
+			sizeQueue = t.MonitorSize(&sizePlusOne, size)
+		}
+
+		o.DisableStderr = true
+	}
+	containerToAttach :=&podToExec.Spec.Containers[0]
+
+	if !o.Quiet {
+		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
+	}
+
+	if err := t.Safe(o.AttachFunc(o, containerToAttach , t.Raw, sizeQueue)); err != nil {
+		return err
+	}
+
+	return nil
 }

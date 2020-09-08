@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	"github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
@@ -62,7 +61,7 @@ func NewExecCommand() *cobra.Command {
 }
 
 // GetPodFromCmd extract and searche for namespace, job and podName
-func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, podName string) (pod *v1.Pod, err error) {
+func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string) (pod *v1.Pod, err error) {
 
 	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
@@ -70,7 +69,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, podName string
 		return
 	}
 
-	job, err := searchTrainingJob(kubeClient, name, "", namespace)
+	job, err := searchTrainingJob(kubeClient, jobName, "", namespace)
 	if err != nil {
 		return
 	}
@@ -98,7 +97,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, podName string
 }
 
 
-func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, podName string, runaiCommandName string) {
+func execute(cmd *cobra.Command, jobName string, command string, commandArgs []string, interactive bool, TTY bool, podName string, runaiCommandName string) {
 
 	kubeClient, err := client.GetClient()
 	if err != nil {
@@ -106,7 +105,7 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 		os.Exit(1)
 	}
 
-	podToExec, err := GetPodFromCmd(cmd, kubeClient, podName)
+	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
 
 	if err != nil {
 		log.Errorln(err)
