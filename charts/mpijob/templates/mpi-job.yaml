@@ -162,7 +162,7 @@ spec:
             {{- end }}
           containers:
             - image: "{{ .Values.image }}"
-              {{- if .Values.supplementalGroups }}
+              {{- if .Values.createUserDir }}
               volumeMounts:
                 - mountPath: /home/{{ .Values.runAsUsername }}
                   name: user-data

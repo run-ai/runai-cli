@@ -95,7 +95,7 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Release.Name }}
-          {{- if .Values.supplementalGroups }}
+          {{- if .Values.createUserDir }}
           volumeMounts:
             - mountPath: /home/{{ .Values.runAsUsername }}
               name: user-data
