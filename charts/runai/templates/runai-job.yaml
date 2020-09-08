@@ -77,7 +77,7 @@ spec:
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
-      {{- if  .Values.createUserDir }}
+      {{- if  .Values.createHomeDir }}
       volumes:
         - name: user-data
           emptyDir: {}
@@ -95,9 +95,9 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Release.Name }}
-          {{- if .Values.createUserDir }}
+          {{- if .Values.createHomeDir }}
           volumeMounts:
-            - mountPath: /home/{{ .Values.runAsUsername }}
+            - mountPath: /home/runai-home
               name: user-data
           {{- end }}
           command:
@@ -140,9 +140,9 @@ spec:
               memory: {{ .Values.memory }}
               {{- end }}
           env:
-            {{- if .Values.createUserDir }}
+            {{- if .Values.createHomeDir }}
             - name: "HOME"
-              value: /home/{{ .Values.runAsUsername }}
+              value: /home/runai-home
             {{- end }}
             # Not using concat to support previous version of helm
             {{- range $index, $env := .Values.environmentDefault }}

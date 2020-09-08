@@ -91,29 +91,26 @@ type submitArgs struct {
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
 
-	AlwaysPullImage          *bool    `yaml:"alwaysPullImage,omitempty"`
-	Volumes                  []string `yaml:"volume,omitempty"`
-	PersistentVolumes        []string `yaml:"persistentVolumes,omitempty"`
-	WorkingDir               string   `yaml:"workingDir,omitempty"`
+	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`
+	Volumes                    []string `yaml:"volume,omitempty"`
+	PersistentVolumes          []string `yaml:"persistentVolumes,omitempty"`
+	WorkingDir                 string   `yaml:"workingDir,omitempty"`
 	PreventPrivilegeEscalation bool     `yaml:"preventPrivilegeEscalation"`
-	CreateUserDir			 *bool   `yaml:"createUserDir,omitempty"`
-	RunAsUsername			 string   `yaml:"runAsUsername,omitempty"`
-	RunAsUser                string   `yaml:"runAsUser,omitempty"`
-	RunAsGroup               string   `yaml:"runAsGroup,omitempty"`
-	SupplementalGroups       []int    `yaml:"supplementalGroups,omitempty"`
-	RunAsCurrentUser         bool
-	Command                  []string          `yaml:"command"`
-	LocalImage               *bool             `yaml:"localImage,omitempty"`
-	LargeShm                 *bool             `yaml:"shm,omitempty"`
-	Ports                    []string          `yaml:"ports,omitempty"`
-	Labels                   map[string]string `yaml:"labels,omitempty"`
-	HostIPC                  *bool             `yaml:"hostIPC,omitempty"`
-	HostNetwork              *bool             `yaml:"hostNetwork,omitempty"`
-	StdIn              		 bool              `yaml:"stdin,omitempty"`
-	TTY              		 bool              `yaml:"tty,omitempty"`
-	Attach                   bool              `yaml:"attach,omitempty"`
-
-
+	CreateHomeDir              *bool    `yaml:"createHomeDir,omitempty"`
+	RunAsUser                  string   `yaml:"runAsUser,omitempty"`
+	RunAsGroup                 string   `yaml:"runAsGroup,omitempty"`
+	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
+	RunAsCurrentUser           bool
+	Command                    []string          `yaml:"command"`
+	LocalImage                 *bool             `yaml:"localImage,omitempty"`
+	LargeShm                   *bool             `yaml:"shm,omitempty"`
+	Ports                      []string          `yaml:"ports,omitempty"`
+	Labels                     map[string]string `yaml:"labels,omitempty"`
+	HostIPC                    *bool             `yaml:"hostIPC,omitempty"`
+	HostNetwork                *bool             `yaml:"hostNetwork,omitempty"`
+	StdIn                      bool              `yaml:"stdin,omitempty"`
+	TTY                        bool              `yaml:"tty,omitempty"`
+	Attach                     bool              `yaml:"attach,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -214,7 +211,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.CreateUserDir), "create-user-dir", "Create a folder with the current user name on /home and create a HOME env to direct it, equal true by default when --rus-as-user is flagged.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.CreateHomeDir), "create-user-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
 	// command.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 	// command.Flags().BoolVar(&(submitArgs.TTY), "tty", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
@@ -271,34 +268,30 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 
 	submitArgs.Namespace = namespaceInfo.Namespace
 	submitArgs.Project = namespaceInfo.ProjectName
-	if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser || *submitArgs.CreateUserDir {
+	if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser {
 		currentUser, err := user.Current()
 		if err != nil {
 			log.Debugf("Could not retrieve the current user: %s", err.Error())
 			os.Exit(1)
 		}
-		submitArgs.RunAsUsername = currentUser.Username
-
-		if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser {
-			groups, err := syscall.Getgroups()
-			if err == nil {
-				submitArgs.SupplementalGroups = groups
-			} else {
-				log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
-				os.Exit(1)
-			}
-			submitArgs.RunAsUser = currentUser.Uid
-			submitArgs.RunAsGroup = currentUser.Gid
-			// Set the default of MountUser as true if run-as-user is true
-			if submitArgs.CreateUserDir == nil {
-				t:=true
-				submitArgs.CreateUserDir = &t
-			}
+		
+		groups, err := syscall.Getgroups()
+		if err != nil {
+			log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
+			os.Exit(1)
+		}
+		submitArgs.SupplementalGroups = groups
+		submitArgs.RunAsUser = currentUser.Uid
+		submitArgs.RunAsGroup = currentUser.Gid
+		// Set the default of MountUser as true if run-as-user is true
+		if submitArgs.CreateHomeDir == nil {
+			t := true
+			submitArgs.CreateHomeDir = &t
 		}
 	}
 
 	if clusterConfig.EnforcePreventPrivilegeEscalation {
-		submitArgs.PreventPrivilegeEscalation = true;
+		submitArgs.PreventPrivilegeEscalation = true
 	}
 
 	err = HandleVolumesAndPvc(submitArgs)
