@@ -283,7 +283,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		submitArgs.SupplementalGroups = groups
 		submitArgs.RunAsUser = currentUser.Uid
 		submitArgs.RunAsGroup = currentUser.Gid
-		// Set the default of MountUser as true if run-as-user is true
+		// Set the default of CreateHomeDir as true if run-as-user is true
 		if submitArgs.CreateHomeDir == nil {
 			t := true
 			submitArgs.CreateHomeDir = &t
