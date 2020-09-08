@@ -96,6 +96,7 @@ type submitArgs struct {
 	PersistentVolumes        []string `yaml:"persistentVolumes,omitempty"`
 	WorkingDir               string   `yaml:"workingDir,omitempty"`
 	PreventPrivilegeEscalation bool     `yaml:"preventPrivilegeEscalation"`
+	CreateUserDir			 *bool   `yaml:"createUserDir,omitempty"`
 	RunAsUsername			 string   `yaml:"runAsUsername,omitempty"`
 	RunAsUser                string   `yaml:"runAsUser,omitempty"`
 	RunAsGroup               string   `yaml:"runAsGroup,omitempty"`
@@ -213,6 +214,8 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.CreateUserDir), "create-user-dir", "Create a folder with the current user name on /home and create a HOME env to direct it, equal true by default when --rus-as-user is flagged.")
+
 	// command.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 	// command.Flags().BoolVar(&(submitArgs.TTY), "tty", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 	// command.Flags().BoolVar(&(submitArgs.Attach), "attach", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
@@ -268,18 +271,29 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 
 	submitArgs.Namespace = namespaceInfo.Namespace
 	submitArgs.Project = namespaceInfo.ProjectName
-	if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser {
+	if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser || *submitArgs.CreateUserDir {
 		currentUser, err := user.Current()
-		if err == nil {
+		if err != nil {
+			log.Debugf("Could not retrieve the current user: %s", err.Error())
+			os.Exit(1)
+		}
+		submitArgs.RunAsUsername = currentUser.Username
+
+		if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser {
 			groups, err := syscall.Getgroups()
 			if err == nil {
 				submitArgs.SupplementalGroups = groups
 			} else {
 				log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
+				os.Exit(1)
 			}
-			submitArgs.RunAsUsername = currentUser.Username
 			submitArgs.RunAsUser = currentUser.Uid
 			submitArgs.RunAsGroup = currentUser.Gid
+			// Set the default of MountUser as true if run-as-user is true
+			if submitArgs.CreateUserDir == nil {
+				t:=true
+				submitArgs.CreateUserDir = &t
+			}
 		}
 	}
 

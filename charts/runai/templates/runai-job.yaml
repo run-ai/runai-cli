@@ -77,6 +77,11 @@ spec:
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
+      {{- if  .Values.createUserDir }}
+      volumes:
+        - name: user-data
+          emptyDir: {}
+      {{- end }}
       securityContext:
         {{- if .Values.runAsUser }}
         runAsUser: {{ .Values.runAsUser }}
@@ -90,6 +95,11 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Release.Name }}
+          {{- if .Values.supplementalGroups }}
+          volumeMounts:
+            - mountPath: /home/{{ .Values.runAsUsername }}
+              name: user-data
+          {{- end }}
           command:
           {{ range $index, $command := .Values.command }}
           - {{ quote $command }}
@@ -130,6 +140,10 @@ spec:
               memory: {{ .Values.memory }}
               {{- end }}
           env:
+            {{- if .Values.createUserDir }}
+            - name: "HOME"
+              value: /home/{{ .Values.runAsUsername }}
+            {{- end }}
             # Not using concat to support previous version of helm
             {{- range $index, $env := .Values.environmentDefault }}
             {{ $parts := split "=" $env }}
