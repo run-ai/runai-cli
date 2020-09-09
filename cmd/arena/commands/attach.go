@@ -21,7 +21,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	// "k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
 	kubeAttach "k8s.io/kubectl/pkg/cmd/attach"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
@@ -88,13 +88,15 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 
 	// restClient, err := f.ToRESTConfig()
 
+	restConfig, _ := initIstioClient(kubeClient)
+
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
 	o.PodName = podToExec.Name
 	o.TTY = tty
 	o.Stdin = stdin
 
-	o.Config = kubeClient.GetRestConfig()
+	o.Config = restConfig
 
 
 	if t.Raw {
@@ -117,11 +119,11 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
 	}
 
-	rc, err := rest.RESTClientFor(o.Config)
+	restClient, err := rest.RESTClientFor(o.Config)
 	if err != nil {
 		return err
 	}
-	req := rc.Post().
+	req := restClient.Post().
 		Resource("pods").
 		Name(podToExec.Name).
 		Namespace(podToExec.Namespace).
@@ -160,7 +162,7 @@ func DefaultAttach(method string, url *netUrl.URL, config *rest.Config, stdin io
 }
 
 
-func initIstioClient(client *client.Client) (*rest.RESTClient, error) {
+func initIstioClient(client *client.Client) (*rest.Config, error) {
 	restConfig := client.GetRestConfig()
 
 	istioAPIGroupVersion := schema.GroupVersion{
@@ -189,7 +191,7 @@ func initIstioClient(client *client.Client) (*rest.RESTClient, error) {
 		return nil, err
 	}
 
-	// restConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)}
+    restConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)}
 
-	return rest.RESTClientFor(restConfig)
+	return restConfig, err
 }
