@@ -47,18 +47,18 @@ func NewAttachCommand() *cobra.Command {
 }
 
 // Attach to a running job name
-func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string ) error {
+func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string ) (err error) {
 	
 	kubeClient, err := client.GetClient()
 	if err != nil {
-		return err
+		return 
 	}
 
 	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
 	if err != nil {
-		return err
+		return 
 	}
-	
+
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 	
 	
@@ -75,6 +75,7 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	o.PodName = podToExec.Name
 	o.TTY = tty
 	o.Stdin = stdin
+	o.Config = kubeClient.GetRestConfig()
 
 	if t.Raw {
 		if size := t.GetSize(); size != nil {
