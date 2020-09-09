@@ -110,6 +110,8 @@ spec:
           - {{ quote $arg }}
           {{- end}}
           {{- end}}
+          stdin: {{ .Values.stdin }}
+          tty: {{ .Values.tty }}
           image: {{ .Values.image }}
           {{- if .Values.localImage}}
           imagePullPolicy: Never

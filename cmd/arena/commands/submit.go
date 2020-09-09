@@ -213,9 +213,10 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.CreateHomeDir), "create-user-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
-	// command.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	// command.Flags().BoolVar(&(submitArgs.TTY), "tty", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	// command.Flags().BoolVar(&(submitArgs.Attach), "attach", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	command.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
+	command.Flags().BoolVar(&(submitArgs.TTY), "tty", false, "Allocated a TTY for the container.")
+	command.Flags().BoolVar(&(submitArgs.Attach), "attach", false, `If true, wait for the Pod to start running, and then attach to the Pod as if 'kubectl attach ...'
+	were called.  Default false, unless '--stdin' is set, in which case the default is true.`)
 	command.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
