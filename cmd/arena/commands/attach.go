@@ -36,7 +36,6 @@ func NewAttachCommand() *cobra.Command {
 
 			jobName := args[0]
 
-			fmt.Println(`hi from attach command`, args)
 			if err := Attach(cmd, jobName, true, true, ""); err != nil {
 				log.Errorln(err)
 				os.Exit(1)
@@ -59,10 +58,11 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	if err != nil {
 		return err
 	}
-	fmt.Print("after search:", jobName)
-
+	
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
-
+	
+	fmt.Print("after ioStream:", jobName)
+	
 	o := kubeAttach.NewAttachOptions(ioStream)
 	fmt.Print("step")
 	var sizeQueue remotecommand.TerminalSizeQueue
