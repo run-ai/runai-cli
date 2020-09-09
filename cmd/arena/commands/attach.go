@@ -68,6 +68,10 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 
 	fmt.Print("after setup tty")
 
+	if podToExec == nil {
+		return fmt.Errorf("Not found any matching pod")
+	}
+
 
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
