@@ -54,9 +54,10 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	if err != nil {
 		return err
 	}
+	fmt.Print("before search", jobName)
 
 	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
-
+	fmt.Print("after search:", jobName)
 	if err != nil {
 		return err
 	}
