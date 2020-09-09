@@ -54,16 +54,31 @@ spec:
           hostIPC: {{ .Values.hostIPC }}
           hostNetwork: {{ .Values.hostNetwork }}
           securityContext:
-          {{- if .Values.runAsUser }}
-          runAsUser: {{ .Values.runAsUser }}
-          {{- end}}
-          {{- if .Values.runAsGroup }}
-          runAsGroup: {{ .Values.runAsGroup }}
-          {{- end }}
+            {{- if .Values.runAsUser }}
+            runAsUser: {{ .Values.runAsUser }}
+            {{- end}}
+            {{- if .Values.runAsGroup }}
+            runAsGroup: {{ .Values.runAsGroup }}
+            fsGroup: {{ .Values.runAsGroup }}
+            {{- end }}
+            {{- if .Values.supplementalGroups }}
+            supplementalGroups:
+{{ toYaml .Values.supplementalGroups | indent 14}}
+            {{- end }}
           schedulerName: runai-scheduler
+          {{- if  .Values.createHomeDir }}
+          volumes:
+            - name: user-data
+              emptyDir: {}
+          {{- end }}
           containers:
             - image: "{{ .Values.image }}"
               name: mpi
+              {{- if  .Values.createHomeDir }}
+              volumeMounts:
+                - mountPath: /home/runai-home
+                  name: user-data
+              {{- end }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               {{- if .Values.localImage}}
@@ -94,6 +109,10 @@ spec:
                   memory: {{ .Values.memory }}
                   {{- end }}
               env:
+                {{- if .Values.createHomeDir }}
+                - name: "HOME"
+                  value: /home/runai-home
+                {{- end }}
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
                 {{ $parts := split "=" $env }}
@@ -125,8 +144,31 @@ spec:
             run.ai/type: {{ .Values.node_type }}
           {{- end}}
           schedulerName: runai-scheduler
+          {{- if  .Values.createHomeDir }}
+          volumes:
+            - name: user-data
+              emptyDir: {}
+          {{- end }}
+          securityContext:
+            {{- if .Values.runAsUser }}
+            runAsUser: {{ .Values.runAsUser }}
+            {{- end}}
+            {{- if .Values.runAsGroup }}
+            runAsGroup: {{ .Values.runAsGroup }}
+            {{- end }}
+            {{- if .Values.supplementalGroups }}
+            supplementalGroups:
+{{ toYaml .Values.supplementalGroups | indent 14}}
+            {{- end }}
           containers:
             - image: "{{ .Values.image }}"
+              {{- if .Values.createHomeDir }}
+              volumeMounts:
+                - mountPath: /home/runai-home
+                  name: user-data
+              {{- end }}
+              securityContext:
+                allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               name: mpi
               imagePullPolicy: {{ .Values.imagePullPolicy }}
               resources:
@@ -140,6 +182,10 @@ spec:
                   memory: {{ .Values.memory }}
                   {{- end }}
               env:
+                {{- if .Values.createHomeDir }}
+                - name: "HOME"
+                  value: /home/runai-home
+                {{- end }}
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
                 {{ $parts := split "=" $env }}
