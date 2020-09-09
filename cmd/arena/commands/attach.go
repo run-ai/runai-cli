@@ -37,7 +37,10 @@ func NewAttachCommand() *cobra.Command {
 			jobName := args[0]
 
 			fmt.Println(`hi from attach command`, args)
-			Attach(cmd, jobName, true, true, "")
+			if err := Attach(cmd, jobName, true, true, ""); err != nil {
+				log.Errorln(err)
+				os.Exit(1)
+			}
 		},
 	}
 
@@ -49,21 +52,19 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	
 	kubeClient, err := client.GetClient()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
 
 	if err != nil {
-		log.Errorln(err)
-		os.Exit(1)
+		return err
 	}
 
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 
 	o := kubeAttach.NewAttachOptions(ioStream)
-
+	fmt.Print("step")
 	var sizeQueue remotecommand.TerminalSizeQueue
 	t := o.SetupTTY()
 
@@ -72,6 +73,8 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	o.PodName = podToExec.Name
 	o.TTY = tty
 	o.Stdin = stdin
+
+	fmt.Print("step1")
 
 	if t.Raw {
 		if size := t.GetSize(); size != nil {
@@ -93,9 +96,12 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
 	}
 
+	fmt.Print("step2")
+
 	if err := t.Safe(o.AttachFunc(o, containerToAttach , t.Raw, sizeQueue)); err != nil {
 		return err
 	}
 
 	return nil
 }
+
