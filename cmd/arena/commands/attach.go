@@ -165,17 +165,13 @@ func DefaultAttach(method string, url *netUrl.URL, config *rest.Config, stdin io
 func initIstioClient(client *client.Client) (*rest.Config, error) {
 	restConfig := client.GetRestConfig()
 
-	istioAPIGroupVersion := schema.GroupVersion{
-		Group:   "kubeflow.org",
-		Version: "v1alpha1",
+	apiGroupVersion := schema.GroupVersion{
+		Group:   "",
+		Version: "v1",
 	}
 
-	//istioAPIGroupVersion := schema.GroupVersion{
-	//	Group:   "config.istio.io",
-	//	Version: "v1alpha2",
-	//}
-
-	restConfig.GroupVersion = &istioAPIGroupVersion
+	// restConfig.GroupVersion = &apiGroupVersion
+	
 
 	restConfig.APIPath = "/apis"
 	restConfig.ContentType = runtime.ContentTypeJSON
@@ -183,7 +179,7 @@ func initIstioClient(client *client.Client) (*rest.Config, error) {
 	types := runtime.NewScheme()
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
-			metav1.AddToGroupVersion(scheme, istioAPIGroupVersion)
+			metav1.AddToGroupVersion(scheme, apiGroupVersion)
 			return nil
 		})
 	err := schemeBuilder.AddToScheme(types)
