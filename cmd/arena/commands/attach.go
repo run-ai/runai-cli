@@ -84,11 +84,11 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
 
-	_ = cmdutil.NewFactory(matchVersionKubeConfigFlags)
+	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
 
-	// restClient, err := f.ToRESTConfig()
+	restConfig, err := f.ToRESTConfig()
 
-	restConfig, _ := initIstioClient(kubeClient)
+	//restConfig, _ := initIstioClient(kubeClient)
 
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
