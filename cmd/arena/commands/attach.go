@@ -61,12 +61,13 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 	
-	fmt.Print("after ioStream:", jobName)
 	
 	o := kubeAttach.NewAttachOptions(ioStream)
-	fmt.Print("step")
 	var sizeQueue remotecommand.TerminalSizeQueue
 	t := o.SetupTTY()
+
+	fmt.Print("after setup tty")
+
 
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
