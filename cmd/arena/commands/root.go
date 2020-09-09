@@ -75,6 +75,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewUpdateCommand())
 	command.AddCommand(NewBashCommand())
 	command.AddCommand(NewExecCommand())
+	command.AddCommand(NewAttachCommand())
 	command.AddCommand(NewTemplateCommand())
 	command.AddCommand(project.NewProjectCommand())
 	command.AddCommand(cluster.NewClusterCommand())

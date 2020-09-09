@@ -60,25 +60,18 @@ func NewExecCommand() *cobra.Command {
 	return command
 }
 
-func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, podName string, runaiCommandName string) {
-
-	kubeClient, err := client.GetClient()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+// GetPodFromCmd extract and searche for namespace, job and podName
+func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string) (pod *v1.Pod, err error) {
 
 	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
 	if err != nil {
-		log.Errorln(err)
-		os.Exit(1)
+		return
 	}
 
-	job, err := searchTrainingJob(kubeClient, name, "", namespace)
+	job, err := searchTrainingJob(kubeClient, jobName, "", namespace)
 	if err != nil {
-		log.Errorln(err)
-		os.Exit(1)
+		return
 	}
 
 	var podToExec *v1.Pod
@@ -93,13 +86,29 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 			}
 		}
 		if podToExec == nil {
-			fmt.Printf("Failed to find pod: '%s' of job: '%s'\n", podName, job.Name())
-			os.Exit(1)
+			err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'\n", podName, job.Name())
 		}
 	}
 
 	if podToExec == nil || podToExec.Status.Phase != v1.PodRunning {
-		fmt.Printf("Job '%s' is still in '%s' state. Please wait until the job is running and try again.\n", job.Name(), podToExec.Status.Phase)
+		err = fmt.Errorf("Job '%s' is still in '%s' state. Please wait until the job is running and try again.\n", job.Name(), podToExec.Status.Phase)	
+	}
+	return
+}
+
+
+func execute(cmd *cobra.Command, jobName string, command string, commandArgs []string, interactive bool, TTY bool, podName string, runaiCommandName string) {
+
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+
+	if err != nil {
+		log.Errorln(err)
 		os.Exit(1)
 	}
 
