@@ -74,26 +74,28 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		return
 	}
 
-	var podToExec *v1.Pod
+	
 	if len(podName) == 0 {
-		podToExec = job.ChiefPod()
+		pod = job.ChiefPod()
 	} else {
 		pods := job.AllPods()
-		for _, pod := range pods {
+		for _, p := range pods {
 			if podName == pod.Name {
-				podToExec = &pod
+				pod = &p
 				break
 			}
 		}
-		if podToExec == nil {
-			err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'\n", podName, job.Name())
+		if pod == nil {
+			err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
 		}
 	}
 
-	if podToExec == nil || podToExec.Status.Phase != v1.PodRunning {
-		err = fmt.Errorf("Job '%s' is still in '%s' state. Please wait until the job is running and try again.\n", job.Name(), podToExec.Status.Phase)	
+	if pod == nil || pod.Status.Phase != v1.PodRunning {
+		err = fmt.Errorf("Job '%s' is still in '%s' state. Please wait until the job is running and try again",
+		 job.Name(),
+		  pod.Status.Phase)	
 	}
-	return
+	return 
 }
 
 

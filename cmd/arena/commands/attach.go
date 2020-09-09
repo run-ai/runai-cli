@@ -66,20 +66,15 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	var sizeQueue remotecommand.TerminalSizeQueue
 	t := o.SetupTTY()
 
-	fmt.Print("after setup tty")
-
 	if podToExec == nil {
 		return fmt.Errorf("Not found any matching pod")
 	}
-
 
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
 	o.PodName = podToExec.Name
 	o.TTY = tty
 	o.Stdin = stdin
-
-	fmt.Print("step1")
 
 	if t.Raw {
 		if size := t.GetSize(); size != nil {
@@ -100,8 +95,6 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	if !o.Quiet {
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
 	}
-
-	fmt.Print("step2")
 
 	if err := t.Safe(o.AttachFunc(o, containerToAttach , t.Raw, sizeQueue)); err != nil {
 		return err
