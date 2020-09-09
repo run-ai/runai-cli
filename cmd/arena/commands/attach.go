@@ -3,6 +3,8 @@ package commands
 import (
 	"fmt"
 	"os"
+	"io"
+	netUrl "net/url"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -11,6 +13,7 @@ import (
 	// "github.com/kubeflow/arena/pkg/util/kubectl"
 	// log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/kubectl/pkg/scheme"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/remotecommand"
 
@@ -22,7 +25,7 @@ import (
 	"k8s.io/client-go/rest"
 	kubeAttach "k8s.io/kubectl/pkg/cmd/attach"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	// v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // AttachOptions contains the option for attach command
@@ -81,16 +84,17 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
 
-	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
+	_ = cmdutil.NewFactory(matchVersionKubeConfigFlags)
+
+	// restClient, err := f.ToRESTConfig()
 
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
 	o.PodName = podToExec.Name
 	o.TTY = tty
 	o.Stdin = stdin
-	restClient, err := f.ToRESTConfig()
 
-	o.Config = restClient
+	o.Config = kubeClient.GetRestConfig()
 
 
 	if t.Raw {
@@ -113,11 +117,44 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
 	}
 
-	if err := t.Safe(o.AttachFunc(o, containerToAttach , t.Raw, sizeQueue)); err != nil {
+	rc, err := rest.RESTClientFor(o.Config)
+	if err != nil {
 		return err
 	}
+	req := rc.Post().
+		Resource("pods").
+		Name(podToExec.Name).
+		Namespace(podToExec.Namespace).
+		SubResource("attach")
+	req.VersionedParams(&corev1.PodAttachOptions{
+		Container: containerToAttach.Name,
+		Stdin:     stdin,
+		Stdout:    o.Out != nil,
+		Stderr:    !o.DisableStderr,
+		TTY:       t.Raw,
+	}, scheme.ParameterCodec)
 
-	return nil
+	return DefaultAttach("POST", req.URL(), o.Config, o.In, o.Out, o.ErrOut, t.Raw, sizeQueue)
+
+	// if err := t.Safe(o.AttachFunc(o, containerToAttach , t.Raw, sizeQueue)); err != nil {
+	// 	return err
+	// }
+
+}
+
+// DefaultAttach
+func DefaultAttach(method string, url *netUrl.URL, config *rest.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool, terminalSizeQueue remotecommand.TerminalSizeQueue) error {
+	exec, err := remotecommand.NewSPDYExecutor(config, method, url)
+	if err != nil {
+		return err
+	}
+	return exec.Stream(remotecommand.StreamOptions{
+		Stdin:             stdin,
+		Stdout:            stdout,
+		Stderr:            stderr,
+		Tty:               tty,
+		TerminalSizeQueue: terminalSizeQueue,
+	})
 }
 
 
@@ -128,12 +165,11 @@ func initIstioClient(client *client.Client) (*rest.RESTClient, error) {
 		Group:   "networking.istio.io",
 		Version: "v1alpha3",
 	}
+
 	//istioAPIGroupVersion := schema.GroupVersion{
 	//	Group:   "config.istio.io",
 	//	Version: "v1alpha2",
 	//}
-
-
 
 	restConfig.GroupVersion = &istioAPIGroupVersion
 
