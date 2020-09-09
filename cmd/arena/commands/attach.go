@@ -190,8 +190,10 @@ func initIstioClient(client *client.Client) (*rest.Config, error) {
 	if err!=nil {
 		return nil, err
 	}
-
-    restConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)}
+	ns := serializer.CodecFactory{}
+	ns.SupportedMediaTypes()
+	restConfig.NegotiatedSerializer = ns
+		//: serializer.NewCodecFactory(types),
 
 	return restConfig, err
 }
