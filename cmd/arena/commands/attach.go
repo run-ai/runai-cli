@@ -166,8 +166,8 @@ func initIstioClient(client *client.Client) (*rest.Config, error) {
 	restConfig := client.GetRestConfig()
 
 	istioAPIGroupVersion := schema.GroupVersion{
-		Group:   "networking.istio.io",
-		Version: "v1alpha3",
+		Group:   "kubeflow.org",
+		Version: "v1alpha1",
 	}
 
 	//istioAPIGroupVersion := schema.GroupVersion{
