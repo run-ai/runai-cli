@@ -166,11 +166,10 @@ func initIstioClient(client *client.Client) (*rest.Config, error) {
 	restConfig := client.GetRestConfig()
 
 	apiGroupVersion := schema.GroupVersion{
-		Group:   "",
 		Version: "v1",
 	}
 
-	// restConfig.GroupVersion = &apiGroupVersion
+	restConfig.GroupVersion = &apiGroupVersion
 	
 
 	restConfig.APIPath = "/apis"
