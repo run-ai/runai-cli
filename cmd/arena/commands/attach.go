@@ -144,6 +144,8 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 
 // DefaultAttach
 func DefaultAttach(method string, url *netUrl.URL, config *rest.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool, terminalSizeQueue remotecommand.TerminalSizeQueue) error {
+	fmt.Println("The url is", url)
+	
 	exec, err := remotecommand.NewSPDYExecutor(config, method, url)
 	if err != nil {
 		return err
