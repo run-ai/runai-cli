@@ -4,17 +4,24 @@ import (
 	"fmt"
 	"os"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	// "github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	// "github.com/kubeflow/arena/pkg/util/kubectl"
 	// log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/tools/remotecommand"
+
 	// "github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/rest"
 	kubeAttach "k8s.io/kubectl/pkg/cmd/attach"
-	// restclient "k8s.io/client-go/rest"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	// v1 "k8s.io/api/core/v1"
 )
 
@@ -61,6 +68,7 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 	
+	initIstioClient(kubeClient)
 	
 	o := kubeAttach.NewAttachOptions(ioStream)
 	var sizeQueue remotecommand.TerminalSizeQueue
@@ -70,12 +78,20 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 		return fmt.Errorf("Not found any matching pod")
 	}
 
+	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
+	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
+
+	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
+
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
 	o.PodName = podToExec.Name
 	o.TTY = tty
 	o.Stdin = stdin
-	o.Config = kubeClient.GetRestConfig()
+	restClient, err := f.ToRESTConfig()
+
+	o.Config = restClient
+
 
 	if t.Raw {
 		if size := t.GetSize(); size != nil {
@@ -104,3 +120,38 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	return nil
 }
 
+
+func initIstioClient(client *client.Client) (*rest.RESTClient, error) {
+	restConfig := client.GetRestConfig()
+
+	istioAPIGroupVersion := schema.GroupVersion{
+		Group:   "networking.istio.io",
+		Version: "v1alpha3",
+	}
+	//istioAPIGroupVersion := schema.GroupVersion{
+	//	Group:   "config.istio.io",
+	//	Version: "v1alpha2",
+	//}
+
+
+
+	restConfig.GroupVersion = &istioAPIGroupVersion
+
+	restConfig.APIPath = "/apis"
+	restConfig.ContentType = runtime.ContentTypeJSON
+
+	types := runtime.NewScheme()
+	schemeBuilder := runtime.NewSchemeBuilder(
+		func(scheme *runtime.Scheme) error {
+			metav1.AddToGroupVersion(scheme, istioAPIGroupVersion)
+			return nil
+		})
+	err := schemeBuilder.AddToScheme(types)
+	if err!=nil {
+		return nil, err
+	}
+
+	// restConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)}
+
+	return rest.RESTClientFor(restConfig)
+}
