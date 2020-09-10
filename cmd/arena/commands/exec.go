@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
@@ -72,9 +73,11 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	job, err := searchTrainingJob(kubeClient, jobName, "", namespace)
 	if err != nil {
 		return
+	} else if job == nil {
+		err = fmt.Errorf("The job: '%s' is not found", jobName)
+		return
 	}
 
-	
 	if len(podName) == 0 {
 		pod = job.ChiefPod()
 	} else {
@@ -85,17 +88,48 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 				break
 			}
 		}
-		if pod == nil {
-			err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
-		}
 	}
 
-	if pod == nil || pod.Status.Phase != v1.PodRunning {
-		err = fmt.Errorf("Job '%s' is still in '%s' state. Please wait until the job is running and try again",
-		 job.Name(),
-		  pod.Status.Phase)	
+	if pod == nil {
+		err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
 	}
+
 	return 
+}
+
+func WaitForPod(getPod func() *v1.Pod, timeout time.Duration) ( *v1.Pod,  error)  {
+	shouldStopAt := time.Now().Add( timeout)
+	for {
+
+		// pod := getPod()
+
+		// if pod.Status.Phase != v1.PodRunning {
+		// 	err = fmt.Errorf("Job '%s' is still in '%s' state. Please wait until the job is running and try again",
+		// 	job.Name(),
+		// 	pod.Status.Phase)	
+		// }
+
+		if shouldStopAt.Before( time.Now()) {
+			return nil, fmt.Errorf("Timeout .. please try again later")
+		}
+
+		time.Sleep(time.Second)
+	}
+
+	// beforeRunning := func (status string) bool {
+	// 	switch stauts {
+	// 		case "Running": return true
+	// 		default: return false
+	// 	}
+	// }
+
+	// isRunning := func (status string) bool {
+	// 	return false
+	// }
+
+	// afterRunning := func(status string) bool {
+	// 	return false
+	// }
 }
 
 

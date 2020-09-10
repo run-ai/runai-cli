@@ -71,8 +71,6 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 	
-	initIstioClient(kubeClient)
-	
 	o := kubeAttach.NewAttachOptions(ioStream)
 	var sizeQueue remotecommand.TerminalSizeQueue
 	t := o.SetupTTY()
@@ -84,11 +82,10 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
 
-	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
+	restConfig, err := matchVersionKubeConfigFlags.ToRESTConfig()
 
-	restConfig, err := f.ToRESTConfig()
 
-	//restConfig, _ := initIstioClient(kubeClient)
+	// restConfig, _ := initIstioClient(kubeClient)
 
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
