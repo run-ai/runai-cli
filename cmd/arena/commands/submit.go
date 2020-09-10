@@ -211,7 +211,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.CreateHomeDir), "create-user-dir", "Create a temporary home directory for the user in the container. Data saved in this directory will not be saved when the container exits.") // todo: The flag is set by default to true when the --run-as-user flag is used, and false if not.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.CreateHomeDir), "create-home-dir", "Create a temporary home directory for the user in the container. Data saved in this directory will not be saved when the container exits.") // todo: The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
 	// command.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 	// command.Flags().BoolVar(&(submitArgs.TTY), "tty", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
