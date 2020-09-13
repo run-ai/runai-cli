@@ -97,39 +97,36 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	return 
 }
 
-func WaitForPod(getPod func() *v1.Pod, timeout time.Duration) ( *v1.Pod,  error)  {
+func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration) ( *v1.Pod,  error)  {
 	shouldStopAt := time.Now().Add( timeout)
-	for {
-
-		// pod := getPod()
-
-		// if pod.Status.Phase != v1.PodRunning {
-		// 	err = fmt.Errorf("Job '%s' is still in '%s' state. Please wait until the job is running and try again",
-		// 	job.Name(),
-		// 	pod.Status.Phase)	
-		// }
-
-		if shouldStopAt.Before( time.Now()) {
-			return nil, fmt.Errorf("Timeout .. please try again later")
-		}
-
-		time.Sleep(time.Second)
+	beforeRunning := func (status v1.PodPhase) bool {
+		return status == v1.PodPending
 	}
 
-	// beforeRunning := func (status string) bool {
-	// 	switch stauts {
-	// 		case "Running": return true
-	// 		default: return false
-	// 	}
-	// }
+	running := func (status v1.PodPhase) bool {
+		return status == v1.PodRunning
+	}
 
-	// isRunning := func (status string) bool {
-	// 	return false
-	// }
+	for {
+		pod, err := getPod()
+		if err != nil {
+			return nil, err
+		}
+		phase := pod.Status.Phase
 
-	// afterRunning := func(status string) bool {
-	// 	return false
-	// }
+		switch true {
+		case beforeRunning(phase):
+			if shouldStopAt.Before( time.Now()) {
+				return nil, fmt.Errorf("Timeout .. Please wait until the job is running and try again")
+			}
+			fmt.Println("Waiting...")
+			time.Sleep(time.Second)
+		case running(phase):
+			return pod, nil
+		default:
+			return nil, fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
+		}
+	}
 }
 
 
@@ -141,7 +138,10 @@ func execute(cmd *cobra.Command, jobName string, command string, commandArgs []s
 		os.Exit(1)
 	}
 
-	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+	podToExec, err := WaitForPod(
+		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName)}, 
+		time.Second * 10,
+	)
 
 	if err != nil {
 		log.Errorln(err)

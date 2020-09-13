@@ -3,29 +3,17 @@ package commands
 import (
 	"fmt"
 	"os"
-	"io"
-	netUrl "net/url"
+	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	// "github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
 	"github.com/kubeflow/arena/pkg/client"
-	// "github.com/kubeflow/arena/pkg/util/kubectl"
-	// log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/kubectl/pkg/scheme"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/remotecommand"
-
-	// "github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/rest"
+	v1 "k8s.io/api/core/v1"
 	kubeAttach "k8s.io/kubectl/pkg/cmd/attach"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // AttachOptions contains the option for attach command
@@ -46,55 +34,72 @@ func NewAttachCommand() *cobra.Command {
 
 			jobName := args[0]
 
-			if err := Attach(cmd, jobName, true, true, ""); err != nil {
+			if err := AttachByKubectlLib(cmd, jobName, true, true, "", time.Second * 20 ); err != nil {
 				log.Errorln(err)
 				os.Exit(1)
 			}
 		},
 	}
 
+	for _, e := range os.Environ() {
+        //pair := strings.SplitN(e, "=", 2)
+        fmt.Println(e)
+    }
+
 	return cmd
 }
 
+func AttachByKubeCtlBin(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration  ) (err error) { 
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		return 
+	}
+
+	podToExec, err := WaitForPod(
+		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
+		timeout,
+	)
+	if err != nil {
+		return 
+	}
+
+	return kubectl.Attach(podToExec.Name, podToExec.Namespace, stdin, tty)
+}
+
 // Attach to a running job name
-func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string ) (err error) {
+func AttachByKubectlLib(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration ) (err error) {
 	
 	kubeClient, err := client.GetClient()
 	if err != nil {
 		return 
 	}
 
-	podToExec, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+	podToExec, err := WaitForPod(
+		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
+		timeout,
+	)
+
 	if err != nil {
 		return 
-	}
-
-	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
-	
-	o := kubeAttach.NewAttachOptions(ioStream)
-	var sizeQueue remotecommand.TerminalSizeQueue
-	t := o.SetupTTY()
-
-	if podToExec == nil {
+	} else if podToExec == nil {
 		return fmt.Errorf("Not found any matching pod")
 	}
 
+	var sizeQueue remotecommand.TerminalSizeQueue
+	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
-
 	restConfig, err := matchVersionKubeConfigFlags.ToRESTConfig()
-
-
-	// restConfig, _ := initIstioClient(kubeClient)
-
+	
+	o := kubeAttach.NewAttachOptions(ioStream)
 	o.Pod = podToExec
 	o.Namespace = podToExec.Namespace
 	o.PodName = podToExec.Name
 	o.TTY = tty
 	o.Stdin = stdin
-
 	o.Config = restConfig
 
+	t := o.SetupTTY()
 
 	if t.Raw {
 		if size := t.GetSize(); size != nil {
@@ -103,7 +108,6 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 			sizePlusOne := *size
 			sizePlusOne.Width++
 			sizePlusOne.Height++
-
 			// this call spawns a goroutine to monitor/update the terminal size
 			sizeQueue = t.MonitorSize(&sizePlusOne, size)
 		}
@@ -116,76 +120,6 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
 	}
 
-	restClient, err := rest.RESTClientFor(o.Config)
-	if err != nil {
-		return err
-	}
-	req := restClient.Post().
-		Resource("pods").
-		Name(podToExec.Name).
-		Namespace(podToExec.Namespace).
-		SubResource("attach")
-	req.VersionedParams(&corev1.PodAttachOptions{
-		Container: containerToAttach.Name,
-		Stdin:     stdin,
-		Stdout:    o.Out != nil,
-		Stderr:    !o.DisableStderr,
-		TTY:       t.Raw,
-	}, scheme.ParameterCodec)
-
-	return DefaultAttach("POST", req.URL(), o.Config, o.In, o.Out, o.ErrOut, t.Raw, sizeQueue)
-
-	// if err := t.Safe(o.AttachFunc(o, containerToAttach , t.Raw, sizeQueue)); err != nil {
-	// 	return err
-	// }
-
+	return t.Safe(o.AttachFunc(o, containerToAttach, t.Raw, sizeQueue));
 }
 
-// DefaultAttach
-func DefaultAttach(method string, url *netUrl.URL, config *rest.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool, terminalSizeQueue remotecommand.TerminalSizeQueue) error {
-	fmt.Println("The url is", url)
-	
-	exec, err := remotecommand.NewSPDYExecutor(config, method, url)
-	if err != nil {
-		return err
-	}
-	return exec.Stream(remotecommand.StreamOptions{
-		Stdin:             stdin,
-		Stdout:            stdout,
-		Stderr:            stderr,
-		Tty:               tty,
-		TerminalSizeQueue: terminalSizeQueue,
-	})
-}
-
-
-func initIstioClient(client *client.Client) (*rest.Config, error) {
-	restConfig := client.GetRestConfig()
-
-	apiGroupVersion := schema.GroupVersion{
-		Version: "v1",
-	}
-
-	restConfig.GroupVersion = &apiGroupVersion
-	
-
-	restConfig.APIPath = "/apis"
-	restConfig.ContentType = runtime.ContentTypeJSON
-
-	types := runtime.NewScheme()
-	schemeBuilder := runtime.NewSchemeBuilder(
-		func(scheme *runtime.Scheme) error {
-			metav1.AddToGroupVersion(scheme, apiGroupVersion)
-			return nil
-		})
-	err := schemeBuilder.AddToScheme(types)
-	if err!=nil {
-		return nil, err
-	}
-	ns := serializer.CodecFactory{}
-	ns.SupportedMediaTypes()
-	restConfig.NegotiatedSerializer = ns
-		//: serializer.NewCodecFactory(types),
-
-	return restConfig, err
-}

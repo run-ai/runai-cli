@@ -123,6 +123,13 @@ func NewRunaiJobCommand() *cobra.Command {
 					}
 				}
 			}
+
+			if submitArgs.Attach {
+				if err := AttachByKubectlLib(cmd, submitArgs.Name, true, true, "", time.Second * 30 ); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+			}
 		},
 	}
 
