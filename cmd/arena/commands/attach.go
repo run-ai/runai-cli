@@ -41,14 +41,10 @@ func NewAttachCommand() *cobra.Command {
 		},
 	}
 
-	for _, e := range os.Environ() {
-        //pair := strings.SplitN(e, "=", 2)
-        fmt.Println(e)
-    }
-
 	return cmd
 }
 
+// AttachByKubeCtlBin attach to a running job name 
 func AttachByKubeCtlBin(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration  ) (err error) { 
 	kubeClient, err := client.GetClient()
 	if err != nil {
@@ -66,7 +62,7 @@ func AttachByKubeCtlBin(cmd *cobra.Command, jobName string, stdin, tty bool,  po
 	return kubectl.Attach(podToExec.Name, podToExec.Namespace, stdin, tty)
 }
 
-// Attach to a running job name
+// AttachByKubectlLib Attach to a running job name
 func AttachByKubectlLib(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration ) (err error) {
 	
 	kubeClient, err := client.GetClient()

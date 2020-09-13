@@ -99,6 +99,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 
 func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration) ( *v1.Pod,  error)  {
 	shouldStopAt := time.Now().Add( timeout)
+	firstCycle := true
 	beforeRunning := func (status v1.PodPhase) bool {
 		return status == v1.PodPending
 	}
@@ -119,13 +120,22 @@ func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration) ( *v1.Pod
 			if shouldStopAt.Before( time.Now()) {
 				return nil, fmt.Errorf("Timeout .. Please wait until the job is running and try again")
 			}
-			fmt.Println("Waiting...")
+			if (firstCycle) {
+				fmt.Print("Waiting...")
+			} else {
+				fmt.Print(".")
+			}
 			time.Sleep(time.Second)
 		case running(phase):
+			if !firstCycle {
+				fmt.Print("\n")
+			}
 			return pod, nil
 		default:
 			return nil, fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
 		}
+
+		firstCycle = false
 	}
 }
 
