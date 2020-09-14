@@ -64,8 +64,11 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 			clientset := kubeClient.GetClientset()
 			configValues := ""
-			submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
-
+			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 			err = submitMPIJob(args, &submitArgs, kubeClient, &configValues)
 			if err != nil {
 				fmt.Println(err)

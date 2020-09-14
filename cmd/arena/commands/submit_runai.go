@@ -53,8 +53,13 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			clientset := kubeClient.GetClientset()
 			configValues := ""
-			submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
 
+			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			
 			if ttlAfterFinished != nil {
 				ttlSeconds := int(math.Round(ttlAfterFinished.Seconds()))
 				log.Debugf("Using time to live seconds %d", ttlSeconds)

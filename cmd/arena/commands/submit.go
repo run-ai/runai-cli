@@ -16,7 +16,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"os/user"
 	"strconv"
 	"strings"
@@ -110,7 +109,7 @@ type submitArgs struct {
 	HostNetwork                *bool             `yaml:"hostNetwork,omitempty"`
 	StdIn                      bool              `yaml:"stdin,omitempty"`
 	TTY                        bool              `yaml:"tty,omitempty"`
-	Attach                     bool              `yaml:"attach,omitempty"`
+	Attach                     *bool              `yaml:"attach,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -174,7 +173,7 @@ func (submitArgs *submitArgs) addTolerations() {
 	}
 }
 
-func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
+func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 	var defaultUser string
 	currentUser, err := user.Current()
 	if err != nil {
@@ -183,50 +182,49 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 		defaultUser = currentUser.Username
 	}
 
-	command.Flags().StringVar(&nameParameter, "name", "", "Job name")
-	command.Flags().MarkDeprecated("name", "please use positional argument instead")
+	cmd.Flags().StringVar(&nameParameter, "name", "", "Job name")
+	cmd.Flags().MarkDeprecated("name", "please use positional argument instead")
 
-	flags.AddFloat64NullableFlagP(command.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.Interactive), "interactive", "Mark this Job as interactive.")
-	command.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
-	command.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
-	command.Flags().StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
-	command.Flags().StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
-	command.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
-	command.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
-	command.Flags().StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
-	command.Flags().StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
-	command.Flags().StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
-	command.Flags().StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
-	command.Flags().MarkHidden("user")
+	flags.AddFloat64NullableFlagP(cmd.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.Interactive), "interactive", "Mark this Job as interactive.")
+	cmd.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
+	cmd.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
+	cmd.Flags().StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
+	cmd.Flags().StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
+	cmd.Flags().StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
+	cmd.Flags().StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
+	cmd.Flags().StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
+	cmd.Flags().StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	cmd.Flags().StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
+	cmd.Flags().StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
+	cmd.Flags().MarkHidden("user")
 	// Will not submit the job to the cluster, just print the template to the screen
-	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
-	command.Flags().MarkHidden("dry-run")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Run as dry run")
+	cmd.Flags().MarkHidden("dry-run")
 
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
-	command.Flags().StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
-	command.Flags().StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
-	command.Flags().StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
-	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
-	command.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
-	command.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
-	command.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.CreateHomeDir), "create-user-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
+	cmd.Flags().StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
+	cmd.Flags().StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
+	cmd.Flags().StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
+	cmd.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
+	cmd.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
+	cmd.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
+	cmd.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.CreateHomeDir), "create-user-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
-	command.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
-	command.Flags().BoolVar(&(submitArgs.TTY), "tty", false, "Allocated a TTY for the container.")
-	command.Flags().BoolVar(&(submitArgs.Attach), "attach", false, `If true, wait for the Pod to start running, and then attach to the Pod as if 'kubectl attach ...'
-	were called.  Default false, unless '--stdin' is set, in which case the default is true.`)
-	command.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
-	command.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
-	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.HostIPC), "host-ipc", "Use the host's ipc namespace.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.HostNetwork), "host-network", "Use the host's network stack inside the container.")
+	cmd.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
+	cmd.Flags().BoolVarP(&(submitArgs.TTY), "tty", "t", false, "Allocate a TTY for the container.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.Attach), "attach", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Default false, unless '--stdin' is set, in which case the default is true.`)
+	cmd.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
+	cmd.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
+	cmd.Flags().StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.HostIPC), "host-ipc", "Use the host's ipc namespace.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.HostNetwork), "host-network", "Use the host's network stack inside the container.")
 }
 
-func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) {
+func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
 	util.SetLogLevel(logLevel)
 	if nameParameter == "" && len(args) >= 1 {
 		name = args[0]
@@ -237,15 +235,13 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if name == "" {
 		cmd.Help()
 		fmt.Println("")
-		fmt.Println("Name must be provided for the job.")
-		os.Exit(1)
+		return fmt.Errorf("Name must be provided for the job.")
 	}
 
 	var errs = validation.IsDNS1035Label(name)
 	if len(errs) > 0 {
 		fmt.Println("")
-		fmt.Println("Job names must consist of lower case alphanumeric characters or '-' and start with an alphabetic character (e.g. 'my-name',  or 'abc-123')")
-		os.Exit(1)
+		return fmt.Errorf("Job names must consist of lower case alphanumeric characters or '-' and start with an alphabetic character (e.g. 'my-name',  or 'abc-123')")
 	}
 
 	submitArgs.Name = name
@@ -253,18 +249,16 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagAndPrintError(cmd, kubeClient)
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	if namespaceInfo.ProjectName == "" {
-		os.Exit(1)
+		return fmt.Errorf("Define a project by --project flag, alternatively set a project as default")
 	}
 
 	clusterConfig, err := clusterConfig.GetClusterConfig(clientset)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	submitArgs.Namespace = namespaceInfo.Namespace
@@ -272,14 +266,13 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser {
 		currentUser, err := user.Current()
 		if err != nil {
-			log.Debugf("Could not retrieve the current user: %s", err.Error())
-			os.Exit(1)
+			return fmt.Errorf("Could not retrieve the current user: %s", err.Error())
 		}
 		
 		groups, err := syscall.Getgroups()
 		if err != nil {
-			log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
-			os.Exit(1)
+			return fmt.Errorf("Could not retrieve list of groups for user: %s", err.Error())
+			
 		}
 		submitArgs.SupplementalGroups = groups
 		submitArgs.RunAsUser = currentUser.Uid
@@ -297,8 +290,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 
 	err = HandleVolumesAndPvc(submitArgs)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	index, err := getJobIndex(clientset)
@@ -317,14 +309,22 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	} else {
 		configToUse, err = configs.GetTemplate(configArg)
 		if configToUse == nil {
-			fmt.Printf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
-			os.Exit(1)
+			return fmt.Errorf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
 		}
 	}
 
 	if configToUse != nil {
 		*configValues = configToUse.Values
 	}
+
+	if submitArgs.TTY && !submitArgs.StdIn {
+		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")
+	}
+	if submitArgs.StdIn && submitArgs.Attach == nil {
+		t := true
+		submitArgs.Attach = &t
+	}
+	return nil
 }
 
 var (
