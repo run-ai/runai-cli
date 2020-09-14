@@ -83,6 +83,8 @@ type submitArgs struct {
 	Name                string
 	Namespace           string
 	GPU                 *float64 `yaml:"gpu,omitempty"`
+	GPUInt              *int     `yaml:"gpuInt,omitempty"`
+	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	Args                []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
@@ -274,7 +276,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 			log.Debugf("Could not retrieve the current user: %s", err.Error())
 			os.Exit(1)
 		}
-		
+
 		groups, err := syscall.Getgroups()
 		if err != nil {
 			log.Debugf("Could not retrieve list of groups for user: %s", err.Error())
@@ -325,6 +327,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if configToUse != nil {
 		*configValues = configToUse.Values
 	}
+	handleRequestedGPUs(submitArgs)
 }
 
 var (

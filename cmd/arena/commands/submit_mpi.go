@@ -108,10 +108,6 @@ func (submitArgs submitMPIJobArgs) check() error {
 		return fmt.Errorf("--image must be set")
 	}
 
-	if submitArgs.GPU != nil && float64(int(*submitArgs.GPU)) != *submitArgs.GPU {
-		return fmt.Errorf("--gpu must be an integer")
-	}
-
 	return nil
 }
 

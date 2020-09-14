@@ -159,8 +159,6 @@ type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
 	submitArgs       `yaml:",inline"`
-	GPUInt           *int   `yaml:"gpuInt,omitempty"`
-	GPUFraction      string `yaml:"gpuFraction,omitempty"`
 	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
 	ServiceType      string `yaml:"serviceType,omitempty"`
 	Elastic          *bool  `yaml:"elastic,omitempty"`
@@ -226,12 +224,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		return err2
 	}
 
-	err := handleRequestedGPUs(submitArgs)
-	if err != nil {
-		return err
-	}
-
-	err = workflow.SubmitJob(submitArgs.Name, defaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	err := workflow.SubmitJob(submitArgs.Name, defaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}

@@ -133,6 +133,10 @@ spec:
       replicas: {{ .Values.numProcesses }}
       template:
         metadata:
+          annotations:
+            {{- if .Values.gpuFraction }}
+            gpu-fraction: "{{ .Values.gpuFraction }}"
+            {{- end }}
           labels:
             project: {{ .Values.project }}
             {{- if .Values.user }}
@@ -173,7 +177,9 @@ spec:
               imagePullPolicy: {{ .Values.imagePullPolicy }}
               resources:
                 limits:
-                  nvidia.com/gpu: {{ .Values.gpu}}
+                  {{- if .Values.gpuInt }}
+                  nvidia.com/gpu: {{ .Values.gpuInt }}
+                  {{- end}}
                 requests:
                   {{- if .Values.cpu}}
                   cpu: {{ .Values.cpu }}
