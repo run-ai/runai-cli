@@ -7,13 +7,11 @@ import (
 
 type testArgs struct {
 	interactive *bool
-	elastic     *bool
 	gpu         *float64
 }
 
 func TestGPUSharingManager(t *testing.T) {
 	interactiveTrue := true
-	elasticJobFalse := false
 	fractionalGPU := 0.2
 	wholeGPU := float64(1)
 
@@ -35,7 +33,6 @@ func TestGPUSharingManager(t *testing.T) {
 			args: &testArgs{
 				interactive: &interactiveTrue,
 				gpu:         &wholeGPU,
-				elastic:     &elasticJobFalse,
 			},
 		},
 	}
