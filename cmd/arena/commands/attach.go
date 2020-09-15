@@ -45,8 +45,8 @@ func NewAttachCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&(options.NoStdIn), "no-stdin", "i", false, "Not pass stdin to the container")
-	cmd.Flags().BoolVarP(&(options.NoTTY), "no-tty", "t", false, "Not allocated a tty")
+	cmd.Flags().BoolVarP(&(options.NoStdIn), "no-stdin", "", false, "Not pass stdin to the container")
+	cmd.Flags().BoolVarP(&(options.NoTTY), "no-tty", "", false, "Not allocated a tty")
 	cmd.Flags().StringVar(&(options.PodName), "pod", "", "Which pod to connect, by default connect to the chief pod")
 
 	return cmd
