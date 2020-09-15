@@ -9,35 +9,17 @@ const (
 	runaiGPUIndex    = "runai-gpu"
 )
 
-func handleRequestedGPUs(submitArgs *submitRunaiJobArgs) error {
+func handleRequestedGPUs(submitArgs *submitArgs) {
 	if submitArgs.GPU == nil {
-		return nil
+		return
 	}
 
 	if float64(int(*submitArgs.GPU)) == *submitArgs.GPU {
 		gpu := int(*submitArgs.GPU)
 		submitArgs.GPUInt = &gpu
-
-		return nil
+		return
 	}
 
-	err := validateFractionalGPUTask(submitArgs)
-	if err != nil {
-		return err
-	}
-
-	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
-	return nil
-}
-
-func validateFractionalGPUTask(submitArgs *submitRunaiJobArgs) error {
-	if submitArgs.Elastic != nil && *submitArgs.Elastic == true {
-		return fmt.Errorf("Jobs that require a fractional number of GPUs can't be elastic jobs. Run the job without flag '--elastic'")
-	}
-
-	if *submitArgs.GPU > 1 {
-		return fmt.Errorf("Jobs that require a fractional number of GPUs must require less than 1 GPU")
-	}
-
-	return nil
+	submitArgs.GPUFraction = fmt.Sprintf("%g", *submitArgs.GPU)
+	return
 }

@@ -7,20 +7,16 @@ import (
 
 type testArgs struct {
 	interactive *bool
-	elastic     *bool
 	gpu         *float64
 }
 
 func TestGPUSharingManager(t *testing.T) {
 	interactiveTrue := true
-	elasticJobTrue := true
-	elasticJobFalse := false
 	fractionalGPU := 0.2
 	wholeGPU := float64(1)
 
 	tests := []struct {
 		name                      string
-		wantErr                   bool
 		shouldRunFractionalGPUJob bool
 		args                      *testArgs
 	}{
@@ -29,9 +25,7 @@ func TestGPUSharingManager(t *testing.T) {
 			args: &testArgs{
 				interactive: &interactiveTrue,
 				gpu:         &fractionalGPU,
-				elastic:     &elasticJobFalse,
 			},
-			wantErr:                   false,
 			shouldRunFractionalGPUJob: true,
 		},
 		{
@@ -39,18 +33,7 @@ func TestGPUSharingManager(t *testing.T) {
 			args: &testArgs{
 				interactive: &interactiveTrue,
 				gpu:         &wholeGPU,
-				elastic:     &elasticJobFalse,
 			},
-			wantErr: false,
-		},
-		{
-			name: "Elastic fractional GPU job",
-			args: &testArgs{
-				interactive: &interactiveTrue,
-				gpu:         &fractionalGPU,
-				elastic:     &elasticJobTrue,
-			},
-			wantErr: true,
 		},
 	}
 
@@ -58,15 +41,13 @@ func TestGPUSharingManager(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			submitArgs := setSubmitArgs(tt.args)
 			testSubmitArgs := *submitArgs
-			if err := handleRequestedGPUs(&testSubmitArgs); (err != nil) != tt.wantErr {
-				t.Errorf("Miss match between error and expected error, error: %v, wantErr: %v", err, tt.wantErr)
-			}
+			handleRequestedGPUs(&testSubmitArgs)
 
 			gpuFraction, err := strconv.ParseFloat(testSubmitArgs.GPUFraction, 64)
 			if err != nil {
 				if tt.shouldRunFractionalGPUJob {
 					t.Errorf("handleSharedGPUsIfNeeded() failed to parse gpuFraction %v, while expecting it to manage", err)
-				} else if !tt.wantErr && float64(*testSubmitArgs.GPUInt) != *submitArgs.GPU {
+				} else if float64(*testSubmitArgs.GPUInt) != *submitArgs.GPU {
 					t.Errorf("GPUInt: %v, submitArgs.gpu: %v", *testSubmitArgs.GPUInt, *submitArgs.GPU)
 				}
 			}
@@ -78,10 +59,9 @@ func TestGPUSharingManager(t *testing.T) {
 	}
 }
 
-func setSubmitArgs(args *testArgs) *submitRunaiJobArgs {
-	submitArgs := submitRunaiJobArgs{}
+func setSubmitArgs(args *testArgs) *submitArgs {
+	submitArgs := submitArgs{}
 	submitArgs.GPU = args.gpu
 	submitArgs.Interactive = args.interactive
-	submitArgs.Elastic = args.elastic
 	return &submitArgs
 }
