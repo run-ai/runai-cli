@@ -23,6 +23,9 @@ type AttachOptions struct {
 	PodName string
 }
 
+// DefaultAttachTimeout .. 
+const DefaultAttachTimeout = time.Second * 30
+
 // NewAttachCommand creating a new attach command
 func NewAttachCommand() *cobra.Command {
 	options := AttachOptions{}
@@ -38,7 +41,7 @@ func NewAttachCommand() *cobra.Command {
 
 			jobName := args[0]
 
-			if err := Attach(cmd, jobName, !options.NoStdIn, !options.NoTTY, options.PodName, time.Second * 20 ); err != nil {
+			if err := Attach(cmd, jobName, !options.NoStdIn, !options.NoTTY, options.PodName, DefaultAttachTimeout ); err != nil {
 				log.Errorln(err)
 				os.Exit(1)
 			}

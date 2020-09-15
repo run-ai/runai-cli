@@ -154,7 +154,7 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 
 	if submitArgs.Attach != nil && *submitArgs.Attach   {
-		if err := Attach(cmd, submitArgs.Name, IsBoolPTrue(submitArgs.StdIn), IsBoolPTrue(submitArgs.TTY), "", time.Second * 30 ); err != nil {
+		if err := Attach(cmd, submitArgs.Name, IsBoolPTrue(submitArgs.StdIn), IsBoolPTrue(submitArgs.TTY), "", DefaultAttachTimeout ); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
