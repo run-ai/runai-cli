@@ -83,7 +83,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	} else {
 		pods := job.AllPods()
 		for _, p := range pods {
-			if podName == pod.Name {
+			if podName == p.Name {
 				pod = &p
 				break
 			}
