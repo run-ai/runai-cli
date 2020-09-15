@@ -82,6 +82,8 @@ type submitArgs struct {
 	Name                string
 	Namespace           string
 	GPU                 *float64 `yaml:"gpu,omitempty"`
+	GPUInt              *int     `yaml:"gpuInt,omitempty"`
+	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	Args                []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
@@ -210,7 +212,7 @@ func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	cmd.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	cmd.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.CreateHomeDir), "create-user-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.CreateHomeDir, "create-home-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
 	cmd.Flags().BoolVarP(submitArgs.TTY, "tty", "t", false, "Allocate a TTY for the container.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.StdIn, "stdin", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
@@ -268,7 +270,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		if err != nil {
 			return fmt.Errorf("Could not retrieve the current user: %s", err.Error())
 		}
-		
+
 		groups, err := syscall.Getgroups()
 		if err != nil {
 			return fmt.Errorf("Could not retrieve list of groups for user: %s", err.Error())
@@ -278,10 +280,11 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		submitArgs.RunAsUser = currentUser.Uid
 		submitArgs.RunAsGroup = currentUser.Gid
 		// Set the default of CreateHomeDir as true if run-as-user is true
-		if submitArgs.CreateHomeDir == nil {
-			t := true
-			submitArgs.CreateHomeDir = &t
-		}
+		// todo: not set as true until testing it
+		// if submitArgs.CreateHomeDir == nil {
+		// 	t := true
+		// 	submitArgs.CreateHomeDir = &t
+		// }
 	}
 
 	if clusterConfig.EnforcePreventPrivilegeEscalation {
@@ -317,6 +320,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		*configValues = configToUse.Values
 	}
 
+
 	if IsBoolPTrue(submitArgs.TTY) && !IsBoolPTrue(submitArgs.StdIn) {
 		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")
 	}
@@ -334,7 +338,11 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	} else if IsBoolPTrue(submitArgs.StdIn) && submitArgs.Attach == nil {
 		submitArgs.Attach = BoolP(true)
 	}
-	return nil
+
+
+	handleRequestedGPUs(submitArgs)
+  
+  return nil
 }
 
 var (
