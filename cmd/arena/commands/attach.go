@@ -38,7 +38,7 @@ func NewAttachCommand() *cobra.Command {
 
 			jobName := args[0]
 
-			if err := AttachByKubectlLib(cmd, jobName, !options.NoStdIn, !options.NoTTY, options.PodName, time.Second * 20 ); err != nil {
+			if err := Attach(cmd, jobName, !options.NoStdIn, !options.NoTTY, options.PodName, time.Second * 20 ); err != nil {
 				log.Errorln(err)
 				os.Exit(1)
 			}
@@ -52,27 +52,8 @@ func NewAttachCommand() *cobra.Command {
 	return cmd
 }
 
-// AttachByKubeCtlBin attach to a running job name 
-func AttachByKubeCtlBin(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration  ) (err error) { 
-	kubeClient, err := client.GetClient()
-	if err != nil {
-		return 
-	}
-
-	podToExec, err := WaitForPod(
-		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
-		timeout,
-	)
-	if err != nil {
-		return 
-	}
-
-	return kubectl.Attach(podToExec.Name, podToExec.Namespace, stdin, tty)
-}
-
-// AttachByKubectlLib Attach to a running job name
-func AttachByKubectlLib(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration ) (err error) {
-	
+// Attach attach to a running job name
+func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration  ) (err error) {
 	kubeClient, err := client.GetClient()
 	if err != nil {
 		return 
@@ -91,9 +72,20 @@ func AttachByKubectlLib(cmd *cobra.Command, jobName string, stdin, tty bool,  po
 
 	if podName == "" {
 		// notify the user which pod name he will to attach
-		fmt.Println("Trying to connect to a pod called: ", podToExec.Name)
+		fmt.Println("Trying to connect to a pod called:", podToExec.Name)
 	}
 
+	return attachByKubectlLib(podToExec, stdin, tty)
+}
+
+// attachByKubeCtlBin attach to a running job name 
+func attachByKubeCtlBin(pod *v1.Pod, stdin, tty bool, timeout time.Duration  ) (err error) { 
+	return kubectl.Attach(pod.Name, pod.Namespace, stdin, tty)
+}
+
+// attachByKubectlLib Attach to a running job name
+func attachByKubectlLib(pod *v1.Pod, stdin, tty bool ) (err error) {
+	
 	var sizeQueue remotecommand.TerminalSizeQueue
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
@@ -101,9 +93,9 @@ func AttachByKubectlLib(cmd *cobra.Command, jobName string, stdin, tty bool,  po
 	restConfig, err := matchVersionKubeConfigFlags.ToRESTConfig()
 	
 	o := kubeAttach.NewAttachOptions(ioStream)
-	o.Pod = podToExec
-	o.Namespace = podToExec.Namespace
-	o.PodName = podToExec.Name
+	o.Pod = pod
+	o.Namespace = pod.Namespace
+	o.PodName = pod.Name
 	o.TTY = tty
 	o.Stdin = stdin
 	o.Config = restConfig
@@ -123,7 +115,7 @@ func AttachByKubectlLib(cmd *cobra.Command, jobName string, stdin, tty bool,  po
 
 		o.DisableStderr = true
 	}
-	containerToAttach :=&podToExec.Spec.Containers[0]
+	containerToAttach :=&pod.Spec.Containers[0]
 
 	if !o.Quiet {
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")

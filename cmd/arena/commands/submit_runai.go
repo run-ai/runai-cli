@@ -130,7 +130,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			if submitArgs.Attach != nil && *submitArgs.Attach   {
-				if err := AttachByKubectlLib(cmd, submitArgs.Name, true, true, "", time.Second * 30 ); err != nil {
+				if err := Attach(cmd, submitArgs.Name, IsBoolPTrue(submitArgs.StdIn), IsBoolPTrue(submitArgs.TTY), "", time.Second * 30 ); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -222,8 +222,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")

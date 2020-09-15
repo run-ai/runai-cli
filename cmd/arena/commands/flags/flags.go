@@ -109,8 +109,8 @@ func AddBoolNullableFlagP(f *flag.FlagSet, variableToSet **bool, name string, sh
 	flag.NoOptDefVal = "true"
 }
 
-func AddBoolNullableFlag(f *flag.FlagSet, variableToSet **bool, name string, usage string) {
-	AddBoolNullableFlagP(f, variableToSet, name, "", usage)
+func AddBoolNullableFlag(f *flag.FlagSet, variableToSet **bool, name string, shortcut, usage string) {
+	AddBoolNullableFlagP(f, variableToSet, name, shortcut, usage)
 }
 
 type durationNullableArgument struct {

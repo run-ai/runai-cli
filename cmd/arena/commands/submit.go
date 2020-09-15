@@ -188,7 +188,7 @@ func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().MarkDeprecated("name", "please use positional argument instead")
 
 	flags.AddFloat64NullableFlagP(cmd.Flags(), &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.Interactive), "interactive", "Mark this Job as interactive.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	cmd.Flags().StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	cmd.Flags().StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
 	cmd.Flags().StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
@@ -204,7 +204,7 @@ func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	cmd.Flags().MarkHidden("dry-run")
 
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "Always pull latest version of the image.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	cmd.Flags().StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
 	cmd.Flags().StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
 	cmd.Flags().StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
@@ -212,18 +212,18 @@ func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	cmd.Flags().StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	cmd.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.CreateHomeDir, "create-home-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
-	cmd.Flags().BoolVarP(submitArgs.TTY, "tty", "t", false, "Allocate a TTY for the container.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.StdIn, "stdin", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.Attach, "attach", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Default false, unless '--stdin' is set, in which case the default is true.`)
+	flags.AddBoolNullableFlag(cmd.Flags(),&submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Default false, unless '--stdin' is set, in which case the default is true.`)
 	cmd.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LocalImage, "local-image", "Use an image stored locally on the machine running the job.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LargeShm, "large-shm", "Mount a large /dev/shm device.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LargeShm, "large-shm", "", "Mount a large /dev/shm device.")
 	cmd.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
 	cmd.Flags().StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.HostIPC), "host-ipc", "Use the host's ipc namespace.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.HostNetwork), "host-network", "Use the host's network stack inside the container.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.HostIPC), "host-ipc", "", "Use the host's ipc namespace.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.HostNetwork), "host-network", "", "Use the host's network stack inside the container.")
 }
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
