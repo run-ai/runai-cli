@@ -89,6 +89,11 @@ func AttachByKubectlLib(cmd *cobra.Command, jobName string, stdin, tty bool,  po
 		return fmt.Errorf("Not found any matching pod")
 	}
 
+	if podName == "" {
+		// notify the user which pod name he will to attach
+		fmt.Println("Trying to connect to a pod called: ", podToExec.Name)
+	}
+
 	var sizeQueue remotecommand.TerminalSizeQueue
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
