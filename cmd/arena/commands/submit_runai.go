@@ -59,7 +59,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			
+
 			if ttlAfterFinished != nil {
 				ttlSeconds := int(math.Round(ttlAfterFinished.Seconds()))
 				log.Debugf("Using time to live seconds %d", ttlSeconds)
@@ -129,7 +129,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				}
 			}
 
-			if submitArgs.Attach {
+			if submitArgs.Attach != nil && *submitArgs.Attach   {
 				if err := AttachByKubectlLib(cmd, submitArgs.Name, true, true, "", time.Second * 30 ); err != nil {
 					fmt.Println(err)
 					os.Exit(1)

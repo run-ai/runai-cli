@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
@@ -69,7 +70,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			err = submitMPIJob(args, &submitArgs, kubeClient, &configValues)
+			err = submitMPIJob(cmd, args, &submitArgs, kubeClient, &configValues)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -129,7 +130,7 @@ func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 }
 
 // Submit MPIJob
-func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Client, configValues *string) (err error) {
+func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArgs, client *client.Client, configValues *string) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
@@ -155,5 +156,13 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Cl
 
 	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+
+	if submitArgs.Attach != nil && *submitArgs.Attach   {
+		if err := AttachByKubectlLib(cmd, submitArgs.Name, true, true, "", time.Second * 30 ); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	} 
+
 	return nil
 }

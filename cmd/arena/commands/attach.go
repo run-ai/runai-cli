@@ -18,14 +18,18 @@ import (
 
 // AttachOptions contains the option for attach command
 type AttachOptions struct {
-
+	NoTTY bool
+	NoStdIn bool
+	PodName string
 }
 
 // NewAttachCommand creating a new attach command
 func NewAttachCommand() *cobra.Command {
+	options := AttachOptions{}
+
 	cmd := &cobra.Command{
 		Use:   "attach JOB_NAME",
-		Short: "Attach a running job session.",
+		Short: "Attach standard input, output, and error streams to a running job session.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
@@ -34,12 +38,16 @@ func NewAttachCommand() *cobra.Command {
 
 			jobName := args[0]
 
-			if err := AttachByKubectlLib(cmd, jobName, true, true, "", time.Second * 20 ); err != nil {
+			if err := AttachByKubectlLib(cmd, jobName, !options.NoStdIn, !options.NoTTY, options.PodName, time.Second * 20 ); err != nil {
 				log.Errorln(err)
 				os.Exit(1)
 			}
 		},
 	}
+
+	cmd.Flags().BoolVarP(&(options.NoStdIn), "no-stdin", "i", false, "Not pass stdin to the container")
+	cmd.Flags().BoolVarP(&(options.NoTTY), "no-tty", "t", false, "Not allocated a tty")
+	cmd.Flags().StringVar(&(options.PodName), "pod", "", "Which pod to connect, by default connect to the chief pod")
 
 	return cmd
 }

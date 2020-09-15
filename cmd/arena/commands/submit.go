@@ -107,8 +107,8 @@ type submitArgs struct {
 	Labels                     map[string]string `yaml:"labels,omitempty"`
 	HostIPC                    *bool             `yaml:"hostIPC,omitempty"`
 	HostNetwork                *bool             `yaml:"hostNetwork,omitempty"`
-	StdIn                      bool              `yaml:"stdin,omitempty"`
-	TTY                        bool              `yaml:"tty,omitempty"`
+	StdIn                      *bool              `yaml:"stdin,omitempty"`
+	TTY                        *bool              `yaml:"tty,omitempty"`
 	Attach                     *bool              `yaml:"attach,omitempty"`
 }
 
@@ -212,12 +212,12 @@ func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.CreateHomeDir), "create-user-dir", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
-	cmd.Flags().BoolVar(&(submitArgs.StdIn), "stdin", false, "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
-	cmd.Flags().BoolVarP(&(submitArgs.TTY), "tty", "t", false, "Allocate a TTY for the container.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.Attach), "attach", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Default false, unless '--stdin' is set, in which case the default is true.`)
+	cmd.Flags().BoolVarP(submitArgs.TTY, "tty", "t", false, "Allocate a TTY for the container.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.StdIn, "stdin", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.Attach, "attach", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Default false, unless '--stdin' is set, in which case the default is true.`)
 	cmd.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.LocalImage), "local-image", "Use an image stored locally on the machine running the job.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.LargeShm), "large-shm", "Mount a large /dev/shm device.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LocalImage, "local-image", "Use an image stored locally on the machine running the job.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LargeShm, "large-shm", "Mount a large /dev/shm device.")
 	cmd.Flags().StringArrayVar(&(submitArgs.Ports), "port", []string{}, "Expose ports from the Job container.")
 	cmd.Flags().StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 	flags.AddBoolNullableFlag(cmd.Flags(), &(submitArgs.HostIPC), "host-ipc", "Use the host's ipc namespace.")
@@ -317,12 +317,22 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		*configValues = configToUse.Values
 	}
 
-	if submitArgs.TTY && !submitArgs.StdIn {
+	if IsBoolPTrue(submitArgs.TTY) && !IsBoolPTrue(submitArgs.StdIn) {
 		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")
 	}
-	if submitArgs.StdIn && submitArgs.Attach == nil {
-		t := true
-		submitArgs.Attach = &t
+
+	// by default when the user set --attach the --stdin and --tty set to true
+	if IsBoolPTrue(submitArgs.Attach) {
+		if submitArgs.StdIn == nil {
+			submitArgs.StdIn = BoolP(true)
+		}
+
+		if submitArgs.TTY == nil {
+			submitArgs.TTY = BoolP(true)
+		}
+	// by default when the user set --stdin the --attach set to true
+	} else if IsBoolPTrue(submitArgs.StdIn) && submitArgs.Attach == nil {
+		submitArgs.Attach = BoolP(true)
 	}
 	return nil
 }
@@ -394,4 +404,13 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	}
 
 	return newIndex, false, nil
+}
+
+
+func BoolP(b bool) *bool {
+	return &b
+}
+
+func IsBoolPTrue(b *bool) bool {
+	return b != nil && *b
 }
