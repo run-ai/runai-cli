@@ -104,6 +104,16 @@ func attachByKubectlLib(pod *v1.Pod, stdin, tty bool ) (err error) {
 	o.Config = restConfig
 
 	t := o.SetupTTY()
+	containerToAttach :=&pod.Spec.Containers[0]
+
+	if o.TTY && !containerToAttach.TTY {
+		return fmt.Errorf( "Unable to use a TTY - container %s did not allocate one", containerToAttach.Name)
+		
+	} else if !o.TTY && containerToAttach.TTY {
+		// the container was launched with a TTY, so we have to force a TTY here, otherwise you'll get
+		// an error "Unrecognized input header"
+		o.TTY = true
+	}
 
 	if t.Raw {
 		if size := t.GetSize(); size != nil {
@@ -118,7 +128,7 @@ func attachByKubectlLib(pod *v1.Pod, stdin, tty bool ) (err error) {
 
 		o.DisableStderr = true
 	}
-	containerToAttach :=&pod.Spec.Containers[0]
+	
 
 	if !o.Quiet {
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
