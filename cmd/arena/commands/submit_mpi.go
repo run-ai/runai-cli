@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"time"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
