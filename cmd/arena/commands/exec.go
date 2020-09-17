@@ -5,22 +5,22 @@ import (
 	"os"
 	"time"
 
-	
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	runaiUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
+	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/pkg/client"
-	"k8s.io/client-go/rest"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
+	"k8s.io/client-go/rest"
+
 	// "k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/kubectl/pkg/scheme"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	v1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/tools/remotecommand"
 	kubeExec "k8s.io/kubectl/pkg/cmd/exec"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+	"k8s.io/kubectl/pkg/scheme"
 )
 
 func NewBashCommand() *cobra.Command {
@@ -39,7 +39,7 @@ func NewBashCommand() *cobra.Command {
 			if err := Exec(cmd, name, []string{"/bin/bash"}, []string{}, DefaultAttachTimeout, true, true, podName, "bash"); err != nil {
 				log.Error(err)
 				os.Exit(1)
-			}			
+			}
 		},
 	}
 
@@ -80,7 +80,6 @@ func NewExecCommand() *cobra.Command {
 	return command
 }
 
-
 // GetPodFromCmd extract and searche for namespace, job and podName
 func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string) (pod *v1.Pod, err error) {
 
@@ -115,9 +114,8 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
 	}
 
-	return 
+	return
 }
-
 
 func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeout time.Duration, interactive bool, TTY bool, podName string, runaiCommandName string) error {
 
@@ -127,11 +125,11 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		os.Exit(1)
 	}
 
-	pod, err := runaiUtil.WaitForPod(
-		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName)}, 
+	pod, err := raUtil.WaitForPod(
+		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
 		timeout,
-		runaiUtil.NotReadyPodTimeoutMsg,
-		runaiUtil.PodRunning,
+		raUtil.NotReadyPodTimeoutMsg,
+		raUtil.PodRunning,
 	)
 
 	if err != nil {
@@ -140,12 +138,12 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 	}
 
 	//return ExecByBin(pod , command, fileNames, interactive, TTY)
-	return ExecByBin(pod , command[0], command[1:], interactive, TTY)
-	
+	return ExecByBin(pod, command[0], command[1:], interactive, TTY)
+
 }
 
 func ExecByLib(pod *v1.Pod, command, fileNames []string, stdin, tty bool) error {
-	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
+	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
 	restConfig, _ := matchVersionKubeConfigFlags.ToRESTConfig()
@@ -153,19 +151,19 @@ func ExecByLib(pod *v1.Pod, command, fileNames []string, stdin, tty bool) error 
 	o := &kubeExec.ExecOptions{
 		StreamOptions: kubeExec.StreamOptions{
 			Namespace: pod.Namespace,
-	        PodName: pod.Name,
+			PodName:   pod.Name,
 			IOStreams: ioStream,
-			TTY: tty,
-			Stdin: stdin,
+			TTY:       tty,
+			Stdin:     stdin,
 		},
 
-		Command: command,
-		Pod: pod,
-		Config: restConfig,
+		Command:  command,
+		Pod:      pod,
+		Config:   restConfig,
 		Executor: &kubeExec.DefaultRemoteExecutor{},
 	}
 
-	containerToAttach :=&pod.Spec.Containers[0]
+	containerToAttach := &pod.Spec.Containers[0]
 	t := o.SetupTTY()
 
 	var sizeQueue remotecommand.TerminalSizeQueue
@@ -201,7 +199,7 @@ func ExecByLib(pod *v1.Pod, command, fileNames []string, stdin, tty bool) error 
 
 		return o.Executor.Execute("POST", req.URL(), o.Config, o.In, o.Out, o.ErrOut, t.Raw, sizeQueue)
 	}
-	return t.Safe(fn);
+	return t.Safe(fn)
 
 }
 

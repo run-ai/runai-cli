@@ -24,6 +24,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
+	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/spf13/cobra"
 )
 
@@ -153,7 +154,7 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 
 	if submitArgs.Attach != nil && *submitArgs.Attach   {
-		if err := Attach(cmd, submitArgs.Name, IsBoolPTrue(submitArgs.StdIn), IsBoolPTrue(submitArgs.TTY), "", DefaultAttachTimeout ); err != nil {
+		if err := Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn),  raUtil.IsBoolPTrue(submitArgs.TTY), "", DefaultAttachTimeout ); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}

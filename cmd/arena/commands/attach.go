@@ -5,26 +5,26 @@ import (
 	"os"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/util/kubectl"
+	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/pkg/client"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/remotecommand"
-	runaiUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
-	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
 	kubeAttach "k8s.io/kubectl/pkg/cmd/attach"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 // AttachOptions contains the option for attach command
 type AttachOptions struct {
-	NoTTY bool
+	NoTTY   bool
 	NoStdIn bool
 	PodName string
 }
 
-// DefaultAttachTimeout .. 
+// DefaultAttachTimeout ..
 const DefaultAttachTimeout = time.Second * 30
 
 // NewAttachCommand creating a new attach command
@@ -42,7 +42,7 @@ func NewAttachCommand() *cobra.Command {
 
 			jobName := args[0]
 
-			if err := Attach(cmd, jobName, !options.NoStdIn, !options.NoTTY, options.PodName, DefaultAttachTimeout ); err != nil {
+			if err := Attach(cmd, jobName, !options.NoStdIn, !options.NoTTY, options.PodName, DefaultAttachTimeout); err != nil {
 				log.Errorln(err)
 				os.Exit(1)
 			}
@@ -57,21 +57,21 @@ func NewAttachCommand() *cobra.Command {
 }
 
 // Attach attach to a running job name
-func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string, timeout time.Duration  ) (err error) {
+func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string, timeout time.Duration) (err error) {
 	kubeClient, err := client.GetClient()
 	if err != nil {
-		return 
+		return
 	}
 
-	podToExec, err := runaiUtil.WaitForPod(
+	podToExec, err := raUtil.WaitForPod(
 		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
 		timeout,
-		runaiUtil.NotReadyPodTimeoutMsg,
-		runaiUtil.PodRunning,
+		raUtil.NotReadyPodTimeoutMsg,
+		raUtil.PodRunning,
 	)
 
 	if err != nil {
-		return 
+		return
 	} else if podToExec == nil {
 		return fmt.Errorf("Not found any matching pod")
 	}
@@ -84,20 +84,20 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	return attachByKubectlLib(podToExec, stdin, tty)
 }
 
-// attachByKubeCtlBin attach to a running job name 
-func attachByKubeCtlBin(pod *v1.Pod, stdin, tty bool, timeout time.Duration  ) (err error) { 
+// attachByKubeCtlBin attach to a running job name
+func attachByKubeCtlBin(pod *v1.Pod, stdin, tty bool, timeout time.Duration) (err error) {
 	return kubectl.Attach(pod.Name, pod.Namespace, stdin, tty)
 }
 
 // attachByKubectlLib Attach to a running job name
-func attachByKubectlLib(pod *v1.Pod, stdin, tty bool ) (err error) {
-	
+func attachByKubectlLib(pod *v1.Pod, stdin, tty bool) (err error) {
+
 	var sizeQueue remotecommand.TerminalSizeQueue
-	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
+	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
 	restConfig, err := matchVersionKubeConfigFlags.ToRESTConfig()
-	
+
 	o := kubeAttach.NewAttachOptions(ioStream)
 	o.Pod = pod
 	o.Namespace = pod.Namespace
@@ -107,11 +107,11 @@ func attachByKubectlLib(pod *v1.Pod, stdin, tty bool ) (err error) {
 	o.Config = restConfig
 
 	t := o.SetupTTY()
-	containerToAttach :=&pod.Spec.Containers[0]
+	containerToAttach := &pod.Spec.Containers[0]
 
 	if o.TTY && !containerToAttach.TTY {
-		return fmt.Errorf( "Unable to use a TTY - container %s did not allocate one", containerToAttach.Name)
-		
+		return fmt.Errorf("Unable to use a TTY - container %s did not allocate one", containerToAttach.Name)
+
 	} else if !o.TTY && containerToAttach.TTY {
 		// the container was launched with a TTY, so we have to force a TTY here, otherwise you'll get
 		// an error "Unrecognized input header"
@@ -131,12 +131,10 @@ func attachByKubectlLib(pod *v1.Pod, stdin, tty bool ) (err error) {
 
 		o.DisableStderr = true
 	}
-	
 
 	if !o.Quiet {
 		fmt.Fprintln(o.ErrOut, "If you don't see a command prompt, try pressing enter.")
 	}
 
-	return t.Safe(o.AttachFunc(o, containerToAttach, t.Raw, sizeQueue));
+	return t.Safe(o.AttachFunc(o, containerToAttach, t.Raw, sizeQueue))
 }
-

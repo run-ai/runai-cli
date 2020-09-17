@@ -42,3 +42,12 @@ func PrintShowingJobsInNamespaceMessage(namespaceInfo types.NamespaceInfo) {
 		}
 	}
 }
+
+
+func BoolP(b bool) *bool {
+	return &b
+}
+
+func IsBoolPTrue(b *bool) bool {
+	return b != nil && *b
+}

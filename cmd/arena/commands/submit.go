@@ -22,6 +22,7 @@ import (
 	"syscall"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
@@ -109,9 +110,9 @@ type submitArgs struct {
 	Labels                     map[string]string `yaml:"labels,omitempty"`
 	HostIPC                    *bool             `yaml:"hostIPC,omitempty"`
 	HostNetwork                *bool             `yaml:"hostNetwork,omitempty"`
-	StdIn                      *bool              `yaml:"stdin,omitempty"`
-	TTY                        *bool              `yaml:"tty,omitempty"`
-	Attach                     *bool              `yaml:"attach,omitempty"`
+	StdIn                      *bool             `yaml:"stdin,omitempty"`
+	TTY                        *bool             `yaml:"tty,omitempty"`
+	Attach                     *bool             `yaml:"attach,omitempty"`
 }
 
 type dataDirVolume struct {
@@ -214,7 +215,7 @@ func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 
-	flags.AddBoolNullableFlag(cmd.Flags(),&submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false, unless '--stdin' is set, in which case the default is true.`)
 	cmd.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
@@ -274,7 +275,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		groups, err := syscall.Getgroups()
 		if err != nil {
 			return fmt.Errorf("Could not retrieve list of groups for user: %s", err.Error())
-			
+
 		}
 		submitArgs.SupplementalGroups = groups
 		submitArgs.RunAsUser = currentUser.Uid
@@ -320,29 +321,27 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		*configValues = configToUse.Values
 	}
 
-
-	if IsBoolPTrue(submitArgs.TTY) && !IsBoolPTrue(submitArgs.StdIn) {
+	if raUtil.IsBoolPTrue(submitArgs.TTY) && !raUtil.IsBoolPTrue(submitArgs.StdIn) {
 		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")
 	}
 
 	// by default when the user set --attach the --stdin and --tty set to true
-	if IsBoolPTrue(submitArgs.Attach) {
+	if raUtil.IsBoolPTrue(submitArgs.Attach) {
 		if submitArgs.StdIn == nil {
-			submitArgs.StdIn = BoolP(true)
+			submitArgs.StdIn = raUtil.BoolP(true)
 		}
 
 		if submitArgs.TTY == nil {
-			submitArgs.TTY = BoolP(true)
+			submitArgs.TTY = raUtil.BoolP(true)
 		}
-	// by default when the user set --stdin the --attach set to true
-	} else if IsBoolPTrue(submitArgs.StdIn) && submitArgs.Attach == nil {
-		submitArgs.Attach = BoolP(true)
+		// by default when the user set --stdin the --attach set to true
+	} else if raUtil.IsBoolPTrue(submitArgs.StdIn) && submitArgs.Attach == nil {
+		submitArgs.Attach = raUtil.BoolP(true)
 	}
 
-
 	handleRequestedGPUs(submitArgs)
-  
-  return nil
+
+	return nil
 }
 
 var (
@@ -412,13 +411,4 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	}
 
 	return newIndex, false, nil
-}
-
-
-func BoolP(b bool) *bool {
-	return &b
-}
-
-func IsBoolPTrue(b *bool) bool {
-	return b != nil && *b
 }
