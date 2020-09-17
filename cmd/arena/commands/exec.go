@@ -170,7 +170,7 @@ func execute(cmd *cobra.Command, jobName string, command string, commandArgs []s
 
 	podToExec, err := WaitForPod(
 		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName)}, 
-		time.Second * 10,
+		DefaultAttachTimeout,
 		NotReadyPodTimeoutMsg,
 		PodRunning,
 	)
