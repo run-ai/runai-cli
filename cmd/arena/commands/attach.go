@@ -50,7 +50,7 @@ func NewAttachCommand() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&(options.NoStdIn), "no-stdin", "", false, "Not pass stdin to the container")
 	cmd.Flags().BoolVarP(&(options.NoTTY), "no-tty", "", false, "Not allocated a tty")
-	cmd.Flags().StringVar(&(options.PodName), "pod", "", "Which pod to connect, by default connect to the chief pod")
+	cmd.Flags().StringVar(&(options.PodName), "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command"))
 
 	return cmd
 }
