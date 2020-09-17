@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func NewBashCommand() *cobra.Command {
@@ -97,39 +98,65 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	return 
 }
 
+const (
+	NotReadyPodTimeoutMsg = "Timeout .. Please wait until the job is running and try again"
+)
+
 // WaitForPod waiting to the pod phase to become running
-func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration) ( *v1.Pod,  error)  {
+func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration, timeoutMsg string, exitCondition func(*v1.Pod, int) (bool, error) ) ( pod *v1.Pod, err error)  {
 	shouldStopAt := time.Now().Add( timeout)
-	firstCycle := true
 
-	for {
-		pod, err := getPod()
+	for i, exit := 0, false;; i++ {
+		pod, err = getPod()
 		if err != nil {
-			return nil, err
+			return 
 		}
-		phase := pod.Status.Phase
 
-		switch phase {
-		case v1.PodPending:
-			if shouldStopAt.Before( time.Now()) {
-				return nil, fmt.Errorf("Timeout .. Please wait until the job is running and try again")
-			}
-			if (firstCycle) {
-				fmt.Print("Waiting...")
-			} else {
-				fmt.Print(".")
-			}
-			firstCycle = false
-			time.Sleep(time.Second)
-		case v1.PodRunning:
-			if !firstCycle {
-				fmt.Print("\n")
-			}
-			return pod, nil
-		default:
-			return nil, fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
+		exit, err = exitCondition(pod, i)
+		if err != nil || exit {
+			return 
 		}
+
+		if shouldStopAt.Before( time.Now()) {
+			return nil, fmt.Errorf(timeoutMsg)
+		}
+		time.Sleep(time.Second)	
 	}
+}
+
+
+func PodRunning(pod *v1.Pod, i int) (exit bool, err error) {
+	phase := pod.Status.Phase
+
+	switch phase {
+	case v1.PodPending:
+		break
+	case v1.PodRunning:
+		conditions := pod.Status.Conditions
+		if conditions == nil {
+			return false, nil
+		}
+		for i := range conditions {
+			if conditions[i].Type == corev1.PodReady &&
+				conditions[i].Status == corev1.ConditionTrue {
+					exit = true 
+			}
+		}
+		
+	default:
+		err = fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
+	}
+
+	if exit {
+		if i > 0 {
+			fmt.Print("\n")
+		}
+	} else if i == 0 {
+		fmt.Print("Waiting...")
+	} else {
+		fmt.Print(".")
+	}
+	return
 }
 
 
@@ -144,6 +171,8 @@ func execute(cmd *cobra.Command, jobName string, command string, commandArgs []s
 	podToExec, err := WaitForPod(
 		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName)}, 
 		time.Second * 10,
+		NotReadyPodTimeoutMsg,
+		PodRunning,
 	)
 
 	if err != nil {

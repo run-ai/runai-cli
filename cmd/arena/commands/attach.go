@@ -65,6 +65,8 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 	podToExec, err := WaitForPod(
 		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
 		timeout,
+		NotReadyPodTimeoutMsg,
+		PodRunning,
 	)
 
 	if err != nil {
