@@ -216,7 +216,7 @@ func (submitArgs *submitArgs) addCommonFlags(cmd *cobra.Command) {
 
 	flags.AddBoolNullableFlag(cmd.Flags(),&submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
-	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Default false, unless '--stdin' is set, in which case the default is true.`)
+	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false, unless '--stdin' is set, in which case the default is true.`)
 	cmd.Flags().BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
 	flags.AddBoolNullableFlag(cmd.Flags(), &submitArgs.LargeShm, "large-shm", "", "Mount a large /dev/shm device.")

@@ -5,13 +5,22 @@ import (
 	"os"
 	"time"
 
+	
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	runaiUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/pkg/client"
+	"k8s.io/client-go/rest"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
+	// "k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/kubectl/pkg/scheme"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	v1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+	kubeExec "k8s.io/kubectl/pkg/cmd/exec"
 )
 
 func NewBashCommand() *cobra.Command {
@@ -27,7 +36,10 @@ func NewBashCommand() *cobra.Command {
 
 			name = args[0]
 
-			execute(cmd, name, "/bin/bash", []string{}, true, true, podName, "bash")
+			if err := Exec(cmd, name, []string{"/bin/bash"}, []string{}, DefaultAttachTimeout, true, true, podName, "bash"); err != nil {
+				log.Error(err)
+				os.Exit(1)
+			}			
 		},
 	}
 
@@ -40,6 +52,7 @@ func NewExecCommand() *cobra.Command {
 	var interactive bool
 	var TTY bool
 	var podName string
+	var fileNames []string
 
 	var command = &cobra.Command{
 		Use:   "exec JOB_NAME COMMAND [ARG ...]",
@@ -48,12 +61,17 @@ func NewExecCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			name = args[0]
-			command := args[1]
-			commandArgs := args[2:]
+			command := args[1:]
+			// commandArgs := args[2:]
 
-			execute(cmd, name, command, commandArgs, interactive, TTY, podName, "exec")
+			if err := Exec(cmd, name, command, fileNames, DefaultAttachTimeout, interactive, TTY, podName, "exec"); err != nil {
+				log.Error(err)
+				os.Exit(1)
+			}
 		},
 	}
+
+	// cmdutil.AddJsonFilenameFlag(command.Flags(), &fileNames, "to use to exec into the resource")
 
 	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command")
 	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
@@ -61,6 +79,7 @@ func NewExecCommand() *cobra.Command {
 
 	return command
 }
+
 
 // GetPodFromCmd extract and searche for namespace, job and podName
 func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string) (pod *v1.Pod, err error) {
@@ -72,6 +91,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	}
 
 	job, err := searchTrainingJob(kubeClient, jobName, "", namespace)
+
 	if err != nil {
 		return
 	} else if job == nil {
@@ -98,69 +118,8 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	return 
 }
 
-const (
-	NotReadyPodTimeoutMsg = "Timeout .. Please wait until the job is running and try again"
-)
 
-// WaitForPod waiting to the pod phase to become running
-func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration, timeoutMsg string, exitCondition func(*v1.Pod, int) (bool, error) ) ( pod *v1.Pod, err error)  {
-	shouldStopAt := time.Now().Add( timeout)
-
-	for i, exit := 0, false;; i++ {
-		pod, err = getPod()
-		if err != nil {
-			return 
-		}
-
-		exit, err = exitCondition(pod, i)
-		if err != nil || exit {
-			return 
-		}
-
-		if shouldStopAt.Before( time.Now()) {
-			return nil, fmt.Errorf(timeoutMsg)
-		}
-		time.Sleep(time.Second)	
-	}
-}
-
-
-func PodRunning(pod *v1.Pod, i int) (exit bool, err error) {
-	phase := pod.Status.Phase
-
-	switch phase {
-	case v1.PodPending:
-		break
-	case v1.PodRunning:
-		conditions := pod.Status.Conditions
-		if conditions == nil {
-			return false, nil
-		}
-		for i := range conditions {
-			if conditions[i].Type == corev1.PodReady &&
-				conditions[i].Status == corev1.ConditionTrue {
-					exit = true 
-			}
-		}
-		
-	default:
-		err = fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
-	}
-
-	if exit {
-		if i > 0 {
-			fmt.Print("\n")
-		}
-	} else if i == 0 {
-		fmt.Print("Waiting...")
-	} else {
-		fmt.Print(".")
-	}
-	return
-}
-
-
-func execute(cmd *cobra.Command, jobName string, command string, commandArgs []string, interactive bool, TTY bool, podName string, runaiCommandName string) {
+func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeout time.Duration, interactive bool, TTY bool, podName string, runaiCommandName string) error {
 
 	kubeClient, err := client.GetClient()
 	if err != nil {
@@ -168,11 +127,11 @@ func execute(cmd *cobra.Command, jobName string, command string, commandArgs []s
 		os.Exit(1)
 	}
 
-	podToExec, err := WaitForPod(
+	pod, err := runaiUtil.WaitForPod(
 		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName)}, 
-		DefaultAttachTimeout,
-		NotReadyPodTimeoutMsg,
-		PodRunning,
+		timeout,
+		runaiUtil.NotReadyPodTimeoutMsg,
+		runaiUtil.PodRunning,
 	)
 
 	if err != nil {
@@ -180,5 +139,73 @@ func execute(cmd *cobra.Command, jobName string, command string, commandArgs []s
 		os.Exit(1)
 	}
 
-	kubectl.Exec(podToExec.Name, podToExec.Namespace, command, commandArgs, interactive, TTY)
+	//return ExecByBin(pod , command, fileNames, interactive, TTY)
+	return ExecByBin(pod , command[0], command[1:], interactive, TTY)
+	
+}
+
+func ExecByLib(pod *v1.Pod, command, fileNames []string, stdin, tty bool) error {
+	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr,}
+	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
+	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
+	restConfig, _ := matchVersionKubeConfigFlags.ToRESTConfig()
+
+	o := &kubeExec.ExecOptions{
+		StreamOptions: kubeExec.StreamOptions{
+			Namespace: pod.Namespace,
+	        PodName: pod.Name,
+			IOStreams: ioStream,
+			TTY: tty,
+			Stdin: stdin,
+		},
+
+		Command: command,
+		Pod: pod,
+		Config: restConfig,
+		Executor: &kubeExec.DefaultRemoteExecutor{},
+	}
+
+	containerToAttach :=&pod.Spec.Containers[0]
+	t := o.SetupTTY()
+
+	var sizeQueue remotecommand.TerminalSizeQueue
+	if t.Raw {
+		// this call spawns a goroutine to monitor/update the terminal size
+		sizeQueue = t.MonitorSize(t.GetSize())
+
+		// unset p.Err if it was previously set because both stdout and stderr go over p.Out when tty is
+		// true
+		o.ErrOut = nil
+	}
+
+	fn := func() error {
+		restClient, err := rest.RESTClientFor(o.Config)
+		if err != nil {
+			return err
+		}
+
+		// TODO: consider abstracting into a client invocation or client helper
+		req := restClient.Post().
+			Resource("pods").
+			Name(pod.Name).
+			Namespace(pod.Namespace).
+			SubResource("exec")
+		req.VersionedParams(&corev1.PodExecOptions{
+			Container: containerToAttach.Name,
+			Command:   o.Command,
+			Stdin:     o.Stdin,
+			Stdout:    o.Out != nil,
+			Stderr:    o.ErrOut != nil,
+			TTY:       t.Raw,
+		}, scheme.ParameterCodec)
+
+		return o.Executor.Execute("POST", req.URL(), o.Config, o.In, o.Out, o.ErrOut, t.Raw, sizeQueue)
+	}
+	return t.Safe(fn);
+
+}
+
+func ExecByBin(pod *v1.Pod, command string, commandArgs []string, interactive, TTY bool) error {
+	// NOTE: Getting a deprecation msg in some kubectl versions
+	return kubectl.Exec(pod.Name, pod.Namespace, command, commandArgs, interactive, TTY)
 }

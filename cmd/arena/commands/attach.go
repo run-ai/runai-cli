@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/remotecommand"
+	runaiUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	kubeAttach "k8s.io/kubectl/pkg/cmd/attach"
@@ -50,7 +51,7 @@ func NewAttachCommand() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&(options.NoStdIn), "no-stdin", "", false, "Not pass stdin to the container")
 	cmd.Flags().BoolVarP(&(options.NoTTY), "no-tty", "", false, "Not allocated a tty")
-	cmd.Flags().StringVar(&(options.PodName), "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command"))
+	cmd.Flags().StringVar(&(options.PodName), "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command")
 
 	return cmd
 }
@@ -62,11 +63,11 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool,  podName string
 		return 
 	}
 
-	podToExec, err := WaitForPod(
+	podToExec, err := runaiUtil.WaitForPod(
 		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
 		timeout,
-		NotReadyPodTimeoutMsg,
-		PodRunning,
+		runaiUtil.NotReadyPodTimeoutMsg,
+		runaiUtil.PodRunning,
 	)
 
 	if err != nil {
