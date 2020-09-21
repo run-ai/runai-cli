@@ -62,7 +62,6 @@ func NewExecCommand() *cobra.Command {
 
 			name = args[0]
 			command := args[1:]
-			// commandArgs := args[2:]
 
 			if err := Exec(cmd, name, command, fileNames, DefaultAttachTimeout, interactive, TTY, podName, "exec"); err != nil {
 				log.Error(err)
@@ -70,8 +69,6 @@ func NewExecCommand() *cobra.Command {
 			}
 		},
 	}
-
-	// cmdutil.AddJsonFilenameFlag(command.Flags(), &fileNames, "to use to exec into the resource")
 
 	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai get <job-name>\" command")
 	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
@@ -137,7 +134,6 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		os.Exit(1)
 	}
 
-	//return ExecByBin(pod , command, fileNames, interactive, TTY)
 	return ExecByBin(pod, command[0], command[1:], interactive, TTY)
 
 }

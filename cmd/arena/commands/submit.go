@@ -321,10 +321,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		*configValues = configToUse.Values
 	}
 
-	if raUtil.IsBoolPTrue(submitArgs.TTY) && !raUtil.IsBoolPTrue(submitArgs.StdIn) {
-		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")
-	}
-
 	// by default when the user set --attach the --stdin and --tty set to true
 	if raUtil.IsBoolPTrue(submitArgs.Attach) {
 		if submitArgs.StdIn == nil {
@@ -337,6 +333,10 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		// by default when the user set --stdin the --attach set to true
 	} else if raUtil.IsBoolPTrue(submitArgs.StdIn) && submitArgs.Attach == nil {
 		submitArgs.Attach = raUtil.BoolP(true)
+	}
+
+	if raUtil.IsBoolPTrue(submitArgs.TTY) && !raUtil.IsBoolPTrue(submitArgs.StdIn) {
+		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")
 	}
 
 	handleRequestedGPUs(submitArgs)

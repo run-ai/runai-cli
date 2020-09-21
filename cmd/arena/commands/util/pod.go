@@ -38,7 +38,7 @@ func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration, timeoutMs
 }
 
 // PodRunning check if the pod is running and ready
-func PodRunning(pod *v1.Pod, i int) (exit bool, err error) {
+func PodRunning(pod *v1.Pod, i int) (bool, error) {
 	phase := pod.Status.Phase
 
 	switch phase {
@@ -52,18 +52,18 @@ func PodRunning(pod *v1.Pod, i int) (exit bool, err error) {
 		for i := range conditions {
 			if conditions[i].Type == corev1.PodReady &&
 				conditions[i].Status == corev1.ConditionTrue {
-					exit = true 
+					return true, nil
 			}
 		}
 		
 	default:
-		err = fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
+		return false, fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
 	}
 
-	if i == 0 && !exit && err == nil{
+	if i == 0 {
 		fmt.Println("Waiting for pod to start running...")
 	} 
 
-	return
+	return false, nil
 }
 
