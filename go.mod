@@ -1,4 +1,4 @@
-module github.com/kubeflow/arena
+module github.com/run-ai/runai-cli
 
 go 1.13
 

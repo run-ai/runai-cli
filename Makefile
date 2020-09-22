@@ -1,4 +1,4 @@
-PACKAGE=github.com/kubeflow/arena
+PACKAGE=github.com/run-ai/runai-cli
 CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/bin
 ARENA_CLI_NAME=runai
@@ -39,10 +39,10 @@ IMAGE_TAG=${GIT_TAG}
 override LDFLAGS += -X ${PACKAGE}.gitTag=${GIT_TAG}
 endif
 ifneq (${IMAGE_NAMESPACE},)
-override LDFLAGS += -X ${PACKAGE}/cmd/arena/commands.imageNamespace=${IMAGE_NAMESPACE}
+override LDFLAGS += -X ${PACKAGE}/cmd.imageNamespace=${IMAGE_NAMESPACE}
 endif
 ifneq (${IMAGE_TAG},)
-override LDFLAGS += -X ${PACKAGE}/cmd/arena/commands.imageTag=${IMAGE_TAG}
+override LDFLAGS += -X ${PACKAGE}/cmd.imageTag=${IMAGE_TAG}
 endif
 
 ifeq (${DOCKER_PUSH},true)
@@ -78,18 +78,18 @@ endif
 .PHONY: cli-linux-amd64
 cli-linux-amd64:
 	mkdir -p bin
-	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
-	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
+	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} *.go
+	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} job-monitor/*.go
 
 .PHONY: cli-darwin-amd64
 cli-darwin-amd64:
 	mkdir -p bin
-	${GENERAL_BUILD_OPTIONS} GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
+	${GENERAL_BUILD_OPTIONS} GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./*.go
 
 .PHONY: cli-windows
 cli-windows:
 	mkdir -p bin
-	${GENERAL_BUILD_OPTIONS} GOARCH=amd64 GOOS=windows go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
+	${GENERAL_BUILD_OPTIONS} GOARCH=amd64 GOOS=windows go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./*.go
 
 
 .PHONY: install-image

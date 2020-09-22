@@ -16,14 +16,15 @@ package helm
 
 import (
 	"fmt"
-	util "github.com/kubeflow/arena/pkg/util"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	util "github.com/run-ai/runai-cli/pkg/util"
+	log "github.com/sirupsen/logrus"
 )
 
 type HELM_VERSION string

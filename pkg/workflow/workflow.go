@@ -6,9 +6,9 @@ import (
 
 	"io/ioutil"
 
-	"github.com/kubeflow/arena/pkg/config"
-	"github.com/kubeflow/arena/pkg/util/helm"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
+	"github.com/run-ai/runai-cli/pkg/config"
+	"github.com/run-ai/runai-cli/pkg/util/helm"
+	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

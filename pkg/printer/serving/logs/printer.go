@@ -7,10 +7,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/kubeflow/arena/pkg/jobs/serving"
-	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
-	"github.com/kubeflow/arena/pkg/podlogs"
-	"github.com/kubeflow/arena/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/jobs/serving"
+	servejob "github.com/run-ai/runai-cli/pkg/jobs/serving"
+	"github.com/run-ai/runai-cli/pkg/podlogs"
+	"github.com/run-ai/runai-cli/pkg/types"
 	"k8s.io/client-go/kubernetes"
 )
 

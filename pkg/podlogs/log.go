@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
+	servejob "github.com/run-ai/runai-cli/pkg/jobs/serving"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

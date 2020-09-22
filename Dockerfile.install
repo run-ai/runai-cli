@@ -1,8 +1,8 @@
 FROM golang:1.10-stretch as build
 
-RUN mkdir -p /go/src/github.com/kubeflow/arena
+RUN mkdir -p /go/src/github.com/run-ai/runai-cli
 
-WORKDIR /go/src/github.com/kubeflow/arena
+WORKDIR /go/src/github.com/run-ai/runai-cli
 COPY . .
 
 RUN make
@@ -18,15 +18,15 @@ RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-rel
 
 FROM centos:7
 
-COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena /usr/local/bin/arena
+COPY --from=build /go/src/github.com/run-ai/runai-cli/bin/arena /usr/local/bin/arena
 
 COPY --from=build /usr/local/bin/helm /usr/local/bin/helm
 
-COPY --from=build /go/src/github.com/kubeflow/arena/kubernetes-artifacts /root/kubernetes-artifacts
+COPY --from=build /go/src/github.com/run-ai/runai-cli/kubernetes-artifacts /root/kubernetes-artifacts
 
 COPY --from=build /usr/local/bin/kubectl /usr/local/bin/kubectl
 
-COPY --from=build /go/src/github.com/kubeflow/arena/charts /charts
+COPY --from=build /go/src/github.com/run-ai/runai-cli/charts /charts
 
 ADD run_arena.sh /usr/local/bin
 

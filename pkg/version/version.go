@@ -20,7 +20,7 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util"
 )
 
 // Version information set by link flags during build. We fall back to these sane

@@ -3,9 +3,9 @@ package logs
 import (
 	"path"
 
-	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
-	"github.com/kubeflow/arena/pkg/podlogs"
-	podlogger "github.com/kubeflow/arena/pkg/printer/base/logs"
+	servejob "github.com/run-ai/runai-cli/pkg/jobs/serving"
+	"github.com/run-ai/runai-cli/pkg/podlogs"
+	podlogger "github.com/run-ai/runai-cli/pkg/printer/base/logs"
 )
 
 type ServingPodLogPrinter struct {
