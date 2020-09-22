@@ -7,6 +7,9 @@ import (
 	"time"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	"github.com/kubeflow/arena/pkg/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	// cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 )
@@ -15,12 +18,22 @@ const (
 	NotReadyPodTimeoutMsg = "Timeout waiting for job to start running"
 )
 
-// WaitForPod waiting to the pod phase to become running
-func WaitForPod(getPod func() (*v1.Pod, error), timeout time.Duration, timeoutMsg string, exitCondition func(*v1.Pod, int) (bool, error) ) ( pod *v1.Pod, err error)  {
+
+// GetPod by its name and namespace
+func GetPod( name, namespace string) (*v1.Pod, error) {
+	client, err := client.GetClient()
+	if err != nil {
+		return nil, err
+	}
+	return client.GetClientset().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{} )
+}
+
+// WaitForPod waiting to the pod
+func WaitForPod(podName, podNamespace string, timeout time.Duration, timeoutMsg string, exitCondition func(*v1.Pod, int) (bool, error) ) ( pod *v1.Pod, err error)  {
 	shouldStopAt := time.Now().Add( timeout)
 
 	for i, exit := 0, false;; i++ {
-		pod, err = getPod()
+		pod, err = GetPod(podName, podNamespace)
 		if err != nil {
 			return 
 		}

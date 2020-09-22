@@ -114,24 +114,29 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	return
 }
 
-func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeout time.Duration, interactive bool, TTY bool, podName string, runaiCommandName string) error {
+func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeout time.Duration, interactive bool, TTY bool, podName string, runaiCommandName string) (err error) {
 
 	kubeClient, err := client.GetClient()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return
+	}
+
+	foundPod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+
+	if err != nil {
+		return
 	}
 
 	pod, err := raUtil.WaitForPod(
-		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
+		foundPod.Name,
+		foundPod.Namespace,
 		timeout,
 		raUtil.NotReadyPodTimeoutMsg,
 		raUtil.PodRunning,
 	)
 
 	if err != nil {
-		log.Errorln(err)
-		os.Exit(1)
+		return
 	}
 
 	return ExecByBin(pod, command[0], command[1:], interactive, TTY)

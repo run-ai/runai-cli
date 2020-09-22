@@ -63,8 +63,15 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string,
 		return
 	}
 
+	foundPod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+
+	if err != nil {
+		return
+	}
+
 	podToExec, err := raUtil.WaitForPod(
-		func() (*v1.Pod, error) { return GetPodFromCmd(cmd, kubeClient, jobName, podName) },
+		foundPod.Name,
+		foundPod.Namespace,
 		timeout,
 		raUtil.NotReadyPodTimeoutMsg,
 		raUtil.PodRunning,
