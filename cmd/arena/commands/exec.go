@@ -130,6 +130,7 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 	pod, err := raUtil.WaitForPod(
 		foundPod.Name,
 		foundPod.Namespace,
+		raUtil.NotReadyPodWaitingMsg,
 		timeout,
 		raUtil.NotReadyPodTimeoutMsg,
 		raUtil.PodRunning,

@@ -16,6 +16,7 @@ import (
 
 const (
 	NotReadyPodTimeoutMsg = "Timeout waiting for job to start running"
+	NotReadyPodWaitingMsg = "Waiting for pod to start running..."
 )
 
 
@@ -29,7 +30,7 @@ func GetPod( name, namespace string) (*v1.Pod, error) {
 }
 
 // WaitForPod waiting to the pod
-func WaitForPod(podName, podNamespace string, timeout time.Duration, timeoutMsg string, exitCondition func(*v1.Pod, int) (bool, error) ) ( pod *v1.Pod, err error)  {
+func WaitForPod(podName, podNamespace, waitingMsg string, timeout time.Duration, timeoutMsg string, exitCondition func(*v1.Pod) (bool, error) ) ( pod *v1.Pod, err error)  {
 	shouldStopAt := time.Now().Add( timeout)
 
 	for i, exit := 0, false;; i++ {
@@ -38,7 +39,7 @@ func WaitForPod(podName, podNamespace string, timeout time.Duration, timeoutMsg 
 			return 
 		}
 
-		exit, err = exitCondition(pod, i)
+		exit, err = exitCondition(pod)
 		if err != nil || exit {
 			return 
 		}
@@ -46,12 +47,17 @@ func WaitForPod(podName, podNamespace string, timeout time.Duration, timeoutMsg 
 		if shouldStopAt.Before( time.Now()) {
 			return nil, fmt.Errorf(timeoutMsg)
 		}
+
+		if i == 0 && len(waitingMsg) != 0 {
+			fmt.Println(waitingMsg)
+		}
+
 		time.Sleep(time.Second)	
 	}
 }
 
 // PodRunning check if the pod is running and ready
-func PodRunning(pod *v1.Pod, i int) (bool, error) {
+func PodRunning(pod *v1.Pod) (bool, error) {
 	phase := pod.Status.Phase
 
 	switch phase {
@@ -72,10 +78,6 @@ func PodRunning(pod *v1.Pod, i int) (bool, error) {
 	default:
 		return false, fmt.Errorf("Can't connect to the pod: %s in phase: %s",pod.Name, phase)
 	}
-
-	if i == 0 {
-		fmt.Println("Waiting for pod to start running...")
-	} 
 
 	return false, nil
 }

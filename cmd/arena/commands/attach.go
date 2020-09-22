@@ -72,6 +72,7 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string,
 	podToExec, err := raUtil.WaitForPod(
 		foundPod.Name,
 		foundPod.Namespace,
+		raUtil.NotReadyPodWaitingMsg,
 		timeout,
 		raUtil.NotReadyPodTimeoutMsg,
 		raUtil.PodRunning,
@@ -88,11 +89,11 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string,
 		fmt.Println("Trying to connect to a pod called:", podToExec.Name)
 	}
 
-	return attachByKubectlLib(podToExec, stdin, tty)
+	return attachByKubeCtlBin(podToExec, stdin, tty)
 }
 
 // attachByKubeCtlBin attach to a running job name
-func attachByKubeCtlBin(pod *v1.Pod, stdin, tty bool, timeout time.Duration) (err error) {
+func attachByKubeCtlBin(pod *v1.Pod, stdin, tty bool) (err error) {
 	return kubectl.Attach(pod.Name, pod.Namespace, stdin, tty)
 }
 
