@@ -121,20 +121,11 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		return
 	}
 
-	foundPod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+	pod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
 
 	if err != nil {
 		return
 	}
-
-	pod, err := raUtil.WaitForPod(
-		foundPod.Name,
-		foundPod.Namespace,
-		raUtil.NotReadyPodWaitingMsg,
-		timeout,
-		raUtil.NotReadyPodTimeoutMsg,
-		raUtil.PodRunning,
-	)
 
 	if err != nil {
 		return
