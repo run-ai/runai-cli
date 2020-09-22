@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	"k8s.io/client-go/rest"
