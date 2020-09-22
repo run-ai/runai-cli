@@ -84,6 +84,11 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string,
 		return fmt.Errorf("Not found any matching pod")
 	}
 
+	if podName == "" {
+		// notify the user which pod name he will to attach
+		fmt.Println("Trying to connect to a pod called:", podToExec.Name)
+	}
+
 	return attachByKubeCtlBin(podToExec, stdin, tty)
 }
 
