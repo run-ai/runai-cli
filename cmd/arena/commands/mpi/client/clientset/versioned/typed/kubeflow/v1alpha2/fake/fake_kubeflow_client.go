@@ -17,7 +17,7 @@
 package fake
 
 import (
-	v1alpha2 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2"
+	v1alpha2 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

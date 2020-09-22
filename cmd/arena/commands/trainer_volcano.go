@@ -19,14 +19,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
-	"github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
+	"github.com/run-ai/runai-cli/pkg/operators/volcano-operator/apis/batch/v1alpha1"
+	"github.com/run-ai/runai-cli/pkg/operators/volcano-operator/client/clientset/versioned"
 )
 
 // all volcano jobs cache

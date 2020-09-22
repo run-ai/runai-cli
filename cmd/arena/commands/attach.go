@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
+	raUtil "github.com/run-ai/runai-cli/cmd/arena/commands/util"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"

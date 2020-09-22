@@ -6,10 +6,10 @@ import (
 	"path"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/jobs/serving"
-	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
+	"github.com/run-ai/runai-cli/pkg/jobs/serving"
+	servejob "github.com/run-ai/runai-cli/pkg/jobs/serving"
 
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )

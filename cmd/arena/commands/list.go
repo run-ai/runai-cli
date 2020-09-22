@@ -21,10 +21,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/flags"
+	cmdUtil "github.com/run-ai/runai-cli/cmd/arena/commands/util"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

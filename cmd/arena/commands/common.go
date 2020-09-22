@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/kubeflow/arena/cmd/arena/commands/constants"
-	"github.com/kubeflow/arena/pkg/client"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/constants"
+	"github.com/run-ai/runai-cli/pkg/client"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"

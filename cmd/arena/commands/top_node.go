@@ -21,7 +21,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/client"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"

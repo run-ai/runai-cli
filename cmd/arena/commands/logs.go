@@ -20,10 +20,10 @@ import (
 	"path"
 	"time"
 
-	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	"github.com/kubeflow/arena/pkg/client"
-	podlogs "github.com/kubeflow/arena/pkg/podlogs"
-	tlogs "github.com/kubeflow/arena/pkg/printer/base/logs"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/flags"
+	"github.com/run-ai/runai-cli/pkg/client"
+	podlogs "github.com/run-ai/runai-cli/pkg/podlogs"
+	tlogs "github.com/run-ai/runai-cli/pkg/printer/base/logs"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

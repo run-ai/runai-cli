@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
+	cmdTypes "github.com/run-ai/runai-cli/cmd/arena/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

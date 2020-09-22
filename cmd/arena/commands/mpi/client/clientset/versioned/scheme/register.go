@@ -17,9 +17,9 @@
 package scheme
 
 import (
-	kubeflowv1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/v1"
-	kubeflowv1alpha1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/v1alpha1"
-	kubeflowv1alpha2 "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/v1alpha2"
+	kubeflowv1 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/api/v1"
+	kubeflowv1alpha1 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/api/v1alpha1"
+	kubeflowv1alpha2 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/api/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

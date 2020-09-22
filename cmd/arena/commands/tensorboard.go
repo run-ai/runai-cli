@@ -19,7 +19,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

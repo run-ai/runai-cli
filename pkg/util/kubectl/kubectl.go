@@ -23,9 +23,9 @@ import (
 	"strconv"
 	"strings"
 
-	util "github.com/kubeflow/arena/pkg/util"
+	util "github.com/run-ai/runai-cli/pkg/util"
 
-	"github.com/kubeflow/arena/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 )
 

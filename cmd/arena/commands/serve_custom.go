@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/workflow"
+	"github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"

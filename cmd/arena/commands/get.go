@@ -25,17 +25,17 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
 
-	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	cmdUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
-	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
-	"github.com/kubeflow/arena/pkg/config"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/flags"
+	cmdUtil "github.com/run-ai/runai-cli/cmd/arena/commands/util"
+	cmdTypes "github.com/run-ai/runai-cli/cmd/arena/types"
+	"github.com/run-ai/runai-cli/pkg/config"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

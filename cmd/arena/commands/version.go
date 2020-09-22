@@ -17,8 +17,8 @@ package commands
 import (
 	"fmt"
 
-	"github.com/kubeflow/arena/pkg/util/command"
-	arenaVersion "github.com/kubeflow/arena/pkg/version"
+	"github.com/run-ai/runai-cli/pkg/util/command"
+	arenaVersion "github.com/run-ai/runai-cli/pkg/version"
 	"github.com/spf13/cobra"
 )
 

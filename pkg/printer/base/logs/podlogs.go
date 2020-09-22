@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/podlogs"
+	"github.com/run-ai/runai-cli/pkg/podlogs"
 )
 
 var (

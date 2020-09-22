@@ -3,7 +3,7 @@ package cluster
 import (
 	"fmt"
 
-	"github.com/kubeflow/arena/pkg/util/command"
+	"github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 )

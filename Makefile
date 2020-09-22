@@ -1,4 +1,4 @@
-PACKAGE=github.com/kubeflow/arena
+PACKAGE=github.com/run-ai/runai-cli
 CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/bin
 ARENA_CLI_NAME=runai

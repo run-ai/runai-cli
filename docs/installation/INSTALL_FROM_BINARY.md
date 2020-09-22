@@ -19,7 +19,7 @@ Arena doesn't have to run can be run within Kubernetes cluster. It can also be r
 
 1\. Prepare kubeconfig file by using `export KUBECONFIG=/etc/kubernetes/admin.conf` or creating a `~/.kube/config`
 
-2\. Download the latest installer from [Release Page](https://github.com/kubeflow/arena/releases), and rename it to `arena-installer.tar.gz`
+2\. Download the latest installer from [Release Page](https://github.com/run-ai/runai-cli/releases), and rename it to `arena-installer.tar.gz`
 
 3\. Untar the installer package
 

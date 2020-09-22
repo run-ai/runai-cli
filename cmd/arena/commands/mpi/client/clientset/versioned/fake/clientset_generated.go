@@ -17,13 +17,13 @@
 package fake
 
 import (
-	clientset "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned"
-	kubeflowv1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1"
-	fakekubeflowv1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1/fake"
-	kubeflowv1alpha1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha1"
-	fakekubeflowv1alpha1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha1/fake"
-	kubeflowv1alpha2 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2"
-	fakekubeflowv1alpha2 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2/fake"
+	clientset "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned"
+	kubeflowv1 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1"
+	fakekubeflowv1 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1/fake"
+	kubeflowv1alpha1 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha1"
+	fakekubeflowv1alpha1 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha1/fake"
+	kubeflowv1alpha2 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2"
+	fakekubeflowv1alpha2 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

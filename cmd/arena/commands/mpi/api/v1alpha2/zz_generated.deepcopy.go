@@ -19,7 +19,7 @@
 package v1alpha2
 
 import (
-	v1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/common/v1"
+	v1 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/api/common/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

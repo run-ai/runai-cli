@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
-	constants "github.com/kubeflow/arena/cmd/arena/commands/constants"
-	"github.com/kubeflow/arena/cmd/arena/commands/util"
-	"github.com/kubeflow/arena/cmd/arena/types"
-	"github.com/kubeflow/arena/pkg/client"
+	constants "github.com/run-ai/runai-cli/cmd/arena/commands/constants"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/util"
+	"github.com/run-ai/runai-cli/cmd/arena/types"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

@@ -17,7 +17,7 @@ package commands
 import (
 	"sort"
 
-	"github.com/kubeflow/arena/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/client"
 )
 
 // construct the trainer list

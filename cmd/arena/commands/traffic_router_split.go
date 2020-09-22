@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	istiov1alpha3 "istio.io/api/networking/v1alpha3"

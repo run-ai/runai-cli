@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
-	"github.com/kubeflow/arena/pkg/client"
+	cmdTypes "github.com/run-ai/runai-cli/cmd/arena/types"
+	"github.com/run-ai/runai-cli/pkg/client"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/api/extensions/v1beta1"

@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	validate "github.com/kubeflow/arena/pkg/util"
+	validate "github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

@@ -16,14 +16,15 @@ package helm
 
 import (
 	"fmt"
-	util "github.com/kubeflow/arena/pkg/util"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
 
-	"github.com/kubeflow/arena/pkg/types"
+	util "github.com/run-ai/runai-cli/pkg/util"
+
+	"github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )

@@ -21,19 +21,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeflow/arena/cmd/arena/commands/constants"
-	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/types"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/constants"
+	cmdTypes "github.com/run-ai/runai-cli/cmd/arena/types"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	common "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/common/v1"
-	mpi "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/v1alpha2"
-	mpiClient "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned"
+	common "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/api/common/v1"
+	mpi "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/api/v1alpha2"
+	mpiClient "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned"
 )
 
 var (

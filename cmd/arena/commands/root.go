@@ -15,12 +15,12 @@
 package commands
 
 import (
-	"github.com/kubeflow/arena/cmd/arena/commands/cluster"
-	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	"github.com/kubeflow/arena/cmd/arena/commands/project"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/cluster"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/flags"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/project"
 
-	"github.com/kubeflow/arena/pkg/config"
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/config"
+	"github.com/run-ai/runai-cli/pkg/util"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

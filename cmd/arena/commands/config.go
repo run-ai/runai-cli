@@ -3,8 +3,8 @@ package commands
 import (
 	"os"
 
-	config "github.com/kubeflow/arena/pkg/util/config"
 	homedir "github.com/mitchellh/go-homedir"
+	config "github.com/run-ai/runai-cli/pkg/util/config"
 	log "github.com/sirupsen/logrus"
 )
 

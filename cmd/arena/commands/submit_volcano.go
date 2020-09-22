@@ -5,11 +5,12 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/workflow"
+	"os"
+
+	"github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (

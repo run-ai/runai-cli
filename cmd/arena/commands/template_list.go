@@ -5,8 +5,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/templates"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/templates"
 	"github.com/spf13/cobra"
 )
 

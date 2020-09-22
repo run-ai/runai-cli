@@ -6,9 +6,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
-	printer "github.com/kubeflow/arena/pkg/printer/serving"
-	"github.com/kubeflow/arena/pkg/types"
+	servejob "github.com/run-ai/runai-cli/pkg/jobs/serving"
+	printer "github.com/run-ai/runai-cli/pkg/printer/serving"
+	"github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 )

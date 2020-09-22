@@ -3,9 +3,9 @@ package util
 import (
 	"fmt"
 
-	"github.com/kubeflow/arena/cmd/arena/types"
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/config"
+	"github.com/run-ai/runai-cli/cmd/arena/types"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,7 +42,6 @@ func PrintShowingJobsInNamespaceMessage(namespaceInfo types.NamespaceInfo) {
 		}
 	}
 }
-
 
 func BoolP(b bool) *bool {
 	return &b

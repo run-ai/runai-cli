@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
-	"github.com/kubeflow/arena/pkg/operators/spark-operator/client/clientset/versioned"
-	"github.com/kubeflow/arena/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
+	"github.com/run-ai/runai-cli/pkg/operators/spark-operator/client/clientset/versioned"
+	"github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

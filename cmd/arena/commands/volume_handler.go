@@ -2,8 +2,9 @@ package commands
 
 import (
 	"fmt"
-	validate "github.com/kubeflow/arena/pkg/util"
 	"strings"
+
+	validate "github.com/run-ai/runai-cli/pkg/util"
 )
 
 // Input: (surrounded by [] means optional)

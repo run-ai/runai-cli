@@ -3,9 +3,9 @@ package project
 import (
 	"fmt"
 
-	"github.com/kubeflow/arena/cmd/arena/commands/util"
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/util/command"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/util"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 )
 

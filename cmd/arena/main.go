@@ -22,7 +22,7 @@ import (
 	"runtime/trace"
 	"strconv"
 
-	"github.com/kubeflow/arena/cmd/arena/commands"
+	"github.com/run-ai/runai-cli/cmd/arena/commands"
 	log "github.com/sirupsen/logrus"
 )
 

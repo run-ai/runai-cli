@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
-	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/config"
-	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
-	"github.com/kubeflow/arena/pkg/workflow"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/flags"
+	raUtil "github.com/run-ai/runai-cli/cmd/arena/commands/util"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/config"
+	"github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util/kubectl"
+	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
@@ -130,8 +130,8 @@ func NewRunaiJobCommand() *cobra.Command {
 				}
 			}
 
-			if submitArgs.Attach != nil && *submitArgs.Attach   {
-				if err := Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn), raUtil.IsBoolPTrue(submitArgs.TTY), "", DefaultAttachTimeout ); err != nil {
+			if submitArgs.Attach != nil && *submitArgs.Attach {
+				if err := Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn), raUtil.IsBoolPTrue(submitArgs.TTY), "", DefaultAttachTimeout); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}

@@ -3,8 +3,8 @@ package commands
 import (
 	"testing"
 
-	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
-	kubeclient "github.com/kubeflow/arena/pkg/client"
+	cmdTypes "github.com/run-ai/runai-cli/cmd/arena/types"
+	kubeclient "github.com/run-ai/runai-cli/pkg/client"
 	appsv1 "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"

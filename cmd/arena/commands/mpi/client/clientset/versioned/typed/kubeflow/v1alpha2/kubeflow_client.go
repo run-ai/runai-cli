@@ -17,8 +17,8 @@
 package v1alpha2
 
 import (
-	v1alpha2 "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/v1alpha2"
-	"github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/scheme"
+	v1alpha2 "github.com/run-ai/runai-cli/cmd/arena/commands/mpi/api/v1alpha2"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/mpi/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

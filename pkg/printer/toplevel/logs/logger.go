@@ -2,9 +2,9 @@ package logs
 
 import (
 
-	//"github.com/kubeflow/arena/cmd/arena/commands"
+	//"github.com/run-ai/runai-cli/cmd/arena/commands"
 
-	podlogger "github.com/kubeflow/arena/pkg/printer/base/logs"
+	podlogger "github.com/run-ai/runai-cli/pkg/printer/base/logs"
 )
 
 type TopLevelPodLogPrinter struct {

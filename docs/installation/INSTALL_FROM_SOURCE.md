@@ -40,7 +40,7 @@ Then run `helm list` to check if the the kubernetes can be managed successfully 
 
 ```
 mkdir /charts
-git clone https://github.com/kubeflow/arena.git
+git clone https://github.com/run-ai/runai-cli.git
 cp -r arena/charts/* /charts
 ```
 
@@ -73,7 +73,7 @@ Prerequisites:
 ```
 mkdir -p $(go env GOPATH)/src/github.com/kubeflow
 cd $(go env GOPATH)/src/github.com/kubeflow
-git clone https://github.com/kubeflow/arena.git
+git clone https://github.com/run-ai/runai-cli.git
 cd arena
 make
 ```

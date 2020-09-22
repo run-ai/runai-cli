@@ -4,9 +4,9 @@ ARG USER=jovyan
 
 FROM golang:1.10-stretch as build
 
-RUN mkdir -p /go/src/github.com/kubeflow/arena
+RUN mkdir -p /go/src/github.com/run-ai/runai-cli
 
-WORKDIR /go/src/github.com/kubeflow/arena
+WORKDIR /go/src/github.com/run-ai/runai-cli
 COPY . .
 
 RUN make
@@ -21,11 +21,11 @@ RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-rel
 
 FROM $BASE_IMAGE
 
-COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena /usr/local/bin/arena
+COPY --from=build /go/src/github.com/run-ai/runai-cli/bin/arena /usr/local/bin/arena
 
 COPY --from=build /usr/local/bin/helm /usr/local/bin/helm
 
-COPY --from=build /go/src/github.com/kubeflow/arena/charts /charts
+COPY --from=build /go/src/github.com/run-ai/runai-cli/charts /charts
 
 RUN chmod a+rx /usr/local/bin/* && \
     chmod a+rx -R /charts

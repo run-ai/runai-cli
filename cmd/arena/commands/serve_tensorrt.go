@@ -21,11 +21,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util/helm"
 
 	//log "github.com/sirupsen/logrus"
-	"github.com/kubeflow/arena/pkg/workflow"
+	"github.com/run-ai/runai-cli/pkg/workflow"
 	"github.com/spf13/cobra"
 )
 

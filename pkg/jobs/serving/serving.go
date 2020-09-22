@@ -7,8 +7,8 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/kubeflow/arena/pkg/types"
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	app_v1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"

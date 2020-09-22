@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/kubeflow/arena/cmd/arena/commands/flags"
-	"github.com/kubeflow/arena/pkg/client"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
+	"github.com/run-ai/runai-cli/cmd/arena/commands/flags"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	"k8s.io/client-go/rest"
 
 	// "k8s.io/cli-runtime/pkg/resource"
