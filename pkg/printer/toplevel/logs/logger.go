@@ -2,7 +2,7 @@ package logs
 
 import (
 
-	//"github.com/run-ai/runai-cli/cmd/arena/commands"
+	//"github.com/run-ai/runai-cli/cmd"
 
 	podlogger "github.com/run-ai/runai-cli/pkg/printer/base/logs"
 )

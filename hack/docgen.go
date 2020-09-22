@@ -16,7 +16,7 @@ package main
 import (
 	"log"
 
-	"github.com/run-ai/runai-cli/cmd/arena/commands"
+	commands "github.com/run-ai/runai-cli/cmd"
 	"github.com/spf13/cobra/doc"
 )
 

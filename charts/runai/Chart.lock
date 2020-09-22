@@ -1,0 +1,6 @@
+dependencies:
+- name: runai-common
+  repository: file://../runai-common
+  version: 1.0.0
+digest: sha256:7db0033e7a7346de848e3fe06af99191061ef8962c2082fa5dd170e9c893f133
+generated: "2020-09-01T15:42:13.357547+03:00"
