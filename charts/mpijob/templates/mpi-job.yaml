@@ -73,6 +73,8 @@ spec:
           {{- end }}
           containers:
             - image: "{{ .Values.image }}"
+              stdin: {{ .Values.stdin }}
+              tty: {{ .Values.tty }}
               name: mpi
               {{- if  .Values.createHomeDir }}
               volumeMounts:
@@ -166,6 +168,8 @@ spec:
             {{- end }}
           containers:
             - image: "{{ .Values.image }}"
+              stdin: {{ .Values.stdin }}
+              tty: {{ .Values.tty }}
               {{- if .Values.createHomeDir }}
               volumeMounts:
                 - mountPath: /home/runai-home

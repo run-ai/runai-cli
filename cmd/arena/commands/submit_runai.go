@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	raUtil "github.com/kubeflow/arena/cmd/arena/commands/util"
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
@@ -53,7 +54,12 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			clientset := kubeClient.GetClientset()
 			configValues := ""
-			submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
+
+			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 
 			if ttlAfterFinished != nil {
 				ttlSeconds := int(math.Round(ttlAfterFinished.Seconds()))
@@ -121,6 +127,13 @@ func NewRunaiJobCommand() *cobra.Command {
 						fmt.Println(err)
 						os.Exit(1)
 					}
+				}
+			}
+
+			if submitArgs.Attach != nil && *submitArgs.Attach   {
+				if err := Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn), raUtil.IsBoolPTrue(submitArgs.TTY), "", DefaultAttachTimeout ); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
 				}
 			}
 		},
@@ -210,8 +223,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")

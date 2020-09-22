@@ -410,6 +410,12 @@ func Exec(podName string, namespace string, command string, commandArgs []string
 	return kubectlAttched(args)
 }
 
+func Attach(podName string, namespace string, interactive bool, TTY bool) error {
+	args := []string{"attach", podName, fmt.Sprintf("-i=%t", interactive), fmt.Sprintf("-t=%t", TTY), "-n", namespace}
+
+	return kubectlAttched(args)
+}
+
 func Logs(podName string, namespace string) (string, error) {
 	args := []string{"logs", podName, "-n", namespace}
 	return kubectl(args)
