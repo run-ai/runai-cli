@@ -89,7 +89,7 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string,
 		fmt.Println("Connecting to pod", podToExec.Name)
 	}
 
-	return attachByKubeCtlBin(podToExec, stdin, tty)
+	return attachByKubectlLib(podToExec, stdin, tty)
 }
 
 // attachByKubeCtlBin attach to a running job name
