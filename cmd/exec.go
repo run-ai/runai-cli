@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	kubeExec "k8s.io/kubectl/pkg/cmd/exec"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"k8s.io/kubectl/pkg/scheme"
 )
 
@@ -126,7 +127,12 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		return
 	}
 
+	isRunning, err := raUtil.PodRunning(pod)
+
 	if err != nil {
+		return
+	} else if !isRunning {
+		err = fmt.Errorf("Unable to run command in pod that did not running")
 		return
 	}
 
