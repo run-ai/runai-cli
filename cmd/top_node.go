@@ -36,6 +36,36 @@ import (
 var (
 	showDetails bool
 )
+// requested / allocated / usage / utilization (0-100 | 0-[number of units * 100])
+type TopNodeInfo struct {
+	Name string 					`title:"NAME"`
+	Address string 					`title:"Address"`
+	Role string						`title:"ROLE"`
+	Status v1.NodeStatus			`title:"STATUS"`
+	// cpu
+	CPUs int						`group:"CPU" title:"TOTAL"`
+	CPUAllocated int				`group:"CPU" title:"ALLOCATED"`
+	CPURequested int				`group:"CPU" title:"REQUESTED"`
+	CPUUsage float32				`group:"CPU" title:"USAGE"`
+	// gpu
+	GPUs int						`group:"GPU" title:"TOTAL"`
+	GPUUnhealthy int				`group:"GPU" title:"UNHEALTHY"`
+	GPUAllocated int				`group:"GPU" title:"ALLOCATED UNITS"`
+	GPUAllocatedFragmented float32  `group:"GPU" title:"ALLOCATED FRAGMENTED"`
+	GPURequested int				`group:"GPU" title:"REQUESTED"`
+	GPUUsage float32				`group:"GPU" title:"USAGE"`
+	// memory
+	Mem int							`group:"MEMORY" format:"memory"`
+	MemAllocated int				`group:"MEMORY" title:"ALLOCATED" format:"memory"`
+	MemRequested int				`group:"MEMORY" title:"REQUESTED" format:"memory"`
+	MemUsage int					`group:"MEMORY" title:"USAGE" format:"memory"`
+	// gpu memory
+	GPUMem int						`group:"GPUs MEMORY" title:"TOTAL" format:"memory"`
+	GPUMemAllocated int				`group:"GPUs MEMORY" title:"ALLOCATED" format:"memory"`
+	GPUMemRequested int				`group:"GPUs MEMORY" title:"REQUESTED" format:"memory"`
+	GPUMemUsage int					`group:"GPUs MEMORY" title:"USAGE" format:"memory"`
+	
+}
 
 type NodeInfo struct {
 	node v1.Node
