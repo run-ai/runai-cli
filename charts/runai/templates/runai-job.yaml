@@ -5,6 +5,9 @@
 {{- if .Values.interactive }}
 apiVersion: apps/v1
 kind: "StatefulSet"
+{{- else if .Values.isRunaiJob }}
+apiVersion: run.ai/v1
+kind: "RunaiJob"
 {{- else }}
 apiVersion: batch/v1
 kind: "Job"

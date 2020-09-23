@@ -22,6 +22,7 @@ import (
 	kubeflowv1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/kubeflow/v1"
 	kubeflowv1alpha1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/kubeflow/v1alpha1"
 	kubeflowv1alpha2 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2"
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/runaijob/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -41,6 +42,12 @@ type Clientset struct {
 	kubeflowV1alpha1 *kubeflowv1alpha1.KubeflowV1alpha1Client
 	kubeflowV1alpha2 *kubeflowv1alpha2.KubeflowV1alpha2Client
 	kubeflowV1       *kubeflowv1.KubeflowV1Client
+	runV1            *runaijobv1.RunV1Client
+}
+
+// RunV1 retrieves the RunV1Client
+func (c *Clientset) RunV1() runaijobv1.RunV1Interface {
+	return c.runV1
 }
 
 // KubeflowV1alpha1 retrieves the KubeflowV1alpha1Client

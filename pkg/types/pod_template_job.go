@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/run-ai/runai-cli/cmd/constants"
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/api/runaijob/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -86,5 +87,44 @@ func PodTemplateJobFromReplicaSet(replicaSet appsv1.ReplicaSet) *PodTemplateJob 
 		Completions: 1,
 		Failed:      0,
 		Succeeded:   0,
+	}
+}
+
+func PodTemplateJobFromRunaiJob(runaiJob runaijobv1.RunaiJob) *PodTemplateJob {
+	extraStatus := ""
+
+	// We don't set the status to succeeded here because of a bug that exists in k8s' job controller, where a pod can be running but the job turns to completed with no reason:
+	// this was fixed in: https://github.com/kubernetes/kubernetes/pull/88440 but was not merged to all releases yet.
+	for _, event := range runaiJob.Status.Conditions {
+		if event.Type == "Failed" && event.Status == "True" {
+			extraStatus = constants.Status.Failed
+			break
+		}
+	}
+
+	parallelism := int32(1)
+	if runaiJob.Spec.Parallelism != nil {
+		parallelism = *runaiJob.Spec.Parallelism
+	}
+
+	completions := int32(1)
+	if runaiJob.Spec.Parallelism != nil {
+		completions = *runaiJob.Spec.Completions
+	}
+
+	selector := &metav1.LabelSelector{}
+	if runaiJob.Spec.Selector != nil {
+		selector = runaiJob.Spec.Selector
+	}
+	return &PodTemplateJob{
+		ExtraStatus: extraStatus,
+		ObjectMeta:  runaiJob.ObjectMeta,
+		Type:        ResourceTypeJob,
+		Template:    runaiJob.Spec.Template,
+		Selector:    selector,
+		Parallelism: parallelism,
+		Completions: completions,
+		Failed:      runaiJob.Status.Failed,
+		Succeeded:   runaiJob.Status.Succeeded,
 	}
 }

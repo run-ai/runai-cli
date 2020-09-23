@@ -17,6 +17,7 @@
 package fake
 
 import (
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/api/runaijob/v1"
 	kubeflowv1 "github.com/run-ai/runai-cli/cmd/mpi/api/v1"
 	kubeflowv1alpha1 "github.com/run-ai/runai-cli/cmd/mpi/api/v1alpha1"
 	kubeflowv1alpha2 "github.com/run-ai/runai-cli/cmd/mpi/api/v1alpha2"
@@ -34,6 +35,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	kubeflowv1alpha1.AddToScheme,
 	kubeflowv1alpha2.AddToScheme,
 	kubeflowv1.AddToScheme,
+	runaijobv1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

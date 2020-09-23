@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/scheme"
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/runaijob/v1"
 	"github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
@@ -21,12 +23,14 @@ const (
 )
 
 type RunaiTrainer struct {
-	client kubernetes.Interface
+	client         kubernetes.Interface
+	runaijobClient *runaijobv1.RunV1Client
 }
 
 func NewRunaiTrainer(client client.Client) Trainer {
 	return &RunaiTrainer{
-		client: client.GetClientset(),
+		client:         client.GetClientset(),
+		runaijobClient: runaijobv1.NewForConfigOrDie(client.GetRestConfig()),
 	}
 }
 
@@ -75,6 +79,22 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiReplicaSetsList.Items) > 0 {
 		for _, item := range runaiReplicaSetsList.Items {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
+				return true
+			}
+		}
+	}
+
+	runaijobs, err := rt.runaijobClient.RunaiJobs(ns).List(metav1.ListOptions{
+		FieldSelector: fieldSelectorByName(name),
+	})
+
+	if err != nil {
+		log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
+	}
+
+	if len(runaijobs.Items) > 0 {
+		for _, item := range runaijobs.Items {
 			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
 				return true
 			}
@@ -139,6 +159,28 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
+		}
+
+		if result != nil {
+			return result, nil
+		}
+	}
+
+	runaiJobs, err := rt.runaijobClient.RunaiJobs(namespace).List(metav1.ListOptions{
+		FieldSelector: fieldSelectorByName(name),
+	})
+
+	if err != nil {
+		log.Debugf("failed to search runaijob %s in namespace %s due to %v", name, namespace, err)
+	}
+
+	if len(runaiJobs.Items) > 0 {
+		runaijob := runaiJobs.Items[0]
+		scheme.Scheme.Default(&runaijob)
+		podSpecJob := cmdTypes.PodTemplateJobFromRunaiJob(runaijob)
+		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
+		if err != nil {
+			log.Debugf("failed to get runaijob %s in namespace %s due to %v", name, namespace, err)
 		}
 
 		if result != nil {
@@ -333,6 +375,14 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	for _, replicaSet := range replicasetJobs.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromReplicaSet(replicaSet)
+		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
+	}
+
+	runaijobs, err := rt.runaijobClient.RunaiJobs(namespace).List(metav1.ListOptions{})
+
+	for _, runaijob := range runaijobs.Items {
+		scheme.Scheme.Default(&runaijob)
+		podTemplateJob := cmdTypes.PodTemplateJobFromRunaiJob(runaijob)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 

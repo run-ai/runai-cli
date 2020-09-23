@@ -24,6 +24,8 @@ import (
 	fakekubeflowv1alpha1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/kubeflow/v1alpha1/fake"
 	kubeflowv1alpha2 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2"
 	fakekubeflowv1alpha2 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/kubeflow/v1alpha2/fake"
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/runaijob/v1"
+	fakerunaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/runaijob/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -91,4 +93,9 @@ func (c *Clientset) KubeflowV1alpha2() kubeflowv1alpha2.KubeflowV1alpha2Interfac
 // KubeflowV1 retrieves the KubeflowV1Client
 func (c *Clientset) KubeflowV1() kubeflowv1.KubeflowV1Interface {
 	return &fakekubeflowv1.FakeKubeflowV1{Fake: &c.Fake}
+}
+
+// Run retrieves the RunClient
+func (c *Clientset) RunV1() runaijobv1.RunaiJobInterface {
+	return &fakerunaijobv1.FakeRunaiJobs{Fake: &fakerunaijobv1.FakeRunV1{Fake: &c.Fake}}
 }
