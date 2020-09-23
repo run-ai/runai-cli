@@ -16,7 +16,6 @@ require (
 	github.com/mitchellh/mapstructure v1.2.2
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
-	github.com/run-ai/runai-scheduler v1.0.20 // indirect
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
