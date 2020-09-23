@@ -96,6 +96,6 @@ func (c *Clientset) KubeflowV1() kubeflowv1.KubeflowV1Interface {
 }
 
 // Run retrieves the RunClient
-func (c *Clientset) RunV1() runaijobv1.RunaiJobInterface {
-	return &fakerunaijobv1.FakeRunaiJobs{Fake: &fakerunaijobv1.FakeRunV1{Fake: &c.Fake}}
+func (c *Clientset) RunV1() runaijobv1.RunV1Interface {
+	return &fakerunaijobv1.FakeRunV1{Fake: &c.Fake}
 }

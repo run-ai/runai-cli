@@ -33,6 +33,7 @@ type Interface interface {
 	KubeflowV1alpha1() kubeflowv1alpha1.KubeflowV1alpha1Interface
 	KubeflowV1alpha2() kubeflowv1alpha2.KubeflowV1alpha2Interface
 	KubeflowV1() kubeflowv1.KubeflowV1Interface
+	RunV1() runaijobv1.RunV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -98,6 +99,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.runV1, err = runaijobv1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 
 	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(&configShallowCopy)
 	if err != nil {
@@ -113,6 +118,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.kubeflowV1alpha1 = kubeflowv1alpha1.NewForConfigOrDie(c)
 	cs.kubeflowV1alpha2 = kubeflowv1alpha2.NewForConfigOrDie(c)
 	cs.kubeflowV1 = kubeflowv1.NewForConfigOrDie(c)
+	cs.runV1 = runaijobv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -124,6 +130,7 @@ func New(c rest.Interface) *Clientset {
 	cs.kubeflowV1alpha1 = kubeflowv1alpha1.New(c)
 	cs.kubeflowV1alpha2 = kubeflowv1alpha2.New(c)
 	cs.kubeflowV1 = kubeflowv1.New(c)
+	cs.runV1 = runaijobv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

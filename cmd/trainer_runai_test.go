@@ -3,13 +3,15 @@ package cmd
 import (
 	"testing"
 
+	fakeclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/fake"
+
 	kubeclient "github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
 	appsv1 "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -24,9 +26,9 @@ var runaiPodTemplate = v1.PodTemplateSpec{
 	},
 }
 
-func getClientWithObject(objects []runtime.Object) kubeclient.Client {
+func getClientWithObject(objects []runtime.Object) (kubeclient.Client, *fakeclientset.Clientset) {
 	client := fake.NewSimpleClientset(objects...)
-	return *kubeclient.NewClientForTesting(client)
+	return *kubeclient.NewClientForTesting(client), fakeclientset.NewSimpleClientset()
 }
 
 func getRunaiReplicaSet() *appsv1.ReplicaSet {
@@ -101,9 +103,8 @@ func TestJobInclusionInResourcesListCommand(t *testing.T) {
 	pod := createPodOwnedBy("pod", nil, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{pod, job}
-	kubeClient := getClientWithObject(objects)
-
-	trainer := NewRunaiTrainer(kubeClient)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
 	trainJob := jobs[0]
@@ -131,9 +132,9 @@ func TestDontListNonRunaiJobs(t *testing.T) {
 	}
 
 	objects := []runtime.Object{job}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
 	if len(jobs) != 0 {
@@ -145,9 +146,9 @@ func TestJobInclusionInResourcesGetCommand(t *testing.T) {
 	job := getRunaiJob()
 
 	objects := []runtime.Object{job}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
@@ -161,9 +162,9 @@ func TestStatefulSetInclusionInResourcesGetCommand(t *testing.T) {
 	job := getRunaiStatefulSet()
 
 	objects := []runtime.Object{job}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
@@ -177,9 +178,9 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 	job := getRunaiReplicaSet()
 
 	objects := []runtime.Object{job}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
@@ -196,9 +197,9 @@ func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
 	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
@@ -213,9 +214,9 @@ func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
 	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
@@ -230,9 +231,9 @@ func TestIncludeMultiplePodsInJob(t *testing.T) {
 	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
@@ -245,9 +246,9 @@ func TestDontGetNotRunaiJob(t *testing.T) {
 	job.Spec.Template.Spec.SchedulerName = "some-scheduler"
 
 	objects := []runtime.Object{job}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	if trainJob != nil {
@@ -259,9 +260,9 @@ func TestStatefulsetJobIsInteractive(t *testing.T) {
 	job := getRunaiStatefulSet()
 
 	objects := []runtime.Object{job}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
 	jobType := jobs[0].Trainer()
@@ -274,9 +275,9 @@ func TestJobIsNotInteractive(t *testing.T) {
 	job := getRunaiJob()
 
 	objects := []runtime.Object{job}
-	kubeClient := getClientWithObject(objects)
+	kubeClient, runaiclient := getClientWithObject(objects)
+	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainer := NewRunaiTrainer(kubeClient)
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
 	jobType := jobs[0].Trainer()

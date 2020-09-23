@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	clientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	"github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/scheme"
-	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/typed/runaijob/v1"
+
 	"github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
@@ -24,13 +25,13 @@ const (
 
 type RunaiTrainer struct {
 	client         kubernetes.Interface
-	runaijobClient *runaijobv1.RunV1Client
+	runaijobClient clientset.Interface
 }
 
 func NewRunaiTrainer(client client.Client) Trainer {
 	return &RunaiTrainer{
 		client:         client.GetClientset(),
-		runaijobClient: runaijobv1.NewForConfigOrDie(client.GetRestConfig()),
+		runaijobClient: clientset.NewForConfigOrDie(client.GetRestConfig()),
 	}
 }
 
@@ -84,8 +85,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	}
-
-	runaijobs, err := rt.runaijobClient.RunaiJobs(ns).List(metav1.ListOptions{
+	runaijobs, err := rt.runaijobClient.RunV1().RunaiJobs(ns).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -166,7 +166,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-	runaiJobs, err := rt.runaijobClient.RunaiJobs(namespace).List(metav1.ListOptions{
+	runaiJobs, err := rt.runaijobClient.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -378,7 +378,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	runaijobs, err := rt.runaijobClient.RunaiJobs(namespace).List(metav1.ListOptions{})
+	runaijobs, err := rt.runaijobClient.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{})
 
 	for _, runaijob := range runaijobs.Items {
 		scheme.Scheme.Default(&runaijob)
