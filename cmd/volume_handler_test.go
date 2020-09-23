@@ -1,4 +1,4 @@
-package commands
+package cmd
 
 import (
 	"runtime/debug"
@@ -9,11 +9,11 @@ import (
 const (
 	WrongLengthPvcParamError           = "the --pvc parameter can be given"
 	WrongLengthVolumeParamError        = "the -v parameter must be"
-    BadlyFormattedResourceRequestError = "Badly formatted resource request"
- 	MissingContainerMountPathError     = "container mount path must be specified"
- 	MissingCapacityError               = "persistent volume size must be specified"
- 	InvalidReadOnlyParamError          = "invalid readonly parameter given:"
- 	MissingPvcNameError                = "persistent volume claim name must be specified"
+	BadlyFormattedResourceRequestError = "Badly formatted resource request"
+	MissingContainerMountPathError     = "container mount path must be specified"
+	MissingCapacityError               = "persistent volume size must be specified"
+	InvalidReadOnlyParamError          = "invalid readonly parameter given:"
+	MissingPvcNameError                = "persistent volume claim name must be specified"
 )
 
 func TestNoPvcRequested(t *testing.T) {

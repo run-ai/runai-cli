@@ -1,4 +1,4 @@
-package commands
+package cmd
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	// "k8s.io/cli-runtime/pkg/resource"
+	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +20,6 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	kubeExec "k8s.io/kubectl/pkg/cmd/exec"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"k8s.io/kubectl/pkg/scheme"
 )
 

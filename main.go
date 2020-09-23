@@ -55,7 +55,7 @@ func main() {
 		defer trace.Stop()
 	}
 
-	if err := commands.NewCommand().Execute(); err != nil {
+	if err := cmd.NewCommand().Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

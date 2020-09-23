@@ -13,7 +13,7 @@
 // limitations under the License.
 // +build ignore
 
-package commands
+package cmd
 
 import (
 	"fmt"

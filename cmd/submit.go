@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package commands
+package cmd
 
 import (
 	"fmt"
@@ -330,7 +330,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		if submitArgs.TTY == nil {
 			submitArgs.TTY = raUtil.BoolP(true)
 		}
-	} 
+	}
 
 	if raUtil.IsBoolPTrue(submitArgs.TTY) && !raUtil.IsBoolPTrue(submitArgs.StdIn) {
 		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")

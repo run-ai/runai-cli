@@ -1,4 +1,4 @@
-package commands
+package cmd
 
 var (
 	bash_completion_flags = map[string]string{
