@@ -135,3 +135,26 @@ func tensorboardURL(name, namespace string, clientset kubernetes.Interface) (url
 
 	return url, nil
 }
+
+// todo: create kube utils
+func isNodeReady(node v1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == v1.NodeReady && condition.Status == v1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+// todo: create kube utils
+func getNodeInternalAddress(node v1.Node) string {
+	address := "unknown"
+	if len(node.Status.Addresses) > 0 {
+		//address = nodeInfo.node.Status.Addresses[0].Address
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == v1.NodeInternalIP {
+				address = addr.Address
+			}
+		}
+	}
+	return address
+}
