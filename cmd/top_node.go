@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	log "github.com/sirupsen/logrus"
+	"github.com/run-ai/runai-cli/pkg/ui"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -36,35 +38,60 @@ import (
 var (
 	showDetails bool
 )
-// requested / allocated / usage / utilization (0-100 | 0-[number of units * 100])
-type TopNodeInfo struct {
+
+// requested / allocated / usage / utilization (0-100 | 0-[number of units * 100]) / shortcut
+
+
+type NodeStatus string
+
+const (
+	NodeReady NodeStatus = "ready"
+	NodeNotReady NodeStatus = "notReady"
+)
+
+type NodeCPUResource struct {
+	Total int64					`title:"TOTAL"`
+	Allocated int64				`title:"ALLOCATED"`
+	Requested int64				`title:"REQUESTED"`
+	Usage float32				`title:"USAGE"`
+}
+
+type NodeGPUResource struct {
+	Total int64						`title:"TOTAL"`
+	Unhealthy int64					`title:"UNHEALTHY"`
+	Allocated int64					`title:"ALLOCATED UNITS"`
+	AllocatedFraction float32  		`title:"ALLOCATED FRACTION"`
+	Requested int64					`title:"REQUESTED"`
+	Usage float32					`title:"USAGE"`
+}
+
+type NodeMemoryResource struct {
+	Mem int64							`format:"memory"`
+	MemAllocated int64				`title:"ALLOCATED" format:"memory"`
+	MemRequested int64				`title:"REQUESTED" format:"memory"`
+	MemUsage int64					`title:"USAGE" format:"memory"`
+}
+
+type NodeGeneralInfo struct {
 	Name string 					`title:"NAME"`
-	Address string 					`title:"Address"`
-	Role string						`title:"ROLE"`
-	Status v1.NodeStatus			`title:"STATUS"`
-	// cpu
-	CPUs int						`group:"CPU" title:"TOTAL"`
-	CPUAllocated int				`group:"CPU" title:"ALLOCATED"`
-	CPURequested int				`group:"CPU" title:"REQUESTED"`
-	CPUUsage float32				`group:"CPU" title:"USAGE"`
-	// gpu
-	GPUs int						`group:"GPU" title:"TOTAL"`
-	GPUUnhealthy int				`group:"GPU" title:"UNHEALTHY"`
-	GPUAllocated int				`group:"GPU" title:"ALLOCATED UNITS"`
-	GPUAllocatedFragmented float32  `group:"GPU" title:"ALLOCATED FRAGMENTED"`
-	GPURequested int				`group:"GPU" title:"REQUESTED"`
-	GPUUsage float32				`group:"GPU" title:"USAGE"`
-	// memory
-	Mem int							`group:"MEMORY" format:"memory"`
-	MemAllocated int				`group:"MEMORY" title:"ALLOCATED" format:"memory"`
-	MemRequested int				`group:"MEMORY" title:"REQUESTED" format:"memory"`
-	MemUsage int					`group:"MEMORY" title:"USAGE" format:"memory"`
-	// gpu memory
-	GPUMem int						`group:"GPUs MEMORY" title:"TOTAL" format:"memory"`
-	GPUMemAllocated int				`group:"GPUs MEMORY" title:"ALLOCATED" format:"memory"`
-	GPUMemRequested int				`group:"GPUs MEMORY" title:"REQUESTED" format:"memory"`
-	GPUMemUsage int					`group:"GPUs MEMORY" title:"USAGE" format:"memory"`
-	
+	IPAddress string 				`title:"IP Address"`
+	Role string						`title:"ROLE" def:"<none>"`
+	Status NodeStatus				`title:"STATUS"`
+}
+
+type NodeView struct {
+	Info NodeGeneralInfo            `group:"info" title:"-"`
+	CPUs NodeCPUResource			`group:"CPU"`
+	GPUs NodeGPUResource			`group:"GPU"`
+	Mem NodeMemoryResource			`group:"GPUs MEMORY"`
+	GPUMem NodeMemoryResource		`group:"GPUs MEMORY"`
+}
+
+type ClusterNodesView struct {
+	GPUs            	int64
+	UnhealthyGPUs   	int64
+	AllocatedGPUs   	int64
+	GPUsOnReadyNode 	int64
 }
 
 type NodeInfo struct {
@@ -155,173 +182,54 @@ func displayTopNode(nodes []NodeInfo) {
 		displayTopNodeSummary(nodes)
 	}
 }
+
 func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	var (
-		totalGPUsInCluster            int64
-		totalUnhealthyGPUsInCluster   int64
-		allocatedGPUsInCluster        int64
-		totalGPUsOnReadyNodeInCluster int64
-		hasUnhealthyGPUNode           bool
-	)
-
-	for _, NodeInfo := range nodeInfos {
-		if hasUnhealthyGPU(NodeInfo) {
-			hasUnhealthyGPUNode = true
-			break
-		}
-	}
-
-	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "NAME\tIP ADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tGPU (Unhealthy)\tCPU (Total)\tCPU (Requested)\tMem (Total)\tMem (Requested)\n")
-	} else {
-		fmt.Fprintf(w, "NAME\tIP ADDRESS\tROLE\tSTATUS\tGPU (Total)\tGPU (Allocated)\tCPU (Total)\tCPU (Requested)\tMem (Total)\tMem (Requested)\n")
-	}
+	clsData := ClusterNodesView{}
+	rows := []NodeView{}
 
 	for _, nodeInfo := range nodeInfos {
-		// Skip NotReady node
-		//if ! isNodeReady(nodeInfo.node) {
-		//	continue
-		//}
-		var totalGPU int64
-		var allocatableGPU int64
-		var allocatedGPU int64
-		totalGPU, allocatableGPU, allocatedGPU = calculateNodeGPU(nodeInfo)
 
-		totalGPUsInCluster += totalGPU
-		allocatedGPUsInCluster += allocatedGPU
-		unhealthGPU := totalGPU - allocatableGPU
-		totalUnhealthyGPUsInCluster += unhealthGPU
-
-		address := getNodeInternalAddress(nodeInfo.node)
-
-		role := strings.Join(findNodeRoles(&nodeInfo.node), ",")
-		if len(role) == 0 {
-			role = "<none>"
+		nodeView := NodeView {
+			Info: nodeInfo.GetGeneralInfo(),
+			CPUs: nodeInfo.GetCpus(),
+			GPUs: nodeInfo.GetGpus(),
+			Mem: nodeInfo.GetMemory(),
+			GPUMem: nodeInfo.GetGpuMemory(),
 		}
 
-		status := "ready"
-		if !isNodeReady(nodeInfo.node) {
-			status = "notReady"
-		} else {
-			totalGPUsOnReadyNodeInCluster += totalGPU
-		}
-
-		if hasUnhealthyGPUNode {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
-				address,
-				role,
-				status,
-				strconv.FormatInt(totalGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10),
-				strconv.FormatInt(unhealthGPU, 10),
-				getTotalNodeCPU(nodeInfo),
-				getRequestedNodeCPU(nodeInfo),
-				getTotalNodeMemory(nodeInfo),
-				getRequestedNodeMemory(nodeInfo))
-		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
-				address,
-				role,
-				status,
-				strconv.FormatInt(totalGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10),
-				getTotalNodeCPU(nodeInfo),
-				getRequestedNodeCPU(nodeInfo),
-				getTotalNodeMemory(nodeInfo),
-				getRequestedNodeMemory(nodeInfo))
-
-		}
+		rows = append(rows, nodeView)
+		clsData.AddNode(nodeView.Info.Status, nodeView.GPUs)
 	}
 
-	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "---------------------------------------------------------------------------------------------------\n")
+	ui.CreateTable(NodeView{}, ui.TableOpt {}).Render(w, rows)
 
-	} else {
-		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
-	}
-	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\n")
-	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPUsInCluster, 10),
-		strconv.FormatInt(allocatedGPUsInCluster, 10))
-	var gpuUsage float64 = 0
-	if totalGPUsInCluster > 0 {
-		gpuUsage = float64(allocatedGPUsInCluster) / float64(totalGPUsInCluster) * 100
-	}
-	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
-		strconv.FormatInt(allocatedGPUsInCluster, 10),
-		strconv.FormatInt(totalGPUsInCluster, 10),
-		int64(gpuUsage))
-	if totalGPUsInCluster != totalGPUsOnReadyNodeInCluster {
-		if totalGPUsOnReadyNodeInCluster > 0 {
-			gpuUsage = float64(allocatedGPUsInCluster) / float64(totalGPUsOnReadyNodeInCluster) * 100
-		} else {
-			gpuUsage = 0
-		}
-		fmt.Fprintf(w, "Allocated/Total GPUs(Active) In Cluster:\n")
-		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
-			strconv.FormatInt(allocatedGPUsInCluster, 10),
-			strconv.FormatInt(totalGPUsOnReadyNodeInCluster, 10),
-			int64(gpuUsage))
-	}
-
-	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "Unhealthy/Total GPUs In Cluster:\n")
-		var gpuUnhealthyPercentage float64 = 0
-		if totalGPUsInCluster > 0 {
-			gpuUnhealthyPercentage = float64(totalUnhealthyGPUsInCluster) / float64(totalGPUsInCluster) * 100
-		}
-		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
-			strconv.FormatInt(totalUnhealthyGPUsInCluster, 10),
-			strconv.FormatInt(totalGPUsInCluster, 10),
-			int64(gpuUnhealthyPercentage))
-	}
+	clsData.Render(w)	
 
 	_ = w.Flush()
 }
 
+
 func displayTopNodeDetails(nodeInfos []NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	var (
-		totalGPUsInCluster          int64
-		totalUnhealthyGPUsInCluster int64
-		allocatedGPUsInCluster      int64
-		hasUnhealthyGPUNode         bool
-	)
-
-	for _, NodeInfo := range nodeInfos {
-		if hasUnhealthyGPU(NodeInfo) {
-			hasUnhealthyGPUNode = true
-			break
-		}
-	}
-
+	clsData := ClusterNodesView{}
 	fmt.Fprintf(w, "\n")
 	for _, nodeInfo := range nodeInfos {
-		// Skip NotReady node
-		//if ! isNodeReady(nodeInfo.node) {
-		//	continue
-		//}
-		var totalGPU int64
-		var allocatableGPU int64
-		var allocatedGPU int64
-		totalGPU, allocatableGPU, allocatedGPU = calculateNodeGPU(nodeInfo)
+		
+		info := nodeInfo.GetGeneralInfo()
 
-		totalGPUsInCluster += totalGPU
-		allocatedGPUsInCluster += allocatedGPU
-		unhealthyGPUs := totalGPU - allocatableGPU
-		totalUnhealthyGPUsInCluster += unhealthyGPUs
+		gpus := nodeInfo.GetGpus()
 
-		address := getNodeInternalAddress(nodeInfo.node)
+		clsData.AddNode(info.Status, gpus)
 
-		role := strings.Join(findNodeRoles(&nodeInfo.node), ",")
-		if len(role) == 0 {
-			role = "<none>"
+		if len(info.Role) == 0 {
+			info.Role = "<none>"
 		}
 
 		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "NAME:\t%s\n", nodeInfo.node.Name)
-		fmt.Fprintf(w, "IPADDRESS:\t%s\n", address)
-		fmt.Fprintf(w, "ROLE:\t%s\n", role)
+		fmt.Fprintf(w, "NAME:\t%s\n", info.Name)
+		fmt.Fprintf(w, "IPADDRESS:\t%s\n", info.IPAddress)
+		fmt.Fprintf(w, "ROLE:\t%s\n", info.Role)
 
 		pods := gpuPods(nodeInfo.pods)
 		if len(pods) > 0 {
@@ -336,75 +244,166 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		}
 
 		var gpuUsageInNode float64 = 0
-		if totalGPU > 0 {
-			gpuUsageInNode = float64(allocatedGPU) / float64(totalGPU) * 100
+		if gpus.Total > 0 {
+			gpuUsageInNode = float64(gpus.Allocated) / float64(gpus.Total) * 100
 		} else {
 			fmt.Fprintf(w, "\n")
 		}
 
 		var gpuUnhealthyPercentageInNode float64 = 0
-		if totalGPU > 0 {
-			gpuUnhealthyPercentageInNode = float64(unhealthyGPUs) / float64(totalGPU) * 100
+		if  gpus.Total > 0  {
+			gpuUnhealthyPercentageInNode = float64(gpus.Unhealthy) / float64(gpus.Total) * 100
 		}
 
-		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", nodeInfo.node.Name, strconv.FormatInt(totalGPU, 10))
-		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, strconv.FormatInt(allocatedGPU, 10), int64(gpuUsageInNode))
-		if hasUnhealthyGPUNode {
-			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, strconv.FormatInt(unhealthyGPUs, 10), int64(gpuUnhealthyPercentageInNode))
+		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", info.Name, strconv.FormatInt(gpus.Total, 10))
+		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(gpus.Allocated, 10), int64(gpuUsageInNode))
+		if gpus.Unhealthy > 0 {
+			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(gpus.Unhealthy, 10), int64(gpuUnhealthyPercentageInNode))
 
 		}
-		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPU, 10),
-			strconv.FormatInt(allocatedGPU, 10))
+		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(gpus.Total, 10),
+			strconv.FormatInt(gpus.Allocated, 10))
 
 		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
 	}
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\t")
-	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPUsInCluster, 10),
-		strconv.FormatInt(allocatedGPUsInCluster, 10))
-
-	var gpuUsage float64 = 0
-	if totalGPUsInCluster > 0 {
-		gpuUsage = float64(allocatedGPUsInCluster) / float64(totalGPUsInCluster) * 100
-	}
-	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
-		strconv.FormatInt(allocatedGPUsInCluster, 10),
-		strconv.FormatInt(totalGPUsInCluster, 10),
-		int64(gpuUsage))
-	// fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
-	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "Unhealthy/Total GPUs In Cluster:\t")
-		var gpuUnhealthyPercentage float64 = 0
-		if totalGPUsInCluster > 0 {
-			gpuUnhealthyPercentage = float64(totalUnhealthyGPUsInCluster) / float64(totalGPUsInCluster) * 100
-		}
-		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
-			strconv.FormatInt(totalUnhealthyGPUsInCluster, 10),
-			strconv.FormatInt(totalGPUsInCluster, 10),
-			int64(gpuUnhealthyPercentage))
-	}
-
+	clsData.Render(w)
 	_ = w.Flush()
 }
 
-// calculate the GPU count of each node
-func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatableGPU, allocatedGPU int64) {
-	node := nodeInfo.node
-	totalGPU = totalGpuInNode(node)
-	allocatableGPU = allocatableGpuInNode(node)
-	// allocatedGPU = gpuInPod()
 
-	for _, pod := range nodeInfo.pods {
-		allocatedGPU += gpuInPod(pod)
+func (cnv *ClusterNodesView) Render(w io.Writer) {
+
+	// Printed at the detailed display
+
+	// fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\t")
+	// log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPUsInCluster, 10),
+	// 	strconv.FormatInt(allocatedGPUsInCluster, 10))
+
+	// var gpuUsage float64 = 0
+	// if totalGPUsInCluster > 0 {
+	// 	gpuUsage = float64(allocatedGPUsInCluster) / float64(totalGPUsInCluster) * 100
+	// }
+	// fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+	// 	strconv.FormatInt(allocatedGPUsInCluster, 10),
+	// 	strconv.FormatInt(totalGPUsInCluster, 10),
+	// 	int64(gpuUsage))
+	// // fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
+	// if hasUnhealthyGPUNode {
+	// 	fmt.Fprintf(w, "Unhealthy/Total GPUs In Cluster:\t")
+	// 	var gpuUnhealthyPercentage float64 = 0
+	// 	if totalGPUsInCluster > 0 {
+	// 		gpuUnhealthyPercentage = float64(totalUnhealthyGPUsInCluster) / float64(totalGPUsInCluster) * 100
+	// 	}
+	// 	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+	// 		strconv.FormatInt(totalUnhealthyGPUsInCluster, 10),
+	// 		strconv.FormatInt(totalGPUsInCluster, 10),
+	// 		int64(gpuUnhealthyPercentage))
+	// }
+
+	if cnv.UnhealthyGPUs > 0 {
+		fmt.Fprintf(w, "---------------------------------------------------------------------------------------------------\n")
+	} else {
+		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+	}
+	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\n")
+	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(cnv.GPUs, 10),
+		strconv.FormatInt(cnv.AllocatedGPUs, 10))
+	var gpuUsage float64 = 0
+	if cnv.GPUs > 0 {
+		gpuUsage = float64(cnv.AllocatedGPUs) / float64(cnv.GPUs) * 100
+	}
+	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+		strconv.FormatInt(cnv.AllocatedGPUs, 10),
+		strconv.FormatInt(cnv.GPUs, 10),
+		int64(gpuUsage))
+	if cnv.GPUs != cnv.GPUsOnReadyNode {
+		if cnv.GPUsOnReadyNode > 0 {
+			gpuUsage = float64(cnv.AllocatedGPUs) / float64(cnv.GPUsOnReadyNode) * 100
+		} else {
+			gpuUsage = 0
+		}
+		fmt.Fprintf(w, "Allocated/Total GPUs(Active) In Cluster:\n")
+		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+			strconv.FormatInt(cnv.AllocatedGPUs, 10),
+			strconv.FormatInt(cnv.GPUsOnReadyNode, 10),
+			int64(gpuUsage))
 	}
 
-	fractionalGPUsUsedInNode := sharedGPUsUsedInNode(nodeInfo)
-	allocatedGPU += fractionalGPUsUsedInNode
-	totalGPU += fractionalGPUsUsedInNode
-
-	return totalGPU, allocatableGPU, allocatedGPU
+	if cnv.UnhealthyGPUs > 0 {
+		fmt.Fprintf(w, "Unhealthy/Total GPUs In Cluster:\n")
+		var gpuUnhealthyPercentage float64 = 0
+		if cnv.GPUs > 0 {
+			gpuUnhealthyPercentage = float64(cnv.UnhealthyGPUs) / float64(cnv.GPUs) * 100
+		}
+		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+			strconv.FormatInt(cnv.UnhealthyGPUs, 10),
+			strconv.FormatInt(cnv.GPUs, 10),
+			int64(gpuUnhealthyPercentage))
+	}
 }
+
+func (cnv *ClusterNodesView) AddNode(status NodeStatus, gpu NodeGPUResource) {
+	cnv.GPUs += gpu.Total
+	cnv.AllocatedGPUs += gpu.Allocated
+	cnv.UnhealthyGPUs += gpu.Unhealthy
+	if status == NodeReady{
+		cnv.GPUsOnReadyNode += gpu.Total
+	}
+}
+
+
+func (ni *NodeInfo) GetStatus() NodeStatus {
+	if !isNodeReady(ni.node) {
+		return NodeNotReady
+	} 
+	return NodeReady
+}
+
+func (ni *NodeInfo) GetGeneralInfo() NodeGeneralInfo {
+	return NodeGeneralInfo {
+		Name: ni.node.Name,
+		Role: strings.Join(findNodeRoles(&ni.node), ","),
+		IPAddress: getNodeInternalAddress(ni.node),
+		Status: ni.GetStatus(),
+	}
+}	
+
+func (ni *NodeInfo) GetCpus() NodeCPUResource{
+	return NodeCPUResource {}
+}
+
+func (ni *NodeInfo) GetGpus() NodeGPUResource {
+	// node := nodeInfo.node
+	// totalGPU = totalGpuInNode(node)
+	// allocatableGPU = allocatableGpuInNode(node)
+	// // allocatedGPU = gpuInPod()
+
+	// for _, pod := range nodeInfo.pods {
+	// 	allocatedGPU += gpuInPod(pod)
+	// }
+
+	// fractionalGPUsUsedInNode := sharedGPUsUsedInNode(nodeInfo)
+	// allocatedGPU += fractionalGPUsUsedInNode
+	// totalGPU += fractionalGPUsUsedInNode
+
+	// 	getTotalNodeCPU(nodeInfo),
+	// 	getRequestedNodeCPU(nodeInfo),
+	
+	return NodeGPUResource {}
+}
+
+func (ni *NodeInfo) GetMemory() NodeMemoryResource{
+	// 	getTotalNodeMemory(nodeInfo),
+	// 	getRequestedNodeMemory(nodeInfo))
+	return NodeMemoryResource {}
+}
+
+func (ni *NodeInfo) GetGpuMemory() NodeMemoryResource{
+	return NodeMemoryResource {}
+}
+
 
 func getTotalNodeCPU(nodeInfo NodeInfo) (totalCPU string) {
 
@@ -483,7 +482,7 @@ func isMasterNode(node v1.Node) bool {
 	return false
 }
 
-func (nodeInfo NodeInfo) isGPUExclusiveNode() bool {
+func (nodeInfo *NodeInfo) isGPUExclusiveNode() bool {
 	value, ok := nodeInfo.node.Status.Allocatable[NVIDIAGPUResourceName]
 
 	if ok {
