@@ -116,11 +116,11 @@ func gpuInContainerDeprecated(container v1.Container) int64 {
 	return val.Value()
 }
 
-func sharedGPUsUsedInNode(nodeInfo NodeInfo) int64 {
+func getGPUsIndexUsedInPods(pods []v1.Pod) []string {
 	gpuIndexUsed := map[string]bool{}
-	for _, pod := range nodeInfo.pods {
+	for _, pod := range pods {
 		if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
-			return 0
+			return []string{}
 		}
 
 		if pod.Annotations != nil {
@@ -133,5 +133,11 @@ func sharedGPUsUsedInNode(nodeInfo NodeInfo) int64 {
 		}
 	}
 
-	return int64(len(gpuIndexUsed))
+	gpuIndexesArray := []string{}
+
+	for key, _ := range gpuIndexUsed {
+		gpuIndexesArray = append(gpuIndexesArray, key)
+	}
+
+	return gpuIndexesArray
 }
