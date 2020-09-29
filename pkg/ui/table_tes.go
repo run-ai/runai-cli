@@ -5,17 +5,25 @@ import (
 	"text/tabwriter"
 )
 
+
+type Address struct {
+	x int32 `title: "MY_x"`
+	y *float32
+}
+
 type Person struct {
 	name string `title:"Name" def:"--"`
 	Age int
-	address *float32 `title:"Addres"`
+	address Address `group:"Addres"`
+	addressPtr *Address `group:"Addres2"`
 }
 
-func RunTableExampleT() {
+func RunTableExampleTes() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	addr := Address{y:float32ptr(552.38956564), x:3}
 	data := []Person{
-		{"moshe", 30, float32ptr(552.38956564)},
-		{"", 50, float32ptr(552.38956564)},
+		{"moshe", 30, addr, &addr},
+		{"", 50,  addr, &addr},
 	}
 
 	err := CreateTable(Person{}, TableOpt{}).Render(w, data).Error()
