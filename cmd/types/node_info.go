@@ -5,6 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"k8s.io/api/core/v1"
+	prom "github.com/run-ai/runai-cli/cmd/util/prometheus"
 
 )
 
@@ -14,20 +15,34 @@ const (
 
 	// nodeLabelRole specifies the role of a node
 	nodeLabelRole = "kubernetes.io/role"
+
+	// prometheus query names
+	TotalGpusPQ = "totalGpus"
+	UsedGpusPQ = "usedGpus"
+	UsedGpuMemoryPQ = "usedGpuMemory"
+	TotalGpuMemoryPQ = "totalGpuMemory"
+	TotalCpuMemoryPQ = "totalCpuMemory"
+	UsedCpuMemoryPQ = "usedCpuMemory"
+	TotalCpusPQ = "totalCpus"
+	UsedCpusPQ = "usedCpus"
+	GPUUtilizationPQ = "gpuUtilization"
+	GeneralPQ = "general"
+	ReadyPQ = "ready"
 )
 
-func NewNodeInfo(node v1.Node, pods []v1.Pod) NodeInfo {
+func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.ItemsMap) NodeInfo {
 	return NodeInfo {
 		Node: node,
 		Pods: pods,
+		PrometheusNode: promNodesMap,
 	}
 }
 
 type NodeInfo struct {
 	Node v1.Node
 	Pods []v1.Pod
+	PrometheusNode prom.ItemsMap
 }
-
 
 func (ni *NodeInfo) GetStatus() NodeStatus {
 	if !isNodeReady(ni.Node) {
