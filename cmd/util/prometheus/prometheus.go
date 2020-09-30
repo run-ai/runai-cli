@@ -1,14 +1,17 @@
 package prometheus
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
-	"encoding/json"
+
+	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/api/core/v1"
 	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -16,9 +19,16 @@ const (
 )
 
 var (
-	runaiPrometheusServer *v1.Service = nil
+	cacheServiceGetFunc = func () (interface{}, error) { 
+		data, err := getPrometheusService()
+		return interface{}(data), err
+	}
+	PrometheusServiceCache = util.NewCache(cacheServiceGetFunc)
 )
 
+func intoInterface(d interface{}) interface{} {
+	return d
+}
 
 type (
 	// MultiQueries is a simple map for queryName => query
@@ -45,14 +55,19 @@ type (
 )
 
 
-
-
-
-func GetPrometheusService() (service *v1.Service, err error) {
-	if runaiPrometheusServer != nil {
-		service = runaiPrometheusServer
-		return
+func GetPrometheusService() ( *v1.Service,  error){
+	data, err := PrometheusServiceCache.Get()
+	switch t := data.(type) {
+	case *v1.Service:
+		return t, err;
+	default:
+		return nil, err;
 	}
+}
+
+
+func getPrometheusService() (service *v1.Service, err error) {
+	
 
 	c, err := client.GetClient()
 
@@ -75,7 +90,7 @@ func GetPrometheusService() (service *v1.Service, err error) {
 	} else {
 		return nil, fmt.Errorf("Not found a server for prometheus")
 	}
-	runaiPrometheusServer = service
+
 	return
 }
 
@@ -127,14 +142,18 @@ func MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error
 	queryResults := map[string]MetricData{}
 	rst := ItemsMap{}
 	funcs := []func() error{}
+	var mux sync.Mutex
+	// init the promethus server before the parrall
+	// it is not the best way to solve that but it ok for now
+	GetPrometheusService()
 	for queryName, query := range q {
-
 		funcs = append(funcs, func() error {
-			var err error
-			queryResults[queryName], err = Query(query)
+			rst, err := Query(query)
+			mux.Lock()
+			queryResults[queryName] = rst
+			mux.Unlock()
 			return err
 		})
-		
 	}
 	err := Parallel(funcs...)
 	if err != nil {
