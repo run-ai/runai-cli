@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	cacheServiceGetFunc = func () (interface{}, error) { 
+	cacheServiceGetFunc = func () (interface{}, error) {
 		data, err := getPrometheusService()
 		return interface{}(data), err
 	}
@@ -143,9 +143,6 @@ func MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error
 	rst := ItemsMap{}
 	funcs := []func() error{}
 	var mux sync.Mutex
-	// init the promethus server before the parrall
-	// it is not the best way to solve that but it ok for now
-	GetPrometheusService()
 	for queryName, query := range q {
 		funcs = append(funcs, func() error {
 			rst, err := Query(query)
