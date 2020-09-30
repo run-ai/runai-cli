@@ -7,38 +7,27 @@ import (
 	"sync"
 	"time"
 
-	"github.com/run-ai/runai-cli/cmd/util"
-	"github.com/run-ai/runai-cli/pkg/client"
+	// "github.com/run-ai/pck/util"
+	"k8s.io/client-go/kubernetes"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	PROMETHEUS_SCHEME = "http"
-)
-
-var (
-	cacheServiceGetFunc = func () (interface{}, error) {
-		data, err := getPrometheusService()
-		return interface{}(data), err
-	}
-	PrometheusServiceCache = util.NewCache(cacheServiceGetFunc)
-)
-
-func intoInterface(d interface{}) interface{} {
-	return d
-}
 
 type (
+	// MetricStatus the possible result status
+	MetricStatus string
+	// MetricType the possible metice type
+	MetricType string
 	// MultiQueries is a simple map for queryName => query
 	MultiQueries = map[string]string
 	// ItemsMap is a map of itemId => item[key] => MetricValue
-	ItemsMap = map[string]map[string]MetricValue
+	ItemsMap = map[string]map[string][]MetricValue
 
 	Metric struct {
-		Status string     `json:"status,inline"`
-		Data   MetricData `json:"data,omitempty"`
+		Status MetricStatus     `json:"status,inline"`
+		Data   MetricData 		`json:"data,omitempty"`
 	}
 
 	MetricData struct {
@@ -52,34 +41,48 @@ type (
 	}
 
 	MetricValue interface{}
+
+	Client struct{
+		client kubernetes.Interface
+		service v1.Service
+	}
 )
 
+const (
 
-func GetPrometheusService() ( *v1.Service,  error){
-	data, err := PrometheusServiceCache.Get()
-	switch t := data.(type) {
-	case *v1.Service:
-		return t, err;
-	default:
-		return nil, err;
+	SuccessStatus MetricStatus = "success"
+	ErrorStatus MetricStatus = "error"
+
+	MatrixResult MetricType = "matrix" 
+	VectorResult MetricType = "vector" 
+	ScalarResult MetricType = "scalar" 
+	StringResult MetricType = "string"
+
+	prometheusSchema = "http"
+	// todo: the namespace can be different from runai
+	namespace = "runai"
+	promLabel = "prometheus-operator-prometheus"
+
+)
+
+func BuildPromethuseClient(c kubernetes.Interface) (*Client, error) {
+
+	ps := &Client {
+		client: c,
 	}
+	service, err := ps.GetPrometheusService()
+	if err != nil {
+		return nil, err
+	}
+	ps.service = *service
+	
+	return ps, nil
 }
 
 
-func getPrometheusService() (service *v1.Service, err error) {
-	
+func (ps *Client) GetPrometheusService() (service *v1.Service, err error) {
 
-	c, err := client.GetClient()
-
-	if err != nil {
-		return 
-	}
-
-	// todo: the namespace can be different from runai
-	namespace := "runai"
-	promLabel := "prometheus-operator-prometheus"
-
-	list, err := c.GetClientset().CoreV1().Services(namespace).List( metav1.ListOptions{
+	list, err := ps.client.CoreV1().Services(namespace).List( metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", promLabel),
 	})
 
@@ -94,25 +97,15 @@ func getPrometheusService() (service *v1.Service, err error) {
 	return
 }
 
-func Query(query string) (data MetricData,  err error) {
+func (ps *Client)  Query( query string) (data MetricData,  err error) {
 	var rst *Metric
-	service, err := GetPrometheusService()
-	if err != nil {
-		return
-	}
 
-	c, err := client.GetClient()
-
-	if err != nil {
-		return 
-	}
-	
-	req := c.GetClientset().CoreV1().Services(service.Namespace).ProxyGet(PROMETHEUS_SCHEME, service.Name , "9090", "api/v1/query", map[string]string{
+	req := ps.client.CoreV1().Services(ps.service.Namespace).ProxyGet(prometheusSchema, ps.service.Name , "9090", "api/v1/query", map[string]string{
 		"query": query,
 		"time":  strconv.FormatInt(time.Now().Unix(), 10),
 	})
 
-	log.Debugf("Query prometheus for by %s in ns %s", query, service.Namespace)
+	log.Debugf("Query prometheus for by %s in ns %s", query, ps.service.Namespace)
 	metric, err := req.DoRaw()
 	if err != nil {
 		log.Debugf("Query prometheus failed due to err %v", err)
@@ -126,7 +119,7 @@ func Query(query string) (data MetricData,  err error) {
 		err = fmt.Errorf("failed to unmarshall heapster response: %v", err)
 		return
 	}
-	if rst.Status != "success" {
+	if rst.Status != SuccessStatus {
 		err = fmt.Errorf("failed to query prometheus, status: %s", rst.Status)
 		return 
 	}
@@ -138,21 +131,27 @@ func Query(query string) (data MetricData,  err error) {
 
 
  // MultipuleQueriesToItemsMap map multipule queries to items by given itemId
-func MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error) {
+func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error) {
 	queryResults := map[string]MetricData{}
 	rst := ItemsMap{}
-	funcs := []func() error{}
+	// funcs := []func() error{}
 	var mux sync.Mutex
+
+	var err error;
+
 	for queryName, query := range q {
-		funcs = append(funcs, func() error {
-			rst, err := Query(query)
+		getFunc := func() error {
+			rst, err := ps.Query(query)
 			mux.Lock()
 			queryResults[queryName] = rst
 			mux.Unlock()
 			return err
-		})
+		}
+		err = getFunc()
+		// todo: how to solve the parallel issue
+		// funcs = append(funcs, getFunc)
 	}
-	err := util.Parallel(funcs...)
+	// err = util.Parallel(funcs...)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +168,7 @@ func MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error
 			val := metricResult.Value
 			item, created := rst[key]
 			if !created {
-				item = map[string]MetricValue{}
+				item = map[string][]MetricValue{}
 				rst[key] = item
 			}
 			item[queryName] = val

@@ -1,12 +1,13 @@
 package types
 
 import (
+	"fmt"
 	"strings"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"k8s.io/api/core/v1"
-	prom "github.com/run-ai/runai-cli/cmd/util/prometheus"
-
+	prom "github.com/run-ai/runai-cli/pkg/prometheus"
+	v1 "k8s.io/api/core/v1"
 )
 
 // todo
@@ -17,52 +18,52 @@ const (
 	nodeLabelRole = "kubernetes.io/role"
 
 	// prometheus query names
-	TotalGpusPQ = "totalGpus"
-	UsedGpusPQ = "usedGpus"
-	UsedGpuMemoryPQ = "usedGpuMemory"
+	TotalGpusPQ      = "totalGpus"
 	TotalGpuMemoryPQ = "totalGpuMemory"
 	TotalCpuMemoryPQ = "totalCpuMemory"
-	UsedCpuMemoryPQ = "usedCpuMemory"
-	TotalCpusPQ = "totalCpus"
-	UsedCpusPQ = "usedCpus"
+	TotalCpusPQ      = "totalCpus"
+	UsedGpuMemoryPQ  = "usedGpuMemory"
+	UsedCpuMemoryPQ  = "usedCpuMemory"
+	UsedCpusPQ       = "usedCpus"
+	UsedGpusPQ       = "usedGpus"
 	GPUUtilizationPQ = "gpuUtilization"
-	GeneralPQ = "general"
-	ReadyPQ = "ready"
+	GeneralPQ        = "general"
+	ReadyPQ          = "ready"
 )
 
 func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.ItemsMap) NodeInfo {
-	return NodeInfo {
-		Node: node,
-		Pods: pods,
+	return NodeInfo{
+		Node:           node,
+		Pods:           pods,
 		PrometheusNode: promNodesMap,
 	}
 }
 
 type NodeInfo struct {
-	Node v1.Node
-	Pods []v1.Pod
+	Node           v1.Node
+	Pods           []v1.Pod
 	PrometheusNode prom.ItemsMap
 }
 
 func (ni *NodeInfo) GetStatus() NodeStatus {
 	if !isNodeReady(ni.Node) {
 		return NodeNotReady
-	} 
+	}
 	return NodeReady
 }
 
 func (ni *NodeInfo) GetGeneralInfo() NodeGeneralInfo {
-	return NodeGeneralInfo {
-		Name: ni.Node.Name,
-		Role: strings.Join(findNodeRoles(&ni.Node), ","),
+	return NodeGeneralInfo{
+		Name:      ni.Node.Name,
+		Role:      strings.Join(findNodeRoles(&ni.Node), ","),
 		IPAddress: getNodeInternalAddress(ni.Node),
-		Status: ni.GetStatus(),
+		Status:    ni.GetStatus(),
 	}
-}	
+}
 
 func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 
- 	// taken for the old code
+	// taken for the old code
 	// node := nodeInfo.node
 	// totalGPU := totalGpuInNode(node)
 	// allocatableGPU := allocatableGpuInNode(node)
@@ -85,15 +86,54 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 		podResStatus.Add(getPodResourceStatus(pod))
 	}
 
+	// adding the kube data
 	nodeResStatus.Requested = podResStatus.Requested
 	nodeResStatus.Limited = podResStatus.Limited
-	// nodeResStatus.GpuIndex = 
-	nodeResStatus.Capacity.AddKubeResourceList( ni.Node.Status.Capacity)
-	nodeResStatus.Allocatable.AddKubeResourceList(ni.Node.Status.Allocatable) 
+	// nodeResStatus.GpuIndex =
+	nodeResStatus.Capacity.AddKubeResourceList(ni.Node.Status.Capacity)
+	nodeResStatus.Allocatable.AddKubeResourceList(ni.Node.Status.Allocatable)
+
+	// adding the prometheus data
+	p, ok := ni.PrometheusNode[ni.Node.Name]
+	if ok {
+		// set usages
+		setPromData(&nodeResStatus.Usage.CPUs, p, UsedCpusPQ)
+		setPromData(&nodeResStatus.Usage.GPUs, p, UsedGpusPQ)
+		setPromData(&nodeResStatus.Usage.Memory, p, UsedCpuMemoryPQ)
+		setPromData(&nodeResStatus.Usage.GPUMemory, p, UsedGpuMemoryPQ)
+		// setPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
+
+		// set total
+		setPromData(&nodeResStatus.Capacity.GPUs, p, TotalGpusPQ)
+		setPromData(&nodeResStatus.Capacity.GPUMemory, p, TotalGpuMemoryPQ)
+		setPromData(&nodeResStatus.Capacity.Memory, p, TotalCpuMemoryPQ)
+		setPromData(&nodeResStatus.Capacity.CPUs, p, TotalCpusPQ)
+		// setPromData(&nodeResStatus.Capacity.Storage, p, UsedStoragePQ)
+	}
+
 	return nodeResStatus
 }
 
-// helper
+func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
+	value, ok := nodeInfo.Node.Status.Allocatable[NVIDIAGPUResourceName]
+
+	if ok {
+		ok = (int(value.Value()) > 0)
+	}
+
+	return ok
+}
+
+// helpers
+
+func setPromData(num *int64, m map[string][]prom.MetricValue, key string) {
+	v, found := m[key]
+	if !found {
+		return
+	}
+	fmt.Println("key: %s, value %v", key, v)
+	*num = v[1].(int64)
+}
 
 func isNodeReady(node v1.Node) bool {
 	for _, condition := range node.Status.Conditions {
@@ -137,14 +177,4 @@ func getNodeInternalAddress(node v1.Node) string {
 		}
 	}
 	return address
-}
-
-func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
-	value, ok := nodeInfo.Node.Status.Allocatable[NVIDIAGPUResourceName]
-
-	if ok {
-		ok = (int(value.Value()) > 0)
-	}
-
-	return ok
 }
