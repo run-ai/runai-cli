@@ -155,7 +155,7 @@ func MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error
 			return err
 		})
 	}
-	err := Parallel(funcs...)
+	err := util.Parallel(funcs...)
 	if err != nil {
 		return nil, err
 	}
@@ -182,24 +182,3 @@ func MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error
 	return rst, nil
 }
 
-// Parallel - running multipule functions in parallel 
-func Parallel( fns ...func() error) error {
-	errs := make(chan error)
-	for _, fn := range fns {
-		thisFn := fn
-		go func() {
-			errs <- thisFn()
-		}()
-	}
-
-	for count := 0; count < len(fns); count++ {
-		select {
-		case e := <-errs:
-			if e != nil {
-				return e
-			}
-		}
-	}
-
-	return nil
-}
