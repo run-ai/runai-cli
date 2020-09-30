@@ -12,7 +12,7 @@ const (
 
 // it can be limited, requested 
 type ResourceList struct {
-	Cpu int64
+	CPUs int64
 	GPUs int64
 	Memory int64
 	GPUMemory int64
@@ -22,7 +22,7 @@ type ResourceList struct {
 
 func (rl *ResourceList) Add(rl2 ResourceList) {
 	
-	rl.Cpu += rl2.Cpu
+	rl.CPUs += rl2.CPUs
 	rl.GPUs += rl2.GPUs
 	rl.Memory += rl2.Memory
 	rl.GPUMemory += rl2.GPUMemory
@@ -33,11 +33,11 @@ func (rl *ResourceList) Add(rl2 ResourceList) {
 
 func (ra *ResourceList) AddKubeResourceList(ra2 v1.ResourceList) {
 
-	ra.Cpu += kubeQuantityToInt64(ra2, v1.ResourceCPU)
+	ra.CPUs += kubeQuantityToInt64(ra2, v1.ResourceCPU)
 	ra.GPUs += kubeQuantityToInt64(ra2, NVIDIAGPUResourceName) + kubeQuantityToInt64(ra2, DeprecatedNVIDIAGPUResourceName)
 	ra.Memory += kubeQuantityToInt64(ra2, v1.ResourceMemory)
 	ra.Storage += kubeQuantityToInt64(ra2, v1.ResourceStorage)
-	
+
 }
 
 func kubeQuantityToInt64(rl v1.ResourceList, key v1.ResourceName) int64 {
@@ -47,5 +47,3 @@ func kubeQuantityToInt64(rl v1.ResourceList, key v1.ResourceName) int64 {
 	}
 	return 0
 }
-
-
