@@ -182,7 +182,6 @@ type submitRunaiJobArgs struct {
 	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
 	IsJupyter        bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
-	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -224,7 +223,6 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsRunaiJob), "runai-job", "", "submit a job of resource runaijob")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
