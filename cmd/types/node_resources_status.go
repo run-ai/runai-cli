@@ -1,74 +1,63 @@
 package types
 
-
 type NodeResourcesStatus struct {
-	Capacity ResourceList
-	Allocatable ResourceList
-	Limited ResourceList
-	Allocated ResourceList
-	AllocatedGPUsIndexes []string
-	Requested ResourceList
-	Usage ResourceList
+	Capacity             ResourceList
+	Allocatable          ResourceList
+	Limited              ResourceList
+	Allocated            ResourceList
+	AllocatedGPUsIndices []string
+	Requested            ResourceList
+	Usage                ResourceList
 }
 
-
 func (nrs *NodeResourcesStatus) GetCpus() NodeCPUResource {
-	return NodeCPUResource {
-		Capacity: nrs.Capacity.CPUs,
+	return NodeCPUResource{
+		Capacity:    nrs.Capacity.CPUs,
 		Allocatable: nrs.Allocatable.CPUs,
-		Allocated: nrs.Allocatable.CPUs,
-		Limited: nrs.Limited.CPUs,
-		Usage:  nrs.Usage.CPUs,
-		Requested: nrs.Requested.CPUs,	
+		Allocated:   nrs.Allocated.CPUs,
+		Usage:       nrs.Usage.CPUs,
 	}
 }
 
 func (nrs *NodeResourcesStatus) GetGpus() NodeGPUResource {
 
-	return NodeGPUResource {
-		Capacity: nrs.Capacity.GPUs,
+	return NodeGPUResource{
+		Capacity:    nrs.Capacity.GPUs,
 		Allocatable: nrs.Allocatable.GPUs,
 		// todo: Unhealthy: nrs. ,
-		Allocated: int64(len(nrs.AllocatedGPUsIndexes)),
+		Allocated:         int64(len(nrs.AllocatedGPUsIndices)),
 		AllocatedFraction: nrs.Allocatable.GPUs,
-		Limited: nrs.Limited.GPUs,
-		Usage:  nrs.Usage.GPUs,
-		Requested: nrs.Requested.GPUs,	
+		Usage:             nrs.Usage.GPUs,
 	}
 }
 
-func (nrs *NodeResourcesStatus) GetMemory() NodeMemoryResource{
-	return NodeMemoryResource {
-		Capacity: nrs.Capacity.Memory,
+func (nrs *NodeResourcesStatus) GetMemory() NodeMemoryResource {
+	return NodeMemoryResource{
+		Capacity:    nrs.Capacity.Memory,
 		Allocatable: nrs.Allocatable.Memory,
-		Allocated: nrs.Allocatable.Memory,
-		Limited: nrs.Limited.Memory,
-		Usage:  nrs.Usage.Memory,
-		Requested: nrs.Requested.Memory,	
+		Allocated:   nrs.Allocated.Memory,
+		Usage:       nrs.Usage.Memory,
 	}
 }
 
-func (nrs *NodeResourcesStatus) GetGpuMemory() NodeMemoryResource{
-	return NodeMemoryResource {
-		Capacity: nrs.Capacity.GPUMemory,
+func (nrs *NodeResourcesStatus) GetGpuMemory() NodeMemoryResource {
+	return NodeMemoryResource{
+		Capacity:    nrs.Capacity.GPUMemory,
 		Allocatable: nrs.Allocatable.GPUMemory,
-		Allocated: nrs.Allocatable.GPUMemory,
-		Limited: nrs.Limited.GPUMemory,
-		Usage:  nrs.Usage.GPUMemory,
-		Requested: nrs.Requested.GPUMemory,	
+		Allocated:   nrs.Allocated.GPUMemory,
+		Usage:       nrs.Usage.GPUMemory,
 	}
 }
 
 
-func (nrs *NodeResourcesStatus) GetStorage() NodeStorageResource{
-	return NodeStorageResource {
-		Capacity: nrs.Capacity.Storage,
-		Allocatable: nrs.Allocatable.Storage,
-		Allocated: nrs.Allocatable.Storage,
-		Limited: nrs.Limited.Storage,
-		Usage:  nrs.Usage.Storage,
-		Requested: nrs.Requested.Storage,	
-	}
-}
-
-
+// todo: currently we are not understand enough the storage in kube
+// func (nrs *NodeResourcesStatus) GetStorage() NodeStorageResource {
+// 	return NodeStorageResource{
+// 		Capacity:    nrs.Capacity.Storage,
+// 		Allocatable: nrs.Allocatable.Storage,
+// 		Allocated:   nrs.Allocatable.Storage,
+// 		Limited:     nrs.Limited.Storage,
+// 		Usage:       nrs.Usage.Storage,
+// 		Requested:   nrs.Requested.Storage,
+// 	}
+// }

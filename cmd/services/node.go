@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	t "github.com/run-ai/runai-cli/cmd/types"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	v1 "k8s.io/api/core/v1"
@@ -19,8 +17,8 @@ var (
 		t.TotalCpusPQ:      `(sum (kube_node_status_capacity{resource="cpu"}) by (node))`,
 		t.UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
 		t.UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
-		t.UsedCpuMemoryPQ:  `(sum(max(sum(kube_pod_container_resource_requests_memory_bytes) by (node,pod,namespace) or max(kube_pod_init_container_resource_requests{resource="memory",unit="bytes"}) by (node,pod,namespace)) by (node,pod,namespace) * on (pod,namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1)) by (node))`,
-		t.UsedCpusPQ:       `(sum(max(sum(kube_pod_container_resource_requests_cpu_cores) by (node,pod,namespace) or max(kube_pod_init_container_resource_requests{resource="cpu",unit="core"}) by (node,pod,namespace)) by (node,pod,namespace) * on (pod,namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1)) by (node))`,
+		t.UsedCpuMemoryPQ:  `runai_node_memory_used_bytes`,
+		t.UsedCpusPQ:       `runai_node_cpu_utilization * 100`,
 		t.GPUUtilizationPQ: `((sum(runai_node_gpu_utilization) by (node)) / on (node) (count(runai_node_gpu_utilization) by (node)))`,
 		// t.GeneralPQ: `sum(kube_node_status_condition) by (node, namespace)`,
 		// t.ReadyPQ: `sum(kube_node_status_condition{condition="Ready",status="true"}) by (node)`,
@@ -59,7 +57,6 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]t.NodeInfo, error) {
 	}
 
 	for _, node := range nodeList.Items {
-		fmt.Println("Node")
 		pods := d.GetPodsFromNode(node)
 		nodeInfo := t.NewNodeInfo(
 			node,

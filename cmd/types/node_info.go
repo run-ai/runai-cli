@@ -1,10 +1,11 @@
 package types
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
+	log "github.com/sirupsen/logrus"
 
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	v1 "k8s.io/api/core/v1"
@@ -93,22 +94,32 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 	nodeResStatus.Capacity.AddKubeResourceList(ni.Node.Status.Capacity)
 	nodeResStatus.Allocatable.AddKubeResourceList(ni.Node.Status.Allocatable)
 
+
 	// adding the prometheus data
 	p, ok := ni.PrometheusNode[ni.Node.Name]
 	if ok {
 		// set usages
-		setPromData(&nodeResStatus.Usage.CPUs, p, UsedCpusPQ)
-		setPromData(&nodeResStatus.Usage.GPUs, p, UsedGpusPQ)
-		setPromData(&nodeResStatus.Usage.Memory, p, UsedCpuMemoryPQ)
-		setPromData(&nodeResStatus.Usage.GPUMemory, p, UsedGpuMemoryPQ)
-		// setPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
+		err := hasError(
+			setFloatPromData(&nodeResStatus.Usage.CPUs, p, UsedCpusPQ),
+			
+			setFloatPromData(&nodeResStatus.Usage.GPUs, p, UsedGpusPQ),
+			setFloatPromData(&nodeResStatus.Usage.Memory, p, UsedCpuMemoryPQ),
+		
 
-		// set total
-		setPromData(&nodeResStatus.Capacity.GPUs, p, TotalGpusPQ)
-		setPromData(&nodeResStatus.Capacity.GPUMemory, p, TotalGpuMemoryPQ)
-		setPromData(&nodeResStatus.Capacity.Memory, p, TotalCpuMemoryPQ)
-		setPromData(&nodeResStatus.Capacity.CPUs, p, TotalCpusPQ)
-		// setPromData(&nodeResStatus.Capacity.Storage, p, UsedStoragePQ)
+			setFloatPromData(&nodeResStatus.Usage.GPUMemory, p, UsedGpuMemoryPQ),
+			// setFloatPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
+
+			// set total
+			setFloatPromData(&nodeResStatus.Capacity.GPUs, p, TotalGpusPQ),
+			setFloatPromData(&nodeResStatus.Capacity.GPUMemory, p, TotalGpuMemoryPQ),
+			setFloatPromData(&nodeResStatus.Capacity.Memory, p, TotalCpuMemoryPQ),
+			setFloatPromData(&nodeResStatus.Capacity.CPUs, p, TotalCpusPQ),
+		)
+
+		if err != nil {
+			log.Debugf("Failed to extract prometheus data, %v",err)
+		}
+		// setFloatPromData(&nodeResStatus.Capacity.Storage, p, UsedStoragePQ)
 	}
 
 	return nodeResStatus
@@ -126,13 +137,31 @@ func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
 
 // helpers
 
-func setPromData(num *int64, m map[string][]prom.MetricValue, key string) {
+func setIntPromData(num *int64, m map[string][]prom.MetricValue, key string) error {
 	v, found := m[key]
 	if !found {
-		return
+		return nil
 	}
-	fmt.Println("key: %s, value %v", key, v)
-	*num = v[1].(int64)
+
+	n, err := strconv.Atoi(v[1].(string))
+	if err != nil {
+		return err
+	} 
+	*num = int64(n)	
+	return nil
+}
+
+func setFloatPromData(num *float64, m map[string][]prom.MetricValue, key string) error {
+	v, found := m[key]
+	if !found {
+		return nil
+	}
+	n, err := strconv.ParseFloat(v[1].(string), 64)
+	if err != nil {
+		return err
+	} 
+	*num = n
+	return nil
 }
 
 func isNodeReady(node v1.Node) bool {
@@ -177,4 +206,14 @@ func getNodeInternalAddress(node v1.Node) string {
 		}
 	}
 	return address
+}
+
+
+func hasError(errors ...error) error{
+	for _, err := range errors {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
