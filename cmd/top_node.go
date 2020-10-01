@@ -25,7 +25,10 @@ import (
 	"github.com/run-ai/runai-cli/pkg/ui"
 	"github.com/run-ai/runai-cli/cmd/services"
 	"github.com/run-ai/runai-cli/cmd/types"
-
+	"github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/ui"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -34,6 +37,13 @@ import (
 
 var (
 	showDetails bool
+	defultHidden = []string{
+		"Mem.Allocatable",
+		"CPUs.Allocatable",
+		"GPUs",
+		"GPUs.Allocatable",
+		"GPUMem.Allocatable",	
+	}
 )
 
 // requested / allocated / usage / utilization (0-100 | 0-[number of units * 100]) / shortcut
@@ -73,8 +83,6 @@ func NewTopNodeCommand() *cobra.Command {
 }
 
 
-
-
 func displayTopNode(nodes []types.NodeInfo) {
 	if showDetails {
 		displayTopNodeDetails(nodes)
@@ -84,6 +92,7 @@ func displayTopNode(nodes []types.NodeInfo) {
 }
 
 func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	rows := []types.NodeView{}
@@ -97,14 +106,24 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 			GPUs: nrs.GetGpus(),
 			Mem: nrs.GetMemory(),
 			GPUMem: nrs.GetGpuMemory(),
-			Storage: nrs.GetStorage(),
+			// todo:
+			// Storage: nrs.GetStorage(),
 		}
 
-		rows = append(rows, nodeView)
 		clsData.AddNode(nodeView.Info.Status, nodeView.GPUs)
+		rows = append(rows, nodeView)
 	}
 
-	ui.CreateTable(types.NodeView{}, ui.TableOpt {}).Render(w, rows)
+	err := ui.CreateTable(types.NodeView{}, ui.TableOpt {
+		CustomFormatts: ui.FormatterMap {
+			"memory": util.ToBytes,
+		},
+		Hidden: defultHidden,
+	}).Render(w, rows).Error()
+
+	if err != nil {
+		fmt.Print(err)
+	}
 
 	clsData.Render(w)	
 
@@ -158,13 +177,13 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 			gpuUnhealthyPercentageInNode = float64(gpus.Unhealthy) / float64(gpus.Capacity) * 100
 		}
 
-		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", info.Name, strconv.FormatInt(gpus.Capacity, 10))
-		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(gpus.Allocated, 10), int64(gpuUsageInNode))
+		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", info.Name, strconv.FormatInt(int64(gpus.Capacity), 10))
+		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.Allocated), 10), int64(gpuUsageInNode))
 		if gpus.Unhealthy > 0 {
-			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(gpus.Unhealthy, 10), int64(gpuUnhealthyPercentageInNode))
+			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.Unhealthy), 10), int64(gpuUnhealthyPercentageInNode))
 
 		}
-		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(gpus.Capacity, 10),
+		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(gpus.Capacity), 10),
 			strconv.FormatInt(gpus.Allocated, 10))
 
 		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
@@ -175,7 +194,7 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 	_ = w.Flush()
 }
 
-
+/// warn: legacy code
 
 
 func getRequestedNodeCPU(nodeInfo types.NodeInfo) (AllocatableCPU string) {

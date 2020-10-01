@@ -12,11 +12,11 @@ const (
 
 // it can be limited, requested 
 type ResourceList struct {
-	CPUs int64
-	GPUs int64
-	Memory int64
-	GPUMemory int64
-	Storage int64
+	CPUs float64
+	GPUs float64
+	Memory float64
+	GPUMemory float64
+	Storage float64
 }
 
 
@@ -33,17 +33,17 @@ func (rl *ResourceList) Add(rl2 ResourceList) {
 
 func (ra *ResourceList) AddKubeResourceList(ra2 v1.ResourceList) {
 
-	ra.CPUs += kubeQuantityToInt64(ra2, v1.ResourceCPU)
-	ra.GPUs += kubeQuantityToInt64(ra2, NVIDIAGPUResourceName) + kubeQuantityToInt64(ra2, DeprecatedNVIDIAGPUResourceName)
-	ra.Memory += kubeQuantityToInt64(ra2, v1.ResourceMemory)
-	ra.Storage += kubeQuantityToInt64(ra2, v1.ResourceStorage)
+	ra.CPUs += kubeQuantityToFloat64(ra2, v1.ResourceCPU)
+	ra.GPUs += kubeQuantityToFloat64(ra2, NVIDIAGPUResourceName) + kubeQuantityToFloat64(ra2, DeprecatedNVIDIAGPUResourceName)
+	ra.Memory += kubeQuantityToFloat64(ra2, v1.ResourceMemory)
+	ra.Storage += kubeQuantityToFloat64(ra2, v1.ResourceStorage)
 
 }
 
-func kubeQuantityToInt64(rl v1.ResourceList, key v1.ResourceName) int64 {
+func kubeQuantityToFloat64(rl v1.ResourceList, key v1.ResourceName) float64 {
 	num, ok := rl[key]
 	if ok {
-		return num.Value()
+		return float64(num.Value())
 	}
 	return 0
 }

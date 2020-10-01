@@ -3,11 +3,11 @@ package prometheus
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
+	//"strconv"
 	"sync"
-	"time"
+	//"time"
 
-	// "github.com/run-ai/pck/util"
+	"github.com/run-ai/runai-cli/pkg/util"
 	"k8s.io/client-go/kubernetes"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -102,7 +102,7 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 
 	req := ps.client.CoreV1().Services(ps.service.Namespace).ProxyGet(prometheusSchema, ps.service.Name , "9090", "api/v1/query", map[string]string{
 		"query": query,
-		"time":  strconv.FormatInt(time.Now().Unix(), 10),
+		"time":  "1601565109", // strconv.FormatInt(time.Now().Unix(), 10),
 	})
 
 	log.Debugf("Query prometheus for by %s in ns %s", query, ps.service.Namespace)
@@ -126,7 +126,8 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 	if len(rst.Data.Result) == 0 {
 		log.Debugf("The metric is not exist in prometheus for query  %s", query)
 	}
-	return rst.Data, nil
+	data = rst.Data
+	return
  }
 
 
@@ -134,7 +135,7 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error) {
 	queryResults := map[string]MetricData{}
 	rst := ItemsMap{}
-	// funcs := []func() error{}
+	funcs := []func() error{}
 	var mux sync.Mutex
 
 	var err error;
@@ -144,14 +145,13 @@ func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( It
 			rst, err := ps.Query(query)
 			mux.Lock()
 			queryResults[queryName] = rst
+			fmt.Print(queryName,"\n\n",rst, "\n\n")
 			mux.Unlock()
 			return err
 		}
-		err = getFunc()
-		// todo: how to solve the parallel issue
-		// funcs = append(funcs, getFunc)
+		funcs = append(funcs, getFunc)
 	}
-	// err = util.Parallel(funcs...)
+	err = util.Parallel(funcs...)
 	if err != nil {
 		return nil, err
 	}

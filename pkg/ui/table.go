@@ -10,9 +10,11 @@ import (
 
 // DECLERATION: currently sub grouping are not supported
 
-const (
+const ( 
 
-	groupSeperation =  "| "
+	groupSeperation =  "┌⦿ "
+	titleSeperation =  "├⚬ "
+	rowsSeperation =   "│  "
 
 	// tag names
 	titleTagName  = "title"
@@ -30,29 +32,31 @@ const (
 
 )
 
-type FormatFunction = func(value interface{}, model interface{}) (string, error)
-type FormatterMap = map[string]FormatFunction
+type (
+	FormatFunction = func(value interface{}, model interface{}) (string, error)
+	FormatterMap = map[string]FormatFunction
 
-type Column struct {
-	Formmater                 FormatFunction
-	Path 					  []string
-	Key, Group, Title, Defult string
-}
+	Column struct {
+		Formmater                 FormatFunction
+		Path 					  []string
+		Key, Group, Title, Defult string
+	}
 
-type tableData struct {
-	columns   []Column
-	modelType reflect.Type
-	groups map[string]GroupTag
-	opt 	  TableOpt
-	err       error
-}
+	tableData struct {
+		columns   	[]Column
+		modelType 	reflect.Type
+		groups 		[]GroupTag
+		opt 	  	TableOpt
+		err       	error
+	}
 
-type Table interface {
-	Render(w io.Writer, rows interface{}) Table
-	RenderHeader(w io.Writer) Table
-	RenderRows(w io.Writer, rows interface{}) Table
-	Error() error
-}
+	Table interface {
+		Render(w io.Writer, rows interface{}) Table
+		RenderHeader(w io.Writer) Table
+		RenderRows(w io.Writer, rows interface{}) Table
+		Error() error
+	}
+)
 
 
 func NewTag(tag string) Tag {
@@ -102,12 +106,11 @@ type TableOpt struct {
 func CreateTable(model interface{}, opt TableOpt) Table {
 	columns := []Column{}
 
-	
 	td := tableData {
 		columns: columns,
 		modelType: reflect.TypeOf(model),
 		opt: opt,
-		groups: map[string]GroupTag{},
+		groups: []GroupTag{},
 	}
 
 	td.addFields(td.modelType, []string{}, NewGroupTag(""))
@@ -123,6 +126,13 @@ func (td *tableData) addFields(modelType reflect.Type, path []string, groupTag G
 }
 
 func (td *tableData) addField(fieldType reflect.StructField, path []string, groupTag GroupTag) {
+	// if need to hide the filed
+	if td.opt.Hidden != nil {
+		pathStr := strings.Join(append(path, fieldType.Name), ".")
+		if contains(td.opt.Hidden, pathStr) {
+			return
+		}
+	}
 	if (isStructGroup(fieldType)) {
 		td.addGroup(fieldType, path, groupTag)
 		return
@@ -140,8 +150,8 @@ func (td *tableData) addGroup(field reflect.StructField, path []string, groupTag
 	groupPath := append(path, field.Name)
 	if len(groupTagStr) > 0 {
 		groupTag = NewGroupTag(groupTagStr)
-		groupPathStr := strings.Join(groupPath, ".")
-		td.groups[groupPathStr] = groupTag
+		//groupPathStr := strings.Join(groupPath, ".")
+		td.groups=  append(td.groups, groupTag)
 	}
 
 	td.addFields(UnwrapTypePtr(field.Type), groupPath, groupTag)
@@ -156,15 +166,16 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 		return td
 	}
 
-
-	// print the groups
+	// add the groups
 	if len(td.groups) > 0 {
 		groupsCount := map[string]int{};
 		groups := []string{}
 		for _, c := range td.columns {
 			groupsCount[c.Group] = groupsCount[c.Group] + 1
 		}
-		for groupName, spaces := range groupsCount {
+		for i, tag := range td.groups {
+			groupName := tag.Name
+			spaces := groupsCount[tag.Name]
 			if spaces == 0 {
 				continue
 			}
@@ -172,10 +183,11 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 			for i := range tabs{
 				tabs[i]="\t"
 			}
-			if len(groupName) > 0 {
+			if i > 0 {
 				groupName = groupSeperation + groupName
 			}
 			groups = append(groups, groupName + strings.Join(tabs, ""))
+			i++
 		}
 		if len(groups) > 0 {
 			fmt.Fprintln(w, strings.Join(groups, ""))
@@ -188,7 +200,7 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 	for i, c := range td.columns {
 		title := c.Title
 		if i > 0 && previousGroup != c.Group {
-			title = groupSeperation + title
+			title = titleSeperation + title
 		}
 		previousGroup = c.Group
 		titles[i] = title
@@ -239,7 +251,7 @@ func (td *tableData) RenderRows(w io.Writer, rows interface{}) Table {
 			}
 
 			if i > 0 && previousGroup != c.Group {
-				val = groupSeperation + val
+				val = rowsSeperation + val
 			}
 			previousGroup = c.Group
 
@@ -286,7 +298,7 @@ func toColumn(field reflect.StructField, formatMap FormatterMap, path []string, 
 	if len(format) != 0 {
 		f, found := formatMap[format]
 		if !found {
-			return Column{}, fmt.Errorf("Not found format function to the format name: %s  on field %s . Please make sure to include it in the TableOpt.CustomFormat", format, key)
+			return Column{}, fmt.Errorf("[Table] Not found format function for format name: %s  on field name: %s . Please make sure to include it in the TableOpt.CustomFormat", format, key)
 		}
 		formaterFunc = f
 	}
@@ -341,7 +353,7 @@ func StringifyValue(ft reflect.Value) string {
 	case reflect.String:
 		return ft.String()
 	case reflect.Float32, reflect.Float64:
-		return fmt.Sprintf("%16.2f", ft.Float())
+		return fmt.Sprintf("%.2f", ft.Float())
 	case reflect.Ptr:
 		if ft.IsNil() {
 			return ""
@@ -365,4 +377,13 @@ func getNesstedVal(t reflect.Value, path []string) (val *reflect.Value) {
 		}
 	}
 	return 
+}
+
+func contains(s []string, searchterm string) bool {
+	for _, a := range s {
+        if a ==  searchterm {
+            return true
+        }
+    }
+    return false
 }
