@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
+	runaiclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
@@ -18,6 +19,7 @@ import (
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -54,6 +56,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			clientset := kubeClient.GetClientset()
 			configValues := ""
+			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
 			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
 			if err != nil {
@@ -71,7 +74,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
-			err = submitRunaiJob(args, submitArgs, clientset, &configValues)
+			err = submitRunaiJob(args, submitArgs, clientset, *runaijobClient, &configValues)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -182,6 +185,7 @@ type submitRunaiJobArgs struct {
 	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
 	IsJupyter        bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
+	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -229,15 +233,17 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsRunaiJob), "runai-job", "", "submit a job of resource runaijob")
 	command.Flags().MarkHidden("runai-job")
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, configValues *string) error {
+func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset, configValues *string) error {
 	err2 := verifyHPOFlags(submitArgs)
 	if err2 != nil {
 		return err2
 	}
 
+	handleRunaiJobCRD(submitArgs, runaiclientset)
 	err := workflow.SubmitJob(submitArgs.Name, defaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
@@ -246,6 +252,16 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 	return nil
+}
+
+// For backward compatibility - remove once all customers have runaijob crd
+func handleRunaiJobCRD(submitArgs *submitRunaiJobArgs, runaiclientset runaiclientset.Clientset) {
+	isRunaiJob := true
+	submitArgs.IsRunaiJob = &isRunaiJob
+	_, err := runaiclientset.RunV1().RunaiJobs("").List(metav1.ListOptions{})
+	if err != nil {
+		*submitArgs.IsRunaiJob = false
+	}
 }
 
 func verifyHPOFlags(submitArgs *submitRunaiJobArgs) error {
