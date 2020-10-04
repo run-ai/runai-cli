@@ -11,10 +11,10 @@ import (
 var (
 	promethesNodeLabelID = "node"
 	nodePQs              = prom.MultiQueries{
-		t.TotalGpusPQ:      `(count(runai_gpus_is_running_with_pod2) by (node))`,
+		// t.TotalGpusPQ:      `(count(runai_gpus_is_running_with_pod2) by (node))`,
 		t.TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
-		t.TotalCpuMemoryPQ: `(sum (kube_node_status_capacity{resource="memory"}) by (node))`,
-		t.TotalCpusPQ:      `(sum (kube_node_status_capacity{resource="cpu"}) by (node))`,
+		// t.TotalCpuMemoryPQ: `(sum (kube_node_status_capacity{resource="memory"}) by (node))`,
+		// t.TotalCpusPQ:      `(sum (kube_node_status_capacity{resource="cpu"}) by (node))`,
 		t.UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
 		t.UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
 		t.UsedCpuMemoryPQ:  `runai_node_memory_used_bytes`,

@@ -8,6 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
+	"github.com/run-ai/runai-cli/cmd/util"
+
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -70,9 +72,6 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 	// allocatableGPU := allocatableGpuInNode(node)
 	// total: getTotalNodeCapacityProp(ni, "cpu"),
 
-	// for _, pod := range nodeInfo.pods {
-	// 	allocatedGPU += gpuInPod(pod)
-	// }
 
 	// fractionalGPUsUsedInNode := len(getGPUsIndexUsedInPods(nodeInfo.pods))
 	// allocatedGPU += fractionalGPUsUsedInNode
@@ -89,11 +88,15 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 
 	// adding the kube data
 	nodeResStatus.Requested = podResStatus.Requested
+	nodeResStatus.Allocated = podResStatus.Requested
+	// allocated gpu is the amount of all pod gpu limits
+	nodeResStatus.Allocated.GPUs = podResStatus.Limited.GPUs
 	nodeResStatus.Limited = podResStatus.Limited
-	// nodeResStatus.GpuIndex =
+	
 	nodeResStatus.Capacity.AddKubeResourceList(ni.Node.Status.Capacity)
 	nodeResStatus.Allocatable.AddKubeResourceList(ni.Node.Status.Allocatable)
 
+	nodeResStatus.AllocatedGPUsIndices = util.GetGPUsIndexUsedInPods(ni.Pods)
 
 	// adding the prometheus data
 	p, ok := ni.PrometheusNode[ni.Node.Name]
@@ -104,8 +107,6 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 			
 			setFloatPromData(&nodeResStatus.Usage.GPUs, p, UsedGpusPQ),
 			setFloatPromData(&nodeResStatus.Usage.Memory, p, UsedCpuMemoryPQ),
-		
-
 			setFloatPromData(&nodeResStatus.Usage.GPUMemory, p, UsedGpuMemoryPQ),
 			// setFloatPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
 

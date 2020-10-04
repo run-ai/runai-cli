@@ -22,6 +22,7 @@ import (
 
 	"github.com/run-ai/runai-cli/cmd/services"
 	"github.com/run-ai/runai-cli/cmd/types"
+	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
 	log "github.com/sirupsen/logrus"
@@ -187,14 +188,14 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 		fmt.Fprintf(w, "IPADDRESS:\t%s\n", info.IPAddress)
 		fmt.Fprintf(w, "ROLE:\t%s\n", info.Role)
 
-		pods := gpuPods(nodeInfo.Pods)
+		pods := util.GpuPods(nodeInfo.Pods)
 		if len(pods) > 0 {
 			fmt.Fprintf(w, "\n")
 			fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\t \n")
 			for _, pod := range pods {
 				fmt.Fprintf(w, "%s\t%s\t%s\t\n", pod.Namespace,
 					pod.Name,
-					strconv.FormatInt(gpuInPod(pod), 10))
+					strconv.FormatInt(util.GpuInPod(pod), 10))
 			}
 			fmt.Fprintf(w, "\n")
 		}
@@ -278,8 +279,8 @@ func getRequestedNodeMemory(nodeInfo types.NodeInfo) (AllocatableMemory string) 
 // Does the node have unhealthy GPU
 func hasUnhealthyGPU(nodeInfo types.NodeInfo) (unhealthy bool) {
 	node := nodeInfo.Node
-	totalGPU := totalGpuInNode(node)
-	allocatableGPU := allocatableGpuInNode(node)
+	totalGPU := util.TotalGpuInNode(node)
+	allocatableGPU := util.AllocatableGpuInNode(node)
 
 	unhealthy = totalGPU > allocatableGPU
 

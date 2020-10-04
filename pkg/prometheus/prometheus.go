@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
+	"sync"
 
 	"github.com/run-ai/runai-cli/pkg/util"
 	"k8s.io/client-go/kubernetes"
@@ -102,7 +102,7 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 
 	req := ps.client.CoreV1().Services(ps.service.Namespace).ProxyGet(prometheusSchema, ps.service.Name , "9090", "api/v1/query", map[string]string{
 		"query": query,
-		"time": strconv.FormatInt(time.Now().Unix() - 20, 10),
+		"time": strconv.FormatInt(time.Now().Unix(), 10),
 	})
 
 	log.Debugf("Query prometheus for by %s in ns %s", query, ps.service.Namespace)
