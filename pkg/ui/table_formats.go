@@ -1,11 +1,17 @@
-package util
+package ui
 
-import (
-	"fmt"
-	// "strconv"
+import "fmt"
+
+var (
+	DefaultTableFormat = FormatterMap {
+		"memory": BytesFormat,
+		"%": PrecantageFormat,
+	}
 )
 
-func ToBytes(v interface{}, _ interface{}) (string, error) {
+/// table formats
+
+func BytesFormat(v interface{}, _ interface{}) (string, error) {
 	switch t:= v.(type) {
 	case int64:
 		return ByteCountIEC(t), nil
@@ -16,8 +22,13 @@ func ToBytes(v interface{}, _ interface{}) (string, error) {
 	}
 }
 
+func PrecantageFormat(v interface{}, _ interface{}) (string, error) {
+	
+	return fmt.Sprintf("%.1f%%", v), nil
+}
 
 
+/// utils
 
 func ByteCountSI(b int64) string {
 	const unit = 1000

@@ -7,6 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"strconv"
 
+	"github.com/run-ai/runai-cli/pkg/ui"
+
 )
 
 type NodeStatus string
@@ -21,7 +23,7 @@ type NodeCPUResource struct {
 	Capacity float64				`title:"CAPACITY"`
 	Allocatable float64			`title:"ALLOCATABLE"`
 	Allocated float64				`title:"ALLOCATED"`
-	Usage float64					`title:"USAGE"`
+	Usage float64					`title:"USAGE" format:"%"`
 }
 
 type NodeGPUResource struct {
@@ -30,7 +32,7 @@ type NodeGPUResource struct {
 	Unhealthy float64					`title:"UNHEALTHY"`
 	Allocated int64					`title:"ALLOCATED UNITS"`
 	AllocatedFraction float64  		`title:"ALLOCATED FRACTION"`
-	Usage float64						`title:"USAGE"`
+	Usage float64						`title:"USAGE" format:"%"`
 }
 
 type NodeMemoryResource struct {
@@ -55,7 +57,7 @@ type NodeGeneralInfo struct {
 }
 
 type NodeView struct {
-	Info NodeGeneralInfo            `group:"GENERAL"`
+	Info NodeGeneralInfo            `group:"GENERAL,flatten"`
 	CPUs NodeCPUResource			`group:"CPU"`
 	GPUs NodeGPUResource			`group:"GPU"`
 	Mem NodeMemoryResource			`group:"MEMORY"`
@@ -74,7 +76,7 @@ type ClusterNodesView struct {
 
 func (cnv *ClusterNodesView) Render(w io.Writer) {
 
-	fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+	ui.Title(w, "CLUSTER NODES INFO")
 	
 	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\t")
 	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(cnv.GPUs), 10),
