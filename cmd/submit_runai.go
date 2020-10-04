@@ -276,6 +276,9 @@ func verifyHPOFlags(submitArgs *submitRunaiJobArgs) error {
 		if submitArgs.Interactive != nil {
 			return fmt.Errorf("interactive jobs can't run with Parallelism")
 		}
+		if *submitArgs.GPU != 0 && *submitArgs.GPU < 1 {
+			return fmt.Errorf("fractional jobs can't run with Parallelism")
+		}
 	}
 	return nil
 }
