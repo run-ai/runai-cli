@@ -25,7 +25,7 @@ func (nrs *NodeResourcesStatus) GetGpus() NodeGPUResource {
 		Capacity:    nrs.Capacity.GPUs,
 		Allocatable: nrs.Allocatable.GPUs,
 		// todo: Unhealthy: nrs. ,
-		Allocated:         int64(len(nrs.AllocatedGPUsIndices)),
+		Allocated:         len(nrs.AllocatedGPUsIndices),
 		AllocatedFraction: nrs.Allocatable.GPUs,
 		Usage:             nrs.Usage.GPUs,
 	}
