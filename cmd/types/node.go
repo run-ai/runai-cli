@@ -29,8 +29,8 @@ type NodeCPUResource struct {
 type NodeGPUResource struct {
 	Capacity float64					`title:"CAPACITY"`
 	Allocatable float64				`title:"ALLOCATABLE"`
-	Unhealthy float64					`title:"UNHEALTHY"`
-	Allocated int64					`title:"ALLOCATED UNITS"`
+	Unhealthy int					`title:"UNHEALTHY"`
+	Allocated int					`title:"ALLOCATED UNITS"`
 	AllocatedFraction float64  		`title:"ALLOCATED FRACTION"`
 	Usage float64						`title:"USAGE" format:"%"`
 }
@@ -68,7 +68,7 @@ type NodeView struct {
 
 type ClusterNodesView struct {
 	GPUs            	float64
-	UnhealthyGPUs   	float64
+	UnhealthyGPUs   	int
 	AllocatedGPUs   	float64
 	GPUsOnReadyNode 	float64
 }

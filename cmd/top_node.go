@@ -221,7 +221,7 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 
 		}
 		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(gpus.Capacity), 10),
-			strconv.FormatInt(gpus.Allocated, 10))
+			strconv.FormatInt(int64(gpus.Allocated), 10))
 
 		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
 	}
