@@ -14,7 +14,7 @@ func (nrs *NodeResourcesStatus) GetCpus() NodeCPUResource {
 	return NodeCPUResource{
 		Capacity:    int(nrs.Capacity.CPUs),
 		Allocatable: nrs.Allocatable.CPUs,
-		Allocated:   nrs.Allocated.CPUs,
+		Allocated:   nrs.Allocated.CPUs / 1000,
 		Usage:       nrs.Usage.CPUs,
 	}
 }
@@ -26,7 +26,7 @@ func (nrs *NodeResourcesStatus) GetGpus() NodeGPUResource {
 		Allocatable: nrs.Allocatable.GPUs,
 		// todo: Unhealthy: nrs. ,
 		Allocated:         len(nrs.AllocatedGPUsIndices),
-		AllocatedFraction: nrs.Allocatable.GPUs,
+		AllocatedFraction: nrs.Allocated.GPUs,
 		Usage:             nrs.Usage.GPUs,
 	}
 }

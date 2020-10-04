@@ -220,19 +220,25 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 	}
 
 	titles := make([]string, len(td.columns))
+	titlesBottomBorder := make([]string, len(td.columns))
+
 	previousGroup := ""
 	// todo add | before group
 	for i, c := range td.columns {
 		title := c.Title
+		border := multiStr("─", len(title))
 		if i > 0 && previousGroup != c.Group {
 			title = titleSeperation + title
+			border = rowsSeperation + border
 		}
 		previousGroup = c.Group
 		titles[i] = title
+		titlesBottomBorder[i] = border
 	}
 
-	buffer := strings.Join(titles, "\t")
-	fmt.Fprintln(w, buffer)
+	fmt.Fprintln(w, strings.Join(titles, "\t"))
+	fmt.Fprintln(w, strings.Join(titlesBottomBorder, "\t"))
+
 	return td
 }
 
@@ -383,7 +389,7 @@ func StringifyValue(ft reflect.Value) string {
 	case reflect.String:
 		return ft.String()
 	case reflect.Float32, reflect.Float64:
-		return fmt.Sprintf("%.1f", ft.Float())
+		return fmt.Sprintf("%.2f", ft.Float())
 	case reflect.Ptr:
 		if ft.IsNil() {
 			return ""
@@ -416,4 +422,13 @@ func contains(s []string, searchterm string) bool {
         }
     }
     return false
+}
+
+
+func multiStr(s string, len int) string {
+	str := ""
+	for i :=0; i<len; i++ {
+		str += s
+	}
+	return str
 }
