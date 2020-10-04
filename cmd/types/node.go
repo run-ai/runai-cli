@@ -51,9 +51,9 @@ type NodeMemoryResource struct {
 
 type NodeGeneralInfo struct {
 	Name string 					`title:"NAME"`
+	Status NodeStatus				`title:"STATUS"`
 	IPAddress string 				`title:"IP Address"`
 	Role string						`title:"ROLE" def:"<none>"`
-	Status NodeStatus				`title:"STATUS"`
 }
 
 type NodeView struct {
