@@ -20,14 +20,14 @@ const (
 
 
 type NodeCPUResource struct {
-	Capacity float64				`title:"CAPACITY"`
+	Capacity int				`title:"CAPACITY"`
 	Allocatable float64			`title:"ALLOCATABLE"`
 	Allocated float64				`title:"ALLOCATED"`
 	Usage float64					`title:"USAGE" format:"%"`
 }
 
 type NodeGPUResource struct {
-	Capacity float64					`title:"CAPACITY"`
+	Capacity int					`title:"CAPACITY"`
 	Allocatable float64				`title:"ALLOCATABLE"`
 	Unhealthy int					`title:"UNHEALTHY"`
 	Allocated int					`title:"ALLOCATED UNITS"`
@@ -61,16 +61,16 @@ type NodeView struct {
 	CPUs NodeCPUResource			`group:"CPU"`
 	GPUs NodeGPUResource			`group:"GPU"`
 	Mem NodeMemoryResource			`group:"MEMORY"`
-	GPUMem NodeMemoryResource		`group:"GPUs MEMORY"`
+	GPUMem NodeMemoryResource		`group:"GPU MEMORY"`
 	// todo
 	// Storage NodeStorageResource     `group:"STORAGE"`
 }
 
 type ClusterNodesView struct {
-	GPUs            	float64
+	GPUs            	int
 	UnhealthyGPUs   	int
 	AllocatedGPUs   	float64
-	GPUsOnReadyNode 	float64
+	GPUsOnReadyNode 	int
 }
 
 
@@ -92,7 +92,7 @@ func (cnv *ClusterNodesView) Render(w io.Writer) {
 	)
 	if cnv.GPUs != cnv.GPUsOnReadyNode {
 		if cnv.GPUsOnReadyNode > 0 {
-			gpuUsage = cnv.AllocatedGPUs / cnv.GPUsOnReadyNode * 100
+			gpuUsage = cnv.AllocatedGPUs / float64(cnv.GPUsOnReadyNode) * 100
 		} else {
 			gpuUsage = 0
 		}
