@@ -22,7 +22,6 @@ import (
 
 	"github.com/run-ai/runai-cli/cmd/services"
 	"github.com/run-ai/runai-cli/cmd/types"
-	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
 	log "github.com/sirupsen/logrus"
@@ -37,9 +36,24 @@ var (
 	defultHidden = []string{
 		"Mem.Allocatable",
 		"CPUs.Allocatable",
-		"GPUs",
 		"GPUs.Allocatable",
 		"GPUMem.Allocatable",	
+	}
+
+	generalFiled = []string{
+		"Info",
+	}
+
+	cpuAndMemoryFields = []string {
+		"Info.Name",
+		"GPUs",
+		"GPUMem",
+	}
+
+	gpuAndGpuMemoryFields = []string {
+		"Info.Name",
+		"CPUs",
+		"Mem",
 	}
 )
 
@@ -111,18 +125,41 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 		rows = append(rows, nodeView)
 	}
 
+	// Print General info table
+	ui.Title(w, "GENERAL NODES INFO")
 	err := ui.CreateTable(types.NodeView{}, ui.TableOpt {
-		CustomFormatts: ui.FormatterMap {
-			"memory": util.ToBytes,
-		},
-		Hidden: defultHidden,
+		Hide: defultHidden,
+		Show: generalFiled,
+	}).Render(w, rows).Error()
+
+	if err != nil {
+		fmt.Print(err)
+	}
+	// Print Gpu and gpu memory table
+	ui.Title(w, "CPU & MEMORY NODES INFO")
+	err = ui.CreateTable(types.NodeView{}, ui.TableOpt {
+		Hide: defultHidden,
+		Show: gpuAndGpuMemoryFields,
+	}).Render(w, rows).Error()
+	
+	if err != nil {
+		fmt.Print(err)
+	}
+		
+	// Print Cpu and memory table
+	ui.Title(w, "GPU & GPU MEMORY NODES INFO")
+	err = ui.CreateTable(types.NodeView{}, ui.TableOpt {
+		Hide: defultHidden,
+		Show: cpuAndMemoryFields,
 	}).Render(w, rows).Error()
 
 	if err != nil {
 		fmt.Print(err)
 	}
 
-	clsData.Render(w)	
+	clsData.Render(w)
+	
+	ui.End(w)
 
 	_ = w.Flush()
 }
