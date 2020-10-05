@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/util/sets"
 	log "github.com/sirupsen/logrus"
 
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
@@ -15,11 +14,7 @@ import (
 
 // todo
 const (
-	labelNodeRolePrefix = "node-role.kubernetes.io/"
-
-	// nodeLabelRole specifies the role of a node
-	nodeLabelRole = "kubernetes.io/role"
-
+	
 	// prometheus query names
 	TotalGpuMemoryPQ = "totalGpuMemory"
 	UsedGpuMemoryPQ  = "usedGpuMemory"
@@ -52,26 +47,13 @@ func (ni *NodeInfo) GetStatus() NodeStatus {
 func (ni *NodeInfo) GetGeneralInfo() NodeGeneralInfo {
 	return NodeGeneralInfo{
 		Name:      ni.Node.Name,
-		Role:      strings.Join(findNodeRoles(&ni.Node), ","),
-		IPAddress: getNodeInternalAddress(ni.Node),
+		Role:      strings.Join(util.GetNodeRoles(&ni.Node), ","),
+		IPAddress: util.GetNodeInternalAddress(ni.Node),
 		Status:    ni.GetStatus(),
 	}
 }
 
 func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
-
-	// taken for the old code
-	// node := nodeInfo.node
-	// totalGPU := totalGpuInNode(node)
-	// allocatableGPU := allocatableGpuInNode(node)
-	// total: getTotalNodeCapacityProp(ni, "cpu"),
-
-
-	// fractionalGPUsUsedInNode := len(getGPUsIndexUsedInPods(nodeInfo.pods))
-	// allocatedGPU += fractionalGPUsUsedInNode
-	// totalGPU += fractionalGPUsUsedInNode
-
-	// misssing gpu memory, allocated gpu
 
 	nodeResStatus := NodeResourcesStatus{}
 	podResStatus := PodResourcesStatus{}
@@ -104,10 +86,6 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 
 			// set total
 			setFloatPromData(&nodeResStatus.Capacity.GPUMemory, p, TotalGpuMemoryPQ),
-			// setFloatPromData(&nodeResStatus.Capacity.GPUs, p, TotalGpusPQ),
-			// setFloatPromData(&nodeResStatus.Capacity.Memory, p, TotalCpuMemoryPQ),
-			// setFloatPromData(&nodeResStatus.Capacity.CPUs, p, TotalCpusPQ),
-			// setFloatPromData(&nodeResStatus.Capacity.Storage, p, UsedStoragePQ)
 		)
 
 		if err != nil {
@@ -165,42 +143,6 @@ func isNodeReady(node v1.Node) bool {
 	}
 	return false
 }
-
-// todo: create kube utils
-// findNodeRoles returns the roles of a given node.
-// The roles are determined by looking for:
-// * a node-role.kubernetes.io/<role>="" label
-// * a kubernetes.io/role="<role>" label
-func findNodeRoles(node *v1.Node) []string {
-	roles := sets.NewString()
-	for k, v := range node.Labels {
-		switch {
-		case strings.HasPrefix(k, labelNodeRolePrefix):
-			if role := strings.TrimPrefix(k, labelNodeRolePrefix); len(role) > 0 {
-				roles.Insert(role)
-			}
-
-		case k == nodeLabelRole && v != "":
-			roles.Insert(v)
-		}
-	}
-	return roles.List()
-}
-
-// todo: create kube utils
-func getNodeInternalAddress(node v1.Node) string {
-	address := "unknown"
-	if len(node.Status.Addresses) > 0 {
-		//address = nodeInfo.node.Status.Addresses[0].Address
-		for _, addr := range node.Status.Addresses {
-			if addr.Type == v1.NodeInternalIP {
-				address = addr.Address
-			}
-		}
-	}
-	return address
-}
-
 
 func hasError(errors ...error) error{
 	for _, err := range errors {

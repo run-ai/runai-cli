@@ -1,13 +1,22 @@
 package util
 
 import (
+	"strconv"
+	"strings"
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/sets"
 
+)
 
-	"strconv"
-	"fmt"
+const (
+	labelNodeRolePrefix = "node-role.kubernetes.io/"
+
+	// nodeLabelRole specifies the role of a node
+	nodeLabelRole = "kubernetes.io/role"
 )
 
 
@@ -38,7 +47,6 @@ func IsMasterNode(node v1.Node) bool {
 }
 
 
-
 func GetTotalNodeMemory(node *v1.Node) (totalMemory string) {
 
 	valTotal, ok := node.Status.Capacity["memory"]
@@ -49,3 +57,35 @@ func GetTotalNodeMemory(node *v1.Node) (totalMemory string) {
 	return ""
 }
 
+// GetNodeRoles returns the roles of a given node.
+// The roles are determined by looking for:
+// * a node-role.kubernetes.io/<role>="" label
+// * a kubernetes.io/role="<role>" label
+func GetNodeRoles(node *v1.Node) []string {
+	roles := sets.NewString()
+	for k, v := range node.Labels {
+		switch {
+		case strings.HasPrefix(k, labelNodeRolePrefix):
+			if role := strings.TrimPrefix(k, labelNodeRolePrefix); len(role) > 0 {
+				roles.Insert(role)
+			}
+
+		case k == nodeLabelRole && v != "":
+			roles.Insert(v)
+		}
+	}
+	return roles.List()
+}
+
+func GetNodeInternalAddress(node v1.Node) string {
+	address := "unknown"
+	if len(node.Status.Addresses) > 0 {
+		//address = nodeInfo.node.Status.Addresses[0].Address
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == v1.NodeInternalIP {
+				address = addr.Address
+			}
+		}
+	}
+	return address
+}
