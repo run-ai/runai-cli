@@ -59,7 +59,7 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 	podResStatus := PodResourcesStatus{}
 
 	for _, pod := range ni.Pods {
-		podResStatus.Add(getPodResourceStatus(pod))
+		podResStatus.Add(GetPodResourceStatus(pod))
 	}
 
 	// adding the kube data
