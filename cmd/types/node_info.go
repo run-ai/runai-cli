@@ -21,17 +21,11 @@ const (
 	nodeLabelRole = "kubernetes.io/role"
 
 	// prometheus query names
-	TotalGpusPQ      = "totalGpus"
 	TotalGpuMemoryPQ = "totalGpuMemory"
-	TotalCpuMemoryPQ = "totalCpuMemory"
-	TotalCpusPQ      = "totalCpus"
 	UsedGpuMemoryPQ  = "usedGpuMemory"
 	UsedCpuMemoryPQ  = "usedCpuMemory"
 	UsedCpusPQ       = "usedCpus"
 	UsedGpusPQ       = "usedGpus"
-	GPUUtilizationPQ = "gpuUtilization"
-	GeneralPQ        = "general"
-	ReadyPQ          = "ready"
 )
 
 func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.ItemsMap) NodeInfo {
