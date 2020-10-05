@@ -88,7 +88,6 @@ func NewCommand() *cobra.Command {
 
 func addKubectlFlagsToCmd(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP(flags.ProjectFlag, "p", "", "Specify the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
-	cmd.PersistentFlags().BoolP(flags.BackwardCompitableFlag, "b", false, "Provide support for Jobs created with older versions of the CLI. See: https://bit.ly/2yqgo8f for details.")
 }
 
 func createNamespace(client *kubernetes.Clientset, namespace string) error {
