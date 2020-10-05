@@ -14,7 +14,7 @@ func (nrs *NodeResourcesStatus) GetCpus() NodeCPUResource {
 	return NodeCPUResource{
 		Capacity:    int(nrs.Capacity.CPUs),
 		Allocatable: nrs.Allocatable.CPUs,
-		Allocated:   nrs.Allocated.CPUs / 1000,
+		Requested:   nrs.Requested.CPUs / 1000,
 		Usage:       nrs.Usage.CPUs,
 	}
 }
@@ -22,9 +22,9 @@ func (nrs *NodeResourcesStatus) GetCpus() NodeCPUResource {
 func (nrs *NodeResourcesStatus) GetGpus() NodeGPUResource {
 
 	return NodeGPUResource{
-		Capacity:    int(nrs.Capacity.GPUs),
-		Allocatable: nrs.Allocatable.GPUs,
-		// todo: Unhealthy: nrs. ,
+		Capacity:          int(nrs.Capacity.GPUs),
+		Allocatable:       nrs.Allocatable.GPUs,
+		Unhealthy:         int(nrs.Capacity.GPUs) - int(nrs.Allocatable.GPUs),
 		Allocated:         len(nrs.AllocatedGPUsIndices),
 		AllocatedFraction: nrs.Allocated.GPUs,
 		Usage:             nrs.Usage.GPUs,
@@ -35,7 +35,7 @@ func (nrs *NodeResourcesStatus) GetMemory() NodeMemoryResource {
 	return NodeMemoryResource{
 		Capacity:    nrs.Capacity.Memory,
 		Allocatable: nrs.Allocatable.Memory,
-		Allocated:   nrs.Allocated.Memory,
+		Requested:   nrs.Requested.Memory,
 		Usage:       nrs.Usage.Memory,
 	}
 }
@@ -44,11 +44,9 @@ func (nrs *NodeResourcesStatus) GetGpuMemory() NodeMemoryResource {
 	return NodeMemoryResource{
 		Capacity:    nrs.Capacity.GPUMemory,
 		Allocatable: nrs.Allocatable.GPUMemory,
-		Allocated:   nrs.Allocated.GPUMemory,
 		Usage:       nrs.Usage.GPUMemory,
 	}
 }
-
 
 // todo: currently we are not understand enough the storage in kube
 // func (nrs *NodeResourcesStatus) GetStorage() NodeStorageResource {

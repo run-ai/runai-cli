@@ -7,5 +7,5 @@ const (
 	ALIYUNGPUResourceName = "aliyun.com/gpu-mem"
 	runaiGPUFraction = "gpu-fraction"
 	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
-
+	masterLabelRole = "node-role.kubernetes.io/master"
 )

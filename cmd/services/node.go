@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	t "github.com/run-ai/runai-cli/cmd/types"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	v1 "k8s.io/api/core/v1"
@@ -12,14 +14,14 @@ var (
 	promethesNodeLabelID = "node"
 	nodePQs              = prom.MultiQueries{
 		// t.TotalGpusPQ:      `(count(runai_gpus_is_running_with_pod2) by (node))`,
-		t.TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
 		// t.TotalCpuMemoryPQ: `(sum (kube_node_status_capacity{resource="memory"}) by (node))`,
 		// t.TotalCpusPQ:      `(sum (kube_node_status_capacity{resource="cpu"}) by (node))`,
+		t.TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
 		t.UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
 		t.UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
 		t.UsedCpuMemoryPQ:  `runai_node_memory_used_bytes`,
 		t.UsedCpusPQ:       `runai_node_cpu_utilization * 100`,
-		t.GPUUtilizationPQ: `((sum(runai_node_gpu_utilization) by (node)) / on (node) (count(runai_node_gpu_utilization) by (node)))`,
+		// t.GPUUtilizationPQ: `((sum(runai_node_gpu_utilization) by (node)) / on (node) (count(runai_node_gpu_utilization) by (node)))`,
 		// t.GeneralPQ: `sum(kube_node_status_condition) by (node, namespace)`,
 		// t.ReadyPQ: `sum(kube_node_status_condition{condition="Ready",status="true"}) by (node)`,
 	}
@@ -37,23 +39,27 @@ func NewNodeDescriber(client kubernetes.Interface, pods []v1.Pod) *NodeDescriber
 	}
 }
 
-func (d *NodeDescriber) GetAllNodeInfos() ([]t.NodeInfo, error) {
+func (d *NodeDescriber) GetAllNodeInfos() ([]t.NodeInfo, error, error) {
+	var warn error
 	nodeInfoList := []t.NodeInfo{}
 
 	nodeList, err := d.client.CoreV1().Nodes().List(metav1.ListOptions{})
 
 	if err != nil {
-		return nodeInfoList, err
+		return nodeInfoList, err, warn
 	}
+
+	var promData prom.ItemsMap
 
 	// get prometheus node resources data
 	promClient, err := prom.BuildPromethuseClient(d.client)
-	if err != nil {
-		return nil, err
+	if err == nil {
+	
+		promData, err = promClient.MultipuleQueriesToItemsMap(nodePQs, promethesNodeLabelID)
+		
 	}
-	promData, err := promClient.MultipuleQueriesToItemsMap(nodePQs, promethesNodeLabelID)
 	if err != nil {
-		return nil, err
+		warn = fmt.Errorf("Missing some data. \nresone: Can't access to the prometheus server, \ncause err: %s", err)
 	}
 
 	for _, node := range nodeList.Items {
@@ -65,7 +71,7 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]t.NodeInfo, error) {
 		)
 		nodeInfoList = append(nodeInfoList, nodeInfo)
 	}
-	return nodeInfoList, nil
+	return nodeInfoList, nil, warn
 }
 
 func (d *NodeDescriber) GetPodsFromNode(node v1.Node) []v1.Pod {

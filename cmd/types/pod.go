@@ -3,6 +3,8 @@ package types
 
 import (
 	v1 "k8s.io/api/core/v1"
+	"github.com/run-ai/runai-cli/cmd/util"
+
 )
 
 type PodResourcesStatus struct {
@@ -20,10 +22,10 @@ func getPodResourceStatus(pod v1.Pod) PodResourcesStatus {
 	for _, container := range pod.Spec.Containers {
 		prs.Requested.AddKubeResourceList( container.Resources.Requests)
 		prs.Limited.AddKubeResourceList( container.Resources.Limits )
-		// prs.Allocated
 		// prs.Usage
 	}
-
+	prs.Allocated.GPUs = util.GpuInActivePod(pod)
+	
 	return prs
 
 }

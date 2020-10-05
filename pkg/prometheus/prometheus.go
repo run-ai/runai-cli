@@ -7,7 +7,7 @@ import (
 	"time"
 	"sync"
 
-	"github.com/run-ai/runai-cli/pkg/util"
+	// "github.com/run-ai/runai-cli/pkg/util"
 	"k8s.io/client-go/kubernetes"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -135,7 +135,7 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error) {
 	queryResults := map[string]MetricData{}
 	rst := ItemsMap{}
-	funcs := []func() error{}
+	// funcs := []func() error{}
 	var mux sync.Mutex
 
 	var err error;
@@ -149,9 +149,11 @@ func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( It
 			mux.Unlock()
 			return err
 		}
-		funcs = append(funcs, getFunc)
+		getFunc();
+		// funcs = append(funcs, getFunc)
 	}
-	err = util.Parallel(funcs...)
+	// err = util.Parallel(funcs...)
+
 	if err != nil {
 		return nil, err
 	}
