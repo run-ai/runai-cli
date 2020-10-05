@@ -15,7 +15,7 @@ type PodResourcesStatus struct {
 }
 
 
-func getPodResourceStatus(pod v1.Pod) PodResourcesStatus {
+func GetPodResourceStatus(pod v1.Pod) PodResourcesStatus {
 
 	prs := PodResourcesStatus {}
 
