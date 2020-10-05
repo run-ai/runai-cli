@@ -15,10 +15,12 @@ func BytesFormat(v interface{}, _ interface{}) (string, error) {
 	switch t:= v.(type) {
 	case int64:
 		return ByteCountIEC(t), nil
+	case int:
+		return ByteCountIEC(int64(t)), nil
 	case float64:
 		return ByteCountIEC(int64(t)), nil
 	default:
-		return fmt.Sprintln("%v", t), nil
+		return fmt.Sprintf("%v", t), nil
 	}
 }
 
