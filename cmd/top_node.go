@@ -31,8 +31,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var (
@@ -41,7 +39,8 @@ var (
 		"Mem.Allocatable",
 		"CPUs.Allocatable",
 		"GPUs.Allocatable",
-		"GPUMem.Allocatable",	
+		"GPUMem.Allocatable",
+		"GPUMem.Requested",	
 	}
 
 	generalFiled = []string{
@@ -61,10 +60,6 @@ var (
 	}
 )
 
-// requested / allocated / usage / utilization (0-100 | 0-[number of units * 100]) / shortcut
-
-
-
 func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
@@ -83,10 +78,12 @@ func NewTopNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			nd := services.NewNodeDescriber(clientset, allPods)
-			nodeInfos, err := nd.GetAllNodeInfos()
+			nodeInfos, err, warn := nd.GetAllNodeInfos()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
+			} else if warn != nil {
+				fmt.Println(warn)
 			}
 
 			displayTopNode(nodeInfos)
@@ -129,10 +126,15 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 		rows = append(rows, nodeView)
 	}
 
+	hiddenFields := defultHidden
+	if clsData.UnhealthyGPUs == 0 {
+		hiddenFields = append(hiddenFields, "GPUs.Unhealthy")
+	}
+
 	// Print General info table
 	ui.Title(w, "GENERAL NODES INFO")
 	err := ui.CreateTable(types.NodeView{}, ui.TableOpt {
-		Hide: defultHidden,
+		Hide: hiddenFields,
 		Show: generalFiled,
 	}).Render(w, rows).Error()
 
@@ -142,7 +144,7 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 	// Print Gpu and gpu memory table
 	ui.Title(w, "CPU & MEMORY NODES INFO")
 	err = ui.CreateTable(types.NodeView{}, ui.TableOpt {
-		Hide: defultHidden,
+		Hide: hiddenFields,
 		Show: gpuAndGpuMemoryFields,
 	}).Render(w, rows).Error()
 	
@@ -153,7 +155,7 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 	// Print Cpu and memory table
 	ui.Title(w, "GPU & GPU MEMORY NODES INFO")
 	err = ui.CreateTable(types.NodeView{}, ui.TableOpt {
-		Hide: defultHidden,
+		Hide: hiddenFields,
 		Show: cpuAndMemoryFields,
 	}).Render(w, rows).Error()
 
@@ -219,7 +221,6 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.Allocated), 10), int64(gpuUsageInNode))
 		if gpus.Unhealthy > 0 {
 			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.Unhealthy), 10), int64(gpuUnhealthyPercentageInNode))
-
 		}
 		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(gpus.Capacity), 10),
 			strconv.FormatInt(int64(gpus.Allocated), 10))
@@ -232,73 +233,6 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 	_ = w.Flush()
 }
 
-/// warn: legacy code
 
 
-func getRequestedNodeCPU(nodeInfo types.NodeInfo) (AllocatableCPU string) {
-	var cpuTotal resource.Quantity
-	cpuTotal.Set(0)
 
-	for _, pod := range nodeInfo.Pods {
-		for _, container := range pod.Spec.Containers {
-			quantity, ok := container.Resources.Requests["cpu"]
-			if ok {
-				cpuTotal.Add(quantity)
-			}
-		}
-	}
-
-	return fmt.Sprintf("%.1f", float64(cpuTotal.MilliValue())/1000)
-}
-
-func getTotalNodeMemory(nodeInfo types.NodeInfo) (totalMemory string) {
-
-	valTotal, ok := nodeInfo.Node.Status.Capacity["memory"]
-	if ok {
-		return fmt.Sprintf("%dM", valTotal.ScaledValue(resource.Mega))
-	}
-
-	return ""
-}
-
-func getRequestedNodeMemory(nodeInfo types.NodeInfo) (AllocatableMemory string) {
-
-	var memTotal resource.Quantity
-	memTotal.Set(0)
-
-	for _, pod := range nodeInfo.Pods {
-		for _, container := range pod.Spec.Containers {
-			quantity, ok := container.Resources.Requests["memory"]
-			if ok {
-				memTotal.Add(quantity)
-			}
-
-		}
-	}
-
-	return fmt.Sprintf("%dM", memTotal.ScaledValue(resource.Mega))
-}
-
-// Does the node have unhealthy GPU
-func hasUnhealthyGPU(nodeInfo types.NodeInfo) (unhealthy bool) {
-	node := nodeInfo.Node
-	totalGPU := util.TotalGpuInNode(node)
-	allocatableGPU := util.AllocatableGpuInNode(node)
-
-	unhealthy = totalGPU > allocatableGPU
-
-	if unhealthy {
-		log.Debugf("node: %s, allocated GPUs %s, total GPUs %s is unhealthy", nodeInfo.Node.Name, strconv.FormatInt(totalGPU, 10),
-			strconv.FormatInt(allocatableGPU, 10))
-	}
-
-	return unhealthy
-}
-
-func isMasterNode(node v1.Node) bool {
-	if _, ok := node.Labels[masterLabelRole]; ok {
-		return true
-	}
-
-	return false
-}

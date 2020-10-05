@@ -89,8 +89,7 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 	// adding the kube data
 	nodeResStatus.Requested = podResStatus.Requested
 	nodeResStatus.Allocated = podResStatus.Requested
-	// allocated gpu is the amount of all pod gpu limits
-	nodeResStatus.Allocated.GPUs = podResStatus.Limited.GPUs
+	nodeResStatus.Allocated.GPUs = podResStatus.Allocated.GPUs
 	nodeResStatus.Limited = podResStatus.Limited
 	
 	nodeResStatus.Capacity.AddKubeResourceList(ni.Node.Status.Capacity)
@@ -104,23 +103,22 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 		// set usages
 		err := hasError(
 			setFloatPromData(&nodeResStatus.Usage.CPUs, p, UsedCpusPQ),
-			
 			setFloatPromData(&nodeResStatus.Usage.GPUs, p, UsedGpusPQ),
 			setFloatPromData(&nodeResStatus.Usage.Memory, p, UsedCpuMemoryPQ),
 			setFloatPromData(&nodeResStatus.Usage.GPUMemory, p, UsedGpuMemoryPQ),
 			// setFloatPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
 
 			// set total
-			setFloatPromData(&nodeResStatus.Capacity.GPUs, p, TotalGpusPQ),
 			setFloatPromData(&nodeResStatus.Capacity.GPUMemory, p, TotalGpuMemoryPQ),
-			setFloatPromData(&nodeResStatus.Capacity.Memory, p, TotalCpuMemoryPQ),
-			setFloatPromData(&nodeResStatus.Capacity.CPUs, p, TotalCpusPQ),
+			// setFloatPromData(&nodeResStatus.Capacity.GPUs, p, TotalGpusPQ),
+			// setFloatPromData(&nodeResStatus.Capacity.Memory, p, TotalCpuMemoryPQ),
+			// setFloatPromData(&nodeResStatus.Capacity.CPUs, p, TotalCpusPQ),
+			// setFloatPromData(&nodeResStatus.Capacity.Storage, p, UsedStoragePQ)
 		)
 
 		if err != nil {
 			log.Debugf("Failed to extract prometheus data, %v",err)
 		}
-		// setFloatPromData(&nodeResStatus.Capacity.Storage, p, UsedStoragePQ)
 	}
 
 	return nodeResStatus

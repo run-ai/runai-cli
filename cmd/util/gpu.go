@@ -116,9 +116,6 @@ func GpuInContainerDeprecated(container v1.Container) int64 {
 	return val.Value()
 }
 
-
-
-// todo move it into kube utils
 func GetGPUsIndexUsedInPods(pods []v1.Pod) []string {
 	gpuIndexUsed := map[string]bool{}
 	for _, pod := range pods {
