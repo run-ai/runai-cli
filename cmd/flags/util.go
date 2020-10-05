@@ -2,7 +2,6 @@ package flags
 
 import (
 	"fmt"
-	"strconv"
 
 	constants "github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/cmd/util"
@@ -38,18 +37,6 @@ func getNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Cli
 }
 
 func getNamespaceInfoToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
-	backwardCompitabilityString := getFlagValue(cmd, BackwardCompitableFlag)
-	backwardCompitability, err := strconv.ParseBool(backwardCompitabilityString)
-	if err != nil {
-		return types.NamespaceInfo{}, err
-	}
-
-	if backwardCompitability {
-		return types.NamespaceInfo{
-			Namespace:             "default",
-			BackwardCompatability: true,
-		}, nil
-	}
 
 	flagValue := getFlagValue(cmd, ProjectFlag)
 	if flagValue != "" {
