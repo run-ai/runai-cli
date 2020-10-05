@@ -33,7 +33,7 @@ func (rl *ResourceList) Add(rl2 ResourceList) {
 
 func (ra *ResourceList) AddKubeResourceList(ra2 v1.ResourceList) {
 
-	ra.CPUs += kubeQuantityToFloat64(ra2, v1.ResourceCPU)
+	ra.CPUs += kubeQuantityToFloat64M(ra2, v1.ResourceCPU)
 	ra.GPUs += kubeQuantityToFloat64(ra2, NVIDIAGPUResourceName) + kubeQuantityToFloat64(ra2, DeprecatedNVIDIAGPUResourceName)
 	ra.Memory += kubeQuantityToFloat64(ra2, v1.ResourceMemory)
 	ra.Storage += kubeQuantityToFloat64(ra2, v1.ResourceStorage)
@@ -44,6 +44,13 @@ func kubeQuantityToFloat64(rl v1.ResourceList, key v1.ResourceName) float64 {
 	num, ok := rl[key]
 	if ok {
 		return float64(num.Value())
+	}
+	return 0
+}
+func kubeQuantityToFloat64M(rl v1.ResourceList, key v1.ResourceName) float64 {
+	num, ok := rl[key]
+	if ok {
+		return float64(num.MilliValue())
 	}
 	return 0
 }
