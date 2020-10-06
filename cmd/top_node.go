@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	log "github.com/sirupsen/logrus"
@@ -53,7 +54,7 @@ func NewTopNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			clientset := kubeClient.GetClientset()
-			allPods, err = acquireAllActivePods(clientset)
+			allPods, err = trainer.AcquireAllActivePods(clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
