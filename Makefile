@@ -78,7 +78,7 @@ endif
 .PHONY: cli-linux-amd64
 cli-linux-amd64:
 	mkdir -p bin
-	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} /cmd/main/*.go
+	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/main/*.go
 	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} job-monitor/*.go
 
 .PHONY: cli-darwin-amd64
