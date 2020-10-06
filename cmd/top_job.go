@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	log "github.com/sirupsen/logrus"
@@ -27,6 +29,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/util"
 )
@@ -53,24 +56,24 @@ func NewTopJobCommand() *cobra.Command {
 			}
 
 			var (
-				jobs []TrainingJob
+				jobs []trainer.TrainingJob
 			)
 
 			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
 
 			useCache = true
-			allPods, err = acquireAllPods(client, namespaceInfo.Namespace)
+			allPods, err = trainer.AcquireAllPods(client, namespaceInfo.Namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			allJobs, err = acquireAllJobs(client, namespaceInfo.Namespace)
+			allJobs, err = trainer.AcquireAllJobs(client, namespaceInfo.Namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			trainers := NewTrainers(kubeClient)
+			trainers := trainer.NewTrainers(kubeClient)
 			for _, trainer := range trainers {
 				trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
 				if err != nil {
@@ -85,7 +88,7 @@ func NewTopJobCommand() *cobra.Command {
 				}
 			}
 
-			jobs = makeTrainingJobOrderdByGPUCount(jobs)
+			jobs = trainer.MakeTrainingJobOrderdByGPUCount(jobs)
 			// TODO(cheyang): Support different job describer, such as MPI job/tf job describer
 			topTrainingJob(jobs)
 		},
@@ -96,7 +99,7 @@ func NewTopJobCommand() *cobra.Command {
 	return command
 }
 
-func topTrainingJob(jobInfoList []TrainingJob) {
+func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
 		totalAllocatedGPUs float64
@@ -139,4 +142,11 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 
 func fromByteToMiB(value float64) float64 {
 	return value / 1048576
+}
+
+// todo remove to ui
+func PrintLine(w io.Writer, fields ...string) {
+	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	buffer := strings.Join(fields, "\t")
+	fmt.Fprintln(w, buffer)
 }

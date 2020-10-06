@@ -16,12 +16,12 @@ package main
 import (
 	"log"
 
-	commands "github.com/run-ai/runai-cli/cmd"
+	"github.com/run-ai/runai-cli/cmd/root"
 	"github.com/spf13/cobra/doc"
 )
 
 func main() {
-	arenaCLI := commands.NewCommand()
+	arenaCLI := root.NewCommand()
 	err := doc.GenMarkdownTree(arenaCLI, "./docs/cli")
 	if err != nil {
 		log.Fatal(err)

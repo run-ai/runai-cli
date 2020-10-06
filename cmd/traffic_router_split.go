@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/run-ai/runai-cli/cmd/global"
 	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -51,7 +52,7 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 				os.Exit(1)
 			}*/
 
-			util.SetLogLevel(logLevel)
+			util.SetLogLevel(global.LogLevel)
 			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)
