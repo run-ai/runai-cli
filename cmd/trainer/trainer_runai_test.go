@@ -3,8 +3,8 @@ package trainer
 import (
 	"testing"
 
+	"github.com/run-ai/runai-cli/cmd/constants"
 	fakeclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/fake"
-
 	kubeclient "github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
-	cmdConst "github.com/run-ai/runai-cli/cmd/const"
 
 )
 
@@ -24,7 +23,7 @@ var (
 
 var runaiPodTemplate = v1.PodTemplateSpec{
 	Spec: v1.PodSpec{
-		SchedulerName: consts.SchedulerName,
+		SchedulerName: constants.SchedulerName,
 	},
 }
 
@@ -313,7 +312,7 @@ func createPodOwnedBy(podName string, labelSelector map[string]string, ownerUUID
 				},
 			}},
 		Spec: v1.PodSpec{
-			SchedulerName: consts.SchedulerName,
+			SchedulerName: constants.SchedulerName,
 		},
 	}
 }
