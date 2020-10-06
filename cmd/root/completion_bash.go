@@ -1,4 +1,4 @@
-package main
+package root
 
 var (
 	bash_completion_flags = map[string]string{

@@ -22,6 +22,7 @@ import (
 	"runtime/trace"
 	"strconv"
 
+	"github.com/run-ai/runai-cli/cmd/root"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -54,7 +55,7 @@ func main() {
 		defer trace.Stop()
 	}
 
-	if err := NewCommand().Execute(); err != nil {
+	if err := root.NewCommand().Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
