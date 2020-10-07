@@ -14,7 +14,6 @@
 
 package util
 
-
 import (
 	"strconv"
 
@@ -22,11 +21,15 @@ import (
 )
 
 const (
-	RunaiGPUIndex    = "runai-gpu"
-	RunaiGPUFraction = "gpu-fraction"
-	NVIDIAGPUResourceName = "nvidia.com/gpu"
-	ALIYUNGPUResourceName = "aliyun.com/gpu-mem"
+	RunaiGPUIndex                   = "runai-gpu"
+	RunaiGPUFraction                = "gpu-fraction"
+	NVIDIAGPUResourceName           = "nvidia.com/gpu"
+	ALIYUNGPUResourceName           = "aliyun.com/gpu-mem"
 	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
+	PodGroupRequestedGPUs           = "runai-podgroup-requested-gpus"
+	WorkloadCurrentAllocatedGPUs    = "runai-current-allocated-gpus"
+	WorkloadCurrentRequestedGPUs    = "runai-current-requested-gpus"
+	WorkloadTotalRequestedGPUs      = "runai-total-requested-gpus"
 )
 
 // filter out the pods with GPU
@@ -92,6 +95,16 @@ func GpuInActivePod(pod v1.Pod) (gpuCount float64) {
 	}
 
 	return float64(GpuInPod(pod))
+}
+
+func GetRequestedGPUsPerPodGroup(trainingAnnotations map[string]string) (float64, bool) {
+	if len(trainingAnnotations[PodGroupRequestedGPUs]) > 0 {
+		requestedGPUs, err := strconv.ParseFloat(trainingAnnotations[PodGroupRequestedGPUs], 64)
+		if err == nil {
+			return requestedGPUs, true
+		}
+	}
+	return 0, false
 }
 
 func getGPUFractionUsedByPod(pod v1.Pod) float64 {

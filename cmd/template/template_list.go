@@ -2,13 +2,12 @@ package template
 
 import (
 	"fmt"
-	"io"
-	"strings"
 	"os"
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/templates"
+	"github.com/run-ai/runai-cli/pkg/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -43,22 +42,15 @@ func PrintTemplates(templates []templates.Template) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	labelField := []string{"NAME", "DESCRIPTION"}
 
-	PrintLine(w, labelField...)
+	ui.Line(w, labelField...)
 
 	for _, config := range templates {
 		configName := config.Name
 		if config.IsDefault {
 			configName = fmt.Sprintf("%s (default)", config.Name)
 		}
-		PrintLine(w, configName, config.Description)
+		ui.Line(w, configName, config.Description)
 	}
 
 	w.Flush()
-}
-
-// todo remove to ui
-func PrintLine(w io.Writer, fields ...string) {
-	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	buffer := strings.Join(fields, "\t")
-	fmt.Fprintln(w, buffer)
 }

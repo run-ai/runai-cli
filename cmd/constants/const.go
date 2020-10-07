@@ -49,10 +49,6 @@ const (
 	WorkloadRunningPods          = "runai-running-pods"
 	WorkloadPendingPods          = "runai-pending-pods"
 	WorkloadUsedNodes            = "runai-used-nodes"
-	PodGroupRequestedGPUs        = "runai-podgroup-requested-gpus"
-	WorkloadCurrentAllocatedGPUs = "runai-current-allocated-gpus"
-	WorkloadCurrentRequestedGPUs = "runai-current-requested-gpus"
-	WorkloadTotalRequestedGPUs   = "runai-total-requested-gpus"
 	AliyunENIAnnotation          = "k8s.aliyun.com/eni"
 )
 

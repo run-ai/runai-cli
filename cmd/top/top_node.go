@@ -116,8 +116,6 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 			GPUs: nrs.GetGpus(),
 			Mem: nrs.GetMemory(),
 			GPUMem: nrs.GetGpuMemory(),
-			// todo:
-			// Storage: nrs.GetStorage(),
 		}
 
 		clsData.AddNode(nodeView.Info.Status, nodeView.GPUs)

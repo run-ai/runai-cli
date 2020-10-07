@@ -27,7 +27,6 @@ func GetPodResourceStatus(pod v1.Pod) PodResourcesStatus {
 	prs.Allocated.GPUs = util.GpuInActivePod(pod)
 	
 	return prs
-
 }
 
 func (prs *PodResourcesStatus) Add(prs2 PodResourcesStatus) {
@@ -35,5 +34,4 @@ func (prs *PodResourcesStatus) Add(prs2 PodResourcesStatus) {
 	prs.Allocated.Add(prs2.Allocated)
 	prs.Requested.Add(prs2.Requested)
 	prs.Usage.Add(prs2.Usage)
-	
 }

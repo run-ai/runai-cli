@@ -194,7 +194,7 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 
 // Requested GPU count of the Job
 func (mj *MPIJob) RequestedGPU() float64 {
-	requestedGPUs, ok := GetRequestedGPUsPerPodGroup(mj.mpijob.Annotations)
+	requestedGPUs, ok := util.GetRequestedGPUsPerPodGroup(mj.mpijob.Annotations)
 	if ok {
 		return requestedGPUs
 	}

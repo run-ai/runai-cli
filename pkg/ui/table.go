@@ -23,11 +23,6 @@ const (
 
 	// group flags
 	flattenGroupFlag	= "flatten"
-	// group features
-	// todo: prefix = "prefix"
-	// todo: groupMetaKey = "meta" // specify tag data for an struct
-
-	// table feature
 
 )
 
@@ -99,11 +94,14 @@ type GroupTag struct {
 }
 
 type TableOpt struct {
-	// todo: expline how hide and show are works
+	// set the default for the root struct (any root fields will be hidden by default if is true)
 	HideAllByDefault bool
+	// which field paths to show
 	Show         []string
+	// which field paths to hide
 	Hide         []string
-	CustomFormatts FormatterMap
+	// map format name into a function 
+	Formatts FormatterMap
 }
 
 func CreateTable(model interface{}, opt TableOpt) Table {
@@ -164,7 +162,7 @@ func (td *tableData) addField(fieldType reflect.StructField, path []string, grou
 	if !showByDefult {
 		return
 	}
-	column, err := toColumn(fieldType, td.opt.CustomFormatts, path, groupTag)
+	column, err := toColumn(fieldType, td.opt.Formatts, path, groupTag)
 	if err != nil {
 		td.err = err
 		return
@@ -224,7 +222,6 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 	titlesBottomBorder := make([]string, len(td.columns))
 
 	previousGroup := ""
-	// todo add | before group
 	for i, c := range td.columns {
 		title := c.Title
 		border := multiStr("─", len(title))
@@ -256,7 +253,6 @@ func (td *tableData) RenderRows(w io.Writer, rows interface{}) Table {
 
 	values := make([]string, len(td.columns))
 	for _, r := range data {
-		// todo add | before group
 		t := reflect.ValueOf(r)
 		previousGroup := ""
 		for i, c := range td.columns {

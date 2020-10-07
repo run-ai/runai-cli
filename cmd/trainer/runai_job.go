@@ -214,7 +214,7 @@ func (rj *RunaiJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, er
 
 // Requested GPU count of the Job
 func (rj *RunaiJob) RequestedGPU() float64 {
-	requestedGPUs, ok := GetRequestedGPUsPerPodGroup(rj.jobMetadata.Annotations)
+	requestedGPUs, ok := util.GetRequestedGPUsPerPodGroup(rj.jobMetadata.Annotations)
 	if ok {
 		return requestedGPUs
 	}

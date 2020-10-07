@@ -1,7 +1,6 @@
 package types
 
 import (
-	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -12,7 +11,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// todo
 const (
 	
 	// prometheus query names
@@ -104,42 +102,4 @@ func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
 	}
 
 	return ok
-}
-
-// helpers
-
-func setIntPromData(num *int64, m map[string][]prom.MetricValue, key string) error {
-	v, found := m[key]
-	if !found {
-		return nil
-	}
-
-	n, err := strconv.Atoi(v[1].(string))
-	if err != nil {
-		return err
-	} 
-	*num = int64(n)	
-	return nil
-}
-
-func setFloatPromData(num *float64, m map[string][]prom.MetricValue, key string) error {
-	v, found := m[key]
-	if !found {
-		return nil
-	}
-	n, err := strconv.ParseFloat(v[1].(string), 64)
-	if err != nil {
-		return err
-	} 
-	*num = n
-	return nil
-}
-
-func hasError(errors ...error) error{
-	for _, err := range errors {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
