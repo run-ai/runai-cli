@@ -144,7 +144,7 @@ func (td *tableData) addFields(modelType reflect.Type, path []string, groupTag G
 }
 
 func (td *tableData) addField(fieldType reflect.StructField, path []string, groupTag GroupTag, showByDefult bool) {
-	// if need to hide the filed
+	// if need to hide the field
 	pathStr := strings.Join(append(path, fieldType.Name), ".")
 	if td.opt.Hide != nil {
 		if contains(td.opt.Hide, pathStr) {
@@ -351,84 +351,4 @@ func toColumn(field reflect.StructField, formatMap FormatterMap, path []string, 
 		Path:      path,
 		Formmater: formaterFunc,
 	}, nil
-}
-
-func interfaceToArrayOfInterface(a interface{}) ([]interface{}, error) {
-	object := reflect.ValueOf(a)
-	items := make([]interface{}, object.Len())
-	for i := 0; i < object.Len(); i++ {
-		items[i] = object.Index(i).Interface()
-	}
-	return items, nil
-}
-
-// UnwrapValuePtr recursively unwrap pointers
-func UnwrapValuePtr(ft reflect.Value) *reflect.Value {
-	if ft.Kind() == reflect.Ptr {
-		if ft.IsNil() {
-			return nil
-		}
-		return UnwrapValuePtr(ft.Elem())
-	}
-	return &ft
-}
-
-// UnwrapTypePtr recursively unwrap pointers
-func UnwrapTypePtr(ft reflect.Type) reflect.Type {
-	if ft.Kind() == reflect.Ptr {
-		return UnwrapTypePtr(ft.Elem())
-	}
-	return ft
-}
-
-// StringifyValue stringify any reflect.Value
-func StringifyValue(ft reflect.Value) string {
-	switch ft.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return strconv.FormatInt(ft.Int(), 10)
-	case reflect.String:
-		return ft.String()
-	case reflect.Float32, reflect.Float64:
-		return fmt.Sprintf("%.2f", ft.Float())
-	case reflect.Ptr:
-		if ft.IsNil() {
-			return ""
-		}
-		return StringifyValue(ft.Elem())
-	default:
-		// todo
-		return string(ft.String())
-	}
-}
-
-
-func getNesstedVal(t reflect.Value, path []string) (val *reflect.Value) {
-	val = &t;
-
-	for _, p := range path {
-		// unwrap the pointers
-		val = UnwrapValuePtr(val.FieldByName(p))
-		if val == nil {
-			return
-		}
-	}
-	return 
-}
-
-func contains(s []string, searchterm string) bool {
-	for _, a := range s {
-        if a ==  searchterm {
-            return true
-        }
-    }
-    return false
-}
-
-
-func multiStr(s string, len int) string {
-	str := ""
-	for i :=0; i<len; i++ {
-		str += s
-	}
-	return str
 }
