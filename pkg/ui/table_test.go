@@ -18,15 +18,6 @@ type Person struct {
 	addressPtr *Address `group:"Addres2"`
 }
 
-type mockWritter struct {
-	data string
-}
-
-func (mw *mockWritter) Write(b []byte) (n int, err error) {
-	mw.data += string(b[:])
-	return 0, nil
-}
-
 func TestTable(t *testing.T) {
 	t.Run("General Case", func(t *testing.T) {
 
@@ -48,6 +39,8 @@ moshe  30   │  3       552.39  │  3        552.39
 		err := CreateTable(Person{}, TableOpt{}).Render(w, data).Error()
 		if err == nil {
 			_ = w.Flush()
+		} else {
+			t.Errorf("Failed to build the table, %s", err)
 		}
 
 		got := b.String()
