@@ -3,7 +3,7 @@ package services
 import (
 	"fmt"
 
-	t "github.com/run-ai/runai-cli/cmd/types"
+	"github.com/run-ai/runai-cli/cmd/types"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,11 +13,11 @@ import (
 var (
 	promethesNodeLabelID = "node"
 	nodePQs              = prom.MultiQueries{
-		t.TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
-		t.UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
-		t.UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
-		t.UsedCpuMemoryPQ:  `runai_node_memory_used_bytes`,
-		t.UsedCpusPQ:       `runai_node_cpu_utilization * 100`,
+		types.TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
+		types.UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
+		types.UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
+		types.UsedCpuMemoryPQ:  `runai_node_memory_used_bytes`,
+		types.UsedCpusPQ:       `runai_node_cpu_utilization * 100`,
 	}
 )
 
@@ -33,9 +33,9 @@ func NewNodeDescriber(client kubernetes.Interface, pods []v1.Pod) *NodeDescriber
 	}
 }
 
-func (d *NodeDescriber) GetAllNodeInfos() ([]t.NodeInfo, error, error) {
-	var warn error
-	nodeInfoList := []t.NodeInfo{}
+func (d *NodeDescriber) GetAllNodeInfos() ([]types.NodeInfo, error, string) {
+	var warn string
+	nodeInfoList := []types.NodeInfo{}
 
 	nodeList, err := d.client.CoreV1().Nodes().List(metav1.ListOptions{})
 
@@ -48,17 +48,15 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]t.NodeInfo, error, error) {
 	// get prometheus node resources data
 	promClient, err := prom.BuildPromethuseClient(d.client)
 	if err == nil {
-	
 		promData, err = promClient.MultipuleQueriesToItemsMap(nodePQs, promethesNodeLabelID)
-		
 	}
 	if err != nil {
-		warn = fmt.Errorf("Missing some data. \nresone: Can't access to the prometheus server, \ncause err: %s", err)
+		warn = fmt.Sprintf("Missing some data. \nreason: Can't access to the prometheus server, \ncause error: %s", err)
 	}
 
 	for _, node := range nodeList.Items {
 		pods := d.GetPodsFromNode(node)
-		nodeInfo := t.NewNodeInfo(
+		nodeInfo := types.NewNodeInfo(
 			node,
 			pods,
 			promData,
