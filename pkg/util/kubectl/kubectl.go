@@ -15,6 +15,7 @@
 package kubectl
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -260,6 +261,39 @@ func LabelAppConfigmap(jobName, namespace, label string) (err error) {
 	}
 
 	return err
+}
+
+func CountJobsByBaseName(baseName, namespace string) (int, error) {
+	binary, err := exec.LookPath(kubectlCmd[0])
+	if err != nil {
+		return 0, err
+	}
+
+	args := []string{"get", "runaijob.run.ai", "--selector=base-name=" + baseName, "-o", "json"}
+	args = util.AddNamespaceToArgs(args, namespace)
+
+	log.Debugf("kubectl %v", args)
+	fmt.Printf("kubectl %v\n", args)
+
+	cmd := exec.Command(binary, args...)
+	env := os.Environ()
+	if types.KubeConfig != "" {
+		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
+	}
+
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, err
+	}
+
+	var jobsData map[string]interface{}
+	err = json.Unmarshal(output, &jobsData)
+	if err != nil {
+		fmt.Println(err)
+		return 0, err
+	}
+	count := len(jobsData["items"].([]interface{}))
+	return count, nil
 }
 
 func CheckIfAppInfofileContentsExists(appFileName string, namespace string) (bool, error) {

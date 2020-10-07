@@ -3,10 +3,10 @@ package workflow
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"io/ioutil"
 
-	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util/helm"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
@@ -148,7 +148,19 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 			}
 
 			if jobExists {
-				return fmt.Errorf("The job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
+				count, err := kubectl.CountJobsByBaseName(name, namespace)
+				if err != nil {
+					return err
+				}
+				jobSuffix := strconv.Itoa(count - 1)
+				jobName = jobName + "-" + jobSuffix
+				name = name + "-" + jobSuffix
+				generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
+				if err != nil {
+					return err
+				}
+
+				jobFiles = generatedJobFiles
 			} else {
 				// Delete the configmap of the job and continue for the creation of the new one.
 
@@ -159,7 +171,6 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 					log.Debugf("Could not delete configmap for job %s on namespace %s", name, namespace)
 					return fmt.Errorf("Error submitting the job.")
 				}
-
 			}
 		}
 	}
