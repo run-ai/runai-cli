@@ -143,12 +143,12 @@ func NewRunaiJobCommand() *cobra.Command {
 		},
 	}
 
-	mgf := flags.NewMapFlagsGroup(command)
+	mfg := flags.NewMapFlagsGroup(command)
 
-	submitArgs.addCommonFlags(mgf)
-	submitArgs.addFlags(mgf)
+	submitArgs.addCommonFlags(mfg)
+	submitArgs.addFlags(mfg)
 
-	mgf.ConnectToCmd()
+	mfg.ConnectToCmd()
 
 	return command
 }
