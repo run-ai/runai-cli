@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/run-ai/runai-cli/cmd/constants"
+	"github.com/run-ai/runai-cli/cmd/util"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -220,7 +221,7 @@ func (rj *RunaiJob) RequestedGPU() float64 {
 
 	// backward compatibility
 	for _, pod := range rj.pods {
-		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[runaiGPUFraction], 64)
+		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[util.RunaiGPUFraction], 64)
 		if GPUFractionErr == nil {
 			requestedGPUs += gpuFraction
 		}
@@ -230,7 +231,7 @@ func (rj *RunaiJob) RequestedGPU() float64 {
 		return requestedGPUs
 	}
 
-	val, ok := rj.podSpec.Containers[0].Resources.Limits[constants.NVIDIAGPUResourceName]
+	val, ok := rj.podSpec.Containers[0].Resources.Limits[util.NVIDIAGPUResourceName]
 	if !ok {
 		return 0
 	}

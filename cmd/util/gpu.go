@@ -14,10 +14,19 @@
 
 package util
 
+
 import (
 	"strconv"
 
 	v1 "k8s.io/api/core/v1"
+)
+
+const (
+	RunaiGPUIndex    = "runai-gpu"
+	RunaiGPUFraction = "gpu-fraction"
+	NVIDIAGPUResourceName = "nvidia.com/gpu"
+	ALIYUNGPUResourceName = "aliyun.com/gpu-mem"
+	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
 )
 
 // filter out the pods with GPU
@@ -87,7 +96,7 @@ func GpuInActivePod(pod v1.Pod) (gpuCount float64) {
 
 func getGPUFractionUsedByPod(pod v1.Pod) float64 {
 	if pod.Annotations != nil {
-		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[runaiGPUFraction], 64)
+		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[RunaiGPUFraction], 64)
 		if GPUFractionErr == nil {
 			return gpuFraction
 		}
@@ -124,7 +133,7 @@ func GetGPUsIndexUsedInPods(pods []v1.Pod) []string {
 		}
 
 		if pod.Annotations != nil {
-			gpuIndex, found := pod.Annotations[runaiGPUIndex]
+			gpuIndex, found := pod.Annotations[RunaiGPUIndex]
 			if !found {
 				continue
 			}

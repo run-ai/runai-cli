@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	labelNodeRolePrefix = "node-role.kubernetes.io/"
-
+	LabelNodeRolePrefix = "node-role.kubernetes.io/"	
+	MasterLabelRole = "node-role.kubernetes.io/master"
 	// nodeLabelRole specifies the role of a node
 	nodeLabelRole = "kubernetes.io/role"
 )
@@ -39,7 +39,7 @@ func HasUnhealthyGPU(node v1.Node) (unhealthy bool) {
 }
 
 func IsMasterNode(node v1.Node) bool {
-	if _, ok := node.Labels[masterLabelRole]; ok {
+	if _, ok := node.Labels[MasterLabelRole]; ok {
 		return true
 	}
 
@@ -65,8 +65,8 @@ func GetNodeRoles(node *v1.Node) []string {
 	roles := sets.NewString()
 	for k, v := range node.Labels {
 		switch {
-		case strings.HasPrefix(k, labelNodeRolePrefix):
-			if role := strings.TrimPrefix(k, labelNodeRolePrefix); len(role) > 0 {
+		case strings.HasPrefix(k, LabelNodeRolePrefix):
+			if role := strings.TrimPrefix(k, LabelNodeRolePrefix); len(role) > 0 {
 				roles.Insert(role)
 			}
 

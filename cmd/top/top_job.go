@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package top
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ func NewTopJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			client := kubeClient.GetClientset()
+			
 			namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
 
 			if err != nil {
@@ -61,18 +61,6 @@ func NewTopJobCommand() *cobra.Command {
 
 			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
 
-			useCache = true
-			allPods, err = trainer.AcquireAllPods(client, namespaceInfo.Namespace)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			allJobs, err = trainer.AcquireAllJobs(client, namespaceInfo.Namespace)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
 			trainers := trainer.NewTrainers(kubeClient)
 			for _, trainer := range trainers {
 				trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)

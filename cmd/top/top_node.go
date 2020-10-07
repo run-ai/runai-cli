@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package top
 
 import (
 	"fmt"
@@ -70,7 +70,7 @@ func NewTopNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			clientset := kubeClient.GetClientset()
-			allPods, err = trainer.AcquireAllActivePods(clientset)
+			allPods, err := trainer.AcquireAllActivePods(clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
