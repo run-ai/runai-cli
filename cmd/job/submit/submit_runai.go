@@ -245,7 +245,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Labels["base-name"] = submitArgs.Name
+	submitArgs.Labels[kubectl.BaseNameLabel] = submitArgs.Name
 	err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err

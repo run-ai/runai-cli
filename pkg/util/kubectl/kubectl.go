@@ -30,6 +30,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const BaseNameLabel = "base-name"
+
 var kubectlCmd = []string{"kubectl"}
 
 func SupportOldDryRun() (bool, error) {
@@ -269,7 +271,9 @@ func CountJobsByBaseName(baseName, namespace string) (int, error) {
 		return 0, err
 	}
 
-	args := []string{"get", "runaijob.run.ai", "--selector=base-name=" + baseName, "-o", "json"}
+	args := []string{"get", "runaijob.run.ai"}
+	args = append(args, "--selector=" + BaseNameLabel + "=" + baseName)
+	args = append(args, "-o", "json")
 	args = util.AddNamespaceToArgs(args, namespace)
 
 	log.Debugf("kubectl %v", args)
