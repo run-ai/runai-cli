@@ -82,7 +82,7 @@ func NewTopNodeCommand() *cobra.Command {
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
-			} else if warn != nil {
+			} else if let(warn) > 0 {
 				fmt.Println(warn)
 			}
 
