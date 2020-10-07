@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -114,7 +113,6 @@ func CreateTable(model interface{}, opt TableOpt) Table {
 		columns: columns,
 		modelType: reflect.TypeOf(model),
 		opt: opt,
-		groups: []GroupTag{},
 	}
 
 	isShowAllByDefault := true
@@ -131,7 +129,10 @@ func CreateTable(model interface{}, opt TableOpt) Table {
 		}
 	}
 
-	td.addFields(td.modelType, []string{}, NewGroupTag(""), isShowAllByDefault)
+	defaultGroup := NewGroupTag("")
+	td.groups = []GroupTag{defaultGroup}
+
+	td.addFields(td.modelType, []string{},defaultGroup , isShowAllByDefault)
 
 	return &td
 }
