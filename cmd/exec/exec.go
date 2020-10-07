@@ -142,11 +142,11 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		return
 	}
 
-	return ExecByBin(pod, command[0], command[1:], interactive, TTY)
+	return ExecByLib(pod, command, interactive, TTY)
 
 }
 
-func ExecByLib(pod *v1.Pod, command, fileNames []string, stdin, tty bool) error {
+func ExecByLib(pod *v1.Pod, command []string, stdin, tty bool) error {
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
