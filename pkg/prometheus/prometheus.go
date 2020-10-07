@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-	"sync"
 
-	// "github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util"
 	"k8s.io/client-go/kubernetes"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -90,11 +89,11 @@ func (ps *Client) GetPrometheusService() (service *v1.Service, err error) {
 		return 
 	} else if len(list.Items) > 0 {
 		service = &list.Items[0]
-	} else {
-		return nil, fmt.Errorf("Not found a server for prometheus")
-	}
+		return
+	} 
+	
+	return nil, fmt.Errorf("No available services of promethues")
 
-	return
 }
 
 func (ps *Client)  Query( query string) (data MetricData,  err error) {
@@ -116,7 +115,7 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 	err = json.Unmarshal(metric, rst)
 	log.Debugf("Prometheus metric:%v", rst)
 	if err != nil {
-		err = fmt.Errorf("failed to unmarshall heapster response: %v", err)
+		err = fmt.Errorf("failed to unmarshall response: %v", err)
 		return
 	}
 	if rst.Status != SuccessStatus {
@@ -135,24 +134,21 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error) {
 	queryResults := map[string]MetricData{}
 	rst := ItemsMap{}
-	// funcs := []func() error{}
-	var mux sync.Mutex
-
-	var err error;
+	funcs := []func() error{}
 
 	for queryName, query := range q {
+		// create scoped vars for the function
+		query := query
+		name := queryName
 		getFunc := func() error {
 			rst, err := ps.Query(query)
-			mux.Lock()
-			queryResults[queryName] = rst
-			// fmt.Print(queryName,"\n\n",rst, "\n\n")
-			mux.Unlock()
+			queryResults[name] = rst
 			return err
 		}
-		getFunc();
-		// funcs = append(funcs, getFunc)
+	
+		funcs = append(funcs, getFunc)
 	}
-	// err = util.Parallel(funcs...)
+	err := util.Parallel(funcs...)
 
 	if err != nil {
 		return nil, err

@@ -78,16 +78,15 @@ func GetNodeRoles(node *v1.Node) []string {
 }
 
 func GetNodeInternalAddress(node v1.Node) string {
-	address := "unknown"
 	if len(node.Status.Addresses) > 0 {
 		//address = nodeInfo.node.Status.Addresses[0].Address
 		for _, addr := range node.Status.Addresses {
 			if addr.Type == v1.NodeInternalIP {
-				address = addr.Address
+				return addr.Address
 			}
 		}
 	}
-	return address
+	return "unknown"
 }
 
 func IsNodeReady(node v1.Node) bool {
