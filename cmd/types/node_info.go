@@ -38,7 +38,7 @@ type NodeInfo struct {
 }
 
 func (ni *NodeInfo) GetStatus() NodeStatus {
-	if !isNodeReady(ni.Node) {
+	if !util.IsNodeReady(ni.Node) {
 		return NodeNotReady
 	}
 	return NodeReady
@@ -133,15 +133,6 @@ func setFloatPromData(num *float64, m map[string][]prom.MetricValue, key string)
 	} 
 	*num = n
 	return nil
-}
-
-func isNodeReady(node v1.Node) bool {
-	for _, condition := range node.Status.Conditions {
-		if condition.Type == v1.NodeReady && condition.Status == v1.ConditionTrue {
-			return true
-		}
-	}
-	return false
 }
 
 func hasError(errors ...error) error{

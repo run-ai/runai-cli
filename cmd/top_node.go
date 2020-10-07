@@ -19,17 +19,15 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
+
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
-	log "github.com/sirupsen/logrus"
-	"github.com/run-ai/runai-cli/pkg/ui"
 	"github.com/run-ai/runai-cli/cmd/services"
 	"github.com/run-ai/runai-cli/cmd/types"
 	"github.com/run-ai/runai-cli/cmd/util"
-	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
+	
 	log "github.com/sirupsen/logrus"
-
 	"github.com/spf13/cobra"
 )
 
@@ -82,7 +80,7 @@ func NewTopNodeCommand() *cobra.Command {
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
-			} else if let(warn) > 0 {
+			} else if len(warn) > 0 {
 				fmt.Println(warn)
 			}
 

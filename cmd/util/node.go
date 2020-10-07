@@ -89,3 +89,12 @@ func GetNodeInternalAddress(node v1.Node) string {
 	}
 	return address
 }
+
+func IsNodeReady(node v1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == v1.NodeReady && condition.Status == v1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
