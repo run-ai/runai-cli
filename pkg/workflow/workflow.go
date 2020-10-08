@@ -128,7 +128,7 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func forceGenerateJobFiles(name , jobName , namespace, environmentValues, chart string, values interface{}) (string, string, *JobFiles, error) {
+func forceGenerateJobFiles(name , trainingType , namespace, environmentValues, chart string, values interface{}) (string, string, *JobFiles, error) {
 	count, err := kubectl.CountJobsByBaseName(name, namespace)
 	if err != nil {
 		return "", "", nil, err
@@ -136,8 +136,9 @@ func forceGenerateJobFiles(name , jobName , namespace, environmentValues, chart 
 
 	for i := 0; i < forceSubmitRetries; i++ {
 		jobSuffix := strconv.Itoa(count + i - 1)
-		jobName = jobName + "-" + jobSuffix
 		name = name + "-" + jobSuffix
+		jobName := GetJobName(name, trainingType)
+
 		generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
 		if err != nil {
 			return "", "", nil, err
@@ -176,7 +177,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 			}
 
 			if jobExists {
-				jobName, name, jobFiles, err = forceGenerateJobFiles(name, jobName, namespace, environmentValues, chart, values)
+				jobName, name, jobFiles, err = forceGenerateJobFiles(name, trainingType, namespace, environmentValues, chart, values)
 
 				if err != nil {
 					return "", err
