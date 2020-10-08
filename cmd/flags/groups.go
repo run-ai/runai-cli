@@ -28,7 +28,7 @@ func NewFlagGroupMap(cmd *cobra.Command) FlagGroupMap {
 }
 
 func (fg *FlagGroup) Usage() string {
-	return fmt.Sprint(fg.Title, "\n", fg.FlagSet.FlagUsagesWrapped(1))
+	return fmt.Sprint(fg.Title, ":\n", fg.FlagSet.FlagUsagesWrapped(1))
 }
 
 func NewFlagsGroup(title string) FlagGroup {

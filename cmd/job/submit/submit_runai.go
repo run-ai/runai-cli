@@ -26,6 +26,22 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	examples = `
+# Start a Training job.
+runai submit train1 -i gcr.io/run-ai-demo/quickstart -g 1
+
+# Start an interactive job.
+runai submit build1 -i python -g 1 --interactive --attach
+
+# Use GPU Fractions
+runai submit frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
+
+# Hyperparameter Optimization
+runai submit hpo1 -i gcr.io/run-ai-demo/quickstart-hpo -g 1  \
+    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo`
+)
+
 var (
 	runaiChart       string
 	ttlAfterFinished *time.Duration
@@ -37,6 +53,7 @@ func NewRunaiJobCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "submit [NAME]",
 		Short: "Submit a new job.",
+		Example: examples,
 		Args:  cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
