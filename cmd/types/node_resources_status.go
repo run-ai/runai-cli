@@ -12,7 +12,7 @@ type NodeResourcesStatus struct {
 
 func (nrs *NodeResourcesStatus) GetCpus() NodeCPUResource {
 	return NodeCPUResource{
-		Capacity:    int(nrs.Capacity.CPUs),
+		Capacity:    int(nrs.Capacity.CPUs) / 1000,
 		Allocatable: nrs.Allocatable.CPUs,
 		Requested:   nrs.Requested.CPUs / 1000,
 		Usage:       nrs.Usage.CPUs,
