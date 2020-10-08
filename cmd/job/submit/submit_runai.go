@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	examples = `
+	submitExamples = `
 # Start a Training job.
 runai submit train1 -i gcr.io/run-ai-demo/quickstart -g 1
 
@@ -53,7 +53,7 @@ func NewRunaiJobCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "submit [NAME]",
 		Short: "Submit a new job.",
-		Example: examples,
+		Example: submitExamples,
 		Args:  cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
