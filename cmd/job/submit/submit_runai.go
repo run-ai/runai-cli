@@ -246,10 +246,11 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
 	submitArgs.Labels[kubectl.BaseNameLabel] = submitArgs.Name
-	err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	jobName, err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}
+	submitArgs.Name = jobName
 
 	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)

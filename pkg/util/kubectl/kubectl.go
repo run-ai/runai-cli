@@ -277,7 +277,6 @@ func CountJobsByBaseName(baseName, namespace string) (int, error) {
 	args = util.AddNamespaceToArgs(args, namespace)
 
 	log.Debugf("kubectl %v", args)
-	fmt.Printf("kubectl %v\n", args)
 
 	cmd := exec.Command(binary, args...)
 	env := os.Environ()

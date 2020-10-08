@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/config"
 	"os"
 	"strconv"
 
@@ -18,6 +19,8 @@ import (
 /**
 *	delete training job with the job name
 **/
+
+const forceSubmitRetries = 3
 
 func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interface) error {
 	jobName := GetJobName(name, trainingType)
@@ -125,7 +128,32 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
+func forceGenerateJobFiles(name , jobName , namespace, environmentValues, chart string, values interface{}) (string, string, *JobFiles, error) {
+	count, err := kubectl.CountJobsByBaseName(name, namespace)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	for i := 0; i < forceSubmitRetries; i++ {
+		jobSuffix := strconv.Itoa(count + i - 1)
+		jobName = jobName + "-" + jobSuffix
+		name = name + "-" + jobSuffix
+		generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		jobExists, err := kubectl.CheckIfAppInfofileContentsExists(generatedJobFiles.appInfoFileName, namespace)
+
+		if !jobExists {
+			return jobName, name, generatedJobFiles, nil
+		}
+	}
+
+	return "", "", nil, fmt.Errorf("The job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
+}
+
+func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
 	jobName := GetJobName(name, trainingType)
 
 	var jobFiles *JobFiles
@@ -136,7 +164,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		if found != nil && found.Name != "" {
 			generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
 			if err != nil {
-				return err
+				return "", err
 			}
 
 			jobFiles = generatedJobFiles
@@ -144,23 +172,15 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 			jobExists, err := kubectl.CheckIfAppInfofileContentsExists(jobFiles.appInfoFileName, namespace)
 
 			if err != nil {
-				return err
+				return "", err
 			}
 
 			if jobExists {
-				count, err := kubectl.CountJobsByBaseName(name, namespace)
-				if err != nil {
-					return err
-				}
-				jobSuffix := strconv.Itoa(count - 1)
-				jobName = jobName + "-" + jobSuffix
-				name = name + "-" + jobSuffix
-				generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
-				if err != nil {
-					return err
-				}
+				jobName, name, jobFiles, err = forceGenerateJobFiles(name, jobName, namespace, environmentValues, chart, values)
 
-				jobFiles = generatedJobFiles
+				if err != nil {
+					return "", err
+				}
 			} else {
 				// Delete the configmap of the job and continue for the creation of the new one.
 
@@ -169,7 +189,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 
 				if err != nil {
 					log.Debugf("Could not delete configmap for job %s on namespace %s", name, namespace)
-					return fmt.Errorf("Error submitting the job.")
+					return "", fmt.Errorf("Error submitting the job.")
 				}
 			}
 		}
@@ -179,7 +199,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if jobFiles == nil {
 		generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		jobFiles = generatedJobFiles
@@ -188,14 +208,14 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if dryRun {
 		fmt.Println("Generate the template on:")
 		fmt.Println(jobFiles.template)
-		return nil
+		return "", nil
 	}
 
 	// 4. Keep value file in configmap
 	chartName := helm.GetChartName(chart)
 	chartVersion, err := helm.GetChartVersion(chart)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = createConfigMap(
@@ -209,7 +229,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		clientset,
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// 5. Create Application
@@ -235,7 +255,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 			log.Debugf("Failed to cleanup configmap %s", jobName)
 		}
 
-		return fmt.Errorf("Failed submitting the job:\n %s", err.Error())
+		return "", fmt.Errorf("Failed submitting the job:\n %s", err.Error())
 	}
 
 	// 6. Clean up the template file
@@ -256,7 +276,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		}
 	}
 
-	return nil
+	return name, nil
 }
 
 func createConfigMap(jobName string,
