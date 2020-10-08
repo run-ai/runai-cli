@@ -150,6 +150,10 @@ func (s submitArgs) check() error {
 	return nil
 }
 
+func (submitArgs *submitArgs) AddLabel(key, value string){
+	submitArgs.Labels[key] = value
+}
+
 // get node selectors
 func (submitArgs *submitArgs) addNodeSelectors() {
 	log.Debugf("node selectors: %v", selectors)

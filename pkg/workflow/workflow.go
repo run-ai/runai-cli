@@ -158,8 +158,8 @@ type submitValues interface {
 	AddLabel(key, value string)
 }
 
-func SubmitJob(namePtr *string, trainingType string, namespace string, values submitValues, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
-	name := *namePtr
+func SubmitJob(baseName *string, trainingType string, namespace string, values submitValues, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
+	name := *baseName
 	jobName := GetJobName(name, trainingType)
 	values.AddLabel(kubectl.BaseNameLabel, name)
 
@@ -183,12 +183,11 @@ func SubmitJob(namePtr *string, trainingType string, namespace string, values su
 			}
 
 			if jobExists {
-				jobFiles, err = forceGenerateJobFiles(namePtr, namespace, environmentValues, chart, values)
-				fmt.Println(*namePtr)
+				jobFiles, err = forceGenerateJobFiles(baseName, namespace, environmentValues, chart, values)
 				if err != nil {
 					return err
 				}
-				name = *namePtr
+				name = *baseName
 				jobName = GetJobName(name, trainingType)
 			} else {
 				// Delete the configmap of the job and continue for the creation of the new one.

@@ -189,10 +189,6 @@ type submitRunaiJobArgs struct {
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 }
 
-func (sa *submitArgs) AddLabel(key, value string){
-	sa.Labels[key] = value
-}
-
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 	var (
 		jupyterPort        = "8888"
