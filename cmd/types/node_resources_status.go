@@ -1,13 +1,14 @@
 package types
 
 type NodeResourcesStatus struct {
-	Capacity             ResourceList
-	Allocatable          ResourceList
-	Limited              ResourceList
-	Allocated            ResourceList
-	AllocatedGPUsIndices []string
-	Requested            ResourceList
-	Usage                ResourceList
+	Capacity                     ResourceList
+	Allocatable                  ResourceList
+	Limited                      ResourceList
+	Allocated                    ResourceList
+	AllocatedGPUsIndices         []string
+	FractionalAllocatedGpuUnits  int
+	Requested                    ResourceList
+	Usage                        ResourceList
 }
 
 func (nrs *NodeResourcesStatus) GetCpus() NodeCPUResource {
@@ -25,7 +26,7 @@ func (nrs *NodeResourcesStatus) GetGpus() NodeGPUResource {
 		Capacity:          int(nrs.Capacity.GPUs),
 		Allocatable:       nrs.Allocatable.GPUs,
 		Unhealthy:         int(nrs.Capacity.GPUs) - int(nrs.Allocatable.GPUs),
-		Allocated:         len(nrs.AllocatedGPUsIndices),
+		Allocated:         len(nrs.AllocatedGPUsIndices) + nrs.FractionalAllocatedGpuUnits,
 		AllocatedFraction: nrs.Allocated.GPUs,
 		Usage:             nrs.Usage.GPUs,
 	}
