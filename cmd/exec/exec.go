@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/run-ai/runai-cli/cmd/get"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -142,11 +143,11 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		return
 	}
 
-	return ExecByBin(pod, command[0], command[1:], interactive, TTY)
+	return ExecByLib(pod, command, interactive, TTY)
 
 }
 
-func ExecByLib(pod *v1.Pod, command, fileNames []string, stdin, tty bool) error {
+func ExecByLib(pod *v1.Pod, command []string, stdin, tty bool) error {
 	ioStream := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
@@ -203,7 +204,14 @@ func ExecByLib(pod *v1.Pod, command, fileNames []string, stdin, tty bool) error 
 
 		return o.Executor.Execute("POST", req.URL(), o.Config, o.In, o.Out, o.ErrOut, t.Raw, sizeQueue)
 	}
-	return t.Safe(fn)
+	err := t.Safe(fn)
+	// check if the user exit with exit command
+	// todo: use a better error handler like cmdutil.CheckErr
+	if err != nil && strings.Contains(err.Error(), "terminated with exit code 130") {
+		fmt.Println("exit")
+		return nil
+	}
+	return err
 
 }
 
