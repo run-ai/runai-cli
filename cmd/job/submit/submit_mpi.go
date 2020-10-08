@@ -34,7 +34,7 @@ import (
 
 const (
 	SubmitMpiCommand = "submit-mpi"
-	examples = `
+	mpiExamples = `
 runai submit-mpi dist1 --processes=2 -g 1 \
 	-i gcr.io/run-ai-demo/quickstart-distributed`
 
@@ -55,7 +55,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Use:     SubmitMpiCommand + " [NAME]",
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
-		Example: examples,
+		Example: mpiExamples,
 		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
