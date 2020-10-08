@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/run-ai/runai-cli/pkg/util"
-	"k8s.io/client-go/kubernetes"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 
@@ -135,14 +136,17 @@ func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( It
 	queryResults := map[string]MetricData{}
 	rst := ItemsMap{}
 	funcs := []func() error{}
-
+	var mux sync.Mutex
 	for queryName, query := range q {
 		// create scoped vars for the function
 		query := query
 		name := queryName
 		getFunc := func() error {
 			rst, err := ps.Query(query)
+			mux.Lock()
 			queryResults[name] = rst
+			mux.Unlock()
+
 			return err
 		}
 	

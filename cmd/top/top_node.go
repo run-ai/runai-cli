@@ -203,7 +203,7 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 
 		var gpuUsageInNode float64 = 0
 		if gpus.Capacity > 0 {
-			gpuUsageInNode = float64(gpus.Allocated) / float64(gpus.Capacity) * 100
+			gpuUsageInNode = float64(gpus.AllocatedUnits) / float64(gpus.Capacity) * 100
 		} else {
 			fmt.Fprintf(w, "\n")
 		}
@@ -214,12 +214,12 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 		}
 
 		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", info.Name, strconv.FormatInt(int64(gpus.Capacity), 10))
-		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.Allocated), 10), int64(gpuUsageInNode))
+		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.AllocatedUnits), 10), int64(gpuUsageInNode))
 		if gpus.Unhealthy > 0 {
 			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.Unhealthy), 10), int64(gpuUnhealthyPercentageInNode))
 		}
 		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(gpus.Capacity), 10),
-			strconv.FormatInt(int64(gpus.Allocated), 10))
+			strconv.FormatInt(int64(gpus.AllocatedUnits), 10))
 
 		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
 	}

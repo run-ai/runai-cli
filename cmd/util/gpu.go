@@ -23,6 +23,8 @@ import (
 const (
 	RunaiGPUIndex                   = "runai-gpu"
 	RunaiGPUFraction                = "gpu-fraction"
+	// an annotation on each node
+	RunaiAllocatableGpus            = "runai-allocatable-gpus"
 	NVIDIAGPUResourceName           = "nvidia.com/gpu"
 	ALIYUNGPUResourceName           = "aliyun.com/gpu-mem"
 	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
@@ -30,6 +32,7 @@ const (
 	WorkloadCurrentAllocatedGPUs    = "runai-current-allocated-gpus"
 	WorkloadCurrentRequestedGPUs    = "runai-current-requested-gpus"
 	WorkloadTotalRequestedGPUs      = "runai-total-requested-gpus"
+
 )
 
 // filter out the pods with GPU
@@ -53,15 +56,15 @@ func TotalGpuInNode(node v1.Node) int64 {
 	return val.Value()
 }
 
-// The way to get allocatble GPU Count of Node: nvidia.com/gpu
-func AllocatableGpuInNode(node v1.Node) int64 {
-	val, ok := node.Status.Allocatable[NVIDIAGPUResourceName]
+// The way to get allocatble GPU Count of Node
+func AllocatableGpuInNode(node v1.Node) (num int64) {
+	val, ok := node.Annotations[RunaiAllocatableGpus]
 
-	if !ok {
-		return GpuInNodeDeprecated(node)
+	if ok {
+		num , _ = strconv.ParseInt(val, 10, 64)
 	}
-
-	return val.Value()
+	
+	return 
 }
 
 // The way to get GPU Count of Node: alpha.kubernetes.io/nvidia-gpu
@@ -138,11 +141,11 @@ func GpuInContainerDeprecated(container v1.Container) int64 {
 	return val.Value()
 }
 
-func GetGPUsIndexUsedInPods(pods []v1.Pod) []string {
+func GetSharedGPUsIndexUsedInPods(pods []v1.Pod) []string {
 	gpuIndexUsed := map[string]bool{}
 	for _, pod := range pods {
 		if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
-			return []string{}
+			continue
 		}
 
 		if pod.Annotations != nil {

@@ -5,8 +5,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	"github.com/run-ai/runai-cli/cmd/util"
+	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 
 	v1 "k8s.io/api/core/v1"
 )
@@ -69,15 +69,16 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 	nodeResStatus.Capacity.AddKubeResourceList(ni.Node.Status.Capacity)
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )
 	totalGpus := int(util.AllocatableGpuInNode(ni.Node))
-	// sometime the totalGpues is not set let check it before
+	// check that the totalGpues is set
 	if (totalGpus > int(nodeResStatus.Capacity.GPUs)) {
-		nodeResStatus.FractionalAllocatedGpuUnits = totalGpus - int(nodeResStatus.Capacity.GPUs)
+		nodeResStatus.FractionalAllocatedGpuUnits = len(util.GetSharedGPUsIndexUsedInPods(ni.Pods))
 		nodeResStatus.Capacity.GPUs = float64(totalGpus)
+		// update the allocatable too
+		nodeResStatus.Allocatable.GPUs += float64(nodeResStatus.FractionalAllocatedGpuUnits)
 	}
 
 	nodeResStatus.Allocatable.AddKubeResourceList(ni.Node.Status.Allocatable)
-
-	nodeResStatus.AllocatedGPUsIndices = util.GetGPUsIndexUsedInPods(ni.Pods)
+	nodeResStatus.AllocatedGPUsUnits = nodeResStatus.FractionalAllocatedGpuUnits + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
 	p, ok := ni.PrometheusNode[ni.Node.Name]

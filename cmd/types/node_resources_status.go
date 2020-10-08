@@ -5,7 +5,7 @@ type NodeResourcesStatus struct {
 	Allocatable                  ResourceList
 	Limited                      ResourceList
 	Allocated                    ResourceList
-	AllocatedGPUsIndices         []string
+	AllocatedGPUsUnits         	 int
 	FractionalAllocatedGpuUnits  int
 	Requested                    ResourceList
 	Usage                        ResourceList
@@ -26,7 +26,7 @@ func (nrs *NodeResourcesStatus) GetGpus() NodeGPUResource {
 		Capacity:          int(nrs.Capacity.GPUs),
 		Allocatable:       nrs.Allocatable.GPUs,
 		Unhealthy:         int(nrs.Capacity.GPUs) - int(nrs.Allocatable.GPUs),
-		Allocated:         len(nrs.AllocatedGPUsIndices) + nrs.FractionalAllocatedGpuUnits,
+		AllocatedUnits:         nrs.AllocatedGPUsUnits,
 		AllocatedFraction: nrs.Allocated.GPUs,
 		Usage:             nrs.Usage.GPUs,
 	}

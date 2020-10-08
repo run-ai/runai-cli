@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/run-ai/runai-cli/cmd/types"
+	"github.com/run-ai/runai-cli/cmd/util"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,8 +69,11 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]types.NodeInfo, error, string) {
 
 func (d *NodeDescriber) GetPodsFromNode(node v1.Node) []v1.Pod {
 	pods := []v1.Pod{}
+	if !util.IsNodeReady(node) {
+		return pods
+	}
 	for _, pod := range d.allPods {
-		if pod.Spec.NodeName == node.Name {
+		if pod.Spec.NodeName == node.Name && pod.Status.Phase == v1.PodRunning{
 			pods = append(pods, pod)
 		}
 	}

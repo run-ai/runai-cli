@@ -28,7 +28,7 @@ type NodeGPUResource struct {
 	Capacity          int     `title:"CAPACITY"`
 	Allocatable       float64 `title:"ALLOCATABLE"`
 	Unhealthy         int     `title:"UNHEALTHY"`
-	Allocated         int     `title:"ALLOCATED UNITS"`
+	AllocatedUnits         int     `title:"ALLOCATED UNITS"`
 	AllocatedFraction float64 `title:"ALLOCATED FRACTION"`
 	Usage             float64 `title:"USAGE" format:"%"`
 }
@@ -59,7 +59,8 @@ type NodeView struct {
 type ClusterNodesView struct {
 	GPUs            int
 	UnhealthyGPUs   int
-	AllocatedGPUs   float64
+	AllocatedGPUs   int
+	AllocatedFractionGPUs float64
 	GPUsOnReadyNode int
 }
 
@@ -67,7 +68,7 @@ func (cnv *ClusterNodesView) Render(w io.Writer) {
 
 	ui.Title(w, "CLUSTER NODES INFO")
 
-	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\t")
+	fmt.Fprintf(w, "Allocated Units/Total GPUs In Cluster:\t")
 	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(cnv.GPUs), 10),
 		strconv.FormatInt(int64(cnv.AllocatedGPUs), 10))
 	var gpuUsage float64 = 0
@@ -81,13 +82,26 @@ func (cnv *ClusterNodesView) Render(w io.Writer) {
 	)
 	if cnv.GPUs != cnv.GPUsOnReadyNode {
 		if cnv.GPUsOnReadyNode > 0 {
-			gpuUsage = cnv.AllocatedGPUs / float64(cnv.GPUsOnReadyNode) * 100
+			gpuUsage = float64(cnv.AllocatedGPUs) / float64(cnv.GPUsOnReadyNode) * 100
 		} else {
 			gpuUsage = 0
 		}
-		fmt.Fprintf(w, "Allocated/Total GPUs(Active) In Cluster:\t")
+		fmt.Fprintf(w, "Allocated Units/Total GPUs(Active) In Cluster:\t")
 		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
 			strconv.FormatInt(int64(cnv.AllocatedGPUs), 10),
+			strconv.FormatInt(int64(cnv.GPUsOnReadyNode), 10),
+			int64(gpuUsage))
+	}
+
+	if float64(cnv.AllocatedGPUs) != cnv.AllocatedFractionGPUs {
+		if cnv.GPUsOnReadyNode > 0 {
+			gpuUsage = float64(cnv.AllocatedFractionGPUs) / float64(cnv.GPUsOnReadyNode) * 100
+		} else {
+			gpuUsage = 0
+		}
+		fmt.Fprintf(w, "Allocated Fractions/Total GPUs In Cluster:\t")
+		fmt.Fprintf(w, "%.1f/%s (%d%%)\t\n",
+			cnv.AllocatedFractionGPUs,
 			strconv.FormatInt(int64(cnv.GPUsOnReadyNode), 10),
 			int64(gpuUsage))
 	}
@@ -107,7 +121,8 @@ func (cnv *ClusterNodesView) Render(w io.Writer) {
 
 func (cnv *ClusterNodesView) AddNode(status NodeStatus, gpu NodeGPUResource) {
 	cnv.GPUs += gpu.Capacity
-	cnv.AllocatedGPUs += float64(gpu.Allocated)
+	cnv.AllocatedGPUs += gpu.AllocatedUnits
+	cnv.AllocatedFractionGPUs += float64(gpu.AllocatedFraction)
 	cnv.UnhealthyGPUs += gpu.Unhealthy
 	if status == NodeReady {
 		cnv.GPUsOnReadyNode += gpu.Capacity
