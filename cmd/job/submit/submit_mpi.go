@@ -16,11 +16,12 @@ package submit
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"path"
 
-	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/cmd/attach"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
@@ -147,9 +148,14 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-
-	fmt.Println("Here")
-	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
+	countJobFunc := func(name, namespace string) (int, error) {
+		list, err := client.GetClientset().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", workflow.BaseNameLabel, name)})
+		if err != nil {
+			return 0, err
+		}
+		return len(list.Items), nil
+	}
+	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, *configValues, mpijob_chart, client.GetClientset(), countJobFunc, dryRun)
 	if err != nil {
 		return err
 	}

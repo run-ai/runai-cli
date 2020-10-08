@@ -244,8 +244,15 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		return err2
 	}
 
+	countJobFunc := func(name, namespace string) (int, error) {
+		list, err := runaiclientset.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", workflow.BaseNameLabel, name)})
+		if err != nil {
+			return 0, err
+		}
+		return len(list.Items), nil
+	}
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, countJobFunc, dryRun)
 	if err != nil {
 		return err
 	}

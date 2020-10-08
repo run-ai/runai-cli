@@ -19,7 +19,8 @@ import (
 *	delete training job with the job name
 **/
 
-const forceSubmitRetries = 3
+const (forceSubmitRetries = 3
+		BaseNameLabel = "base-name")
 
 func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interface) error {
 	jobName := GetJobName(name, trainingType)
@@ -127,8 +128,8 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func forceGenerateJobFiles(name *string , namespace, environmentValues, chart string, values interface{}) (*JobFiles, error) {
-	count, err := kubectl.CountJobsByBaseName(*name, namespace)
+func forceGenerateJobFiles(name *string , namespace, environmentValues, chart string, values interface{}, countFunc getJobCount) (*JobFiles, error) {
+	count, err := countFunc(*name, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -158,10 +159,12 @@ type submitValues interface {
 	AddLabel(key, value string)
 }
 
-func SubmitJob(baseName *string, trainingType string, namespace string, values submitValues, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
+type getJobCount func(name, namespace string) (int, error)
+
+func SubmitJob(baseName *string, trainingType string, namespace string, values submitValues, environmentValues string, chart string, clientset kubernetes.Interface, countJobFunc getJobCount, dryRun bool) error {
 	name := *baseName
 	jobName := GetJobName(name, trainingType)
-	values.AddLabel(kubectl.BaseNameLabel, name)
+	values.AddLabel(BaseNameLabel, name)
 
 	var jobFiles *JobFiles
 
@@ -183,7 +186,7 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values s
 			}
 
 			if jobExists {
-				jobFiles, err = forceGenerateJobFiles(baseName, namespace, environmentValues, chart, values)
+				jobFiles, err = forceGenerateJobFiles(baseName, namespace, environmentValues, chart, values, countJobFunc)
 				if err != nil {
 					return err
 				}
