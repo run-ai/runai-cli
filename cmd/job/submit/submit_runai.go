@@ -189,6 +189,10 @@ type submitRunaiJobArgs struct {
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 }
 
+func (sa *submitArgs) AddLabel(key, value string){
+	sa.Labels[key] = value
+}
+
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 	var (
 		jupyterPort        = "8888"
@@ -245,12 +249,10 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Labels[kubectl.BaseNameLabel] = submitArgs.Name
-	mutatedName, err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}
-	submitArgs.Name = mutatedName
 
 	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)

@@ -279,11 +279,6 @@ func CountJobsByBaseName(baseName, namespace string) (int, error) {
 	log.Debugf("kubectl %v", args)
 
 	cmd := exec.Command(binary, args...)
-	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
-
 	output, err := cmd.Output()
 	if err != nil {
 		return 0, err
