@@ -8,69 +8,67 @@ import (
 	"github.com/spf13/pflag"
 )
 
-
-type FlagsGroup struct {
-	Title string
-	FlagSet * pflag.FlagSet
+type FlagGroup struct {
+	Title   string
+	FlagSet *pflag.FlagSet
 }
 
-type MapFlagsGroup struct {
-	cmd *cobra.Command
-	m map[string]FlagsGroup
+type FlagGroupMap struct {
+	cmd   *cobra.Command
+	m     map[string]FlagGroup
 	order *[]string
 }
 
-func NewMapFlagsGroup(cmd *cobra.Command) MapFlagsGroup {
-	return MapFlagsGroup {
-		cmd: cmd,
-		m: map[string]FlagsGroup{},
+func NewFlagGroupMap(cmd *cobra.Command) FlagGroupMap {
+	return FlagGroupMap{
+		cmd:   cmd,
+		m:     map[string]FlagGroup{},
 		order: &([]string{}),
 	}
 }
 
-func (fg *FlagsGroup) Usage() string {
-	return fmt.Sprint( fg.Title, "\n", fg.FlagSet.FlagUsagesWrapped(1))
+func (fg *FlagGroup) Usage() string {
+	return fmt.Sprint(fg.Title, "\n", fg.FlagSet.FlagUsagesWrapped(1))
 }
 
-func NewFlagsGroup(title string) FlagsGroup {
-	return FlagsGroup {
-		Title: title,
+func NewFlagsGroup(title string) FlagGroup {
+	return FlagGroup{
+		Title:   title,
 		FlagSet: pflag.NewFlagSet(title, 0),
 	}
 }
 
-func (mfg MapFlagsGroup) GetOrAddFlagSet(groupName string) *pflag.FlagSet {
-	fg, found := mfg.m[groupName]
+func (fgm FlagGroupMap) GetOrAddFlagSet(groupName string) *pflag.FlagSet {
+	fg, found := fgm.m[groupName]
 	if !found {
 		fg = NewFlagsGroup(groupName)
-		mfg.m[groupName] = fg
-		*mfg.order = append(*mfg.order, groupName)
+		fgm.m[groupName] = fg
+		*fgm.order = append(*fgm.order, groupName)
 	}
 	return fg.FlagSet
 }
 
-func (mfg MapFlagsGroup) Groups() []FlagsGroup {
-	groups := []FlagsGroup{}
-	for _, name := range *mfg.order {
-		groups = append(groups, mfg.m[name])
+func (fgm FlagGroupMap) Groups() []FlagGroup {
+	groups := []FlagGroup{}
+	for _, name := range *fgm.order {
+		groups = append(groups, fgm.m[name])
 	}
 	return groups
 }
 
-func (mfg MapFlagsGroup) ConnectToCmd() {
-	ConnectFlagsGroupToCmd(mfg.cmd, mfg.Groups()...)
+func (fgm FlagGroupMap) ConnectToCmd() {
+	ConnectFlagsGroupToCmd(fgm.cmd, fgm.Groups()...)
 }
 
-
 // ConnectFlagsGroupToCmd
-func ConnectFlagsGroupToCmd(cmd *cobra.Command, fgs ...FlagsGroup) {
+func ConnectFlagsGroupToCmd(cmd *cobra.Command, fgs ...FlagGroup) {
 	for _, fg := range fgs {
 		cmd.Flags().AddFlagSet(fg.FlagSet)
 	}
 	usage := FlagsGroupUsage(fgs...)
 
 	cmd.SetUsageTemplate(fmt.Sprintf(
-`Usage:{{if .Runnable}}
+		`Usage:{{if .Runnable}}
 {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
 {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 Aliases:
@@ -79,8 +77,9 @@ Examples:
 {{.Example}}{{end}}{{if .HasAvailableSubCommands}}
 Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
 {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
 Flags:
-`+usage+`{{end}}{{if .HasAvailableInheritedFlags}}
+` + usage + `{{end}}{{if .HasAvailableInheritedFlags}}
 Global Flags:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
@@ -88,11 +87,11 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}`))
 }
 
-func FlagsGroupUsage(fgs ...FlagsGroup) string {
+func FlagsGroupUsage(fgs ...FlagGroup) string {
 	usage := []string{}
 	for _, fg := range fgs {
 		usage = append(usage, fg.Usage())
 	}
 
-	return strings.Join(usage,"\n\n")
+	return strings.Join(usage, "\n\n")
 }

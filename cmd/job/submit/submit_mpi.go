@@ -19,11 +19,11 @@ import (
 	"os"
 	"path"
 
-	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/cmd/attach"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 
-	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/cmd/flags"
+	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util"
@@ -82,12 +82,12 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		},
 	}
 
-	mfg := flags.NewMapFlagsGroup(command)
-	submitArgs.addCommonFlags(mfg)
-	fg := mfg.GetOrAddFlagSet(JobLifecycle)
+	fgm := flags.NewFlagGroupMap(command)
+	submitArgs.addCommonFlags(fgm)
+	fg := fgm.GetOrAddFlagSet(JobLifecycle)
 	fg.IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
-	mfg.ConnectToCmd()
-	
+	fgm.ConnectToCmd()
+
 	return command
 
 }

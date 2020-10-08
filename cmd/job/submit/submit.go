@@ -42,12 +42,12 @@ const (
 	// groups
 	AliasesAndShortcuts = "Aliases/Shortcuts"
 	ContainerDefinition = "Container Definition"
-	ResourceAllocation = "Resource Allocation"
-	Storage = "Storage"
-	Network = "Network"
-	JobLifecycle = "Job Lifecycle"
-	AccessControl = "Access Control"
-	Scheduling = "Scheduling"
+	ResourceAllocation  = "Resource Allocation"
+	Storage             = "Storage"
+	Network             = "Network"
+	JobLifecycle        = "Job Lifecycle"
+	AccessControl       = "Access Control"
+	Scheduling          = "Scheduling"
 )
 
 var (
@@ -187,7 +187,7 @@ func (submitArgs *submitArgs) addTolerations() {
 	}
 }
 
-func (submitArgs *submitArgs) addCommonFlags(mfg flags.MapFlagsGroup) {
+func (submitArgs *submitArgs) addCommonFlags(fgm flags.FlagGroupMap) {
 	var defaultUser string
 	currentUser, err := user.Current()
 	if err != nil {
@@ -196,7 +196,7 @@ func (submitArgs *submitArgs) addCommonFlags(mfg flags.MapFlagsGroup) {
 		defaultUser = currentUser.Username
 	}
 
-	fs := mfg.GetOrAddFlagSet( AliasesAndShortcuts )
+	fs := fgm.GetOrAddFlagSet(AliasesAndShortcuts)
 	fs.StringVar(&nameParameter, "name", "", "Job name")
 	fs.MarkDeprecated("name", "please use positional argument instead")
 	flags.AddBoolNullableFlag(fs, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
@@ -204,10 +204,9 @@ func (submitArgs *submitArgs) addCommonFlags(mfg flags.MapFlagsGroup) {
 	fs.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	fs.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
-	fs.MarkHidden("dry-run")	
+	fs.MarkHidden("dry-run")
 
-
-	fs = mfg.GetOrAddFlagSet( ContainerDefinition )
+	fs = fgm.GetOrAddFlagSet(ContainerDefinition)
 	flags.AddBoolNullableFlag(fs, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	fs.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
 	fs.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
@@ -219,40 +218,34 @@ func (submitArgs *submitArgs) addCommonFlags(mfg flags.MapFlagsGroup) {
 	flags.AddBoolNullableFlag(fs, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
 	fs.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	fs.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
-	
-	
-	fs = mfg.GetOrAddFlagSet( ResourceAllocation )
+
+	fs = fgm.GetOrAddFlagSet(ResourceAllocation)
 	flags.AddFloat64NullableFlagP(fs, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
 	fs.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	fs.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
 	fs.StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
 	fs.StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
 	flags.AddBoolNullableFlag(fs, &submitArgs.LargeShm, "large-shm", "", "Mount a large /dev/shm device.")
-	
-	
-	fs = mfg.GetOrAddFlagSet( Storage )
+
+	fs = fgm.GetOrAddFlagSet(Storage)
 	fs.StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
 	fs.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
 	fs.StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	fs.MarkDeprecated("volumes", "please use 'volume' flag instead.")
-	
-	
-	fs = mfg.GetOrAddFlagSet( Network )
+
+	fs = fgm.GetOrAddFlagSet(Network)
 	flags.AddBoolNullableFlag(fs, &(submitArgs.HostIPC), "host-ipc", "", "Use the host's ipc namespace.")
 	flags.AddBoolNullableFlag(fs, &(submitArgs.HostNetwork), "host-network", "", "Use the host's network stack inside the container.")
-	
-	
-	fs = mfg.GetOrAddFlagSet( JobLifecycle )
-	
-	
-	fs = mfg.GetOrAddFlagSet( AccessControl )
+
+	fs = fgm.GetOrAddFlagSet(JobLifecycle)
+
+	fs = fgm.GetOrAddFlagSet(AccessControl)
 	flags.AddBoolNullableFlag(fs, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 	fs.BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
 	fs.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 	fs.MarkHidden("user")
 
-
-	fs = mfg.GetOrAddFlagSet( Scheduling )
+	fs = fgm.GetOrAddFlagSet(Scheduling)
 	fs.StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 }
 

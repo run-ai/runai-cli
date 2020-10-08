@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
-	"github.com/run-ai/runai-cli/cmd/attach"
-
 
 	runaiclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
@@ -31,7 +30,6 @@ var (
 	runaiChart       string
 	ttlAfterFinished *time.Duration
 )
-
 
 func NewRunaiJobCommand() *cobra.Command {
 
@@ -143,12 +141,12 @@ func NewRunaiJobCommand() *cobra.Command {
 		},
 	}
 
-	mfg := flags.NewMapFlagsGroup(command)
+	fgm := flags.NewFlagGroupMap(command)
 
-	submitArgs.addCommonFlags(mfg)
-	submitArgs.addFlags(mfg)
+	submitArgs.addCommonFlags(fgm)
+	submitArgs.addFlags(fgm)
 
-	mfg.ConnectToCmd()
+	fgm.ConnectToCmd()
 
 	return command
 }
@@ -229,9 +227,9 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 }
 
 // add flags to submit spark args
-func (sa *submitRunaiJobArgs) addFlags(mfg flags.MapFlagsGroup) {
+func (sa *submitRunaiJobArgs) addFlags(fgm flags.FlagGroupMap) {
 
-	fs := mfg.GetOrAddFlagSet(JobLifecycle)
+	fs := fgm.GetOrAddFlagSet(JobLifecycle)
 	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
@@ -243,7 +241,7 @@ func (sa *submitRunaiJobArgs) addFlags(mfg flags.MapFlagsGroup) {
 	flags.AddBoolNullableFlag(fs, &(sa.IsRunaiJob), "runai-job", "", "submit a job of resource runaijob")
 	fs.MarkHidden("runai-job")
 
-	fs =  mfg.GetOrAddFlagSet(Network)
+	fs = fgm.GetOrAddFlagSet(Network)
 	fs.StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 
 }
