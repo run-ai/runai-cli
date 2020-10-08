@@ -29,7 +29,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 var kubectlCmd = []string{"kubectl"}
 
 func SupportOldDryRun() (bool, error) {
