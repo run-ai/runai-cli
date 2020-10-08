@@ -5,6 +5,7 @@ import (
 	"io"
 	"reflect"
 	"strings"
+	"strconv"
 )
 
 // DECLERATION: currently sub grouping are not supported
@@ -26,6 +27,10 @@ const (
 
 )
 
+var (
+	groupId = 0
+)
+
 type (
 	FormatFunction = func(value interface{}, model interface{}) (string, error)
 	FormatterMap = map[string]FormatFunction
@@ -33,7 +38,7 @@ type (
 	Column struct {
 		Formmater                 FormatFunction
 		Path 					  []string
-		Key, Group, Title, Defult string
+		Key, GroupID, Title, Defult string
 	}
 
 	tableData struct {
@@ -87,6 +92,8 @@ type Tag struct {
 
 type GroupTag struct {
 	Name string
+	// to diff groups with the same name
+	ID string
 	// flags
 	Flatten bool
 	// keys
@@ -188,18 +195,18 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 	}
 
 	// add the groups
-	if len(td.groups) > 0 {
+	if len(td.groups) > 1 {
 		groupsCount := map[string]int{};
 		groups := []string{}
 		for _, c := range td.columns {
-			groupsCount[c.Group] = groupsCount[c.Group] + 1
+			groupsCount[c.GroupID] = groupsCount[c.GroupID] + 1
 		}
 		for i, tag := range td.groups {
 			groupName := tag.Name
 			if tag.Flatten {
 				groupName = ""
 			}
-			spaces := groupsCount[tag.Name]
+			spaces := groupsCount[tag.ID]
 			if spaces == 0 {
 				continue
 			}
@@ -221,15 +228,15 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 	titles := make([]string, len(td.columns))
 	titlesBottomBorder := make([]string, len(td.columns))
 
-	previousGroup := ""
+	previousGroup := "1"
 	for i, c := range td.columns {
 		title := c.Title
 		border := multiStr("─", len(title))
-		if i > 0 && previousGroup != c.Group {
+		if i > 0 && previousGroup != c.GroupID {
 			title = titleSeperation + title
 			border = rowsSeperation + border
 		}
-		previousGroup = c.Group
+		previousGroup = c.GroupID
 		titles[i] = title
 		titlesBottomBorder[i] = border
 	}
@@ -278,10 +285,10 @@ func (td *tableData) RenderRows(w io.Writer, rows interface{}) Table {
 				val = c.Defult
 			}
 
-			if i > 0 && previousGroup != c.Group {
+			if i > 0 && previousGroup != c.GroupID {
 				val = rowsSeperation + val
 			}
-			previousGroup = c.Group
+			previousGroup = c.GroupID
 
 			values[i] = val
 		}
@@ -310,7 +317,9 @@ func isStructGroup(field reflect.StructField) bool {
 
 func NewGroupTag(tagStr string) GroupTag{
 	tag := NewTag(tagStr)
+	groupId+=1
 	return GroupTag {
+		ID: strconv.Itoa(groupId),
 		Name: tag.Val,
 		Flatten: tag.Flags[flattenGroupFlag] || len(tag.Val)==0,
 	}
@@ -343,7 +352,7 @@ func toColumn(field reflect.StructField, formatMap FormatterMap, path []string, 
 	return Column{
 		Title:     title,
 		Defult:    def,
-		Group:     groupTag.Name,
+		GroupID:   groupTag.ID,
 		Key:       key,
 		Path:      path,
 		Formmater: formaterFunc,
