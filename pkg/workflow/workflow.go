@@ -133,28 +133,38 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func generateJobFilesWithNewName(name *string , namespace, environmentValues, chart string, values interface{}, labels *map[string]string, getJobSuffixFunc getJobSuffixFunc) (*JobFiles, error) {
-	jobSuffix, err := getJobSuffixFunc(*name, namespace)
+func generateJobFilesWithValidation(name, namespace, chart, environmentValues string, values interface{}) (bool, *JobFiles, error){
+	generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
+
+	jobExists, err := kubectl.CheckIfAppInfofileContentsExists(generatedJobFiles.appInfoFileName, namespace)
+	if err != nil {
+		return false, nil, err
+	}
+	return !jobExists, generatedJobFiles, err
+}
+
+func generateJobFilesWithNewName(name *string , namespace, environmentValues, chart string, values interface{}, labels *map[string]string, getJobSuffixFunc getJobSuffixFunc) (*JobFiles, error) {
 	initialName := *name
 	(*labels)[JobFamilyRoot] = strconv.FormatBool(false)
 
 	for i := 0; i < submitNewNameRetries; i++ {
+		jobSuffix, err := getJobSuffixFunc(*name, namespace)
+		if err != nil {
+			return nil, err
+		}
 		jobSuffixStr := strconv.Itoa(jobSuffix)
-		fmt.Println(jobSuffixStr)
 		currentName := initialName + "-" + jobSuffixStr
 
 		(*labels)[JobFamilyIndex] = jobSuffixStr
-		generatedJobFiles, err := generateJobFiles(currentName, namespace, values, environmentValues, chart)
+		isSuccess, generatedJobFiles, err := generateJobFilesWithValidation(currentName, namespace, chart, environmentValues, values)
 		if err != nil {
 			return nil, err
 		}
 
-		jobExists, err := kubectl.CheckIfAppInfofileContentsExists(generatedJobFiles.appInfoFileName, namespace)
-
-		if !jobExists {
+		if isSuccess {
 			*name = currentName
 			return generatedJobFiles, nil
 		}
@@ -175,21 +185,13 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
 
 		if found != nil && found.Name != "" {
-			generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
+			isSuccess, generatedJobFiles, err := generateJobFilesWithValidation(name, namespace, chart, environmentValues, values)
 			if err != nil {
 				return err
 			}
 
-			jobFiles = generatedJobFiles
-
-			jobExists, err := kubectl.CheckIfAppInfofileContentsExists(jobFiles.appInfoFileName, namespace)
-
-			if err != nil {
-				return err
-			}
-
-			if jobExists {
-				jobFiles, err = generateJobFilesWithNewName(baseName, namespace, environmentValues, chart, values, labels, getJobSuffixFunc)
+			if !isSuccess {
+				generatedJobFiles, err = generateJobFilesWithNewName(baseName, namespace, environmentValues, chart, values, labels, getJobSuffixFunc)
 				if err != nil {
 					return err
 				}
@@ -206,6 +208,8 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 					return fmt.Errorf("Error submitting the job.")
 				}
 			}
+
+			jobFiles = generatedJobFiles
 		}
 	}
 
