@@ -187,6 +187,7 @@ type submitRunaiJobArgs struct {
 	IsJupyter        bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
+	IsOldJob         *bool
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -234,8 +235,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsRunaiJob), "runai-job", "", "submit a job of resource runaijob")
-	command.Flags().MarkHidden("runai-job")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
+	command.Flags().MarkHidden("old-job")
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset, configValues *string) error {
@@ -272,6 +273,10 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 func handleRunaiJobCRD(submitArgs *submitRunaiJobArgs, runaiclientset runaiclientset.Clientset) {
 	isRunaiJob := true
 	submitArgs.IsRunaiJob = &isRunaiJob
+	if submitArgs.IsOldJob != nil && *submitArgs.IsOldJob {
+		*submitArgs.IsRunaiJob = false
+		return
+	}
 	_, err := runaiclientset.RunV1().RunaiJobs("").List(metav1.ListOptions{})
 	if err != nil {
 		*submitArgs.IsRunaiJob = false
@@ -289,9 +294,6 @@ func verifyHPOFlags(submitArgs *submitRunaiJobArgs) error {
 		}
 		if submitArgs.Interactive != nil {
 			return fmt.Errorf("interactive jobs can't run with Parallelism")
-		}
-		if *submitArgs.GPU != 0 && *submitArgs.GPU < 1 {
-			return fmt.Errorf("usage of GPU Fractions in conjunction with parallelism is not supported")
 		}
 	}
 	return nil
