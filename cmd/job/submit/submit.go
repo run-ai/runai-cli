@@ -39,15 +39,15 @@ import (
 const (
 	runaiNamespace = "runai"
 
-	// groups
-	AliasesAndShortcuts flags.FlagGroupName = "Aliases/Shortcuts"
-	ContainerDefinition flags.FlagGroupName = "Container Definition"
-	ResourceAllocation  flags.FlagGroupName = "Resource Allocation"
-	Storage             flags.FlagGroupName = "Storage"
-	Network             flags.FlagGroupName = "Network"
-	JobLifecycle        flags.FlagGroupName = "Job Lifecycle"
-	AccessControl       flags.FlagGroupName = "Access Control"
-	Scheduling          flags.FlagGroupName = "Scheduling"
+	// flag group names
+	AliasesAndShortcutsFlagGroup flags.FlagGroupName = "Aliases/Shortcuts"
+	ContainerDefinitionFlagGroup flags.FlagGroupName = "Container Definition"
+	ResourceAllocationFlagGroup  flags.FlagGroupName = "Resource Allocation"
+	StorageFlagGroup             flags.FlagGroupName = "Storage"
+	NetworkFlagGroup             flags.FlagGroupName = "Network"
+	JobLifecycleFlagGroup        flags.FlagGroupName = "Job Lifecycle"
+	AccessControlFlagGroup       flags.FlagGroupName = "Access Control"
+	SchedulingFlagGroup          flags.FlagGroupName = "Scheduling"
 )
 
 var (
