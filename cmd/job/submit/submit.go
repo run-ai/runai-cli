@@ -187,7 +187,7 @@ func (submitArgs *submitArgs) addTolerations() {
 	}
 }
 
-func (submitArgs *submitArgs) addCommonFlags(fgm flags.FlagGroupMap) {
+func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	var defaultUser string
 	currentUser, err := user.Current()
 	if err != nil {
@@ -196,57 +196,57 @@ func (submitArgs *submitArgs) addCommonFlags(fgm flags.FlagGroupMap) {
 		defaultUser = currentUser.Username
 	}
 
-	fs := fgm.GetOrAddFlagSet(AliasesAndShortcuts)
-	fs.StringVar(&nameParameter, "name", "", "Job name")
-	fs.MarkDeprecated("name", "please use positional argument instead")
-	flags.AddBoolNullableFlag(fs, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
-	fs.StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-	fs.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
+	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcuts)
+	flagSet.StringVar(&nameParameter, "name", "", "Job name")
+	flagSet.MarkDeprecated("name", "please use positional argument instead")
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
+	flagSet.StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
+	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
-	fs.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
-	fs.MarkHidden("dry-run")
+	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
+	flagSet.MarkHidden("dry-run")
 
-	fs = fgm.GetOrAddFlagSet(ContainerDefinition)
-	flags.AddBoolNullableFlag(fs, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
-	fs.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
-	fs.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
-	fs.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
-	fs.StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
-	flags.AddBoolNullableFlag(fs, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
-	flags.AddBoolNullableFlag(fs, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
-	flags.AddBoolNullableFlag(fs, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
-	flags.AddBoolNullableFlag(fs, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
-	fs.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
-	fs.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	flagSet = fbg.GetOrAddFlagSet(ContainerDefinition)
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
+	flagSet.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	flagSet.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
+	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
+	flagSet.StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
+	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
+	flagSet.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 
-	fs = fgm.GetOrAddFlagSet(ResourceAllocation)
-	flags.AddFloat64NullableFlagP(fs, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
-	fs.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
-	fs.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
-	fs.StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
-	fs.StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
-	flags.AddBoolNullableFlag(fs, &submitArgs.LargeShm, "large-shm", "", "Mount a large /dev/shm device.")
+	flagSet = fbg.GetOrAddFlagSet(ResourceAllocation)
+	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
+	flagSet.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
+	flagSet.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
+	flagSet.StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
+	flagSet.StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.LargeShm, "large-shm", "", "Mount a large /dev/shm device.")
 
-	fs = fgm.GetOrAddFlagSet(Storage)
-	fs.StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
-	fs.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
-	fs.StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
-	fs.MarkDeprecated("volumes", "please use 'volume' flag instead.")
+	flagSet = fbg.GetOrAddFlagSet(Storage)
+	flagSet.StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
+	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
+	flagSet.StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
+	flagSet.MarkDeprecated("volumes", "please use 'volume' flag instead.")
 
-	fs = fgm.GetOrAddFlagSet(Network)
-	flags.AddBoolNullableFlag(fs, &(submitArgs.HostIPC), "host-ipc", "", "Use the host's ipc namespace.")
-	flags.AddBoolNullableFlag(fs, &(submitArgs.HostNetwork), "host-network", "", "Use the host's network stack inside the container.")
+	flagSet = fbg.GetOrAddFlagSet(Network)
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.HostIPC), "host-ipc", "", "Use the host's ipc namespace.")
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.HostNetwork), "host-network", "", "Use the host's network stack inside the container.")
 
-	fs = fgm.GetOrAddFlagSet(JobLifecycle)
+	flagSet = fbg.GetOrAddFlagSet(JobLifecycle)
 
-	fs = fgm.GetOrAddFlagSet(AccessControl)
-	flags.AddBoolNullableFlag(fs, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
-	fs.BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
-	fs.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
-	fs.MarkHidden("user")
+	flagSet = fbg.GetOrAddFlagSet(AccessControl)
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
+	flagSet.BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
+	flagSet.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
+	flagSet.MarkHidden("user")
 
-	fs = fgm.GetOrAddFlagSet(Scheduling)
-	fs.StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
+	flagSet = fbg.GetOrAddFlagSet(Scheduling)
+	flagSet.StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 }
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
