@@ -40,14 +40,14 @@ const (
 	runaiNamespace = "runai"
 
 	// groups
-	AliasesAndShortcuts = "Aliases/Shortcuts"
-	ContainerDefinition = "Container Definition"
-	ResourceAllocation  = "Resource Allocation"
-	Storage             = "Storage"
-	Network             = "Network"
-	JobLifecycle        = "Job Lifecycle"
-	AccessControl       = "Access Control"
-	Scheduling          = "Scheduling"
+	AliasesAndShortcuts flags.FlagGroupName = "Aliases/Shortcuts"
+	ContainerDefinition flags.FlagGroupName = "Container Definition"
+	ResourceAllocation  flags.FlagGroupName = "Resource Allocation"
+	Storage             flags.FlagGroupName = "Storage"
+	Network             flags.FlagGroupName = "Network"
+	JobLifecycle        flags.FlagGroupName = "Job Lifecycle"
+	AccessControl       flags.FlagGroupName = "Access Control"
+	Scheduling          flags.FlagGroupName = "Scheduling"
 )
 
 var (

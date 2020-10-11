@@ -8,8 +8,10 @@ import (
 	"github.com/spf13/pflag"
 )
 
+type FlagGroupName string
+
 type FlagGroup struct {
-	Title   string
+	Name   FlagGroupName
 	FlagSet *pflag.FlagSet
 }
 
@@ -26,19 +28,19 @@ func NewFlagsByGroups(cmd *cobra.Command) FlagsByGroups {
 }
 
 func (fg *FlagGroup) usage() string {
-	return fmt.Sprint(fg.Title, ":\n", fg.FlagSet.FlagUsagesWrapped(1))
+	return fmt.Sprint(fg.Name, ":\n", fg.FlagSet.FlagUsagesWrapped(1))
 }
 
-func NewFlagGroup(title string) FlagGroup {
+func NewFlagGroup(name FlagGroupName) FlagGroup {
 	return FlagGroup{
-		Title:   title,
-		FlagSet: pflag.NewFlagSet(title, 0),
+		Name:   name,
+		FlagSet: pflag.NewFlagSet(string(name), 0),
 	}
 }
 
-func (fbg *FlagsByGroups) GetOrAddFlagSet(groupName string) (fs *pflag.FlagSet){
+func (fbg *FlagsByGroups) GetOrAddFlagSet(groupName FlagGroupName) (fs *pflag.FlagSet){
 	for _, item := range *fbg.groupsByOrder {
-		if item.Title == groupName {
+		if item.Name == groupName {
 			fs = item.FlagSet
 		}
 	}
