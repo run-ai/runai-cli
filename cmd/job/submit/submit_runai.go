@@ -51,10 +51,10 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:   "submit [NAME]",
-		Short: "Submit a new job.",
+		Use:     "submit [NAME]",
+		Short:   "Submit a new job.",
 		Example: submitExamples,
-		Args:  cobra.RangeArgs(0, 1),
+		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
 			if err != nil {
@@ -158,12 +158,12 @@ func NewRunaiJobCommand() *cobra.Command {
 		},
 	}
 
-	fgm := flags.NewFlagGroupMap(command)
+	fbg := flags.NewFlagsByGroups(command)
 
-	submitArgs.addCommonFlags(fgm)
-	submitArgs.addFlags(fgm)
+	submitArgs.addCommonFlags(fbg)
+	submitArgs.addFlags(fbg)
 
-	fgm.ConnectToCmd()
+	fbg.UpdateFlagsByGroupsToCmd()
 
 	return command
 }
@@ -243,9 +243,9 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 }
 
 // add flags to submit spark args
-func (sa *submitRunaiJobArgs) addFlags(fgm flags.FlagGroupMap) {
+func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
-	fs := fgm.GetOrAddFlagSet(JobLifecycle)
+	fs := fbg.GetOrAddFlagSet(JobLifecycle)
 	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
@@ -257,7 +257,7 @@ func (sa *submitRunaiJobArgs) addFlags(fgm flags.FlagGroupMap) {
 	flags.AddBoolNullableFlag(fs, &(sa.IsRunaiJob), "runai-job", "", "submit a job of resource runaijob")
 	fs.MarkHidden("runai-job")
 
-	fs = fgm.GetOrAddFlagSet(Network)
+	fs = fbg.GetOrAddFlagSet(Network)
 	fs.StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 
 }

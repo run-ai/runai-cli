@@ -13,61 +13,54 @@ type FlagGroup struct {
 	FlagSet *pflag.FlagSet
 }
 
-type FlagGroupMap struct {
-	cmd   *cobra.Command
-	m     map[string]FlagGroup
-	order *[]string
+type FlagsByGroups struct {
+	cmd           *cobra.Command
+	groupsByOrder *[]FlagGroup
 }
 
-func NewFlagGroupMap(cmd *cobra.Command) FlagGroupMap {
-	return FlagGroupMap{
-		cmd:   cmd,
-		m:     map[string]FlagGroup{},
-		order: &([]string{}),
+func NewFlagsByGroups(cmd *cobra.Command) FlagsByGroups {
+	return FlagsByGroups{
+		cmd:           cmd,
+		groupsByOrder: &([]FlagGroup{}),
 	}
 }
 
-func (fg *FlagGroup) Usage() string {
+func (fg *FlagGroup) usage() string {
 	return fmt.Sprint(fg.Title, ":\n", fg.FlagSet.FlagUsagesWrapped(1))
 }
 
-func NewFlagsGroup(title string) FlagGroup {
+func NewFlagGroup(title string) FlagGroup {
 	return FlagGroup{
 		Title:   title,
 		FlagSet: pflag.NewFlagSet(title, 0),
 	}
 }
 
-func (fgm FlagGroupMap) GetOrAddFlagSet(groupName string) *pflag.FlagSet {
-	fg, found := fgm.m[groupName]
-	if !found {
-		fg = NewFlagsGroup(groupName)
-		fgm.m[groupName] = fg
-		*fgm.order = append(*fgm.order, groupName)
+func (fbg *FlagsByGroups) GetOrAddFlagSet(groupName string) (fs *pflag.FlagSet){
+	for _, item := range *fbg.groupsByOrder {
+		if item.Title == groupName {
+			fs = item.FlagSet
+		}
 	}
-	return fg.FlagSet
-}
-
-func (fgm FlagGroupMap) Groups() []FlagGroup {
-	groups := []FlagGroup{}
-	for _, name := range *fgm.order {
-		groups = append(groups, fgm.m[name])
+	if fs == nil {
+		newFlagGroup := NewFlagGroup(groupName)
+		*fbg.groupsByOrder = append(*fbg.groupsByOrder, newFlagGroup)
+		fs = newFlagGroup.FlagSet
 	}
-	return groups
+	return fs
 }
 
-func (fgm FlagGroupMap) ConnectToCmd() {
-	ConnectFlagsGroupToCmd(fgm.cmd, fgm.Groups()...)
+func (fbg *FlagsByGroups) UpdateFlagsByGroupsToCmd() {	
+	updateFlagsByGroupsToCmd(fbg.cmd, *fbg.groupsByOrder...)
 }
 
-// ConnectFlagsGroupToCmd
-func ConnectFlagsGroupToCmd(cmd *cobra.Command, fgs ...FlagGroup) {
+func updateFlagsByGroupsToCmd(cmd *cobra.Command, fgs ...FlagGroup) {
 	for _, fg := range fgs {
 		cmd.Flags().AddFlagSet(fg.FlagSet)
 	}
-	usage := FlagsGroupUsage(fgs...)
+	usage := flagsGroupUsage(fgs...)
 
-	cmd.SetUsageTemplate(fmt.Sprintf(
+	cmd.SetUsageTemplate(
 		`Usage:{{if .Runnable}}
 {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
 {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
@@ -84,13 +77,13 @@ Global Flags:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
-Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}`))
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}`)
 }
 
-func FlagsGroupUsage(fgs ...FlagGroup) string {
+func flagsGroupUsage(fgs ...FlagGroup) string {
 	usage := []string{}
 	for _, fg := range fgs {
-		usage = append(usage, fg.Usage())
+		usage = append(usage, fg.usage())
 	}
 
 	return strings.Join(usage, "\n\n")

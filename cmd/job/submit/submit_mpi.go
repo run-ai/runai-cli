@@ -34,10 +34,9 @@ import (
 
 const (
 	SubmitMpiCommand = "submit-mpi"
-	mpiExamples = `
-runai submit-mpi dist1 --processes=2 -g 1 \
+	mpiExamples      = `
+runai submit-mpi distributed-job --processes=2 -g 1 \
 	-i gcr.io/run-ai-demo/quickstart-distributed`
-
 )
 
 var (
@@ -87,11 +86,11 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		},
 	}
 
-	fgm := flags.NewFlagGroupMap(command)
-	submitArgs.addCommonFlags(fgm)
-	fg := fgm.GetOrAddFlagSet(JobLifecycle)
+	fbg := flags.NewFlagsByGroups(command)
+	submitArgs.addCommonFlags(fbg)
+	fg := fbg.GetOrAddFlagSet(JobLifecycle)
 	fg.IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
-	fgm.ConnectToCmd()
+	fbg.UpdateFlagsByGroupsToCmd()
 
 	return command
 
