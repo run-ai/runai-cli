@@ -16,6 +16,7 @@ package submit
 
 import (
 	"fmt"
+	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"path"
@@ -74,7 +75,8 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			err = submitMPIJob(cmd, args, &submitArgs, kubeClient, &configValues)
+			mpiClient := mpiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
+			err = submitMPIJob(cmd, args, &submitArgs, kubeClient, mpiClient, &configValues)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -130,7 +132,7 @@ func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 }
 
 // Submit MPIJob
-func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArgs, client *client.Client, configValues *string) (err error) {
+func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArgs, client *client.Client, mpiClient *mpiClient.Clientset,configValues *string) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
@@ -146,16 +148,18 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 		return fmt.Errorf("the job %s already exists, please delete it first. use 'runai delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 
-	// the master is also considered as a worker
-	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-	countJobFunc := func(name, namespace string) (int, error) {
-		list, err := client.GetClientset().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", workflow.BaseNameLabel, name)})
+	countJobsByBaseNameFunc := func(baseName, namespace string) (int, error) {
+		baseNameSelector := fmt.Sprintf("%s=%s", workflow.BaseNameLabel, baseName)
+		list, err := mpiClient.KubeflowV1alpha1().MPIJobs(namespace).List(metav1.ListOptions{LabelSelector: baseNameSelector})
 		if err != nil {
 			return 0, err
 		}
 		return len(list.Items), nil
 	}
-	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, *configValues, mpijob_chart, client.GetClientset(), countJobFunc, dryRun)
+
+	// the master is also considered as a worker
+	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, mpijob_chart, client.GetClientset(), countJobsByBaseNameFunc, dryRun)
 	if err != nil {
 		return err
 	}

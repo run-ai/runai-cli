@@ -161,10 +161,10 @@ type submitValues interface {
 
 type getJobCount func(name, namespace string) (int, error)
 
-func SubmitJob(baseName *string, trainingType string, namespace string, values submitValues, environmentValues string, chart string, clientset kubernetes.Interface, countJobFunc getJobCount, dryRun bool) error {
+func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, countJobFunc getJobCount, dryRun bool) error {
 	name := *baseName
 	jobName := GetJobName(name, trainingType)
-	values.AddLabel(BaseNameLabel, name)
+	(*labels)[BaseNameLabel] = name
 
 	var jobFiles *JobFiles
 
