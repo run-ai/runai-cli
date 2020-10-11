@@ -196,7 +196,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 		defaultUser = currentUser.Username
 	}
 
-	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcuts)
+	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&nameParameter, "name", "", "Job name")
 	flagSet.MarkDeprecated("name", "please use positional argument instead")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
@@ -206,7 +206,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
 
-	flagSet = fbg.GetOrAddFlagSet(ContainerDefinition)
+	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	flagSet.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
 	flagSet.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
@@ -219,7 +219,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	flagSet.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 
-	flagSet = fbg.GetOrAddFlagSet(ResourceAllocation)
+	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
 	flagSet.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	flagSet.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
@@ -227,25 +227,25 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LargeShm, "large-shm", "", "Mount a large /dev/shm device.")
 
-	flagSet = fbg.GetOrAddFlagSet(Storage)
+	flagSet = fbg.GetOrAddFlagSet(StorageFlagGroup)
 	flagSet.StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
 	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
 	flagSet.StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	flagSet.MarkDeprecated("volumes", "please use 'volume' flag instead.")
 
-	flagSet = fbg.GetOrAddFlagSet(Network)
+	flagSet = fbg.GetOrAddFlagSet(NetworkFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.HostIPC), "host-ipc", "", "Use the host's ipc namespace.")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.HostNetwork), "host-network", "", "Use the host's network stack inside the container.")
 
-	flagSet = fbg.GetOrAddFlagSet(JobLifecycle)
+	flagSet = fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 
-	flagSet = fbg.GetOrAddFlagSet(AccessControl)
+	flagSet = fbg.GetOrAddFlagSet(AccessControlFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
 	flagSet.BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
 	flagSet.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 	flagSet.MarkHidden("user")
 
-	flagSet = fbg.GetOrAddFlagSet(Scheduling)
+	flagSet = fbg.GetOrAddFlagSet(SchedulingFlagGroup)
 	flagSet.StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 }
 

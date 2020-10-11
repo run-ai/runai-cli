@@ -88,7 +88,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 	fbg := flags.NewFlagsByGroups(command)
 	submitArgs.addCommonFlags(fbg)
-	fg := fbg.GetOrAddFlagSet(JobLifecycle)
+	fg := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	fg.IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
 	fbg.UpdateFlagsByGroupsToCmd()
 

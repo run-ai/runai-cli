@@ -246,7 +246,7 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 // add flags to submit spark args
 func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
-	fs := fbg.GetOrAddFlagSet(JobLifecycle)
+	fs := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
 	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
@@ -258,7 +258,7 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
 	fs.MarkHidden("old-job")
 
-	fs = fbg.GetOrAddFlagSet(Network)
+	fs = fbg.GetOrAddFlagSet(NetworkFlagGroup)
 	fs.StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 
 }
