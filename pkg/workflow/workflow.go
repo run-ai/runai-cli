@@ -154,7 +154,7 @@ func forceGenerateJobFiles(name *string , namespace, environmentValues, chart st
 		}
 	}
 
-	return nil, fmt.Errorf("Could not submit %s. Please try again", name)
+	return nil, fmt.Errorf("could not submit %s. Please try again", initialName)
 }
 
 func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, countJobFunc getJobCountFunc, dryRun bool) error {
