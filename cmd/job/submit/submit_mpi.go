@@ -16,6 +16,7 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/flags"
 	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
@@ -83,6 +84,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	}
 
 	command.Flags().IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
+	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.generateName), "generate-name", "", "Allow the CLI to change the name of the job if the job name already exists")
 	submitArgs.addCommonFlags(command)
 	return command
 
@@ -95,6 +97,7 @@ type submitMPIJobArgs struct {
 	// for tensorboard
 	NumberProcesses int `yaml:"numProcesses"` // --workers
 	TotalGPUs       int `yaml:"totalGpus"`    // --workers
+	generateName    *bool
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
@@ -135,6 +138,10 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 	if err != nil {
 		return err
 	}
+	generateName := false
+	if submitArgs.generateName != nil {
+		generateName = *submitArgs.generateName
+	}
 
 	getSmallestUnoccupiedJobSuffixByBaseName := func(baseName, namespace string) (int, error) {
 		baseNameSelector := fmt.Sprintf("%s=%s", workflow.JobFamilyName, baseName)
@@ -162,7 +169,7 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, mpijob_chart, client.GetClientset(), getSmallestUnoccupiedJobSuffixByBaseName, dryRun)
+	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, mpijob_chart, client.GetClientset(), getSmallestUnoccupiedJobSuffixByBaseName, dryRun, generateName)
 	if err != nil {
 		return err
 	}

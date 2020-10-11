@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/config"
 	"os"
 	"strconv"
 
@@ -173,7 +174,7 @@ func generateJobFilesWithNewName(name *string , namespace, environmentValues, ch
 	return nil, fmt.Errorf("could not submit %s. Please try again", initialName)
 }
 
-func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, getJobSuffixFunc getJobSuffixFunc, dryRun bool) error {
+func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, getJobSuffixFunc getJobSuffixFunc, dryRun, generateName bool) error {
 	name := *baseName
 	jobName := GetJobName(name, trainingType)
 	(*labels)[JobFamilyName] = name
@@ -191,6 +192,10 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 			}
 
 			if !isSuccess {
+				if !generateName {
+					return fmt.Errorf("the job %s already exists, please delete it first. Alternatively you can use --%s flag. use '%s delete %s'", name, config.GenerateNameFlagName, config.CLIName, name)
+				}
+
 				generatedJobFiles, err = generateJobFilesWithNewName(baseName, namespace, environmentValues, chart, values, labels, getJobSuffixFunc)
 				if err != nil {
 					return err

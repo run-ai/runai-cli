@@ -189,6 +189,7 @@ type submitRunaiJobArgs struct {
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 	IsOldJob         *bool
+	generateName	 *bool
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -237,6 +238,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.generateName), "generate-name", "", "Allow the CLI to change the name of the job if the job name already exists")
 	command.Flags().MarkHidden("old-job")
 }
 
@@ -244,6 +246,10 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	err2 := verifyHPOFlags(submitArgs)
 	if err2 != nil {
 		return err2
+	}
+	generateName := false
+	if submitArgs.generateName != nil {
+		generateName = *submitArgs.generateName
 	}
 
 	getSmallestUnoccupiedJobSuffixByBaseName := func(baseName, namespace string) (int, error) {
@@ -283,7 +289,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		return jobCount, nil
 	}
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, runaiChart, clientset, getSmallestUnoccupiedJobSuffixByBaseName, dryRun)
+	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, runaiChart, clientset, getSmallestUnoccupiedJobSuffixByBaseName, dryRun, generateName)
 	if err != nil {
 		return err
 	}
