@@ -22,6 +22,8 @@ import (
 const (forceSubmitRetries = 3
 		BaseNameLabel = "base-name")
 
+type getJobCountFunc func(name, namespace string) (int, error)
+
 func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interface) error {
 	jobName := GetJobName(name, trainingType)
 
@@ -128,7 +130,7 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func forceGenerateJobFiles(name *string , namespace, environmentValues, chart string, values interface{}, countFunc getJobCount) (*JobFiles, error) {
+func forceGenerateJobFiles(name *string , namespace, environmentValues, chart string, values interface{}, countFunc getJobCountFunc) (*JobFiles, error) {
 	count, err := countFunc(*name, namespace)
 	if err != nil {
 		return nil, err
@@ -152,16 +154,10 @@ func forceGenerateJobFiles(name *string , namespace, environmentValues, chart st
 		}
 	}
 
-	return nil, fmt.Errorf("Could not submit %s. Pleas try again", name)
+	return nil, fmt.Errorf("Could not submit %s. Please try again", name)
 }
 
-type submitValues interface {
-	AddLabel(key, value string)
-}
-
-type getJobCount func(name, namespace string) (int, error)
-
-func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, countJobFunc getJobCount, dryRun bool) error {
+func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, countJobFunc getJobCountFunc, dryRun bool) error {
 	name := *baseName
 	jobName := GetJobName(name, trainingType)
 	(*labels)[BaseNameLabel] = name

@@ -22,14 +22,11 @@ import (
 	"path"
 
 	"github.com/run-ai/runai-cli/cmd/attach"
-	"github.com/run-ai/runai-cli/cmd/trainer"
-
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util"
 	"github.com/run-ai/runai-cli/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -138,19 +135,9 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 		return err
 	}
 
-	trainer := trainer.NewMPIJobTrainer(*client)
-	job, err := trainer.GetTrainingJob(submitArgs.Name, submitArgs.Namespace)
-	if err != nil {
-		log.Debugf("Check %s exist due to error %v", submitArgs.Name, err)
-	}
-
-	if job != nil {
-		return fmt.Errorf("the job %s already exists, please delete it first. use 'runai delete %s'", submitArgs.Name, submitArgs.Name)
-	}
-
 	countJobsByBaseNameFunc := func(baseName, namespace string) (int, error) {
 		baseNameSelector := fmt.Sprintf("%s=%s", workflow.BaseNameLabel, baseName)
-		list, err := mpiClient.KubeflowV1alpha1().MPIJobs(namespace).List(metav1.ListOptions{LabelSelector: baseNameSelector})
+		list, err := mpiClient.KubeflowV1alpha2().MPIJobs(namespace).List(metav1.ListOptions{LabelSelector: baseNameSelector})
 		if err != nil {
 			return 0, err
 		}
