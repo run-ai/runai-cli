@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -245,8 +246,8 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		return err2
 	}
 
-	countJobsByBaseNameFunc := func(baseName, namespace string) (int, error) {
-		baseNameSelector := fmt.Sprintf("%s=%s", workflow.BaseNameLabel, baseName)
+	getSmallestUnoccupiedJobSuffixByBaseName := func(baseName, namespace string) (int, error) {
+		baseNameSelector := fmt.Sprintf("%s=%s", workflow.JobFamilyName, baseName)
 		runaiJobList, err := runaiclientset.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{LabelSelector: baseNameSelector})
 		if err != nil {
 			return 0, err
@@ -255,11 +256,34 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		if err != nil {
 			return 0, err
 		}
+		jobCount := len(runaiJobList.Items) + len(statefullsetList.Items)
 
-		return len(runaiJobList.Items) + len(statefullsetList.Items), nil
+		OptionalLoop:
+		for i:= 0; i < jobCount; i++ {
+			for jobIndex := 0; jobIndex < len(runaiJobList.Items); jobIndex++ {
+				if runaiJobList.Items[jobIndex].Labels[workflow.JobFamilyRoot] == strconv.FormatBool(true) {
+					continue
+				}
+				jobIndex, err := strconv.Atoi(runaiJobList.Items[jobIndex].Labels[workflow.JobFamilyIndex])
+				if err != nil || i == jobIndex {
+					continue OptionalLoop
+				}
+			}
+			for jobIndex := 0; jobIndex < len(statefullsetList.Items); jobIndex++ {
+				if statefullsetList.Items[jobIndex].Labels[workflow.JobFamilyRoot] == strconv.FormatBool(true) {
+					continue
+				}
+				jobIndex, err := strconv.Atoi(statefullsetList.Items[jobIndex].Labels[workflow.JobFamilyIndex])
+				if err != nil || i == jobIndex {
+					continue OptionalLoop
+				}
+			}
+			return i, nil
+		}
+		return jobCount, nil
 	}
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, runaiChart, clientset, countJobsByBaseNameFunc, dryRun)
+	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, runaiChart, clientset, getSmallestUnoccupiedJobSuffixByBaseName, dryRun)
 	if err != nil {
 		return err
 	}

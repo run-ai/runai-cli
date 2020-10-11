@@ -19,10 +19,13 @@ import (
 *	delete training job with the job name
 **/
 
-const (forceSubmitRetries = 3
-		BaseNameLabel = "base-name")
+const (
+	submitNewNameRetries = 3
+		JobFamilyName = "job-family-name"
+		JobFamilyIndex = "job-family-index"
+		JobFamilyRoot = "job-family-root")
 
-type getJobCountFunc func(name, namespace string) (int, error)
+type getJobSuffixFunc func(name, namespace string) (int, error)
 
 func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interface) error {
 	jobName := GetJobName(name, trainingType)
@@ -130,17 +133,20 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func forceGenerateJobFiles(name *string , namespace, environmentValues, chart string, values interface{}, countFunc getJobCountFunc) (*JobFiles, error) {
-	count, err := countFunc(*name, namespace)
+func generateJobFilesWithNewName(name *string , namespace, environmentValues, chart string, values interface{}, labels *map[string]string, getJobSuffixFunc getJobSuffixFunc) (*JobFiles, error) {
+	jobSuffix, err := getJobSuffixFunc(*name, namespace)
 	if err != nil {
 		return nil, err
 	}
 	initialName := *name
+	(*labels)[JobFamilyRoot] = strconv.FormatBool(false)
 
-	for i := 0; i < forceSubmitRetries; i++ {
-		jobSuffix := strconv.Itoa(count + i - 1)
-		currentName := initialName + "-" + jobSuffix
+	for i := 0; i < submitNewNameRetries; i++ {
+		jobSuffixStr := strconv.Itoa(jobSuffix)
+		fmt.Println(jobSuffixStr)
+		currentName := initialName + "-" + jobSuffixStr
 
+		(*labels)[JobFamilyIndex] = jobSuffixStr
 		generatedJobFiles, err := generateJobFiles(currentName, namespace, values, environmentValues, chart)
 		if err != nil {
 			return nil, err
@@ -157,10 +163,11 @@ func forceGenerateJobFiles(name *string , namespace, environmentValues, chart st
 	return nil, fmt.Errorf("could not submit %s. Please try again", initialName)
 }
 
-func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, countJobFunc getJobCountFunc, dryRun bool) error {
+func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, getJobSuffixFunc getJobSuffixFunc, dryRun bool) error {
 	name := *baseName
 	jobName := GetJobName(name, trainingType)
-	(*labels)[BaseNameLabel] = name
+	(*labels)[JobFamilyName] = name
+	(*labels)[JobFamilyRoot] = strconv.FormatBool(true)
 
 	var jobFiles *JobFiles
 
@@ -182,7 +189,7 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 			}
 
 			if jobExists {
-				jobFiles, err = forceGenerateJobFiles(baseName, namespace, environmentValues, chart, values, countJobFunc)
+				jobFiles, err = generateJobFilesWithNewName(baseName, namespace, environmentValues, chart, values, labels, getJobSuffixFunc)
 				if err != nil {
 					return err
 				}
