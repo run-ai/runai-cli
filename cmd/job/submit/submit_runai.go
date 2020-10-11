@@ -255,8 +255,8 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(fs, &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
 	flags.AddDurationNullableFlagP(fs, &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
-	flags.AddBoolNullableFlag(fs, &(sa.IsRunaiJob), "runai-job", "", "submit a job of resource runaijob")
-	fs.MarkHidden("runai-job")
+	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
+	fs.MarkHidden("old-job")
 
 	fs = fbg.GetOrAddFlagSet(Network)
 	fs.StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
