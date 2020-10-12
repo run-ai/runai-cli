@@ -264,7 +264,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		}
 		jobCount := len(runaiJobList.Items) + len(statefullsetList.Items)
 
-		OptionalLoop:
+		OptionalIndexesLoop:
 		for i:= 1; i < jobCount; i++ {
 			for jobIndex := 0; jobIndex < len(runaiJobList.Items); jobIndex++ {
 				if runaiJobList.Items[jobIndex].Labels[workflow.JobFamilyIndex] == "" {
@@ -272,7 +272,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 				}
 				jobIndex, err := strconv.Atoi(runaiJobList.Items[jobIndex].Labels[workflow.JobFamilyIndex])
 				if err != nil || i == jobIndex {
-					continue OptionalLoop
+					continue OptionalIndexesLoop
 				}
 			}
 			for jobIndex := 0; jobIndex < len(statefullsetList.Items); jobIndex++ {
@@ -281,7 +281,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 				}
 				jobIndex, err := strconv.Atoi(statefullsetList.Items[jobIndex].Labels[workflow.JobFamilyIndex])
 				if err != nil || i == jobIndex {
-					continue OptionalLoop
+					continue OptionalIndexesLoop
 				}
 			}
 			return i, nil
