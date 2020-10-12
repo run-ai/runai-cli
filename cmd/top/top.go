@@ -12,26 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package top
 
 import (
-	v1 "k8s.io/api/core/v1"
-	batchv1 "k8s.io/api/batch/v1"
+	"github.com/spf13/cobra"
+	// podv1 "k8s.io/api/core/v1"
 )
 
-// Global variables
 var (
-	// To reduce client-go API call, for 'arena list' scenario
-	allPods        []v1.Pod
-	allJobs        []batchv1.Job
-	useCache       bool
-	arenaNamespace string // the system namespace of arena
+	topLong = `Display information about nodes and jobs.
+
+Available Commands:
+  node        Display Resource (GPU) usage of nodes
+  job         Display Resource (GPU) usage of pods
+    `
 )
 
+func NewTopCommand() *cobra.Command {
+	var command = &cobra.Command{
+		Use:   "top",
+		Short: "Display information about nodes and jobs.",
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.HelpFunc()(cmd, args)
+		},
+	}
 
+	// create subcommands
+	command.AddCommand(NewTopNodeCommand())
+	command.AddCommand(NewTopJobCommand())
 
-
-
-
-
-
+	return command
+}

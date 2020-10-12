@@ -2,6 +2,7 @@ package trainer
 
 import (
 	"github.com/run-ai/runai-cli/cmd/constants"
+	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	v1 "k8s.io/api/core/v1"
 
@@ -58,17 +59,6 @@ func getTrainingStatus(trainingAnnotations map[string]string, chiefPod *v1.Pod, 
 
 func IsFinishedStatus(status string) bool {
 	return status == constants.Status.Succeeded || status == constants.Status.Failed || status == constants.Status.Deleted || status == constants.Status.Preempted || status == constants.Status.TimedOut
-}
-
-// todo move from here to util > gpu
-func GetRequestedGPUsPerPodGroup(trainingAnnotations map[string]string) (float64, bool) {
-	if len(trainingAnnotations[constants.PodGroupRequestedGPUs]) > 0 {
-		requestedGPUs, err := strconv.ParseFloat(trainingAnnotations[constants.PodGroupRequestedGPUs], 64)
-		if err == nil {
-			return requestedGPUs, true
-		}
-	}
-	return 0, false
 }
 
 func getStatusColumnFromPodStatus(pod *corev1.Pod) string {
@@ -191,8 +181,8 @@ func getPendingPods(trainingAnnotations map[string]string) (int32, bool) {
 }
 
 func getCurrentRequestedGPUs(trainingAnnotations map[string]string) (float64, bool) {
-	if len(trainingAnnotations[constants.WorkloadCurrentRequestedGPUs]) > 0 {
-		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[constants.WorkloadCurrentRequestedGPUs], 64)
+	if len(trainingAnnotations[util.WorkloadCurrentRequestedGPUs]) > 0 {
+		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[util.WorkloadCurrentRequestedGPUs], 64)
 		if err == nil {
 			return totalAllocatedGPUs, true
 		}
@@ -201,8 +191,8 @@ func getCurrentRequestedGPUs(trainingAnnotations map[string]string) (float64, bo
 }
 
 func getAllocatedRequestedGPUs(trainingAnnotations map[string]string) (float64, bool) {
-	if len(trainingAnnotations[constants.WorkloadCurrentAllocatedGPUs]) > 0 {
-		currentAllocated, err := strconv.ParseFloat(trainingAnnotations[constants.WorkloadCurrentAllocatedGPUs], 64)
+	if len(trainingAnnotations[util.WorkloadCurrentAllocatedGPUs]) > 0 {
+		currentAllocated, err := strconv.ParseFloat(trainingAnnotations[util.WorkloadCurrentAllocatedGPUs], 64)
 		if err == nil {
 			return currentAllocated, true
 		}
@@ -211,8 +201,8 @@ func getAllocatedRequestedGPUs(trainingAnnotations map[string]string) (float64, 
 }
 
 func getTotalAllocatedGPUs(trainingAnnotations map[string]string) (float64, bool) {
-	if len(trainingAnnotations[constants.WorkloadTotalRequestedGPUs]) > 0 {
-		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[constants.WorkloadTotalRequestedGPUs], 64)
+	if len(trainingAnnotations[util.WorkloadTotalRequestedGPUs]) > 0 {
+		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[util.WorkloadTotalRequestedGPUs], 64)
 		if err == nil {
 			return totalAllocatedGPUs, true
 		}

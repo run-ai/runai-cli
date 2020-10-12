@@ -14,7 +14,7 @@
 
 // +build ignore
 
-package cmd
+package serve
 
 import (
 	"fmt"

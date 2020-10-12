@@ -12,7 +12,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	constants "github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/ui"
 	"github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -131,7 +131,7 @@ func getSortedProjects(projects map[string]*ProjectInfo) []*ProjectInfo {
 func printProjects(infos []*ProjectInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	util.PrintLine(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
+	ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
 
 	for _, info := range infos {
 		deservedInfo := "deleted"
@@ -154,7 +154,7 @@ func printProjects(infos []*ProjectInfo) {
 			name = info.name
 		}
 
-		util.PrintLine(w, name, info.department, deservedInfo, interactiveJobTimeLimitFmt, info.nodeAffinityInteractive, info.nodeAffinityTraining)
+		ui.Line(w, name, info.department, deservedInfo, interactiveJobTimeLimitFmt, info.nodeAffinityInteractive, info.nodeAffinityTraining)
 	}
 
 	_ = w.Flush()

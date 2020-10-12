@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package top
 
 import (
 	"fmt"
-	"io"
 	"os"
-	"strings"
 
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	log "github.com/sirupsen/logrus"
@@ -31,6 +29,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/ui"
 	"github.com/run-ai/runai-cli/pkg/util"
 )
 
@@ -46,7 +45,7 @@ func NewTopJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			client := kubeClient.GetClientset()
+
 			namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
 
 			if err != nil {
@@ -61,18 +60,6 @@ func NewTopJobCommand() *cobra.Command {
 
 			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
 
-			useCache = true
-			allPods, err = trainer.AcquireAllPods(client, namespaceInfo.Namespace)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			allJobs, err = trainer.AcquireAllJobs(client, namespaceInfo.Namespace)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
 			trainers := trainer.NewTrainers(kubeClient)
 			for _, trainer := range trainers {
 				trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
@@ -108,7 +95,7 @@ func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 
 	labelField := []string{"NAME", "PROJECT", "GPU(Current Requests)", "GPU(Current Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
 
-	PrintLine(w, labelField...)
+	ui.Line(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
 
@@ -118,7 +105,7 @@ func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 		// status, hostIP := jobInfo.getStatus()
 		totalAllocatedGPUs += allocatedGPU
 		totalRequestedGPUs += requestedGPU
-		PrintLine(w, jobInfo.Name(),
+		ui.Line(w, jobInfo.Name(),
 			jobInfo.Project(),
 			strconv.FormatFloat(jobInfo.CurrentRequestedGPUs(), 'f', -1, 64),
 			strconv.FormatFloat(jobInfo.CurrentAllocatedGPUs(), 'f', -1, 64),
@@ -142,11 +129,4 @@ func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 
 func fromByteToMiB(value float64) float64 {
 	return value / 1048576
-}
-
-// todo remove to ui
-func PrintLine(w io.Writer, fields ...string) {
-	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	buffer := strings.Join(fields, "\t")
-	fmt.Fprintln(w, buffer)
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package util
 
 import (
 	"strconv"
@@ -20,10 +20,25 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const (
+	RunaiGPUIndex                   = "runai-gpu"
+	RunaiGPUFraction                = "gpu-fraction"
+	// an annotation on each node
+	RunaiAllocatableGpus            = "runai-allocatable-gpus"
+	NVIDIAGPUResourceName           = "nvidia.com/gpu"
+	ALIYUNGPUResourceName           = "aliyun.com/gpu-mem"
+	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
+	PodGroupRequestedGPUs           = "runai-podgroup-requested-gpus"
+	WorkloadCurrentAllocatedGPUs    = "runai-current-allocated-gpus"
+	WorkloadCurrentRequestedGPUs    = "runai-current-requested-gpus"
+	WorkloadTotalRequestedGPUs      = "runai-total-requested-gpus"
+
+)
+
 // filter out the pods with GPU
-func gpuPods(pods []v1.Pod) (podsWithGPU []v1.Pod) {
+func GpuPods(pods []v1.Pod) (podsWithGPU []v1.Pod) {
 	for _, pod := range pods {
-		if gpuInPod(pod) > 0 {
+		if GpuInPod(pod) > 0 {
 			podsWithGPU = append(podsWithGPU, pod)
 		}
 	}
@@ -31,29 +46,29 @@ func gpuPods(pods []v1.Pod) (podsWithGPU []v1.Pod) {
 }
 
 // The way to get total GPU Count of Node: nvidia.com/gpu
-func totalGpuInNode(node v1.Node) int64 {
+func TotalGpuInNode(node v1.Node) int64 {
 	val, ok := node.Status.Capacity[NVIDIAGPUResourceName]
 
 	if !ok {
-		return gpuInNodeDeprecated(node)
+		return GpuInNodeDeprecated(node)
 	}
 
 	return val.Value()
 }
 
-// The way to get allocatble GPU Count of Node: nvidia.com/gpu
-func allocatableGpuInNode(node v1.Node) int64 {
-	val, ok := node.Status.Allocatable[NVIDIAGPUResourceName]
+// The way to get allocatble GPU Count of Node
+func AllocatableGpuInNode(node v1.Node) (num int64) {
+	val, ok := node.Annotations[RunaiAllocatableGpus]
 
-	if !ok {
-		return gpuInNodeDeprecated(node)
+	if ok {
+		num , _ = strconv.ParseInt(val, 10, 64)
 	}
-
-	return val.Value()
+	
+	return 
 }
 
 // The way to get GPU Count of Node: alpha.kubernetes.io/nvidia-gpu
-func gpuInNodeDeprecated(node v1.Node) int64 {
+func GpuInNodeDeprecated(node v1.Node) int64 {
 	val, ok := node.Status.Allocatable[DeprecatedNVIDIAGPUResourceName]
 
 	if !ok {
@@ -63,7 +78,7 @@ func gpuInNodeDeprecated(node v1.Node) int64 {
 	return val.Value()
 }
 
-func gpuInPod(pod v1.Pod) (gpuCount int64) {
+func GpuInPod(pod v1.Pod) (gpuCount int64) {
 	containers := pod.Spec.Containers
 	for _, container := range containers {
 		gpuCount += gpuInContainer(container)
@@ -72,7 +87,7 @@ func gpuInPod(pod v1.Pod) (gpuCount int64) {
 	return gpuCount
 }
 
-func gpuInActivePod(pod v1.Pod) (gpuCount float64) {
+func GpuInActivePod(pod v1.Pod) (gpuCount float64) {
 	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
 		return 0
 	}
@@ -82,12 +97,22 @@ func gpuInActivePod(pod v1.Pod) (gpuCount float64) {
 		return gpuFractionUsed
 	}
 
-	return float64(gpuInPod(pod))
+	return float64(GpuInPod(pod))
+}
+
+func GetRequestedGPUsPerPodGroup(trainingAnnotations map[string]string) (float64, bool) {
+	if len(trainingAnnotations[PodGroupRequestedGPUs]) > 0 {
+		requestedGPUs, err := strconv.ParseFloat(trainingAnnotations[PodGroupRequestedGPUs], 64)
+		if err == nil {
+			return requestedGPUs, true
+		}
+	}
+	return 0, false
 }
 
 func getGPUFractionUsedByPod(pod v1.Pod) float64 {
 	if pod.Annotations != nil {
-		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[runaiGPUFraction], 64)
+		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[RunaiGPUFraction], 64)
 		if GPUFractionErr == nil {
 			return gpuFraction
 		}
@@ -100,13 +125,13 @@ func gpuInContainer(container v1.Container) int64 {
 	val, ok := container.Resources.Limits[NVIDIAGPUResourceName]
 
 	if !ok {
-		return gpuInContainerDeprecated(container)
+		return GpuInContainerDeprecated(container)
 	}
 
 	return val.Value()
 }
 
-func gpuInContainerDeprecated(container v1.Container) int64 {
+func GpuInContainerDeprecated(container v1.Container) int64 {
 	val, ok := container.Resources.Limits[DeprecatedNVIDIAGPUResourceName]
 
 	if !ok {
@@ -116,15 +141,15 @@ func gpuInContainerDeprecated(container v1.Container) int64 {
 	return val.Value()
 }
 
-func sharedGPUsUsedInNode(nodeInfo NodeInfo) int64 {
+func GetSharedGPUsIndexUsedInPods(pods []v1.Pod) []string {
 	gpuIndexUsed := map[string]bool{}
-	for _, pod := range nodeInfo.pods {
+	for _, pod := range pods {
 		if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
-			return 0
+			continue
 		}
 
 		if pod.Annotations != nil {
-			gpuIndex, found := pod.Annotations[runaiGPUIndex]
+			gpuIndex, found := pod.Annotations[RunaiGPUIndex]
 			if !found {
 				continue
 			}
@@ -133,5 +158,11 @@ func sharedGPUsUsedInNode(nodeInfo NodeInfo) int64 {
 		}
 	}
 
-	return int64(len(gpuIndexUsed))
+	gpuIndexesArray := []string{}
+
+	for key, _ := range gpuIndexUsed {
+		gpuIndexesArray = append(gpuIndexesArray, key)
+	}
+
+	return gpuIndexesArray
 }

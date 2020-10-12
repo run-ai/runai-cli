@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/run-ai/runai-cli/cmd/constants"
+	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/types"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
@@ -193,7 +194,7 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 
 // Requested GPU count of the Job
 func (mj *MPIJob) RequestedGPU() float64 {
-	requestedGPUs, ok := GetRequestedGPUsPerPodGroup(mj.mpijob.Annotations)
+	requestedGPUs, ok := util.GetRequestedGPUsPerPodGroup(mj.mpijob.Annotations)
 	if ok {
 		return requestedGPUs
 	}
@@ -217,7 +218,7 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 	}
 	for _, pod := range mj.pods {
 		if pod.Status.Phase == v1.PodRunning {
-			mj.allocatedGPU += int64(gpuInActivePod(pod))
+			mj.allocatedGPU += int64(util.GpuInActivePod(pod))
 		}
 	}
 	return float64(mj.allocatedGPU)
