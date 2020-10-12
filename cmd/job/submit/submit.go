@@ -124,7 +124,7 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
-	GenerateName			   *bool
+	GenerateName               *bool
 }
 
 type dataDirVolume struct {
