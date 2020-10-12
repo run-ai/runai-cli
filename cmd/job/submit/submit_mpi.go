@@ -20,7 +20,6 @@ import (
 	"path"
 
 	"github.com/run-ai/runai-cli/cmd/attach"
-	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
@@ -29,8 +28,6 @@ import (
 	"github.com/run-ai/runai-cli/pkg/util"
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
 )
 
 const (
@@ -92,7 +89,6 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	submitArgs.addCommonFlags(fbg)
 	fg := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	fg.IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
-	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.generateName), "generate-name", "", "Allow the CLI to change the name of the job if the job name already exists")
 	fbg.UpdateFlagsByGroupsToCmd()
 
 	return command
@@ -106,7 +102,6 @@ type submitMPIJobArgs struct {
 	// for tensorboard
 	NumberProcesses int `yaml:"numProcesses"` // --workers
 	TotalGPUs       int `yaml:"totalGpus"`    // --workers
-	generateName    *bool
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
@@ -148,8 +143,8 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 		return err
 	}
 	generateName := false
-	if submitArgs.generateName != nil {
-		generateName = *submitArgs.generateName
+	if submitArgs.GenerateName != nil {
+		generateName = *submitArgs.GenerateName
 	}
 
 	// the master is also considered as a worker

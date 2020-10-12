@@ -124,6 +124,7 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
+	GenerateName			   *bool
 }
 
 type dataDirVolume struct {
@@ -205,6 +206,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.GenerateName), "generate-name", "", "Allow the CLI to change the name of the job if the job name already exists")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")

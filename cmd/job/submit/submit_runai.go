@@ -207,7 +207,6 @@ type submitRunaiJobArgs struct {
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 	IsOldJob         *bool
-	generateName	 *bool
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -257,7 +256,6 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 	flags.AddIntNullableFlag(fs, &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
 	flags.AddDurationNullableFlagP(fs, &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.generateName), "generate-name", "", "Allow the CLI to change the name of the job if the job name already exists")
   fs.MarkHidden("old-job")
 
 	fs = fbg.GetOrAddFlagSet(NetworkFlagGroup)
@@ -270,8 +268,8 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		return err2
 	}
 	generateName := false
-	if submitArgs.generateName != nil {
-		generateName = *submitArgs.generateName
+	if submitArgs.GenerateName != nil {
+		generateName = *submitArgs.GenerateName
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
