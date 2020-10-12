@@ -164,7 +164,7 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 				return i, nil
 			}
 		}
-		return jobCount, nil
+		return 0, nil
 	}
 
 	// the master is also considered as a worker

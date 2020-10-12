@@ -174,13 +174,13 @@ func generateJobFilesWithNewName(name *string , namespace, environmentValues, ch
 
 func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, getJobSuffixFunc getJobSuffixFunc, dryRun, generateName bool) error {
 	name := *baseName
-	jobName := GetJobName(name, trainingType)
+	jobConfigMapName := GetJobName(name, trainingType)
 	(*labels)[JobFamilyName] = name
 
 	var jobFiles *JobFiles
 
 	if !dryRun {
-		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
+		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(jobConfigMapName, metav1.GetOptions{})
 
 		if found != nil && found.Name != "" {
 			isSuccess, generatedJobFiles, err := generateJobFilesWithValidation(name, namespace, chart, environmentValues, values)
@@ -198,12 +198,12 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 					return err
 				}
 				name = *baseName
-				jobName = GetJobName(name, trainingType)
+				jobConfigMapName = GetJobName(name, trainingType)
 			} else {
 				// Delete the configmap of the job and continue for the creation of the new one.
 
 				log.Debugf("Configmap for job exists but job itself does not for job %s on namespace %s. Deleting the configmap", name, namespace)
-				err := clientset.CoreV1().ConfigMaps(namespace).Delete(jobName, &metav1.DeleteOptions{})
+				err := clientset.CoreV1().ConfigMaps(namespace).Delete(jobConfigMapName, &metav1.DeleteOptions{})
 
 				if err != nil {
 					log.Debugf("Could not delete configmap for job %s on namespace %s", name, namespace)
@@ -239,7 +239,7 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 	}
 
 	err = createConfigMap(
-		jobName,
+		jobConfigMapName,
 		namespace,
 		jobFiles.valueFileName,
 		jobFiles.envValuesFile,

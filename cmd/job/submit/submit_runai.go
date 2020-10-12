@@ -283,7 +283,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 				return i, nil
 			}
 		}
-		return jobCount, nil
+		return 0, nil
 	}
 	handleRunaiJobCRD(submitArgs, runaiclientset)
 	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, runaiChart, clientset, getSmallestUnoccupiedJobSuffixByBaseName, dryRun, generateName)
