@@ -21,7 +21,6 @@ import (
 
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
-	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
@@ -76,8 +75,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			mpiClient := mpiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
-			err = submitMPIJob(cmd, args, &submitArgs, kubeClient, mpiClient, &configValues)
+			err = submitMPIJob(cmd, args, &submitArgs, kubeClient, &configValues)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -137,7 +135,7 @@ func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 }
 
 // Submit MPIJob
-func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArgs, client *client.Client, mpiClient *mpiClient.Clientset,configValues *string) (err error) {
+func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArgs, client *client.Client,configValues *string) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
