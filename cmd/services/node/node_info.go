@@ -1,7 +1,11 @@
-package types
+package node
 
 import (
 	"strings"
+	"strconv"
+	"github.com/run-ai/runai-cli/cmd/types"
+	"github.com/run-ai/runai-cli/cmd/helpers"
+
 
 	log "github.com/sirupsen/logrus"
 
@@ -35,15 +39,15 @@ type NodeInfo struct {
 	PrometheusNode prom.ItemsMap
 }
 
-func (ni *NodeInfo) GetStatus() NodeStatus {
+func (ni *NodeInfo) GetStatus() types.NodeStatus {
 	if !util.IsNodeReady(ni.Node) {
-		return NodeNotReady
+		return types.NodeNotReady
 	}
-	return NodeReady
+	return types.NodeReady
 }
 
-func (ni *NodeInfo) GetGeneralInfo() NodeGeneralInfo {
-	return NodeGeneralInfo{
+func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
+	return types.NodeGeneralInfo{
 		Name:      ni.Node.Name,
 		Role:      strings.Join(util.GetNodeRoles(&ni.Node), ","),
 		IPAddress: util.GetNodeInternalAddress(ni.Node),
@@ -51,13 +55,13 @@ func (ni *NodeInfo) GetGeneralInfo() NodeGeneralInfo {
 	}
 }
 
-func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
+func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 
-	nodeResStatus := NodeResourcesStatus{}
-	podResStatus := PodResourcesStatus{}
+	nodeResStatus := types.NodeResourcesStatus{}
+	podResStatus := types.PodResourcesStatus{}
 
 	for _, pod := range ni.Pods {
-		podResStatus.Add(GetPodResourceStatus(pod))
+		helpers.AddToPodResourcesStatus( &podResStatus, helpers.GetPodResourceStatus(pod))
 	}
 
 	// adding the kube data
@@ -66,7 +70,7 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 	nodeResStatus.Allocated.GPUs = podResStatus.Allocated.GPUs
 	nodeResStatus.Limited = podResStatus.Limited
 	
-	nodeResStatus.Capacity.AddKubeResourceList(ni.Node.Status.Capacity)
+	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Capacity, ni.Node.Status.Capacity)
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )
 	totalGpus := int(util.AllocatableGpuInNode(ni.Node))
 	// check that the totalGpues is set
@@ -77,7 +81,7 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 		nodeResStatus.Allocatable.GPUs += float64(nodeResStatus.FractionalAllocatedGpuUnits)
 	}
 
-	nodeResStatus.Allocatable.AddKubeResourceList(ni.Node.Status.Allocatable)
+	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Allocatable, ni.Node.Status.Allocatable)
 	nodeResStatus.AllocatedGPUsUnits = nodeResStatus.FractionalAllocatedGpuUnits + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
@@ -104,11 +108,49 @@ func (ni *NodeInfo) GetResourcesStatus() NodeResourcesStatus {
 }
 
 func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
-	value, ok := nodeInfo.Node.Status.Allocatable[NVIDIAGPUResourceName]
+	value, ok := nodeInfo.Node.Status.Allocatable[util.NVIDIAGPUResourceName]
 
 	if ok {
 		ok = (int(value.Value()) > 0)
 	}
 
 	return ok
+}
+
+
+
+func setIntPromData(num *int64, m map[string][]prom.MetricValue, key string) error {
+	v, found := m[key]
+	if !found {
+		return nil
+	}
+
+	n, err := strconv.Atoi(v[1].(string))
+	if err != nil {
+		return err
+	} 
+	*num = int64(n)	
+	return nil
+}
+
+func setFloatPromData(num *float64, m map[string][]prom.MetricValue, key string) error {
+	v, found := m[key]
+	if !found {
+		return nil
+	}
+	n, err := strconv.ParseFloat(v[1].(string), 64)
+	if err != nil {
+		return err
+	} 
+	*num = n
+	return nil
+}
+
+func hasError(errors ...error) error{
+	for _, err := range errors {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

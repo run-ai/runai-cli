@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
-	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,7 +63,7 @@ const (
 
 )
 
-func BuildPromethuseClient(c kubernetes.Interface) (*Client, error) {
+func BuildPrometheusClient(c kubernetes.Interface) (*Client, error) {
 
 	ps := &Client {
 		client: c,
@@ -130,42 +128,38 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 	return
  }
 
+type queryResult struct {
+	name string
+	metric MetricData
+	err error
+}
 
- // MultipuleQueriesToItemsMap map multipule queries to items by given itemId
-func (ps *Client) MultipuleQueriesToItemsMap(q MultiQueries, itemID string) ( ItemsMap, error) {
+ // GroupMultiQueriesToItems map multipule queries to items by given itemId
+func (ps *Client) GroupMultiQueriesToItems(q MultiQueries, itemID string) ( ItemsMap, error) {
 	queryResults := map[string]MetricData{}
 	rst := ItemsMap{}
-	funcs := []func() error{}
-	var mux sync.Mutex
+	var prometheusResultChanel = make(chan queryResult)
 	for queryName, query := range q {
-		// create scoped vars for the function
-		query := query
-		name := queryName
-		getFunc := func() error {
-			rst, err := ps.Query(query)
-			mux.Lock()
-			queryResults[name] = rst
-			mux.Unlock()
-
-			return err
-		}
-	
-		funcs = append(funcs, getFunc)
+		go (func(query, name string) {
+			metric, err := ps.Query(query)
+			prometheusResultChanel <- queryResult{name, metric, err}
+		})(query, queryName)
 	}
-	err := util.Parallel(funcs...)
-
-	if err != nil {
-		return nil, err
+	for i := 0; i< len(q); i++ {
+		queryResult := <-prometheusResultChanel
+		if queryResult.err != nil {
+			return nil, queryResult.err
+		}
+		queryResults[queryResult.name] = queryResult.metric
 	}
 
 	// map the result to items by the given 'itemId' 
 	for queryName, qr := range queryResults {
-		// todo: check the metric type
+		// todo: now we are handling only result type = "vector", consider handling more result type in the fuehrer 
 		for _, metricResult := range qr.Result {
-			// search the itemId in metric labels
 			key, ok := metricResult.Metric[itemID]
 			if !ok {
-				return nil, fmt.Errorf("[Prometheos] Not found an 'itemID' (%s) on the metric query: %s => %s",itemID, queryName, q[queryName] )
+				return nil, fmt.Errorf("[Prometheos] Failed to find key: (%s) on the metric query: %s => %s",itemID, queryName, q[queryName] )
 			}
 			val := metricResult.Value
 			item, created := rst[key]

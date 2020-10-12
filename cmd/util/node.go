@@ -79,7 +79,6 @@ func GetNodeRoles(node *v1.Node) []string {
 
 func GetNodeInternalAddress(node v1.Node) string {
 	if len(node.Status.Addresses) > 0 {
-		//address = nodeInfo.node.Status.Addresses[0].Address
 		for _, addr := range node.Status.Addresses {
 			if addr.Type == v1.NodeInternalIP {
 				return addr.Address

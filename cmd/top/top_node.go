@@ -20,13 +20,14 @@ import (
 	"strconv"
 	"text/tabwriter"
 
+	"github.com/run-ai/runai-cli/cmd/helpers"
+	nodeService "github.com/run-ai/runai-cli/cmd/services/node"
 	"github.com/run-ai/runai-cli/cmd/trainer"
-	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/cmd/services"
 	"github.com/run-ai/runai-cli/cmd/types"
 	"github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
-	
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -75,8 +76,8 @@ func NewTopNodeCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			nd := services.NewNodeDescriber(clientset, allPods)
-			nodeInfos, err, warn := nd.GetAllNodeInfos()
+			nd := nodeService.NewNodeDescriber(clientset, allPods)
+			nodeInfos, warn, err := nd.GetAllNodeInfos()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -93,7 +94,7 @@ func NewTopNodeCommand() *cobra.Command {
 }
 
 
-func displayTopNode(nodes []types.NodeInfo) {
+func displayTopNode(nodes []nodeService.NodeInfo) {
 	if showDetails {
 		displayTopNodeDetails(nodes)
 	} else {
@@ -101,7 +102,7 @@ func displayTopNode(nodes []types.NodeInfo) {
 	}
 }
 
-func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
+func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
@@ -109,16 +110,16 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 
 	for _, nodeInfo := range nodeInfos {
 
-		nrs := nodeInfo.GetResourcesStatus()
+		nrsc := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
 		nodeView := types.NodeView {
 			Info: nodeInfo.GetGeneralInfo(),
-			CPUs: nrs.GetCpus(),
-			GPUs: nrs.GetGpus(),
-			Mem: nrs.GetMemory(),
-			GPUMem: nrs.GetGpuMemory(),
+			CPUs: nrsc.ToCpus(),
+			GPUs: nrsc.ToGpus(),
+			Mem: nrsc.ToMemory(),
+			GPUMem: nrsc.ToGpuMemory(),
 		}
 
-		clsData.AddNode(nodeView.Info.Status, nodeView.GPUs)
+		helpers.AddNodeToClusterNodes(&clsData, nodeView.Info.Status, nodeView.GPUs)
 		rows = append(rows, nodeView)
 	}
 
@@ -159,7 +160,7 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 		fmt.Print(err)
 	}
 
-	clsData.Render(w)
+	helpers.RenderClusterNodesView(w, clsData)
 	
 	ui.End(w)
 
@@ -167,7 +168,7 @@ func displayTopNodeSummary(nodeInfos []types.NodeInfo) {
 }
 
 
-func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
+func displayTopNodeDetails(nodeInfos []nodeService.NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	fmt.Fprintf(w, "\n")
@@ -175,10 +176,10 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 		
 		info := nodeInfo.GetGeneralInfo()
 
-		rs := nodeInfo.GetResourcesStatus()
-		gpus := rs.GetGpus()
+		nrsc := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
+		gpus := nrsc.ToGpus()
 
-		clsData.AddNode(info.Status, gpus)
+		helpers.AddNodeToClusterNodes(&clsData, info.Status, gpus)
 
 		if len(info.Role) == 0 {
 			info.Role = "<none>"
@@ -225,7 +226,7 @@ func displayTopNodeDetails(nodeInfos []types.NodeInfo) {
 	}
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
-	clsData.Render(w)
+	helpers.RenderClusterNodesView(w, clsData)
 	_ = w.Flush()
 }
 
