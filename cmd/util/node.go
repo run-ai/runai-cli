@@ -15,8 +15,8 @@ import (
 const (
 	LabelNodeRolePrefix = "node-role.kubernetes.io/"	
 	MasterLabelRole = "node-role.kubernetes.io/master"
-	// nodeLabelRole specifies the role of a node
-	nodeLabelRole = "kubernetes.io/role"
+	// NodeLabelRole specifies the role of a node
+	NodeLabelRole = "kubernetes.io/role"
 )
 
 
@@ -70,7 +70,7 @@ func GetNodeRoles(node *v1.Node) []string {
 				roles.Insert(role)
 			}
 
-		case k == nodeLabelRole && v != "":
+		case k == NodeLabelRole && v != "":
 			roles.Insert(v)
 		}
 	}

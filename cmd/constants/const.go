@@ -42,9 +42,6 @@ const (
 	// It's copied over to here until it's merged in core: https://github.com/kubernetes/kubernetes/pull/39112
 	labelNodeRolePrefix = "node-role.kubernetes.io/"
 
-	// nodeLabelRole specifies the role of a node
-	nodeLabelRole = "kubernetes.io/role"
-
 	WorkloadCalculatedStatus     = "runai-calculated-status"
 	WorkloadRunningPods          = "runai-running-pods"
 	WorkloadPendingPods          = "runai-pending-pods"
