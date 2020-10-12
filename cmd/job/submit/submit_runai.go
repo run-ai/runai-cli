@@ -6,14 +6,12 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
-	"github.com/run-ai/runai-cli/cmd/attach"
-
 
 	runaiclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
@@ -252,41 +250,8 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		generateName = *submitArgs.generateName
 	}
 
-	getSmallestUnoccupiedJobSuffixByBaseName := func(baseName, namespace string) (int, error) {
-		baseNameSelector := fmt.Sprintf("%s=%s", workflow.JobFamilyName, baseName)
-		runaiJobList, err := runaiclientset.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{LabelSelector: baseNameSelector})
-		if err != nil {
-			return 0, err
-		}
-		statefullsetList, err := clientset.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{LabelSelector: baseNameSelector})
-		if err != nil {
-			return 0, err
-		}
-		jobCount := len(runaiJobList.Items) + len(statefullsetList.Items)
-
-		occupiedIndexesMap := make(map[string]bool)
-		for _, item := range runaiJobList.Items {
-			if item.Labels[workflow.JobFamilyIndex] == "" {
-				continue
-			}
-			occupiedIndexesMap[item.Labels[workflow.JobFamilyIndex]] = true
-		}
-		for _, item := range statefullsetList.Items {
-			if item.Labels[workflow.JobFamilyIndex] == "" {
-				continue
-			}
-			occupiedIndexesMap[item.Labels[workflow.JobFamilyIndex]] = true
-		}
-
-		for i := 1; i <= jobCount; i++{
-			if !occupiedIndexesMap[strconv.Itoa(i)] {
-				return i, nil
-			}
-		}
-		return 0, nil
-	}
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, runaiChart, clientset, getSmallestUnoccupiedJobSuffixByBaseName, dryRun, generateName)
+	err := workflow.SubmitJob(&submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun, generateName)
 	if err != nil {
 		return err
 	}

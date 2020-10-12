@@ -16,20 +16,17 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"path"
-	"strconv"
-
-	"github.com/run-ai/runai-cli/cmd/attach"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util"
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	"github.com/spf13/cobra"
+	"os"
+	"path"
 )
 
 const (
@@ -143,33 +140,9 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 		generateName = *submitArgs.generateName
 	}
 
-	getSmallestUnoccupiedJobSuffixByBaseName := func(baseName, namespace string) (int, error) {
-		baseNameSelector := fmt.Sprintf("%s=%s", workflow.JobFamilyName, baseName)
-		list, err := mpiClient.KubeflowV1alpha2().MPIJobs(namespace).List(metav1.ListOptions{LabelSelector: baseNameSelector})
-		if err != nil {
-			return 0, err
-		}
-
-		occupiedIndexesMap := make(map[string]bool)
-		for _, item := range list.Items {
-			if item.Labels[workflow.JobFamilyIndex] == "" {
-				continue
-			}
-			occupiedIndexesMap[item.Labels[workflow.JobFamilyIndex]] = true
-		}
-
-		jobCount := len(list.Items)
-		for i:= 1; i <= jobCount; i++ {
-			if !occupiedIndexesMap[strconv.Itoa(i)] {
-				return i, nil
-			}
-		}
-		return 0, nil
-	}
-
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, &submitArgs.Labels, *configValues, mpijob_chart, client.GetClientset(), getSmallestUnoccupiedJobSuffixByBaseName, dryRun, generateName)
+	err = workflow.SubmitJob(&submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun, generateName)
 	if err != nil {
 		return err
 	}

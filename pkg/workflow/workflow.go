@@ -21,9 +21,9 @@ import (
 **/
 
 const (
-	submitNewNameRetries = 3
-		JobFamilyName = "job-family-name"
-		JobFamilyIndex = "job-family-index")
+	submitNewNameRetries   = 3
+		jobFamilyNameLabel = "job-family-name"
+		jobFamilyIndexLabel     = "job-family-index")
 
 type getJobSuffixFunc func(name, namespace string) (int, error)
 
@@ -133,6 +133,30 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
+func getSmallestUnoccupiedJobSuffixByBaseName(baseName, namespace string, clientset kubernetes.Interface) (int, error){
+	baseNameLabelSelector := fmt.Sprintf("%s=%s", jobFamilyNameLabel, baseName)
+	configMapList, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: baseNameLabelSelector})
+	if err != nil {
+		return 0, err
+	}
+
+	occupiedIndexesMap := make(map[string]bool)
+	for _, item := range configMapList.Items {
+		if item.Labels[jobFamilyIndexLabel] == "" {
+			continue
+		}
+		occupiedIndexesMap[item.Labels[jobFamilyIndexLabel]] = true
+	}
+
+	for i := range configMapList.Items {
+		index := i + 1
+		if !occupiedIndexesMap[strconv.Itoa(index)] {
+			return index, nil
+		}
+	}
+	return 0, nil
+}
+
 func generateJobFilesWithValidation(name, namespace, chart, environmentValues string, values interface{}) (bool, *JobFiles, error){
 	generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
 	if err != nil {
@@ -146,37 +170,36 @@ func generateJobFilesWithValidation(name, namespace, chart, environmentValues st
 	return !jobExists, generatedJobFiles, err
 }
 
-func generateJobFilesWithNewName(name *string , namespace, environmentValues, chart string, values interface{}, labels *map[string]string, getJobSuffixFunc getJobSuffixFunc) (*JobFiles, error) {
+func generateJobFilesWithNewName(name *string , namespace, environmentValues, chart string, values interface{}, clientset kubernetes.Interface) (*JobFiles, int, error) {
 	initialName := *name
 
 	for i := 0; i < submitNewNameRetries; i++ {
-		jobSuffix, err := getJobSuffixFunc(*name, namespace)
+		jobSuffix, err := getSmallestUnoccupiedJobSuffixByBaseName(*name, namespace, clientset)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		jobSuffixStr := strconv.Itoa(jobSuffix)
 		currentName := initialName + "-" + jobSuffixStr
 
-		(*labels)[JobFamilyIndex] = jobSuffixStr
 		isSuccess, generatedJobFiles, err := generateJobFilesWithValidation(currentName, namespace, chart, environmentValues, values)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		if isSuccess {
 			*name = currentName
-			return generatedJobFiles, nil
+			return generatedJobFiles, jobSuffix, nil
 		}
 	}
 
-	return nil, fmt.Errorf("could not submit %s. Please try again", initialName)
+	return nil, 0, fmt.Errorf("could not submit %s. Please try again", initialName)
 }
 
-func SubmitJob(baseName *string, trainingType string, namespace string, values interface{}, labels *map[string]string, environmentValues string, chart string, clientset kubernetes.Interface, getJobSuffixFunc getJobSuffixFunc, dryRun, generateName bool) error {
-	name := *baseName
+func SubmitJob(namePtr *string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun, generateName bool) error {
+	baseName := *namePtr
+	name := *namePtr
 	jobConfigMapName := GetJobName(name, trainingType)
-	(*labels)[JobFamilyName] = name
-
+	jobFamilyIndex := 0
 	var jobFiles *JobFiles
 
 	if !dryRun {
@@ -190,18 +213,18 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 
 			if !isSuccess {
 				if !generateName {
-					return fmt.Errorf("the job %s already exists, please delete it first. Alternatively you can use --%s flag. use '%s delete %s'", name, config.GenerateNameFlagName, config.CLIName, name)
+					return fmt.Errorf("the job %s already exists, please delete it first. use '%s delete %s'. Alternatively you can use --%s flag", name, config.CLIName, name, config.GenerateNameFlagName)
 				}
 
-				generatedJobFiles, err = generateJobFilesWithNewName(baseName, namespace, environmentValues, chart, values, labels, getJobSuffixFunc)
+				generatedJobFiles, jobFamilyIndex, err = generateJobFilesWithNewName(namePtr, namespace, environmentValues, chart, values, clientset)
 				if err != nil {
 					return err
 				}
-				name = *baseName
+				name = *namePtr
 				jobConfigMapName = GetJobName(name, trainingType)
 			} else {
 				// Delete the configmap of the job and continue for the creation of the new one.
-
+				fmt.Println("Going to delete")
 				log.Debugf("Configmap for job exists but job itself does not for job %s on namespace %s. Deleting the configmap", name, namespace)
 				err := clientset.CoreV1().ConfigMaps(namespace).Delete(jobConfigMapName, &metav1.DeleteOptions{})
 
@@ -246,6 +269,8 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 		jobFiles.appInfoFileName,
 		chartName,
 		chartVersion,
+		baseName,
+		jobFamilyIndex,
 		clientset,
 	)
 	if err != nil {
@@ -299,13 +324,16 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 	return nil
 }
 
-func createConfigMap(jobName string,
-	namespace string,
-	valueFileName string,
-	envValuesFile string,
-	appInfoFileName string,
-	chartName string,
-	chartVersion string, clientset kubernetes.Interface) error {
+func createConfigMap(jobName,
+	namespace,
+	valueFileName,
+	envValuesFile,
+	appInfoFileName,
+	chartName,
+	chartVersion,
+	jobFamilyName string,
+	jobFamilyIndex int,
+	clientset kubernetes.Interface) error {
 	lables := make(map[string]string)
 	data := make(map[string]string)
 	data["app"] = appInfoFileName
@@ -334,6 +362,8 @@ func createConfigMap(jobName string,
 	data["app"] = string(appFileContent)
 
 	lables[kubectl.JOB_CONFIG_LABEL_KEY] = kubectl.JOB_CONFIG_LABEL_VALUES
+	lables[jobFamilyNameLabel] = jobFamilyName
+	lables[jobFamilyIndexLabel] = strconv.Itoa(jobFamilyIndex)
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   jobName,
