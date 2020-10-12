@@ -264,27 +264,24 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		}
 		jobCount := len(runaiJobList.Items) + len(statefullsetList.Items)
 
-		OptionalIndexesLoop:
-		for i:= 1; i < jobCount; i++ {
-			for jobIndex := 0; jobIndex < len(runaiJobList.Items); jobIndex++ {
-				if runaiJobList.Items[jobIndex].Labels[workflow.JobFamilyIndex] == "" {
-					continue
-				}
-				jobIndex, err := strconv.Atoi(runaiJobList.Items[jobIndex].Labels[workflow.JobFamilyIndex])
-				if err != nil || i == jobIndex {
-					continue OptionalIndexesLoop
-				}
+		occupiedIndexesMap := make(map[string]bool)
+		for _, item := range runaiJobList.Items {
+			if item.Labels[workflow.JobFamilyIndex] == "" {
+				continue
 			}
-			for jobIndex := 0; jobIndex < len(statefullsetList.Items); jobIndex++ {
-				if statefullsetList.Items[jobIndex].Labels[workflow.JobFamilyIndex] == "" {
-					continue
-				}
-				jobIndex, err := strconv.Atoi(statefullsetList.Items[jobIndex].Labels[workflow.JobFamilyIndex])
-				if err != nil || i == jobIndex {
-					continue OptionalIndexesLoop
-				}
+			occupiedIndexesMap[item.Labels[workflow.JobFamilyIndex]] = true
+		}
+		for _, item := range statefullsetList.Items {
+			if item.Labels[workflow.JobFamilyIndex] == "" {
+				continue
 			}
-			return i, nil
+			occupiedIndexesMap[item.Labels[workflow.JobFamilyIndex]] = true
+		}
+
+		for i := 1; i <= jobCount; i++{
+			if !occupiedIndexesMap[strconv.Itoa(i)] {
+				return i, nil
+			}
 		}
 		return jobCount, nil
 	}

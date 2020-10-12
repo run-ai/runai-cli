@@ -150,19 +150,19 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 			return 0, err
 		}
 
-		jobCount := len(list.Items)
-		OptionalIndexesLoop:
-		for i:= 1; i <= jobCount; i++ {
-			for jobIndex := 0; jobIndex < len(list.Items); jobIndex++ {
-				if list.Items[jobIndex].Labels[workflow.JobFamilyIndex] == "" {
-					continue
-				}
-				jobIndex, err := strconv.Atoi(list.Items[jobIndex].Labels[workflow.JobFamilyIndex])
-				if err != nil || i == jobIndex {
-					continue OptionalIndexesLoop
-				}
+		occupiedIndexesMap := make(map[string]bool)
+		for _, item := range list.Items {
+			if item.Labels[workflow.JobFamilyIndex] == "" {
+				continue
 			}
-			return i, nil
+			occupiedIndexesMap[item.Labels[workflow.JobFamilyIndex]] = true
+		}
+
+		jobCount := len(list.Items)
+		for i:= 1; i <= jobCount; i++ {
+			if !occupiedIndexesMap[strconv.Itoa(i)] {
+				return i, nil
+			}
 		}
 		return jobCount, nil
 	}
