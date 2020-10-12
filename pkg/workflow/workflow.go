@@ -23,8 +23,7 @@ import (
 const (
 	submitNewNameRetries = 3
 		JobFamilyName = "job-family-name"
-		JobFamilyIndex = "job-family-index"
-		JobFamilyRoot = "job-family-root")
+		JobFamilyIndex = "job-family-index")
 
 type getJobSuffixFunc func(name, namespace string) (int, error)
 
@@ -149,7 +148,6 @@ func generateJobFilesWithValidation(name, namespace, chart, environmentValues st
 
 func generateJobFilesWithNewName(name *string , namespace, environmentValues, chart string, values interface{}, labels *map[string]string, getJobSuffixFunc getJobSuffixFunc) (*JobFiles, error) {
 	initialName := *name
-	(*labels)[JobFamilyRoot] = strconv.FormatBool(false)
 
 	for i := 0; i < submitNewNameRetries; i++ {
 		jobSuffix, err := getJobSuffixFunc(*name, namespace)
@@ -178,7 +176,6 @@ func SubmitJob(baseName *string, trainingType string, namespace string, values i
 	name := *baseName
 	jobName := GetJobName(name, trainingType)
 	(*labels)[JobFamilyName] = name
-	(*labels)[JobFamilyRoot] = strconv.FormatBool(true)
 
 	var jobFiles *JobFiles
 

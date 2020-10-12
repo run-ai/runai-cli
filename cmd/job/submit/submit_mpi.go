@@ -152,9 +152,9 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 
 		jobCount := len(list.Items)
 		OptionalLoop:
-		for i:= 0; i < jobCount; i++ {
+		for i:= 1; i <= jobCount; i++ {
 			for jobIndex := 0; jobIndex < len(list.Items); jobIndex++ {
-				if list.Items[jobIndex].Labels[workflow.JobFamilyRoot] == strconv.FormatBool(true) {
+				if list.Items[jobIndex].Labels[workflow.JobFamilyIndex] == "" {
 					continue
 				}
 				jobIndex, err := strconv.Atoi(list.Items[jobIndex].Labels[workflow.JobFamilyIndex])
