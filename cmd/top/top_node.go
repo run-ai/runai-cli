@@ -110,13 +110,13 @@ func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
 
 	for _, nodeInfo := range nodeInfos {
 
-		nrsc := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
+		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
 		nodeView := types.NodeView {
 			Info: nodeInfo.GetGeneralInfo(),
-			CPUs: nrsc.ToCpus(),
-			GPUs: nrsc.ToGpus(),
-			Mem: nrsc.ToMemory(),
-			GPUMem: nrsc.ToGpuMemory(),
+			CPUs: nodeResourcesConvertor.ToCpus(),
+			GPUs: nodeResourcesConvertor.ToGpus(),
+			Mem: nodeResourcesConvertor.ToMemory(),
+			GPUMem: nodeResourcesConvertor.ToGpuMemory(),
 		}
 
 		helpers.AddNodeToClusterNodes(&clsData, nodeView.Info.Status, nodeView.GPUs)
@@ -176,8 +176,8 @@ func displayTopNodeDetails(nodeInfos []nodeService.NodeInfo) {
 		
 		info := nodeInfo.GetGeneralInfo()
 
-		nrsc := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
-		gpus := nrsc.ToGpus()
+		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
+		gpus := nodeResourcesConvertor.ToGpus()
 
 		helpers.AddNodeToClusterNodes(&clsData, info.Status, gpus)
 

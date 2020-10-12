@@ -137,7 +137,7 @@ type queryResult struct {
  // GroupMultiQueriesToItems map multipule queries to items by given itemId
 func (ps *Client) GroupMultiQueriesToItems(q MultiQueries, itemID string) ( ItemsMap, error) {
 	queryResults := map[string]MetricData{}
-	rst := ItemsMap{}
+	results := ItemsMap{}
 	var prometheusResultChanel = make(chan queryResult)
 	for queryName, query := range q {
 		go (func(query, name string) {
@@ -162,15 +162,15 @@ func (ps *Client) GroupMultiQueriesToItems(q MultiQueries, itemID string) ( Item
 				return nil, fmt.Errorf("[Prometheos] Failed to find key: (%s) on the metric query: %s => %s",itemID, queryName, q[queryName] )
 			}
 			val := metricResult.Value
-			item, created := rst[key]
+			item, created := results[key]
 			if !created {
 				item = map[string][]MetricValue{}
-				rst[key] = item
+				results[key] = item
 			}
 			item[queryName] = val
 		}
 		
 	}
-	return rst, nil
+	return results, nil
 }
 
