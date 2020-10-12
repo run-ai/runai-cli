@@ -26,19 +26,35 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	submitExamples = `
+# Start a Training job.
+runai submit train1 -i gcr.io/run-ai-demo/quickstart -g 1
+
+# Start an interactive job.
+runai submit build1 -i python -g 1 --interactive --attach
+
+# Use GPU Fractions
+runai submit frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
+
+# Hyperparameter Optimization
+runai submit hpo1 -i gcr.io/run-ai-demo/quickstart-hpo -g 1  \
+    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo`
+)
+
 var (
 	runaiChart       string
 	ttlAfterFinished *time.Duration
 )
 
-
 func NewRunaiJobCommand() *cobra.Command {
 
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:   "submit [NAME]",
-		Short: "Submit a new job.",
-		Args:  cobra.RangeArgs(0, 1),
+		Use:     "submit [NAME]",
+		Short:   "Submit a new job.",
+		Example: submitExamples,
+		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
 			if err != nil {
@@ -142,8 +158,12 @@ func NewRunaiJobCommand() *cobra.Command {
 		},
 	}
 
-	submitArgs.addCommonFlags(command)
-	submitArgs.addFlags(command)
+	fbg := flags.NewFlagsByGroups(command)
+
+	submitArgs.addCommonFlags(fbg)
+	submitArgs.addFlags(fbg)
+
+	fbg.UpdateFlagsByGroupsToCmd()
 
 	return command
 }
@@ -225,19 +245,23 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 }
 
 // add flags to submit spark args
-func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
+func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
-	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
-	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsPreemptible), "preemptible", "", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
-	flags.AddIntNullableFlag(command.Flags(), &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
-	flags.AddIntNullableFlag(command.Flags(), &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
-	flags.AddIntNullableFlag(command.Flags(), &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
-	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
-	flags.AddBoolNullableFlag(command.Flags(), &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
+	fs := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
+	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
+	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
+	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
+	flags.AddBoolNullableFlag(fs, &(sa.IsPreemptible), "preemptible", "", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
+	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
+	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
+	flags.AddIntNullableFlag(fs, &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
+	flags.AddDurationNullableFlagP(fs, &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
+	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.generateName), "generate-name", "", "Allow the CLI to change the name of the job if the job name already exists")
-	command.Flags().MarkHidden("old-job")
+  fs.MarkHidden("old-job")
+
+	fs = fbg.GetOrAddFlagSet(NetworkFlagGroup)
+	fs.StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset, configValues *string) error {

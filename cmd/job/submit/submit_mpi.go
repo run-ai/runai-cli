@@ -16,7 +16,11 @@ package submit
 
 import (
 	"fmt"
+	"os"
+	"path"
+
 	"github.com/run-ai/runai-cli/cmd/attach"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
@@ -31,6 +35,9 @@ import (
 
 const (
 	SubmitMpiCommand = "submit-mpi"
+	mpiExamples      = `
+runai submit-mpi distributed-job --processes=2 -g 1 \
+	-i gcr.io/run-ai-demo/quickstart-distributed`
 )
 
 var (
@@ -48,6 +55,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Use:     SubmitMpiCommand + " [NAME]",
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
+		Example: mpiExamples,
 		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
@@ -80,9 +88,13 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
+	fbg := flags.NewFlagsByGroups(command)
+	submitArgs.addCommonFlags(fbg)
+	fg := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
+	fg.IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
 	flags.AddBoolNullableFlag(command.Flags(), &(submitArgs.generateName), "generate-name", "", "Allow the CLI to change the name of the job if the job name already exists")
-	submitArgs.addCommonFlags(command)
+	fbg.UpdateFlagsByGroupsToCmd()
+
 	return command
 
 }
