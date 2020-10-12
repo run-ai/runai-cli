@@ -18,11 +18,13 @@ package trainer
 // todo move into job
 
 import (
+	"github.com/run-ai/runai-cli/cmd/util"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 
 	"time"
 )
@@ -76,7 +78,7 @@ func (ji *JobInfo) RequestedGPU() float64 {
 		return ji.requestedGPU
 	}
 	for _, pod := range ji.pods {
-		ji.requestedGPU += float64(gpuInPod(pod))
+		ji.requestedGPU += float64(util.GpuInPod(pod))
 	}
 	return ji.requestedGPU
 }
@@ -87,7 +89,7 @@ func (ji *JobInfo) AllocatedGPU() float64 {
 		return ji.allocatedGPU
 	}
 	for _, pod := range ji.pods {
-		ji.allocatedGPU += gpuInActivePod(pod)
+		ji.allocatedGPU += util.GpuInActivePod(pod)
 	}
 	return ji.allocatedGPU
 }

@@ -16,17 +16,17 @@ package job_list
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
 
-	"github.com/run-ai/runai-cli/cmd/get"
 	"github.com/run-ai/runai-cli/cmd/flags"
+	"github.com/run-ai/runai-cli/cmd/get"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 
 	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/ui"
 	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -86,7 +86,7 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs Allocated (Requested)", "PODs Running (Pending)", "SERVICE URL(S)"}
 
-	PrintLine(w, labelField...)
+	ui.Line(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
 		status := get.GetJobRealStatus(jobInfo)
@@ -111,7 +111,7 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) 
 		allocatedFromRequestedGPUs := fmt.Sprintf("%s (%g)", currentAllocatedGPUsAsString, jobInfo.RequestedGPU())
 		runningOfActivePods := fmt.Sprintf("%d (%d)", int(jobInfo.RunningPods()), int(jobInfo.PendingPods()))
 
-		PrintLine(w, jobInfo.Name(),
+		ui.Line(w, jobInfo.Name(),
 			status,
 			util.ShortHumanDuration(jobInfo.Age()),
 			nodeName, jobInfo.Image(), jobInfo.Trainer(), projectName, jobInfo.User(),
@@ -120,11 +120,4 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) 
 			strings.Join(jobInfo.ServiceURLs(), ", "))
 	}
 	_ = w.Flush()
-}
-
-// todo remove to ui
-func PrintLine(w io.Writer, fields ...string) {
-	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	buffer := strings.Join(fields, "\t")
-	fmt.Fprintln(w, buffer)
 }

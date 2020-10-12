@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package top
 
 import (
 	"fmt"
@@ -21,6 +21,7 @@ import (
 	"strings"
 	"text/tabwriter"
 	"github.com/run-ai/runai-cli/cmd/trainer"
+	"github.com/run-ai/runai-cli/cmd/util"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	log "github.com/sirupsen/logrus"
@@ -54,7 +55,7 @@ func NewTopNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			clientset := kubeClient.GetClientset()
-			allPods, err = trainer.AcquireAllActivePods(clientset)
+			allPods, err := trainer.AcquireAllActivePods(clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -293,14 +294,14 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		fmt.Fprintf(w, "IPADDRESS:\t%s\n", address)
 		fmt.Fprintf(w, "ROLE:\t%s\n", role)
 
-		pods := gpuPods(nodeInfo.pods)
+		pods := util.GpuPods(nodeInfo.pods)
 		if len(pods) > 0 {
 			fmt.Fprintf(w, "\n")
 			fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\t \n")
 			for _, pod := range pods {
 				fmt.Fprintf(w, "%s\t%s\t%s\t\n", pod.Namespace,
 					pod.Name,
-					strconv.FormatInt(gpuInPod(pod), 10))
+					strconv.FormatInt(util.GpuInPod(pod), 10))
 			}
 			fmt.Fprintf(w, "\n")
 		}
@@ -361,15 +362,15 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 // calculate the GPU count of each node
 func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatableGPU, allocatedGPU int64) {
 	node := nodeInfo.node
-	totalGPU = totalGpuInNode(node)
-	allocatableGPU = allocatableGpuInNode(node)
+	totalGPU = util.TotalGpuInNode(node)
+	allocatableGPU = util.AllocatableGpuInNode(node)
 	// allocatedGPU = gpuInPod()
 
 	for _, pod := range nodeInfo.pods {
-		allocatedGPU += gpuInPod(pod)
+		allocatedGPU += util.GpuInPod(pod)
 	}
 
-	fractionalGPUsUsedInNode := sharedGPUsUsedInNode(nodeInfo)
+	fractionalGPUsUsedInNode := int64(len(util.GetSharedGPUsIndexUsedInPods(nodeInfo.pods)))
 	allocatedGPU += fractionalGPUsUsedInNode
 	totalGPU += fractionalGPUsUsedInNode
 
@@ -432,8 +433,8 @@ func getRequestedNodeMemory(nodeInfo NodeInfo) (AllocatableMemory string) {
 // Does the node have unhealthy GPU
 func hasUnhealthyGPU(nodeInfo NodeInfo) (unhealthy bool) {
 	node := nodeInfo.node
-	totalGPU := totalGpuInNode(node)
-	allocatableGPU := allocatableGpuInNode(node)
+	totalGPU := util.TotalGpuInNode(node)
+	allocatableGPU := util.AllocatableGpuInNode(node)
 
 	unhealthy = totalGPU > allocatableGPU
 
@@ -446,7 +447,7 @@ func hasUnhealthyGPU(nodeInfo NodeInfo) (unhealthy bool) {
 }
 
 func isMasterNode(node v1.Node) bool {
-	if _, ok := node.Labels[masterLabelRole]; ok {
+	if _, ok := node.Labels[util.MasterLabelRole]; ok {
 		return true
 	}
 
@@ -454,7 +455,7 @@ func isMasterNode(node v1.Node) bool {
 }
 
 func (nodeInfo NodeInfo) isGPUExclusiveNode() bool {
-	value, ok := nodeInfo.node.Status.Allocatable[NVIDIAGPUResourceName]
+	value, ok := nodeInfo.node.Status.Allocatable[util.NVIDIAGPUResourceName]
 
 	if ok {
 		ok = (int(value.Value()) > 0)
@@ -471,12 +472,12 @@ func findNodeRoles(node *v1.Node) []string {
 	roles := sets.NewString()
 	for k, v := range node.Labels {
 		switch {
-		case strings.HasPrefix(k, labelNodeRolePrefix):
-			if role := strings.TrimPrefix(k, labelNodeRolePrefix); len(role) > 0 {
+		case strings.HasPrefix(k, util.LabelNodeRolePrefix):
+			if role := strings.TrimPrefix(k, util.LabelNodeRolePrefix); len(role) > 0 {
 				roles.Insert(role)
 			}
 
-		case k == nodeLabelRole && v != "":
+		case k == util.NodeLabelRole && v != "":
 			roles.Insert(v)
 		}
 	}

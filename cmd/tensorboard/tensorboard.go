@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/run-ai/runai-cli/pkg/util"
+	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -121,7 +122,7 @@ func TensorboardURL(name, namespace string, clientset kubernetes.Interface) (url
 	findReadyNode := false
 
 	for _, item := range nodeList.Items {
-		if isNodeReady(item) {
+		if cmdUtil.IsNodeReady(item) {
 			node = item
 			findReadyNode = true
 			break
@@ -131,32 +132,8 @@ func TensorboardURL(name, namespace string, clientset kubernetes.Interface) (url
 	if !findReadyNode {
 		return "", fmt.Errorf("Failed to find the ready node for exporting tensorboard.")
 	}
-	url = fmt.Sprintf("http://%s:%d", getNodeInternalAddress(node), port)
+	url = fmt.Sprintf("http://%s:%d", cmdUtil.GetNodeInternalAddress(node), port)
 
 	return url, nil
 }
 
-
-// todo use util instead
-func isNodeReady(node v1.Node) bool {
-	for _, condition := range node.Status.Conditions {
-		if condition.Type == v1.NodeReady && condition.Status == v1.ConditionTrue {
-			return true
-		}
-	}
-	return false
-}
-
-// todo use util instead
-func getNodeInternalAddress(node v1.Node) string {
-	address := "unknown"
-	if len(node.Status.Addresses) > 0 {
-		//address = nodeInfo.node.Status.Addresses[0].Address
-		for _, addr := range node.Status.Addresses {
-			if addr.Type == v1.NodeInternalIP {
-				address = addr.Address
-			}
-		}
-	}
-	return address
-}

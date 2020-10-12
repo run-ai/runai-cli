@@ -17,20 +17,19 @@ package root
 import (
 	"github.com/run-ai/runai-cli/cmd/cluster"
 	"github.com/run-ai/runai-cli/cmd/flags"
+	
+	raCmd "github.com/run-ai/runai-cli/cmd"
 	deleteJob "github.com/run-ai/runai-cli/cmd/job/delete"
 	listJob "github.com/run-ai/runai-cli/cmd/job/list"
 	submitJob "github.com/run-ai/runai-cli/cmd/job/submit"
 	"github.com/run-ai/runai-cli/cmd/project"
-
 	"github.com/run-ai/runai-cli/cmd/logs"
-
-	raCmd "github.com/run-ai/runai-cli/cmd"
-	attach "github.com/run-ai/runai-cli/cmd/attach"
-	exec "github.com/run-ai/runai-cli/cmd/exec"
-	get "github.com/run-ai/runai-cli/cmd/get"
+	"github.com/run-ai/runai-cli/cmd/attach"
+	"github.com/run-ai/runai-cli/cmd/exec"
+	"github.com/run-ai/runai-cli/cmd/get"
 	"github.com/run-ai/runai-cli/cmd/template"
-
-	global "github.com/run-ai/runai-cli/cmd/global"
+	"github.com/run-ai/runai-cli/cmd/top"
+	"github.com/run-ai/runai-cli/cmd/global"
 
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util"
@@ -75,7 +74,7 @@ func NewCommand() *cobra.Command {
 	// command.AddCommand(NewLogViewerCommand())
 	command.AddCommand(logs.NewLogsCommand())
 	command.AddCommand(deleteJob.NewDeleteCommand())
-	command.AddCommand(raCmd.NewTopCommand())
+	command.AddCommand(top.NewTopCommand())
 	command.AddCommand(raCmd.NewVersionCmd())
 	// command.AddCommand(NewDataCommand())
 	// command.AddCommand(NewCompletionCommand())
