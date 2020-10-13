@@ -83,11 +83,7 @@ spec:
               {{- end }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
-              {{- if .Values.localImage}}
-              imagePullPolicy: Never
-              {{- else if .Values.alwaysPullImage }}
-              imagePullPolicy: Always
-              {{- end }}
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
               {{- if .Values.workingDir }}
               workingDir: {{ .Values.workingDir }}
               {{- end}}
