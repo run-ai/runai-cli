@@ -16,11 +16,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/cmd/trainer"
 	"os"
 
-	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/get"
+	"github.com/run-ai/runai-cli/cmd/trainer"
+
+	"github.com/run-ai/runai-cli/cmd/flags"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
@@ -69,8 +70,7 @@ func NewDeleteCommand() *cobra.Command {
 }
 
 func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo, trainingType string) error {
-	var trainingTypes []string
-	var isInteractive bool
+	var trainingTypes map[string]bool
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)
 	if err == nil {
@@ -87,14 +87,12 @@ func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo 
 			return err
 		}
 
-		runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
-		job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
-		if err == nil && !job.CreatedByCLI() {
-			return fmt.Errorf("the job '%s' exists but was not created using the runai cli", jobName)
-		}
-		isInteractive = job.Trainer() == "Interactive"
-
 		if len(trainingTypes) == 0 {
+			runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
+			job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
+			if err == nil && !job.CreatedByCLI() {
+				return fmt.Errorf("the job '%s' exists but was not created using the runai cli", jobName)
+			}
 			return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
 		} else if len(trainingTypes) > 1 {
 			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
@@ -105,10 +103,14 @@ func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo 
 				jobName)
 		}
 	} else {
-		trainingTypes = []string{trainingType}
+		trainingTypes[trainingType] = false
+	}
+	isInteractive := false
+	for trainingType, isInteractive = range trainingTypes {
+		break
 	}
 
-	err = workflow.DeleteJob(jobName, namespaceInfo.Namespace, trainingTypes[0], isInteractive, kubeClient.GetClientset())
+	err = workflow.DeleteJob(jobName, namespaceInfo.Namespace, trainingType, isInteractive, kubeClient.GetClientset())
 	if err != nil {
 		return err
 	}

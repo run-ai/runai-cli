@@ -31,17 +31,20 @@ import (
 /*
 * get App Configs by name, which is created by arena
  */
-func GetTrainingTypes(name, namespace string, clientset kubernetes.Interface) (cms []string, err error) {
+func GetTrainingTypes(name, namespace string, clientset kubernetes.Interface) (cms map[string]bool, err error) {
 	configMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
+	cms = make(map[string]bool)
 	if err != nil {
-		return []string{}, err
+		return cms, err
 	}
-	cms = []string{}
 	for _, trainingType := range trainer.KnownTrainingTypes {
 		configName := fmt.Sprintf("%s-%s", name, trainingType)
+		configNameInteractive := fmt.Sprintf("%s-%s-interactive", name, trainingType)
 		for _, configMap := range configMaps.Items {
 			if configName == configMap.Name {
-				cms = append(cms, trainingType)
+				cms[trainingType] = false
+			} else if configNameInteractive == configMap.Name {
+				cms[trainingType] = true
 			}
 		}
 	}
