@@ -104,6 +104,7 @@ type submitArgs struct {
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
 
+	ImagePullPolicy            string   `yaml:"imagePullPolicy"`
 	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`
 	Volumes                    []string `yaml:"volume,omitempty"`
 	PersistentVolumes          []string `yaml:"persistentVolumes,omitempty"`
@@ -207,12 +208,15 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.MarkHidden("dry-run")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
+	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
+	flagSet.MarkDeprecated("always-pull-image", "please use 'image-pull-policy=Always' instead.")
 	flagSet.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
 	flagSet.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
 	flagSet.StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
+	flagSet.MarkDeprecated("local-image", "please use 'image-pull-policy=Never' instead.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
@@ -360,7 +364,9 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	handleRequestedGPUs(submitArgs)
-
+	if err = handleImagePullPolicy(submitArgs); err != nil {
+		return err
+	}
 	return nil
 }
 
