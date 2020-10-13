@@ -19,8 +19,8 @@ import (
 *	delete training job with the job name
 **/
 
-func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interface) error {
-	jobName := GetJobName(name, trainingType)
+func DeleteJob(name, namespace, trainingType string, isInteractive bool , clientset kubernetes.Interface) error {
+	jobName := GetJobName(name, trainingType, isInteractive)
 
 	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
@@ -71,8 +71,12 @@ func GetDefaultValuesFile(environmentValues string) (string, error) {
 	return valueFile.Name(), nil
 }
 
-func GetJobName(name string, trainingType string) string {
-	return fmt.Sprintf("%s-%s", name, trainingType)
+func GetJobName(name string, trainingType string, isInteractive bool) string {
+	jobName := fmt.Sprintf("%s-%s", name, trainingType)
+	if isInteractive{
+		return jobName + "-interactive"
+	}
+	return jobName
 }
 
 type JobFiles struct {
@@ -125,8 +129,8 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
-	jobName := GetJobName(name, trainingType)
+func SubmitJob(name, trainingType, namespace string, isInteractive bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
+	jobName := GetJobName(name, trainingType, isInteractive)
 
 	var jobFiles *JobFiles
 
@@ -214,7 +218,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		log.Warnf("Creation of job failed. Cleaning up...")
 
-		jobName := GetJobName(name, trainingType)
+		jobName := GetJobName(name, trainingType, isInteractive)
 		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
 		if cleanUpErr != nil {
 			log.Debugf("Failed to uninstall app with configmap.")

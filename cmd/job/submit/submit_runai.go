@@ -270,7 +270,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, *submitArgs.Interactive, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}

@@ -157,7 +157,7 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
+	err = workflow.SubmitJob(submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, *submitArgs.Interactive, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
 	if err != nil {
 		return err
 	}
