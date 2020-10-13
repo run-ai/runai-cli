@@ -17,8 +17,8 @@ type (
 	MetricStatusResult string
 	MetricType string
 	QueryNameToQuery = map[string]string
-	// MetricResultsAsItems is a map of itemId => item[key] => MetricValue
-	MetricResultsAsItems = map[string]map[string][]MetricValue
+	// MetricResultsByItems is a map of itemId => item[key] => MetricValue
+	MetricResultsByItems = map[string]map[string][]MetricValue
 
 	Metric struct {
 		Status MetricStatusResult     `json:"status,inline"`
@@ -132,9 +132,9 @@ type queryResult struct {
 }
 
  // GroupMultiQueriesToItems map multipule queries to items by given itemId
-func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) ( MetricResultsAsItems, error) {
+func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) ( MetricResultsByItems, error) {
 	queryResults := map[string]MetricData{}
-	results := MetricResultsAsItems{}
+	results := MetricResultsByItems{}
 	var prometheusResultChanel = make(chan queryResult)
 	for queryName, query := range q {
 		go (func(query, name string) {

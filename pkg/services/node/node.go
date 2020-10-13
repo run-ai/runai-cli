@@ -43,7 +43,7 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 		return nodeInfoList, warning, err
 	}
 
-	var promData prom.MetricResultsAsItems
+	var promData prom.MetricResultsByItems
 
 	promClient, err := prom.BuildPrometheusClient(d.client)
 	if err == nil {

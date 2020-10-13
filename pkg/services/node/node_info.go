@@ -25,7 +25,7 @@ const (
 	UsedGpusPQ       = "usedGpus"
 )
 
-func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsAsItems) NodeInfo {
+func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsByItems) NodeInfo {
 	return NodeInfo{
 		Node:           node,
 		Pods:           pods,
@@ -36,7 +36,7 @@ func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsAsI
 type NodeInfo struct {
 	Node           v1.Node
 	Pods           []v1.Pod
-	PrometheusNode prom.MetricResultsAsItems
+	PrometheusNode prom.MetricResultsByItems
 }
 
 func (ni *NodeInfo) GetStatus() types.NodeStatus {
