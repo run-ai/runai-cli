@@ -53,8 +53,7 @@ func TestHandleImagePullPolicy(t *testing.T) {
 			pullPolicy := testSubmitArgs.ImagePullPolicy
 			if err != nil && tt.expectedPullPolicy != "" {
 				t.Errorf("handleImagePullPolicy failed with error. imagePullPolicy: %s, alwaysPullImage: %v, localImage: %v", tt.args.imagePullPolicy, tt.args.alwaysPullImage, tt.args.localImage)
-			}
-			if pullPolicy != tt.expectedPullPolicy {
+			} else if pullPolicy != tt.expectedPullPolicy {
 				t.Errorf("unexpected pull pollicy value. expectedPullPolicy: %s, imagePullPolicy: %s, alwaysPullImage: %v, localImage: %v", tt.expectedPullPolicy, tt.args.imagePullPolicy, tt.args.alwaysPullImage, tt.args.localImage)
 			}
 		})
