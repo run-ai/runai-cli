@@ -7,41 +7,41 @@ import (
 type pullPolicyTestArgs struct {
 	imagePullPolicy string
 	alwaysPullImage *bool
-	localImage *bool
+	localImage      *bool
 }
 
 func TestHandleImagePullPolicy(t *testing.T) {
 	tests := []struct {
-		name                      string
-		expectedPullPolicy		  string
-		args                      *pullPolicyTestArgs
+		name               string
+		expectedPullPolicy string
+		args               *pullPolicyTestArgs
 	}{
 		{
 			name: "valid ImagePullPolicy",
 			args: &pullPolicyTestArgs{
-				imagePullPolicy: "always",
-				alwaysPullImage:         nil,
-				localImage: nil,
+				imagePullPolicy: "Always",
+				alwaysPullImage: nil,
+				localImage:      nil,
 			},
-			expectedPullPolicy: "always",
+			expectedPullPolicy: "Always",
 		},
 		{
 			name: "invalid ImagePullPolicy",
 			args: &pullPolicyTestArgs{
 				imagePullPolicy: "invalid value",
-				alwaysPullImage:         nil,
-				localImage: nil,
+				alwaysPullImage: nil,
+				localImage:      nil,
 			},
 			expectedPullPolicy: "", // expected error
 		},
 		{
-			name: "localImageIsTrue is true",
+			name: "localImage is true", // the flag localImage is kept for backward compatibility
 			args: &pullPolicyTestArgs{
-				imagePullPolicy: "always",
-				alwaysPullImage:         nil,
-				localImage: &[]bool{true}[0],
+				imagePullPolicy: "Always",
+				alwaysPullImage: nil,
+				localImage:      &[]bool{true}[0],
 			},
-			expectedPullPolicy: "never",
+			expectedPullPolicy: "Never",
 		},
 	}
 

@@ -104,7 +104,7 @@ type submitArgs struct {
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
 
-	ImagePullPolicy 			string   `yaml:"imagePullPolicy"`
+	ImagePullPolicy            string   `yaml:"imagePullPolicy"`
 	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`
 	Volumes                    []string `yaml:"volume,omitempty"`
 	PersistentVolumes          []string `yaml:"persistentVolumes,omitempty"`
@@ -208,7 +208,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.MarkHidden("dry-run")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
-	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "always", "the policy to pull the image, and the default policy is always")
+	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy to pull the image, and the default policy is always")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	flagSet.MarkDeprecated("always-pull-image", "please use 'image-pull-policy=always' instead.")
 	flagSet.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")

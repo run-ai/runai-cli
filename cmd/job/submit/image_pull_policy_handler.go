@@ -2,17 +2,20 @@ package submit
 
 import "fmt"
 
+const (
+	pullPolicyAlways       = "Always"
+	pullPolicyIfNotPresent = "IfNotPresent"
+	pullPolicyNever        = "Never"
+)
+
 func handleImagePullPolicy(submitArgs *submitArgs) (err error) {
 	switch submitArgs.ImagePullPolicy {
-	case "always", "ifNotPresent", "never":
+	case pullPolicyAlways, pullPolicyIfNotPresent, pullPolicyNever:
 		if submitArgs.LocalImage != nil && *submitArgs.LocalImage {
-			submitArgs.ImagePullPolicy = "never"
-		}
-		if submitArgs.AlwaysPullImage != nil && *submitArgs.AlwaysPullImage {
-			submitArgs.ImagePullPolicy = "always"
+			submitArgs.ImagePullPolicy = pullPolicyNever
 		}
 		return nil
 	default:
-		return fmt.Errorf("--imagePullPolicy should be one of: always, ifNotPresent or never")
+		return fmt.Errorf("image-pull-policy flag should be set with one of the following values of: \"Always\", \"IfNotPresent\" or \"Never\"")
 	}
 }
