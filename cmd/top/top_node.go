@@ -34,7 +34,7 @@ import (
 
 var (
 	showDetails  bool
-	defultHidden = []string{
+	defaultHiddenFields = []string{
 		"Mem.Allocatable",
 		"CPUs.Allocatable",
 		"GPUs.Allocatable",
@@ -42,7 +42,7 @@ var (
 		"GPUMem.Requested",
 	}
 
-	generalFiled = []string{
+	generalNodeInfoFields = []string{
 		"Info",
 	}
 
@@ -77,12 +77,12 @@ func NewTopNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			nd := nodeService.NewNodeDescriber(clientset, allPods)
-			nodeInfos, warn, err := nd.GetAllNodeInfos()
+			nodeInfos, warning, err := nd.GetAllNodeInfos()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
-			} else if len(warn) > 0 {
-				fmt.Println(warn)
+			} else if len(warning) > 0 {
+				fmt.Println(warning)
 			}
 
 			displayTopNode(nodeInfos)
@@ -122,22 +122,21 @@ func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
 		rows = append(rows, nodeView)
 	}
 
-	hiddenFields := defultHidden
+	hiddenFields := defaultHiddenFields
 	if clsData.UnhealthyGPUs == 0 {
 		hiddenFields = append(hiddenFields, "GPUs.Unhealthy")
 	}
 
-	// Print General info table
 	ui.Title(w, "GENERAL NODES INFO")
 	err := ui.CreateTable(types.NodeView{}, ui.TableOpt{
 		Hide: hiddenFields,
-		Show: generalFiled,
+		Show: generalNodeInfoFields,
 	}).Render(w, rows).Error()
 
 	if err != nil {
 		fmt.Print(err)
 	}
-	// Print Gpu and gpu memory table
+
 	ui.Title(w, "CPU & MEMORY NODES INFO")
 	err = ui.CreateTable(types.NodeView{}, ui.TableOpt{
 		Hide: hiddenFields,
@@ -148,7 +147,6 @@ func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
 		fmt.Print(err)
 	}
 
-	// Print Cpu and memory table
 	ui.Title(w, "GPU & GPU MEMORY NODES INFO")
 	err = ui.CreateTable(types.NodeView{}, ui.TableOpt{
 		Hide: hiddenFields,
@@ -172,21 +170,21 @@ func displayTopNodeDetails(nodeInfos []nodeService.NodeInfo) {
 	fmt.Fprintf(w, "\n")
 	for _, nodeInfo := range nodeInfos {
 
-		info := nodeInfo.GetGeneralInfo()
+		generalNodeInfo := nodeInfo.GetGeneralInfo()
 
 		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
 		gpus := nodeResourcesConvertor.ToGpus()
 
-		helpers.AddNodeToClusterNodes(&clsData, info.Status, gpus)
+		helpers.AddNodeToClusterNodes(&clsData, generalNodeInfo.Status, gpus)
 
-		if len(info.Role) == 0 {
-			info.Role = "<none>"
+		if len(generalNodeInfo.Role) == 0 {
+			generalNodeInfo.Role = "<none>"
 		}
 
 		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "NAME:\t%s\n", info.Name)
-		fmt.Fprintf(w, "IPADDRESS:\t%s\n", info.IPAddress)
-		fmt.Fprintf(w, "ROLE:\t%s\n", info.Role)
+		fmt.Fprintf(w, "NAME:\t%s\n", generalNodeInfo.Name)
+		fmt.Fprintf(w, "IPADDRESS:\t%s\n", generalNodeInfo.IPAddress)
+		fmt.Fprintf(w, "ROLE:\t%s\n", generalNodeInfo.Role)
 
 		pods := util.GpuPods(nodeInfo.Pods)
 		if len(pods) > 0 {
@@ -212,10 +210,10 @@ func displayTopNodeDetails(nodeInfos []nodeService.NodeInfo) {
 			gpuUnhealthyPercentageInNode = float64(gpus.Unhealthy) / float64(gpus.Capacity) * 100
 		}
 
-		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", info.Name, strconv.FormatInt(int64(gpus.Capacity), 10))
-		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.AllocatedUnits), 10), int64(gpuUsageInNode))
+		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", generalNodeInfo.Name, strconv.FormatInt(int64(gpus.Capacity), 10))
+		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", generalNodeInfo.Name, strconv.FormatInt(int64(gpus.AllocatedUnits), 10), int64(gpuUsageInNode))
 		if gpus.Unhealthy > 0 {
-			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", info.Name, strconv.FormatInt(int64(gpus.Unhealthy), 10), int64(gpuUnhealthyPercentageInNode))
+			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", generalNodeInfo.Name, strconv.FormatInt(int64(gpus.Unhealthy), 10), int64(gpuUnhealthyPercentageInNode))
 		}
 		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(gpus.Capacity), 10),
 			strconv.FormatInt(int64(gpus.AllocatedUnits), 10))

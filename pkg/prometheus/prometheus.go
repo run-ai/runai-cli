@@ -14,17 +14,14 @@ import (
 
 
 type (
-	// MetricStatus the possible result status
-	MetricStatus string
-	// MetricType the possible metice type
+	MetricStatusResult string
 	MetricType string
-	// MultiQueries is a simple map for queryName => query
-	MultiQueries = map[string]string
-	// ItemsMap is a map of itemId => item[key] => MetricValue
-	ItemsMap = map[string]map[string][]MetricValue
+	QueryNameToQuery = map[string]string
+	// MetricResultsAsItems is a map of itemId => item[key] => MetricValue
+	MetricResultsAsItems = map[string]map[string][]MetricValue
 
 	Metric struct {
-		Status MetricStatus     `json:"status,inline"`
+		Status MetricStatusResult     `json:"status,inline"`
 		Data   MetricData 		`json:"data,omitempty"`
 	}
 
@@ -48,8 +45,8 @@ type (
 
 const (
 
-	SuccessStatus MetricStatus = "success"
-	ErrorStatus MetricStatus = "error"
+	SuccessStatus MetricStatusResult = "success"
+	ErrorStatus MetricStatusResult = "error"
 
 	MatrixResult MetricType = "matrix" 
 	VectorResult MetricType = "vector" 
@@ -135,9 +132,9 @@ type queryResult struct {
 }
 
  // GroupMultiQueriesToItems map multipule queries to items by given itemId
-func (ps *Client) GroupMultiQueriesToItems(q MultiQueries, itemID string) ( ItemsMap, error) {
+func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) ( MetricResultsAsItems, error) {
 	queryResults := map[string]MetricData{}
-	results := ItemsMap{}
+	results := MetricResultsAsItems{}
 	var prometheusResultChanel = make(chan queryResult)
 	for queryName, query := range q {
 		go (func(query, name string) {
@@ -154,12 +151,12 @@ func (ps *Client) GroupMultiQueriesToItems(q MultiQueries, itemID string) ( Item
 	}
 
 	// map the result to items by the given 'itemId' 
-	for queryName, qr := range queryResults {
-		// todo: now we are handling only result type = "vector", consider handling more result type in the fuehrer 
-		for _, metricResult := range qr.Result {
+	for queryName, queryResult := range queryResults {
+		// todo: now we are handling only result type = "vector", consider handling more result type in the future 
+		for _, metricResult := range queryResult.Result {
 			key, ok := metricResult.Metric[itemID]
 			if !ok {
-				return nil, fmt.Errorf("[Prometheos] Failed to find key: (%s) on the metric query: %s => %s",itemID, queryName, q[queryName] )
+				return nil, fmt.Errorf("[Prometheus] Failed to find key: (%s) on the metric query: %s => %s",itemID, queryName, q[queryName] )
 			}
 			val := metricResult.Value
 			item, created := results[key]

@@ -25,7 +25,7 @@ const (
 	UsedGpusPQ       = "usedGpus"
 )
 
-func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.ItemsMap) NodeInfo {
+func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsAsItems) NodeInfo {
 	return NodeInfo{
 		Node:           node,
 		Pods:           pods,
@@ -36,7 +36,7 @@ func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.ItemsMap) NodeIn
 type NodeInfo struct {
 	Node           v1.Node
 	Pods           []v1.Pod
-	PrometheusNode prom.ItemsMap
+	PrometheusNode prom.MetricResultsAsItems
 }
 
 func (ni *NodeInfo) GetStatus() types.NodeStatus {
@@ -85,18 +85,18 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	nodeResStatus.AllocatedGPUsUnits = nodeResStatus.FractionalAllocatedGpuUnits + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
-	p, ok := ni.PrometheusNode[ni.Node.Name]
+	promDataByNode, ok := ni.PrometheusNode[ni.Node.Name]
 	if ok {
 		// set usages
 		err := hasError(
-			setFloatPromData(&nodeResStatus.Usage.CPUs, p, UsedCpusPQ),
-			setFloatPromData(&nodeResStatus.Usage.GPUs, p, UsedGpusPQ),
-			setFloatPromData(&nodeResStatus.Usage.Memory, p, UsedCpuMemoryPQ),
-			setFloatPromData(&nodeResStatus.Usage.GPUMemory, p, UsedGpuMemoryPQ),
+			setFloatPromData(&nodeResStatus.Usage.CPUs, promDataByNode, UsedCpusPQ),
+			setFloatPromData(&nodeResStatus.Usage.GPUs, promDataByNode, UsedGpusPQ),
+			setFloatPromData(&nodeResStatus.Usage.Memory, promDataByNode, UsedCpuMemoryPQ),
+			setFloatPromData(&nodeResStatus.Usage.GPUMemory, promDataByNode, UsedGpuMemoryPQ),
 			// setFloatPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
 
 			// set total
-			setFloatPromData(&nodeResStatus.Capacity.GPUMemory, p, TotalGpuMemoryPQ),
+			setFloatPromData(&nodeResStatus.Capacity.GPUMemory, promDataByNode, TotalGpuMemoryPQ),
 		)
 
 		if err != nil {
@@ -111,7 +111,7 @@ func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
 	value, ok := nodeInfo.Node.Status.Allocatable[util.NVIDIAGPUResourceName]
 
 	if ok {
-		ok = (int(value.Value()) > 0)
+		ok = (value.Value() > 0)
 	}
 
 	return ok

@@ -12,7 +12,7 @@ import (
 
 var (
 	promethesNodeLabelID = "node"
-	nodePQs              = prom.MultiQueries{
+	nodePQs              = prom.QueryNameToQuery{
 		TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
 		UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
 		UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
@@ -43,9 +43,8 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 		return nodeInfoList, warning, err
 	}
 
-	var promData prom.ItemsMap
+	var promData prom.MetricResultsAsItems
 
-	// get prometheus node resources data
 	promClient, err := prom.BuildPrometheusClient(d.client)
 	if err == nil {
 		promData, err = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
