@@ -59,7 +59,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(kubeClient, jobName, namespaceInfo, "")
+				err = deleteTrainingJob(kubeClient, jobName, namespaceInfo)
 				if err != nil {
 					log.Error(err)
 				}
@@ -71,15 +71,15 @@ func NewDeleteCommand() *cobra.Command {
 }
 
 func getJobOptionalConfigMaps(name, namespace string, clientset kubernetes.Interface) ([]string, error) {
-	configMaps := []string{}
+	var configMaps []string
 	configMapInNamespace, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	for _, trainingType := range trainer.KnownTrainingTypes {
-		maybeConfigMapName := fmt.Sprintf("%s-%s", name, trainingType)
+		configMapPrefix := fmt.Sprintf("%s-%s", name, trainingType)
 		for _, configMap := range configMapInNamespace.Items {
-			if strings.HasPrefix(configMap.Name, maybeConfigMapName){
+			if strings.HasPrefix(configMap.Name, configMapPrefix){
 				configMaps = append(configMaps, configMap.Name)
 			}
 		}
@@ -87,7 +87,7 @@ func getJobOptionalConfigMaps(name, namespace string, clientset kubernetes.Inter
 	return configMaps, nil
 }
 
-func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo, trainingType string) error {
+func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo) error {
 	optionalConfigMaps, err := getJobOptionalConfigMaps(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
 	if err != nil {
 		return err

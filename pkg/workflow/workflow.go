@@ -20,9 +20,7 @@ import (
 **/
 
 func DeleteJob(namespace, configMapName string, clientset kubernetes.Interface) error {
-	jobName := configMapName
-
-	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
+	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", namespace)
 	if err != nil {
 		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
 		return err
@@ -34,17 +32,17 @@ func DeleteJob(namespace, configMapName string, clientset kubernetes.Interface) 
 		log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
 	}
 
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
+	_, err = clientset.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 
 	if err != nil {
-		log.Debugf("Skip deletion of ConfigMap %s, because the ConfigMap does not exist.", jobName)
+		log.Debugf("Skip deletion of ConfigMap %s, because the ConfigMap does not exist.", configMapName)
 		return nil
 	}
 
-	err = kubectl.DeleteAppConfigMap(jobName, namespace)
+	err = kubectl.DeleteAppConfigMap(configMapName, namespace)
 	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
+		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
+		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, configMapName)
 	}
 
 	return nil
@@ -71,7 +69,7 @@ func GetDefaultValuesFile(environmentValues string) (string, error) {
 	return valueFile.Name(), nil
 }
 
-func GetJobName(name string, trainingType string, isInteractive bool) string {
+func GetConfigMapName(name string, trainingType string, isInteractive bool) string {
 	jobName := fmt.Sprintf("%s-%s", name, trainingType)
 	if isInteractive{
 		return jobName + "-interactive"
@@ -130,12 +128,12 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 }
 
 func SubmitJob(name, trainingType, namespace string, isInteractive bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
-	jobName := GetJobName(name, trainingType, isInteractive)
+	configMapName := GetConfigMapName(name, trainingType, isInteractive)
 
 	var jobFiles *JobFiles
 
 	if !dryRun {
-		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
+		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 
 		if found != nil && found.Name != "" {
 			generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
@@ -157,7 +155,7 @@ func SubmitJob(name, trainingType, namespace string, isInteractive bool, values 
 				// Delete the configmap of the job and continue for the creation of the new one.
 
 				log.Debugf("Configmap for job exists but job itself does not for job %s on namespace %s. Deleting the configmap", name, namespace)
-				err := clientset.CoreV1().ConfigMaps(namespace).Delete(jobName, &metav1.DeleteOptions{})
+				err := clientset.CoreV1().ConfigMaps(namespace).Delete(configMapName, &metav1.DeleteOptions{})
 
 				if err != nil {
 					log.Debugf("Could not delete configmap for job %s on namespace %s", name, namespace)
@@ -192,7 +190,7 @@ func SubmitJob(name, trainingType, namespace string, isInteractive bool, values 
 	}
 
 	err = createConfigMap(
-		jobName,
+		configMapName,
 		namespace,
 		jobFiles.valueFileName,
 		jobFiles.envValuesFile,
@@ -218,7 +216,7 @@ func SubmitJob(name, trainingType, namespace string, isInteractive bool, values 
 	if err != nil {
 		log.Warnf("Creation of job failed. Cleaning up...")
 
-		jobName := GetJobName(name, trainingType, isInteractive)
+		jobName := GetConfigMapName(name, trainingType, isInteractive)
 		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
 		if cleanUpErr != nil {
 			log.Debugf("Failed to uninstall app with configmap.")
