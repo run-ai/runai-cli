@@ -216,14 +216,14 @@ func SubmitJob(name, trainingType, namespace string, isInteractive bool, values 
 	if err != nil {
 		log.Warnf("Creation of job failed. Cleaning up...")
 
-		jobName := GetConfigMapName(name, trainingType, isInteractive)
+		configMapName := GetConfigMapName(name, trainingType, isInteractive)
 		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
 		if cleanUpErr != nil {
 			log.Debugf("Failed to uninstall app with configmap.")
 		}
-		cleanUpErr = kubectl.DeleteAppConfigMap(jobName, namespace)
+		cleanUpErr = kubectl.DeleteAppConfigMap(configMapName, namespace)
 		if cleanUpErr != nil {
-			log.Debugf("Failed to cleanup configmap %s", jobName)
+			log.Debugf("Failed to cleanup configmap %s", configMapName)
 		}
 
 		return fmt.Errorf("Failed submitting the job:\n %s", err.Error())
