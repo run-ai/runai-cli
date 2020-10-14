@@ -19,8 +19,8 @@ import (
 *	delete training job with the job name
 **/
 
-func DeleteJob(name, namespace, trainingType string, isInteractive bool , clientset kubernetes.Interface) error {
-	jobName := GetJobName(name, trainingType, isInteractive)
+func DeleteJob(namespace, configMapName string, clientset kubernetes.Interface) error {
+	jobName := configMapName
 
 	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {

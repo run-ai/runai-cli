@@ -16,9 +16,11 @@ package cmd
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"os"
+	"strings"
 
-	"github.com/run-ai/runai-cli/cmd/get"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -26,7 +28,6 @@ import (
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/types"
-	"github.com/run-ai/runai-cli/pkg/util/helm"
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -69,48 +70,45 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo, trainingType string) error {
-	var trainingTypes map[string]bool
-	// 1. Handle legacy training job
-	err := helm.DeleteRelease(jobName)
-	if err == nil {
-		log.Infof("Delete the job %s successfully.", jobName)
-		return nil
+func getJobOptionalConfigMaps(name, namespace string, clientset kubernetes.Interface) ([]string, error) {
+	configMaps := []string{}
+	configMapInNamespace, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
 	}
-
-	log.Debugf("%s wasn't deleted by helm due to %v", jobName, err)
-
-	// 2. Handle training jobs created by arena
-	if trainingType == "" {
-		trainingTypes, err = get.GetTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
-		if err != nil {
-			return err
-		}
-
-		if len(trainingTypes) == 0 {
-			runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
-			job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
-			if err == nil && !job.CreatedByCLI() {
-				return fmt.Errorf("the job '%s' exists but was not created using the runai cli", jobName)
+	for _, trainingType := range trainer.KnownTrainingTypes {
+		maybeConfigMapName := fmt.Sprintf("%s-%s", name, trainingType)
+		for _, configMap := range configMapInNamespace.Items {
+			if strings.HasPrefix(configMap.Name, maybeConfigMapName){
+				configMaps = append(configMaps, configMap.Name)
 			}
-			return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
-		} else if len(trainingTypes) > 1 {
-			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
-				jobName,
-				config.CLIName,
-				jobName,
-				config.CLIName,
-				jobName)
 		}
-	} else {
-		trainingTypes[trainingType] = false
 	}
-	isInteractive := false
-	for trainingType, isInteractive = range trainingTypes {
-		break
+	return configMaps, nil
+}
+
+func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo, trainingType string) error {
+	optionalConfigMaps, err := getJobOptionalConfigMaps(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
+	if err != nil {
+		return err
+	}
+	if len(optionalConfigMaps) == 0 {
+		runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
+		job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
+		if err == nil && !job.CreatedByCLI() {
+			return fmt.Errorf("the job '%s' exists but was not created using the runai cli", jobName)
+		}
+		return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
+	} else if len(optionalConfigMaps) > 1 {
+		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
+			jobName,
+			config.CLIName,
+			jobName,
+			config.CLIName,
+			jobName)
 	}
 
-	err = workflow.DeleteJob(jobName, namespaceInfo.Namespace, trainingType, isInteractive, kubeClient.GetClientset())
+	err = workflow.DeleteJob(namespaceInfo.Namespace, optionalConfigMaps[0], kubeClient.GetClientset())
 	if err != nil {
 		return err
 	}
