@@ -42,7 +42,7 @@ func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
 
 	if float64(cnv.AllocatedGpuUnits) != cnv.AllocatedGpuFractions {
 		if cnv.GPUsOnReadyNode > 0 {
-			gpuUsage = float64(cnv.AllocatedGpuFractions) / float64(cnv.GPUsOnReadyNode) * 100
+			gpuUsage = cnv.AllocatedGpuFractions / float64(cnv.GPUsOnReadyNode) * 100
 		} else {
 			gpuUsage = 0
 		}
@@ -69,7 +69,7 @@ func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
 func AddNodeToClusterNodes(cnv *types.ClusterNodesView, status types.NodeStatus, gpu types.NodeGPUResource) {
 	cnv.GPUs += gpu.Capacity
 	cnv.AllocatedGpuUnits += gpu.AllocatedUnits
-	cnv.AllocatedGpuFractions += float64(gpu.AllocatedFraction)
+	cnv.AllocatedGpuFractions += gpu.AllocatedFraction
 	cnv.UnhealthyGPUs += gpu.Unhealthy
 	if status == types.NodeReady {
 		cnv.GPUsOnReadyNode += gpu.Capacity
