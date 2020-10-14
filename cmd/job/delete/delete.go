@@ -28,7 +28,8 @@ import (
 
 // NewDeleteCommand
 func NewDeleteCommand() *cobra.Command {
-	var interactive string
+	var typeInteractive bool
+	var typeTrain bool
 	var trainerType string
 	var command = &cobra.Command{
 		Use:   "delete JOB_NAME",
@@ -54,7 +55,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				maybeJobIdentifier := jobs.JobIdentifier{Name: jobName, Namespace: namespaceInfo.Namespace, Trainer: strings.ToLower(trainerType), Interactive: strings.ToLower(interactive)}
+				maybeJobIdentifier := jobs.JobIdentifier{Name: jobName, Namespace: namespaceInfo.Namespace, Trainer: strings.ToLower(trainerType), Interactive: typeInteractive, Train: typeTrain}
 				err = DeleteJob(maybeJobIdentifier, kubeClient)
 				if err != nil {
 					log.Error(err)
@@ -63,8 +64,9 @@ func NewDeleteCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVarP(&interactive, "interactive", "", "unknown", "Specifies whether to delete interactive job [interactive / train]")
-	command.Flags().StringVarP(&trainerType, "trainer-type", "", "", "Specifies the trainer type to avoid conflict")
+	command.Flags().BoolVarP(&typeInteractive, "interactive", "", false, "Specifies whether to delete interactive job")
+	command.Flags().BoolVarP(&typeTrain, "train", "", false, "Specifies whether to delete train job")
+	command.Flags().StringVarP(&trainerType, "training-type", "", "", "Specifies the trainer type to avoid conflict")
 	return command
 }
 

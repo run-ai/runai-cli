@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"strings"
 )
 
 type JobIdentifier struct {
 	Name          string
 	Namespace     string
 	Trainer       string
-	Interactive   string
+	Interactive   bool
+	Train		  bool
 }
 
 func generateConflictError(conflictedJobs []trainer.TrainingJob) error {
@@ -19,7 +19,7 @@ func generateConflictError(conflictedJobs []trainer.TrainingJob) error {
 	for i, job := range conflictedJobs {
 		message = fmt.Sprintf("%s \t %d) %s, %s, %s\n", message, i, job.Name(), job.TrainerName(), job.Trainer())
 	}
-	message = fmt.Sprintf("%sTo delete a specifig job you can use the flags --training-type and --interactive", message)
+	message = fmt.Sprintf("%sTo delete a specifig job you can use the flags --training-type, --interactive, and --train", message)
 	return fmt.Errorf(message)
 }
 
@@ -27,11 +27,26 @@ func guessTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.Tra
 	var matchingJobs []trainer.TrainingJob
 	trainers := trainer.NewTrainers(kubeClient)
 	for _, trainer := range trainers {
-		trainingJob, err := trainer.GetTrainingJobs(job.Name, job.Namespace)
+		trainingJobs, err := trainer.GetTrainingJobs(job.Name, job.Namespace)
 		if err != nil {
 			continue
 		}
-		matchingJobs = append(matchingJobs, trainingJob...)
+
+		if job.Interactive {
+			for _, trainingJob := range trainingJobs {
+				if (trainingJob.Trainer() == "Interactive") == job.Interactive {
+					matchingJobs = append(matchingJobs, trainingJob)
+				}
+			}
+		} else if job.Train{
+			for _, trainingJob := range trainingJobs {
+				if (trainingJob.Trainer() == "Train") == job.Train {
+					matchingJobs = append(matchingJobs, trainingJob)
+				}
+			}
+		} else {
+			matchingJobs = append(matchingJobs, trainingJobs...)
+		}
 	}
 
 	if len(matchingJobs) == 0 {
@@ -67,15 +82,19 @@ func GetTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.Train
 
 	if len(trainingJobs) == 1 {
 		return trainingJobs[0], nil
-	}
-
-	for _, trainingJob := range trainingJobs {
-		if strings.ToLower(trainingJob.Trainer()) == job.Interactive {
-			return trainingJob, nil
+	} else if job.Interactive {
+		for _, trainingJob := range trainingJobs {
+			if (trainingJob.Trainer() == "Interactive") == job.Interactive {
+				return trainingJob, nil
+			}
 		}
-	}
-
-	if len(trainingJobs) > 1 {
+	} else if job.Train{
+		for _, trainingJob := range trainingJobs {
+			if (trainingJob.Trainer() == "Train") == job.Train {
+				return trainingJob, nil
+			}
+		}
+	} else if len(trainingJobs) > 1 {
 		return nil, generateConflictError(trainingJobs)
 	}
 	return nil, fmt.Errorf("could not find a job with name: %s, trainer: %s, interactive: %s, namespace: %s", job.Name, job.Trainer, job.Interactive, job.Namespace)
