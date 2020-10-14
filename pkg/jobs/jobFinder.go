@@ -6,6 +6,9 @@ import (
 	"github.com/run-ai/runai-cli/pkg/client"
 )
 
+const (InteractiveJobTrainerLabel = "Interactive"
+		TrainJobTrainerLabel = "Train")
+
 type JobIdentifier struct {
 	Name          string
 	Namespace     string
@@ -23,30 +26,34 @@ func generateConflictError(conflictedJobs []trainer.TrainingJob) error {
 	return fmt.Errorf(message)
 }
 
+func guessTrainingJobByTrainer(job JobIdentifier, t trainer.Trainer) ([]trainer.TrainingJob, error) {
+	trainingJobs, err := t.GetTrainingJobs(job.Name, job.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var matchingJobs []trainer.TrainingJob
+	for _, trainingJob := range trainingJobs {
+		if !job.Interactive && !job.Train{
+			matchingJobs = append(matchingJobs, trainingJob)
+		} else if job.Interactive && (trainingJob.Trainer() == InteractiveJobTrainerLabel) {
+			matchingJobs = append(matchingJobs, trainingJob)
+		} else if job.Train && (trainingJob.Trainer() == TrainJobTrainerLabel) {
+			matchingJobs = append(matchingJobs, trainingJob)
+		}
+	}
+	return matchingJobs, nil
+}
+
 func guessTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.TrainingJob, error) {
 	var matchingJobs []trainer.TrainingJob
 	trainers := trainer.NewTrainers(kubeClient)
 	for _, trainer := range trainers {
-		trainingJobs, err := trainer.GetTrainingJobs(job.Name, job.Namespace)
+		trainingJobs, err := guessTrainingJobByTrainer(job, trainer)
 		if err != nil {
 			continue
 		}
-
-		if job.Interactive {
-			for _, trainingJob := range trainingJobs {
-				if (trainingJob.Trainer() == "Interactive") == job.Interactive {
-					matchingJobs = append(matchingJobs, trainingJob)
-				}
-			}
-		} else if job.Train{
-			for _, trainingJob := range trainingJobs {
-				if (trainingJob.Trainer() == "Train") == job.Train {
-					matchingJobs = append(matchingJobs, trainingJob)
-				}
-			}
-		} else {
-			matchingJobs = append(matchingJobs, trainingJobs...)
-		}
+		matchingJobs = append(matchingJobs, trainingJobs...)
 	}
 
 	if len(matchingJobs) == 0 {
@@ -97,5 +104,5 @@ func GetTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.Train
 	} else if len(trainingJobs) > 1 {
 		return nil, generateConflictError(trainingJobs)
 	}
-	return nil, fmt.Errorf("could not find a job with name: %s, trainer: %s, interactive: %s, namespace: %s", job.Name, job.Trainer, job.Interactive, job.Namespace)
+	return nil, fmt.Errorf("could not find a job with name: %s, trainer: %s, interactive: %t, namespace: %s", job.Name, job.Trainer, job.Interactive, job.Namespace)
 }
