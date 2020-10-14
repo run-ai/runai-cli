@@ -150,7 +150,7 @@ func TestJobInclusionInResourcesGetCommand(t *testing.T) {
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
 
@@ -166,7 +166,7 @@ func TestStatefulSetInclusionInResourcesGetCommand(t *testing.T) {
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
 
@@ -182,7 +182,7 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
 
@@ -201,7 +201,7 @@ func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
@@ -218,7 +218,7 @@ func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
@@ -235,7 +235,7 @@ func TestIncludeMultiplePodsInJob(t *testing.T) {
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
@@ -250,7 +250,7 @@ func TestDontGetNotRunaiJob(t *testing.T) {
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
 	if trainJob != nil {
 		t.Errorf("Expected nil as return, but got a job")

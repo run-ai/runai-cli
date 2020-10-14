@@ -105,8 +105,8 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 	return false
 }
 
-func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
-
+func (rt *RunaiTrainer) GetTrainingJobs(name, namespace string) ([]TrainingJob, error) {
+	targetTrainingJobs := []TrainingJob{}
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
@@ -123,7 +123,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 
 		if result != nil {
-			return result, nil
+			targetTrainingJobs = append(targetTrainingJobs, result)
 		}
 	}
 
@@ -143,7 +143,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 
 		if result != nil {
-			return result, nil
+			targetTrainingJobs = append(targetTrainingJobs, result)
 		}
 	}
 
@@ -163,7 +163,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 
 		if result != nil {
-			return result, nil
+			targetTrainingJobs = append(targetTrainingJobs, result)
 		}
 	}
 
@@ -185,10 +185,13 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 
 		if result != nil {
-			return result, nil
+			targetTrainingJobs = append(targetTrainingJobs, result)
 		}
 	}
 
+	if len(targetTrainingJobs) > 0 {
+		return targetTrainingJobs, nil
+	}
 	return nil, fmt.Errorf("Failed to find the job for %s", name)
 }
 

@@ -145,7 +145,7 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 	}
 
 	trainer := trainer.NewMPIJobTrainer(*client)
-	job, err := trainer.GetTrainingJob(submitArgs.Name, submitArgs.Namespace)
+	job, err := trainer.GetTrainingJobs(submitArgs.Name, submitArgs.Namespace)
 	if err != nil {
 		log.Debugf("Check %s exist due to error %v", submitArgs.Name, err)
 	}

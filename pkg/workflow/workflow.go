@@ -2,6 +2,8 @@ package workflow
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/trainer"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"os"
 
 	"io/ioutil"
@@ -46,6 +48,28 @@ func DeleteJob(namespace, configMapName string, clientset kubernetes.Interface) 
 	}
 
 	return nil
+}
+
+func DeleteJob2(job trainer.TrainingJob, kubeClient *client.Client) error {
+	go (func() {
+		configMapName := GetConfigMapName(job.Name(), job.TrainerName(), job.Trainer() == "Interactive")
+		appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", job.Namespace())
+		if err != nil {
+			log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
+		}
+		_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, job.Namespace())
+		if err != nil {
+			log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
+		}
+
+		err = kubeClient.GetClientset().CoreV1().ConfigMaps(job.Namespace()).Delete(configMapName, &metav1.DeleteOptions{})
+		if err != nil {
+			log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
+			log.Warningf("Please run `kubectl delete -n %s cm %s`", job.Namespace(), configMapName)
+		}
+	})()
+
+	return job.Delete(kubeClient)
 }
 
 /**

@@ -107,14 +107,14 @@ func NewRunaiJobCommand() *cobra.Command {
 
 				if submitArgs.IsJupyter {
 					runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
-					job, err := runaiTrainer.GetTrainingJob(submitArgs.Name, submitArgs.Namespace)
+					job, err := runaiTrainer.GetTrainingJobs(submitArgs.Name, submitArgs.Namespace)
 
 					if err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
 
-					pod := job.ChiefPod()
+					pod := job[0].ChiefPod()
 					logs, err := kubectl.Logs(pod.Name, pod.Namespace)
 
 					token, err := getTokenFromJupyterLogs(string(logs))

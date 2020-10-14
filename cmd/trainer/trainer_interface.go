@@ -15,6 +15,7 @@
 package trainer
 
 import (
+	"github.com/run-ai/runai-cli/pkg/client"
 	"time"
 
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
@@ -25,6 +26,7 @@ import (
 
 // The Training Job can be TensorFlow, MPI and Caffe
 type TrainingJob interface {
+	TrainerName() string
 	// Get the chief Pod of the Job.
 	ChiefPod() *v1.Pod
 
@@ -92,6 +94,7 @@ type TrainingJob interface {
 	CurrentAllocatedGPUs() float64
 	WorkloadType() string
 	TotalRequestedGPUs() float64
+	Delete(kubeClient *client.Client) error
 }
 
 type Trainer interface {
@@ -99,7 +102,7 @@ type Trainer interface {
 	IsSupported(name, ns string) bool
 
 	// Get TrainingJob object directly. this method is called when `arena get`
-	GetTrainingJob(name, namespace string) (TrainingJob, error)
+	GetTrainingJobs(name, namespace string) ([]TrainingJob, error)
 
 	// Get the type of trainer
 	Type() string

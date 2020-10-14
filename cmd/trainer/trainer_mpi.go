@@ -37,6 +37,8 @@ import (
 	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 )
 
+const mpiJobTrainerName				= "MpiJob"
+
 var (
 	allMPIjobs []MPIJob
 )
@@ -53,6 +55,10 @@ type MPIJob struct {
 	trainerType  string // return trainer type: TENSORFLOW
 	podMetadata  metav1.ObjectMeta
 	imageName    string
+}
+
+func (mj *MPIJob) TrainerName() string {
+	return mpiJobTrainerName
 }
 
 func (mj *MPIJob) Name() string {
@@ -398,8 +404,12 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 }
 
 // Get the training job from cache or directly
-func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
-	return tt.getTrainingJob(name, namespace)
+func (tt *MPIJobTrainer) GetTrainingJobs(name, namespace string) ([]TrainingJob, error) {
+	trainingJob, err := tt.getTrainingJob(name, namespace)
+	if err != nil {
+		return nil, err
+	}
+	return []TrainingJob{trainingJob}, nil
 }
 
 func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
@@ -742,6 +752,15 @@ func (mj *MPIJob) Resources() []cmdTypes.Resource {
 // Get PriorityClass
 func (m *MPIJob) GetPriorityClass() string {
 	return ""
+}
+
+func (m *MPIJob) Delete(kubeClient *client.Client) error {
+	mpiClient, err := mpiClient.NewForConfig(kubeClient.GetRestConfig())
+	if err != nil {
+		return err
+	}
+
+	return mpiClient.KubeflowV1alpha2().MPIJobs(m.Namespace()).Delete(m.Name(), &metav1.DeleteOptions{})
 }
 
 func getPodsOfMPIJob(name string, namespace string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {

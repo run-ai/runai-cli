@@ -1,6 +1,8 @@
 package trainer
 
 import (
+	runaiclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"strconv"
 	"time"
 
@@ -11,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+const runaiJobTrainerName = "Runaijob"
 
 type RunaiJob struct {
 	*cmdTypes.BasicJobInfo
@@ -57,6 +61,10 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1
 		succeeded:         succeeded,
 		workloadType:      workloadType,
 	}
+}
+
+func (rj *RunaiJob) TrainerName() string {
+	return runaiJobTrainerName
 }
 
 // // Get the chief Pod of the Job.
@@ -391,4 +399,17 @@ func (rj *RunaiJob) TotalRequestedGPUs() float64 {
 	}
 
 	return rj.RequestedGPU() * float64(rj.Completions())
+}
+
+func (rj *RunaiJob) Delete(kubeClient *client.Client) error {
+	if rj.Trainer() == "Interactive" {
+		return kubeClient.GetClientset().AppsV1().StatefulSets(rj.Namespace()).Delete(rj.Name(), &metav1.DeleteOptions{})
+	}
+
+	clientset, err := runaiclientset.NewForConfig(kubeClient.GetRestConfig())
+	if err != nil {
+		return err
+	}
+
+	return clientset.RunV1().RunaiJobs(rj.Namespace()).Delete(rj.Name(), metav1.DeleteOptions{})
 }

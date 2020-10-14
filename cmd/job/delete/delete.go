@@ -16,25 +16,20 @@ package cmd
 
 import (
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"os"
-	"strings"
-
-	"github.com/run-ai/runai-cli/cmd/trainer"
-
 	"github.com/run-ai/runai-cli/cmd/flags"
-	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/config"
-	"github.com/run-ai/runai-cli/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/jobs"
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os"
+	"strings"
 )
 
 // NewDeleteCommand
 func NewDeleteCommand() *cobra.Command {
+	var interactive string
+	var trainerType string
 	var command = &cobra.Command{
 		Use:   "delete JOB_NAME",
 		Short: "Delete a job and its associated pods.",
@@ -59,12 +54,8 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				maybeJobIdentifier := JobIdentifier{name: jobName, namespace: namespaceInfo.Namespace}
+				maybeJobIdentifier := jobs.JobIdentifier{Name: jobName, Namespace: namespaceInfo.Namespace, Trainer: strings.ToLower(trainerType), Interactive: strings.ToLower(interactive)}
 				err = DeleteJob(maybeJobIdentifier, kubeClient)
-				if err != nil {
-					log.Error(err)
-				}
-				err = deleteTrainingJob(kubeClient, jobName, namespaceInfo)
 				if err != nil {
 					log.Error(err)
 				}
@@ -72,55 +63,27 @@ func NewDeleteCommand() *cobra.Command {
 		},
 	}
 
+	command.Flags().StringVarP(&interactive, "interactive", "", "unknown", "Specifies whether to delete interactive job [interactive / train]")
+	command.Flags().StringVarP(&trainerType, "trainer-type", "", "", "Specifies the trainer type to avoid conflict")
 	return command
 }
 
-func getJobOptionalConfigMaps(name, namespace string, clientset kubernetes.Interface) ([]string, error) {
-	var configMaps []string
-	configMapInNamespace, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	for _, trainingType := range trainer.KnownTrainingTypes {
-		configMapPrefix := fmt.Sprintf("%s-%s", name, trainingType)
-		for _, configMap := range configMapInNamespace.Items {
-			if strings.HasPrefix(configMap.Name, configMapPrefix){
-				configMaps = append(configMaps, configMap.Name)
-			}
-		}
-	}
-	return configMaps, nil
-}
-
-func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo) error {
-	optionalConfigMaps, err := getJobOptionalConfigMaps(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
-	if err != nil {
-		return err
-	}
-	if len(optionalConfigMaps) == 0 {
-		runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
-		job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
-		if err == nil && !job.CreatedByCLI() {
-			return fmt.Errorf("the job '%s' exists but was not created using the runai cli", jobName)
-		}
-		return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
-	} else if len(optionalConfigMaps) > 1 {
-		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
-			jobName,
-			config.CLIName,
-			jobName,
-			config.CLIName,
-			jobName)
-	}
-
-	err = workflow.DeleteJob(namespaceInfo.Namespace, optionalConfigMaps[0], kubeClient.GetClientset())
+func DeleteJob(maybeJobIdentifier jobs.JobIdentifier, kubeClient *client.Client) error {
+	trainingJob, err := jobs.GetTrainingJob(maybeJobIdentifier, kubeClient)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("The job '%s' has been deleted successfully\n", jobName)
-	// (TODO: cheyang)3. Handle training jobs created by others, to implement
+	if !trainingJob.CreatedByCLI() {
+		return fmt.Errorf("the job '%s' exists but was not created using the runai cli", trainingJob.Name())
+	}
+
+	err = workflow.DeleteJob2(trainingJob, kubeClient)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("The job '%s' has been deleted successfully\n", trainingJob.Name())
 	return nil
 }
-
 

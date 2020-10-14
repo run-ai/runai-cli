@@ -161,7 +161,8 @@ func getTrainingJob(kubeClient *client.Client, name, namespace string) (job trai
 	trainers := trainer.NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.IsSupported(name, namespace) {
-			return trainer.GetTrainingJob(name, namespace)
+			trainingJob, err := trainer.GetTrainingJobs(name, namespace)
+			return trainingJob[0], err
 		} else {
 			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
 		}
@@ -176,7 +177,8 @@ func getTrainingJobByType(kubeClient *client.Client, name, namespace, trainingTy
 	trainers := trainer.NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.Type() == trainingType {
-			return trainer.GetTrainingJob(name, namespace)
+			trainingJob, err := trainer.GetTrainingJobs(name, namespace)
+			return trainingJob[0], err
 		} else {
 			log.Debugf("the job %s with type %s in namespace %s is not expected type %v",
 				name,
@@ -194,11 +196,11 @@ func getTrainingJobsByName(kubeClient *client.Client, name string, namespaceInfo
 	trainers := trainer.NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.IsSupported(name, namespaceInfo.Namespace) {
-			job, err := trainer.GetTrainingJob(name, namespaceInfo.Namespace)
+			job, err := trainer.GetTrainingJobs(name, namespaceInfo.Namespace)
 			if err != nil {
 				return nil, err
 			}
-			jobs = append(jobs, job)
+			jobs = append(jobs, job[0])
 		} else {
 			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespaceInfo.Namespace, trainer.Type())
 		}
