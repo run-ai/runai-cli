@@ -59,6 +59,11 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
+				maybeJobIdentifier := JobIdentifier{name: jobName, namespace: namespaceInfo.Namespace}
+				err = DeleteJob(maybeJobIdentifier, kubeClient)
+				if err != nil {
+					log.Error(err)
+				}
 				err = deleteTrainingJob(kubeClient, jobName, namespaceInfo)
 				if err != nil {
 					log.Error(err)
