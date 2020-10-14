@@ -101,8 +101,6 @@ type Trainer interface {
 	// Get TrainingJob object directly. this method is called when `arena get`
 	GetTrainingJob(name, namespace string) (TrainingJob, error)
 
-	GetTrainingInteractiveJob(name, namespace string) (TrainingJob, error)
-
 	// Get the type of trainer
 	Type() string
 
