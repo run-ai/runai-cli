@@ -78,7 +78,7 @@ func DeleteJob(maybeJobIdentifier jobs.JobIdentifier, kubeClient *client.Client)
 		return fmt.Errorf("the job '%s' exists but was not created using the runai cli", trainingJob.Name())
 	}
 
-	err = workflow.DeleteJob2(trainingJob, kubeClient)
+	err = workflow.DeleteJob(trainingJob, kubeClient)
 	if err != nil {
 		return err
 	}

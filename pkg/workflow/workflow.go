@@ -21,36 +21,7 @@ import (
 *	delete training job with the job name
 **/
 
-func DeleteJob(namespace, configMapName string, clientset kubernetes.Interface) error {
-	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", namespace)
-	if err != nil {
-		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
-		return err
-	}
-
-	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
-	log.Debugf("%s", result)
-	if err != nil {
-		log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
-	}
-
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
-
-	if err != nil {
-		log.Debugf("Skip deletion of ConfigMap %s, because the ConfigMap does not exist.", configMapName)
-		return nil
-	}
-
-	err = kubectl.DeleteAppConfigMap(configMapName, namespace)
-	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, configMapName)
-	}
-
-	return nil
-}
-
-func DeleteJob2(job trainer.TrainingJob, kubeClient *client.Client) error {
+func DeleteJob(job trainer.TrainingJob, kubeClient *client.Client) error {
 	go (func() {
 		configMapName := GetConfigMapName(job.Name(), job.TrainerName(), job.Trainer() == "Interactive")
 		appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", job.Namespace())
@@ -239,15 +210,14 @@ func SubmitJob(name, trainingType, namespace string, isInteractive bool, values 
 	// Clean up because creation of application failed.
 	if err != nil {
 		log.Warnf("Creation of job failed. Cleaning up...")
-
-		jobName := GetConfigMapName(name, trainingType, isInteractive)
+		configMapName := GetConfigMapName(name, trainingType, isInteractive)
 		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
 		if cleanUpErr != nil {
 			log.Debugf("Failed to uninstall app with configmap.")
 		}
-		cleanUpErr = kubectl.DeleteAppConfigMap(jobName, namespace)
+		cleanUpErr = kubectl.DeleteAppConfigMap(configMapName, namespace)
 		if cleanUpErr != nil {
-			log.Debugf("Failed to cleanup configmap %s", jobName)
+			log.Debugf("Failed to cleanup configmap %s", configMapName)
 		}
 
 		return fmt.Errorf("Failed submitting the job:\n %s", err.Error())
