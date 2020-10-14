@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	showDetails  bool
+	showDetails         bool
 	defaultHiddenFields = []string{
 		"Mem.Allocatable",
 		"CPUs.Allocatable",
@@ -85,7 +85,7 @@ func NewTopNodeCommand() *cobra.Command {
 				fmt.Println(warning)
 			}
 
-			displayTopNode(nodeInfos)
+			displayTopNodes(nodeInfos)
 		},
 	}
 
@@ -93,15 +93,15 @@ func NewTopNodeCommand() *cobra.Command {
 	return command
 }
 
-func displayTopNode(nodes []nodeService.NodeInfo) {
+func displayTopNodes(nodes []nodeService.NodeInfo) {
 	if showDetails {
-		displayTopNodeDetails(nodes)
+		displayTopNodesDetails(nodes)
 	} else {
-		displayTopNodeSummary(nodes)
+		displayTopNodesSummary(nodes)
 	}
 }
 
-func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
+func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
@@ -164,7 +164,20 @@ func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
 	_ = w.Flush()
 }
 
-func displayTopNodeDetails(nodeInfos []nodeService.NodeInfo) {
+func displayTopNode(nodeInfo nodeService.NodeInfo) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{}).Render(w, nodeInfo).Error()
+
+	if err != nil {
+		fmt.Print(err)
+	}
+	_ = w.Flush()
+
+	// todo: print node's gpus list
+	// todo: print node's pods list
+}
+
+func displayTopNodesDetails(nodeInfos []nodeService.NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	fmt.Fprintf(w, "\n")

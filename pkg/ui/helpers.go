@@ -60,7 +60,10 @@ func StringifyValue(ft reflect.Value) string {
 
 
 func getNesstedVal(v reflect.Value, path []string) (val *reflect.Value) {
-	val = &v;
+	val = UnwrapValuePtr(v);
+	if val == nil {
+		return
+	}
 
 	for _, p := range path {
 		// unwrap the pointers
