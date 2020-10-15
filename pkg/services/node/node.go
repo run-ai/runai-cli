@@ -51,6 +51,7 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 	}
 	if err != nil {
 		warning = fmt.Sprintf("Missing some data. \nreason: Can't access to the prometheus server, \ncause error: %s", err)
+		err = nil // change the error to be just a warning
 	}
 
 	for _, node := range nodeList.Items {

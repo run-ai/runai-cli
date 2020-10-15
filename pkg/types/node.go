@@ -1,7 +1,5 @@
 package types
 
-
-
 type NodeStatus string
 
 const (
@@ -10,7 +8,7 @@ const (
 )
 
 type NodeCPUResource struct {
-	Capacity    int     `title:"CAPACITY"`
+	Capacity    int     `title:"CAPACITY" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE"`
 	Requested   float64 `title:"REQUESTED"`
 	// Limit float64				`title:"Limit"`
@@ -18,16 +16,16 @@ type NodeCPUResource struct {
 }
 
 type NodeGPUResource struct {
-	Capacity          int     `title:"CAPACITY"`
+	Capacity          int     `title:"CAPACITY" def:"0"`
 	Allocatable       float64 `title:"ALLOCATABLE"`
 	Unhealthy         int     `title:"UNHEALTHY"`
-	AllocatedUnits         int     `title:"ALLOCATED UNITS"`
+	AllocatedUnits    int     `title:"ALLOCATED UNITS"`
 	AllocatedFraction float64 `title:"ALLOCATED FRACTION"`
 	Usage             float64 `title:"USAGE" format:"%"`
 }
 
 type NodeMemoryResource struct {
-	Capacity    float64 `title:"CAPACITY" format:"memory"`
+	Capacity    float64 `title:"CAPACITY" format:"memory" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE" format:"memory"`
 	Requested   float64 `title:"REQUESTED" format:"memory"`
 	// Limit float64				`title:"Limit"`
@@ -42,17 +40,17 @@ type NodeGeneralInfo struct {
 }
 
 type NodeView struct {
-	Info   NodeGeneralInfo    `group:"GENERAL,flatten"`
-	CPUs   NodeCPUResource    `group:"CPU"`
-	GPUs   NodeGPUResource    `group:"GPU"`
-	Mem    NodeMemoryResource `group:"MEMORY"`
-	GPUMem NodeMemoryResource `group:"GPU MEMORY"`
+	Info   NodeGeneralInfo     `group:"GENERAL,flatten"`
+	CPUs   *NodeCPUResource    `group:"CPU"`
+	GPUs   *NodeGPUResource    `group:"GPU" def:"<none>"`
+	Mem    *NodeMemoryResource `group:"MEMORY"`
+	GPUMem *NodeMemoryResource `group:"GPU MEMORY" def:"<none>"`
 }
 
 type ClusterNodesView struct {
-	GPUs            int
-	UnhealthyGPUs   int
-	AllocatedGpuUnits   int
+	GPUs                  int
+	UnhealthyGPUs         int
+	AllocatedGpuUnits     int
 	AllocatedGpuFractions float64
-	GPUsOnReadyNode int
+	GPUsOnReadyNode       int
 }

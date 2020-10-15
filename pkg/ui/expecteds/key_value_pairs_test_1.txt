@@ -1,0 +1,16 @@
+  Name     ⊜ moshe
+           
+  Age      ⊜ 30
+           
+▿ Addres   
+           
+    x        ⊜ 3
+             
+    y        ⊜ 552.39
+             
+▿ Addres2  
+           
+    x        ⊜ 3
+             
+    y        ⊜ 552.39
+             

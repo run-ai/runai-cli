@@ -62,9 +62,11 @@ var (
 func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "node",
+		Use:   "node [NODE_NAME]",
 		Short: "Display information about nodes in the cluster.",
+		Args:  cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
+
 			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
@@ -85,7 +87,19 @@ func NewTopNodeCommand() *cobra.Command {
 				fmt.Println(warning)
 			}
 
-			displayTopNodes(nodeInfos)
+			if len(nodeInfos) == 0 {
+				fmt.Println("No available node found in cluster")
+				return
+			}
+
+			if len(args) > 0 {
+				nodeName := args[0]
+				displayTopNodeMutcher(nodeInfos, nodeName)
+
+			} else {
+				displayTopNodes(nodeInfos)
+			}
+
 		},
 	}
 
@@ -162,19 +176,6 @@ func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
 	ui.End(w)
 
 	_ = w.Flush()
-}
-
-func displayTopNode(nodeInfo nodeService.NodeInfo) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{}).Render(w, nodeInfo).Error()
-
-	if err != nil {
-		fmt.Print(err)
-	}
-	_ = w.Flush()
-
-	// todo: print node's gpus list
-	// todo: print node's pods list
 }
 
 func displayTopNodesDetails(nodeInfos []nodeService.NodeInfo) {
