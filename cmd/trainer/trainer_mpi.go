@@ -16,7 +16,6 @@ package trainer
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/jobs"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,6 +37,8 @@ import (
 	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 )
 
+const MpiJobTrainerName = "mpijob"
+
 var (
 	allMPIjobs []MPIJob
 )
@@ -57,7 +58,7 @@ type MPIJob struct {
 }
 
 func (mj *MPIJob) TrainerName() string {
-	return jobs.MpiJobTrainerName
+	return MpiJobTrainerName
 }
 
 func (mj *MPIJob) Name() string {

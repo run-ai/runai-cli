@@ -3,7 +3,6 @@ package trainer
 import (
 	runaiclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/jobs"
 	"strconv"
 	"time"
 
@@ -14,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+const RunaiJobTrainerName = "runaijob"
 
 type RunaiJob struct {
 	*cmdTypes.BasicJobInfo
@@ -63,7 +64,7 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1
 }
 
 func (rj *RunaiJob) TrainerName() string {
-	return jobs.RunaiJobTrainerName
+	return RunaiJobTrainerName
 }
 
 // // Get the chief Pod of the Job.

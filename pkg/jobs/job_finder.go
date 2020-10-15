@@ -8,9 +8,7 @@ import (
 
 const (InteractiveJobTrainerLabel = "Interactive"
 		TrainJobTrainerLabel = "Train"
-		PreemptibleInteractiveJobTrainerLabel = "Preemptible-Interactive"
-	MpiJobTrainerName = "mpijob"
-	RunaiJobTrainerName = "runaijob")
+		PreemptibleInteractiveJobTrainerLabel = "Preemptible-Interactive")
 
 type JobIdentifier struct {
 	Name          string
@@ -97,9 +95,9 @@ func GetTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.Train
 
 	var err error
 	switch job.Trainer {
-	case RunaiJobTrainerName:
+	case trainer.RunaiJobTrainerName:
 		jobTrainer = trainer.NewRunaiTrainer(*kubeClient)
-	case MpiJobTrainerName:
+	case trainer.MpiJobTrainerName:
 		jobTrainer = trainer.NewMPIJobTrainer(*kubeClient)
 	default:
 		trainingJob, err = guessTrainingJob(job, kubeClient)
