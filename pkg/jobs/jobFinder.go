@@ -64,6 +64,30 @@ func guessTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.Tra
 	return matchingJobs[0], nil
 }
 
+func getTrainingJobByTrainer(job JobIdentifier, t trainer.Trainer) (trainer.TrainingJob, error){
+	trainingJobs, err := t.GetTrainingJobs(job.Name, job.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(trainingJobs) == 1 {
+		return trainingJobs[0], nil
+	} else if len(trainingJobs) > 1 {
+		if !job.Interactive && !job.Train {
+			return nil, generateConflictError(trainingJobs)
+		}
+		for _, trainingJob := range trainingJobs {
+			if job.Interactive && (trainingJob.Trainer() == InteractiveJobTrainerLabel) {
+				return trainingJob, nil
+			} else if job.Train && (trainingJob.Trainer() == TrainJobTrainerLabel) {
+				return trainingJob, nil
+			}
+		}
+		return nil, generateConflictError(trainingJobs)
+	}
+	return nil, fmt.Errorf("could not find a job with name: %s, trainer: %s, interactive: %t, namespace: %s", job.Name, job.Trainer, job.Interactive, job.Namespace)
+}
+
 func GetTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.TrainingJob, error) {
 	var jobTrainer trainer.Trainer
 	var trainingJob trainer.TrainingJob
@@ -82,27 +106,5 @@ func GetTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.Train
 		return trainingJob, nil
 	}
 
-	trainingJobs, err := jobTrainer.GetTrainingJobs(job.Name, job.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(trainingJobs) == 1 {
-		return trainingJobs[0], nil
-	} else if job.Interactive {
-		for _, trainingJob := range trainingJobs {
-			if (trainingJob.Trainer() == "Interactive") == job.Interactive {
-				return trainingJob, nil
-			}
-		}
-	} else if job.Train{
-		for _, trainingJob := range trainingJobs {
-			if (trainingJob.Trainer() == "Train") == job.Train {
-				return trainingJob, nil
-			}
-		}
-	} else if len(trainingJobs) > 1 {
-		return nil, generateConflictError(trainingJobs)
-	}
-	return nil, fmt.Errorf("could not find a job with name: %s, trainer: %s, interactive: %t, namespace: %s", job.Name, job.Trainer, job.Interactive, job.Namespace)
+	return getTrainingJobByTrainer(job, jobTrainer)
 }
