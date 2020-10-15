@@ -152,7 +152,7 @@ func TestJobInclusionInResourcesGetCommand(t *testing.T) {
 
 	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
-	resources := trainJob.Resources()
+	resources := trainJob[0].Resources()
 
 	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeJob) {
 		t.Errorf("Could not find related job in training job resources")
@@ -168,7 +168,7 @@ func TestStatefulSetInclusionInResourcesGetCommand(t *testing.T) {
 
 	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
-	resources := trainJob.Resources()
+	resources := trainJob[0].Resources()
 
 	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeStatefulSet) {
 		t.Errorf("Could not find related job in training job resources")
@@ -184,7 +184,7 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 
 	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
-	resources := trainJob.Resources()
+	resources := trainJob[0].Resources()
 
 	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeReplicaset) {
 		t.Errorf("Could not find related job in training job resources")
@@ -203,7 +203,7 @@ func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
 
 	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
-	if len(trainJob.AllPods()) != 2 {
+	if len(trainJob[0].AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
 	}
 }
@@ -220,7 +220,7 @@ func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
 
 	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
-	if len(trainJob.AllPods()) != 2 {
+	if len(trainJob[0].AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
 	}
 }
@@ -237,7 +237,7 @@ func TestIncludeMultiplePodsInJob(t *testing.T) {
 
 	trainJob, _ := trainer.GetTrainingJobs(job.Name, NAMESPACE)
 
-	if len(trainJob.AllPods()) != 2 {
+	if len(trainJob[0].AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
 	}
 }
@@ -266,7 +266,7 @@ func TestStatefulsetJobIsInteractive(t *testing.T) {
 
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
-	jobType := jobs[0].Trainer()
+	jobType := jobs[0].Type()
 	if jobType != "Interactive" {
 		t.Errorf("Expected job to be interactive, got %s", jobType)
 	}
@@ -281,7 +281,7 @@ func TestJobIsNotInteractive(t *testing.T) {
 
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
-	jobType := jobs[0].Trainer()
+	jobType := jobs[0].Type()
 	if jobType != "Train" {
 		t.Errorf("Expected job to be train, got %s", jobType)
 	}

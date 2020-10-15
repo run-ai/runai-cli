@@ -155,22 +155,6 @@ func SearchTrainingJob(kubeClient *client.Client, jobName string, trainingType s
 	return job, nil
 }
 
-func getTrainingJob(kubeClient *client.Client, name, namespace string) (job trainer.TrainingJob, err error) {
-	// trainers := NewTrainers(client, )
-
-	trainers := trainer.NewTrainers(kubeClient)
-	for _, trainer := range trainers {
-		if trainer.IsSupported(name, namespace) {
-			trainingJob, err := trainer.GetTrainingJobs(name, namespace)
-			return trainingJob[0], err
-		} else {
-			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
-		}
-	}
-
-	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
-}
-
 func getTrainingJobByType(kubeClient *client.Client, name, namespace, trainingType string) (job trainer.TrainingJob, err error) {
 	// trainers := NewTrainers(client, )
 
@@ -277,7 +261,7 @@ func printSingleJobHelper(client kubernetes.Interface, job trainer.TrainingJob, 
 		podCreationTime = metav1.Now().Sub(pod.CreationTimestamp.Time)
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", pod.Name,
 			strings.ToUpper(podStatus),
-			strings.ToUpper(job.Trainer()),
+			strings.ToUpper(job.Type()),
 			util.ShortHumanDuration(podCreationTime),
 			hostIP)
 	}
@@ -293,7 +277,7 @@ func printSingleJobHelper(client kubernetes.Interface, job trainer.TrainingJob, 
 func printJobSummary(w io.Writer, job trainer.TrainingJob) {
 	fmt.Fprintf(w, "NAME: %s\n", job.Name())
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
-	fmt.Fprintf(w, "TYPE: %s\n", job.Trainer())
+	fmt.Fprintf(w, "TYPE: %s\n", job.Type())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "TRAINING DURATION: %s\n", util.ShortHumanDuration(job.Duration()))
 	fmt.Fprintf(w, "GPUS: %g\n", job.RequestedGPU())

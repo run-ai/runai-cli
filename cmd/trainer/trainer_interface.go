@@ -46,7 +46,7 @@ type TrainingJob interface {
 	GetStatus() string
 
 	// Return trainer Type, support MPI, standalone, tensorflow
-	Trainer() string
+	Type() string
 
 	// Get the Job Age
 	Age() time.Duration

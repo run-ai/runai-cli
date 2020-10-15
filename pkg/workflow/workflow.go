@@ -17,30 +17,46 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-/**
-*	delete training job with the job name
-**/
+func deleteJobAdditionalResources(job trainer.TrainingJob, kubeClient *client.Client) {
+	configMapName := GetConfigMapName(job.Name(), job.TrainerName(), job.Type() == "Interactive")
+	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", job.Namespace())
+	if err != nil {
+		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
+	}
+	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, job.Namespace())
+	if err != nil {
+		log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
+	}
+
+	err = kubeClient.GetClientset().CoreV1().ConfigMaps(job.Namespace()).Delete(configMapName, &metav1.DeleteOptions{})
+	if err != nil {
+		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
+		log.Warningf("Please run `kubectl delete -n %s cm %s`", job.Namespace(), configMapName)
+	}
+}
 
 func DeleteJob(job trainer.TrainingJob, kubeClient *client.Client) error {
-	go (func() {
-		configMapName := GetConfigMapName(job.Name(), job.TrainerName(), job.Trainer() == "Interactive")
-		appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", job.Namespace())
-		if err != nil {
-			log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
-		}
-		_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, job.Namespace())
-		if err != nil {
-			log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
-		}
+	configMapName := GetConfigMapName(job.Name(), job.TrainerName(), job.Type() == "Interactive")
+	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", job.Namespace())
+	if err != nil {
+		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
+	}
+	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, job.Namespace())
+	if err != nil {
+		log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
+		//TODO: not return error when failed to delete the resources of the job. Currently the job itself is on the configMap
+		return err
+	}
 
-		err = kubeClient.GetClientset().CoreV1().ConfigMaps(job.Namespace()).Delete(configMapName, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
-			log.Warningf("Please run `kubectl delete -n %s cm %s`", job.Namespace(), configMapName)
-		}
-	})()
+	err = kubeClient.GetClientset().CoreV1().ConfigMaps(job.Namespace()).Delete(configMapName, &metav1.DeleteOptions{})
+	if err != nil {
+		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
+		log.Warningf("Please run `kubectl delete -n %s cm %s`", job.Namespace(), configMapName)
+	}
 
-	return job.Delete(kubeClient)
+	return nil
+	//TODO: When the job itself wont be on the configMap we would need to delete it manually
+	//return job.Delete(kubeClient)
 }
 
 /**

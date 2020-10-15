@@ -114,7 +114,7 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) 
 		ui.Line(w, jobInfo.Name(),
 			status,
 			util.ShortHumanDuration(jobInfo.Age()),
-			nodeName, jobInfo.Image(), jobInfo.Trainer(), projectName, jobInfo.User(),
+			nodeName, jobInfo.Image(), jobInfo.Type(), projectName, jobInfo.User(),
 			allocatedFromRequestedGPUs,
 			runningOfActivePods,
 			strings.Join(jobInfo.ServiceURLs(), ", "))

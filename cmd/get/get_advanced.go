@@ -103,7 +103,7 @@ func BuildJobInfo(job trainer.TrainingJob, clientset kubernetes.Interface) *type
 		Namespace:   job.Namespace(),
 		Status:      types.JobStatus(GetJobRealStatus(job)),
 		Duration:    util.ShortHumanDuration(job.Duration()),
-		Trainer:     job.Trainer(),
+		Trainer:     job.Type(),
 		Priority:    getPriorityClass(job),
 		Tensorboard: tensorboard,
 		ChiefName:   job.ChiefPod().Name,

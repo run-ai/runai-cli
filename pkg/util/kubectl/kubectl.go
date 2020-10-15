@@ -360,7 +360,6 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 	args = append(args, ">", fileName)
 
 	log.Debugf("Exec bash -c %s", strings.Join(args, " "))
-	fmt.Println(args)
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
 	env := os.Environ()
 	if types.KubeConfig != "" {

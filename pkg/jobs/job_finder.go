@@ -7,7 +7,10 @@ import (
 )
 
 const (InteractiveJobTrainerLabel = "Interactive"
-		TrainJobTrainerLabel = "Train")
+		TrainJobTrainerLabel = "Train"
+		PreemptibleInteractiveJobTrainerLabel = "Preemptible-Interactive"
+	MpiJobTrainerName = "mpijob"
+	RunaiJobTrainerName = "runaijob")
 
 type JobIdentifier struct {
 	Name          string
@@ -20,7 +23,7 @@ type JobIdentifier struct {
 func generateConflictError(conflictedJobs []trainer.TrainingJob) error {
 	message := fmt.Sprintf("There are more than one training job with the name %s: \n", conflictedJobs[0].Name())
 	for i, job := range conflictedJobs {
-		message = fmt.Sprintf("%s \t %d) %s, %s, %s\n", message, i, job.Name(), job.TrainerName(), job.Trainer())
+		message = fmt.Sprintf("%s \t %d) %s, %s, %s\n", message, i, job.Name(), job.TrainerName(), job.Type())
 	}
 	message = fmt.Sprintf("%sTo delete a specifig job you can use the flags --training-type, --interactive, and --train", message)
 	return fmt.Errorf(message)
@@ -36,9 +39,9 @@ func guessTrainingJobByTrainer(job JobIdentifier, t trainer.Trainer) ([]trainer.
 	for _, trainingJob := range trainingJobs {
 		if !job.Interactive && !job.Train{
 			matchingJobs = append(matchingJobs, trainingJob)
-		} else if job.Interactive && (trainingJob.Trainer() == InteractiveJobTrainerLabel) {
+		} else if job.Interactive && (trainingJob.Type() == InteractiveJobTrainerLabel || trainingJob.Type() == PreemptibleInteractiveJobTrainerLabel) {
 			matchingJobs = append(matchingJobs, trainingJob)
-		} else if job.Train && (trainingJob.Trainer() == TrainJobTrainerLabel) {
+		} else if job.Train && (trainingJob.Type() == TrainJobTrainerLabel) {
 			matchingJobs = append(matchingJobs, trainingJob)
 		}
 	}
@@ -77,9 +80,9 @@ func getTrainingJobByTrainer(job JobIdentifier, t trainer.Trainer) (trainer.Trai
 			return nil, generateConflictError(trainingJobs)
 		}
 		for _, trainingJob := range trainingJobs {
-			if job.Interactive && (trainingJob.Trainer() == InteractiveJobTrainerLabel) {
+			if job.Interactive && (trainingJob.Type() == InteractiveJobTrainerLabel || trainingJob.Type() == PreemptibleInteractiveJobTrainerLabel) {
 				return trainingJob, nil
-			} else if job.Train && (trainingJob.Trainer() == TrainJobTrainerLabel) {
+			} else if job.Train && (trainingJob.Type() == TrainJobTrainerLabel) {
 				return trainingJob, nil
 			}
 		}
@@ -94,9 +97,9 @@ func GetTrainingJob(job JobIdentifier, kubeClient *client.Client) (trainer.Train
 
 	var err error
 	switch job.Trainer {
-	case "runaijob":
+	case RunaiJobTrainerName:
 		jobTrainer = trainer.NewRunaiTrainer(*kubeClient)
-	case "mpijob":
+	case MpiJobTrainerName:
 		jobTrainer = trainer.NewMPIJobTrainer(*kubeClient)
 	default:
 		trainingJob, err = guessTrainingJob(job, kubeClient)

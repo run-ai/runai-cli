@@ -110,7 +110,7 @@ func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 			strconv.FormatFloat(jobInfo.CurrentRequestedGPUs(), 'f', -1, 64),
 			strconv.FormatFloat(jobInfo.CurrentAllocatedGPUs(), 'f', -1, 64),
 			jobInfo.GetStatus(),
-			jobInfo.Trainer(),
+			jobInfo.Type(),
 			util.ShortHumanDuration(jobInfo.Age()),
 			hostIP,
 		)
