@@ -94,7 +94,7 @@ func NewTopNodeCommand() *cobra.Command {
 
 			if len(args) > 0 {
 				nodeName := args[0]
-				displayTopNodeMutcher(nodeInfos, nodeName)
+				handleDisplayTopNode(nodeInfos, nodeName)
 
 			} else {
 				displayTopNodes(nodeInfos)

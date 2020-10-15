@@ -6,16 +6,13 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	// "github.com/run-ai/runai-cli/cmd/util"
-	// "github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/helpers"
 	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/ui"
-	// "github.com/spf13/cobra"
 )
 
-func displayTopNodeMutcher(nodeInfos []nodeService.NodeInfo, nodeName string) {
+func handleDisplayTopNode(nodeInfos []nodeService.NodeInfo, nodeName string) {
 	nodeNames := []string{}
 	var matchNodeInfo *nodeService.NodeInfo
 
@@ -50,9 +47,8 @@ func displayTopNode(nodeInfo *nodeService.NodeInfo) {
 		GPUMem: nodeResourcesConvertor.ToGpuMemory(),
 	}
 
-	fmt.Printf("%v", nodeView)
-
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+
 	ui.Title(w, "NODE SUMMERY INFO")
 
 	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{Hide: defaultHiddenFields}).Render(w, nodeView).Error()
@@ -62,6 +58,6 @@ func displayTopNode(nodeInfo *nodeService.NodeInfo) {
 	}
 	_ = w.Flush()
 
-	// todo: print node's gpus list
 	// todo: print node's pods list
+	// todo: print node's gpus list
 }

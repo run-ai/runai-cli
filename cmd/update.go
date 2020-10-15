@@ -36,7 +36,6 @@ func NewUpdateCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "update",
 		Short: "Update the Run:AI CLI to latest version.",
-		
 		Run: func(cmd *cobra.Command, args []string) {
 			if os.Getuid() != 0 {
 				log.Error("The command must be run as root")

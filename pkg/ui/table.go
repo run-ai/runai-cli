@@ -45,6 +45,11 @@ type (
 		// map format name into a function
 		Formatts FormattersByName
 	}
+
+	Column struct {
+		FieldMeta
+		GroupID string
+	}
 )
 
 func CreateTable(model interface{}, opt TableOpt) Table {
@@ -241,6 +246,18 @@ func (td *tableData) Error() error {
 }
 
 //// helpers
+
+func toColumn(field reflect.StructField, formatMap FormattersByName, path []string, groupTag GroupTag) (Column, error) {
+	fieldMeta, err := createFieldMeta(field, formatMap, path )
+
+	if err != nil {
+		return Column{}, nil
+	}
+	return Column{
+		FieldMeta: fieldMeta,
+		GroupID: groupTag.ID,
+	}, nil
+}
 
 func isStructGroup(field reflect.StructField) bool {
 	isStruct := UnwrapTypePtr(field.Type).Kind() == reflect.Struct
