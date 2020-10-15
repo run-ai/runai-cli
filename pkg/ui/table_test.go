@@ -14,15 +14,15 @@ type Address struct {
 type Person struct {
 	name       string `title:"Name" def:"--"`
 	Age        int
-	address    Address  `group:"Addres"`
-	addressPtr *Address `group:"Addres2"`
+	address    Address  `group:"Address"`
+	addressPtr *Address `group:"Address 2"`
 }
 
 func TestTable(t *testing.T) {
 	t.Run("General Case", func(t *testing.T) {
-
+		expactedPath := "test_expected/table_test_1.txt"
+		expected := from_file(expactedPath)
 		b := new(bytes.Buffer)
-		expected := from_file("expecteds/table_test_1.txt")
 		w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 		addr := Address{y: float32ptr(552.38956564), x: 3}
 		data := []Person{
@@ -38,6 +38,9 @@ func TestTable(t *testing.T) {
 		}
 
 		got := b.String()
+
+		// for test debugging
+		// record_at_file(expactedPath, got)
 
 		if got != expected {
 			t.Errorf("Strings dont match expected:\n\n%s\n result: \n\n%s", expected, got)
