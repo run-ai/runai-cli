@@ -3,10 +3,10 @@ package workflow
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"io/ioutil"
 
-	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util/helm"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
@@ -14,6 +14,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+const (
+	FamilyNameLabelSelectorName = "FamilyName"
+	FamilyIndexLabelSelectorName = "FamilyIndex"
+	ConfigMapGenerationRetries = 5
+	)
+
+type JobFiles struct {
+	valueFileName   string
+	envValuesFile   string
+	template        string
+	appInfoFileName string
+}
 
 /**
 *	delete training job with the job name
@@ -52,7 +65,7 @@ func DeleteJob(namespace, configMapName string, clientset kubernetes.Interface) 
 *	Submit training job
 **/
 
-func GetDefaultValuesFile(environmentValues string) (string, error) {
+func getDefaultValuesFile(environmentValues string) (string, error) {
 	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
 	if err != nil {
 		return "", err
@@ -69,21 +82,6 @@ func GetDefaultValuesFile(environmentValues string) (string, error) {
 	return valueFile.Name(), nil
 }
 
-func GetConfigMapName(name string, trainingType string, isInteractive bool) string {
-	jobName := fmt.Sprintf("%s-%s", name, trainingType)
-	if isInteractive{
-		return jobName + "-interactive"
-	}
-	return jobName
-}
-
-type JobFiles struct {
-	valueFileName   string
-	envValuesFile   string
-	template        string
-	appInfoFileName string
-}
-
 func generateJobFiles(name string, namespace string, values interface{}, environmentValues string, chart string) (*JobFiles, error) {
 	valueFileName, err := helm.GenerateValueFile(values)
 	if err != nil {
@@ -92,7 +90,7 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 	envValuesFile := ""
 	if environmentValues != "" {
-		envValuesFile, err = GetDefaultValuesFile(environmentValues)
+		envValuesFile, err = getDefaultValuesFile(environmentValues)
 		if err != nil {
 			log.Debugln(err)
 			return nil, fmt.Errorf("Error getting default values file of cluster")
@@ -127,156 +125,96 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 }
 
-func SubmitJob(name, trainingType, namespace string, isInteractive bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
-	configMapName := GetConfigMapName(name, trainingType, isInteractive)
-
-	var jobFiles *JobFiles
-
-	if !dryRun {
-		found, _ := clientset.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
-
-		if found != nil && found.Name != "" {
-			generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
-			if err != nil {
-				return err
-			}
-
-			jobFiles = generatedJobFiles
-
-			jobExists, err := kubectl.CheckIfAppInfofileContentsExists(jobFiles.appInfoFileName, namespace)
-
-			if err != nil {
-				return err
-			}
-
-			if jobExists {
-				return fmt.Errorf("The job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
-			} else {
-				// Delete the configmap of the job and continue for the creation of the new one.
-
-				log.Debugf("Configmap for job exists but job itself does not for job %s on namespace %s. Deleting the configmap", name, namespace)
-				err := clientset.CoreV1().ConfigMaps(namespace).Delete(configMapName, &metav1.DeleteOptions{})
-
-				if err != nil {
-					log.Debugf("Could not delete configmap for job %s on namespace %s", name, namespace)
-					return fmt.Errorf("Error submitting the job.")
-				}
-
-			}
-		}
-	}
-
-	// Create job files only if did not create them yet
-	if jobFiles == nil {
-		generatedJobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
-		if err != nil {
-			return err
-		}
-
-		jobFiles = generatedJobFiles
-	}
-
-	if dryRun {
-		fmt.Println("Generate the template on:")
-		fmt.Println(jobFiles.template)
-		return nil
-	}
-
-	// 4. Keep value file in configmap
-	chartName := helm.GetChartName(chart)
-	chartVersion, err := helm.GetChartVersion(chart)
-	if err != nil {
-		return err
-	}
-
-	err = createConfigMap(
-		configMapName,
-		namespace,
-		jobFiles.valueFileName,
-		jobFiles.envValuesFile,
-		jobFiles.appInfoFileName,
-		chartName,
-		chartVersion,
-		clientset,
-	)
-	if err != nil {
-		return err
-	}
-
-	// 5. Create Application
-	_, err = kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
-	if err != nil {
-		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
-	}
-
-	result, err := kubectl.InstallApps(jobFiles.template, namespace)
-	log.Debugf("%s", result)
-
-	// Clean up because creation of application failed.
-	if err != nil {
-		log.Warnf("Creation of job failed. Cleaning up...")
-
-		configMapName := GetConfigMapName(name, trainingType, isInteractive)
-		_, cleanUpErr := kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
-		if cleanUpErr != nil {
-			log.Debugf("Failed to uninstall app with configmap.")
-		}
-		cleanUpErr = kubectl.DeleteAppConfigMap(configMapName, namespace)
-		if cleanUpErr != nil {
-			log.Debugf("Failed to cleanup configmap %s", configMapName)
-		}
-
-		return fmt.Errorf("Failed submitting the job:\n %s", err.Error())
-	}
-
-	// 6. Clean up the template file
-	if log.GetLevel() != log.DebugLevel {
-		err = os.Remove(jobFiles.valueFileName)
-		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", jobFiles.valueFileName, err)
-		}
-
-		err = os.Remove(jobFiles.template)
-		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", jobFiles.template, err)
-		}
-
-		err = os.Remove(jobFiles.appInfoFileName)
-		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", jobFiles.appInfoFileName, err)
-		}
-	}
-
-	return nil
+func getConfigMapLabelSelector(configMapName string) string {
+	return fmt.Sprintf("%s=%s", FamilyNameLabelSelectorName, configMapName)
 }
 
-func createConfigMap(jobName string,
-	namespace string,
-	valueFileName string,
-	envValuesFile string,
-	appInfoFileName string,
-	chartName string,
-	chartVersion string, clientset kubernetes.Interface) error {
-	lables := make(map[string]string)
+func getSmallestUnoccupiedIndex(configMaps []corev1.ConfigMap) int {
+	occupationMap := make(map[string]bool)
+	for _, configMap := range configMaps {
+		occupationMap[configMap.Labels[FamilyIndexLabelSelectorName]] = true
+	}
+
+	for i := 1; i < len(configMaps); i++ {
+		if !occupationMap[strconv.Itoa(i)] {
+			return i
+		}
+	}
+
+	return len(configMaps)
+}
+
+func getConfigMapName(name string, index int) string {
+	if index == 0 {
+		return name
+	}
+	return fmt.Sprintf("%s-%d", name, index)
+}
+
+func submitConfigMap(name, namespace string, generateName bool, clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
+	maybeConfigMapName := getConfigMapName(name, 0)
+
+	configMap, err := createEmptyConfigMap(name, name, namespace, 0, clientset)
+	if err == nil {
+		return configMap, nil
+	}
+
+	if !generateName {
+		return nil, fmt.Errorf("seems like there is another job with the name %s, you can use the --generate-name flag", maybeConfigMapName)
+	}
+
+	configMapLabelSelector := getConfigMapLabelSelector(maybeConfigMapName)
+	for i := 0; i < ConfigMapGenerationRetries; i ++ {
+		existingConfigMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: configMapLabelSelector})
+		if err != nil {
+			return nil, err
+		}
+		configMapIndex := getSmallestUnoccupiedIndex(existingConfigMaps.Items)
+		maybeConfigMapName = getConfigMapName(name, configMapIndex)
+
+		configMap, err = createEmptyConfigMap(maybeConfigMapName, name, namespace, configMapIndex, clientset)
+		if err == nil {
+			return configMap, nil
+		}
+	}
+
+	return nil, fmt.Errorf("could not create job, please try again later")
+}
+
+func createEmptyConfigMap(name, baseName, namespace string, index int, clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
+	labels := make(map[string]string)
+	labels[kubectl.JOB_CONFIG_LABEL_KEY] = kubectl.JOB_CONFIG_LABEL_VALUES
+	labels[FamilyIndexLabelSelectorName] = strconv.Itoa(index)
+	labels[FamilyNameLabelSelectorName] = baseName
+
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: labels,
+		},
+	}
+	acceptedConfigMap, err := clientset.CoreV1().ConfigMaps(namespace).Create(&configMap)
+	if err != nil {
+		return nil, err
+	}
+	return acceptedConfigMap, nil
+}
+
+func populateConfigMap(configMap *corev1.ConfigMap, chartName, chartVersion, envValuesFile, valuesFileName, appInfoFileName, namespace string, clientset kubernetes.Interface) error {
 	data := make(map[string]string)
-	data["app"] = appInfoFileName
 	data[chartName] = chartVersion
 	if envValuesFile != "" {
 		envFileContent, err := ioutil.ReadFile(envValuesFile)
 		if err != nil {
 			return err
 		}
-
 		data["env-values"] = string(envFileContent)
 	}
-
-	valuesFileContent, err := ioutil.ReadFile(valueFileName)
+	valuesFileContent, err := ioutil.ReadFile(valuesFileName)
 	if err != nil {
 		return err
 	}
-
 	data["values"] = string(valuesFileContent)
-
 	appFileContent, err := ioutil.ReadFile(appInfoFileName)
 	if err != nil {
 		return err
@@ -284,15 +222,69 @@ func createConfigMap(jobName string,
 
 	data["app"] = string(appFileContent)
 
-	lables[kubectl.JOB_CONFIG_LABEL_KEY] = kubectl.JOB_CONFIG_LABEL_VALUES
-	configMap := corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   jobName,
-			Labels: lables,
-		},
-		Data: data,
+	configMap.Data = data
+	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(configMap)
+	return err
+}
+
+func cleanupJobFiles(files *JobFiles) {
+	err := os.Remove(files.valueFileName)
+	if err != nil {
+		log.Warnf("Failed to delete %s due to %v", files.valueFileName, err)
+	}
+	err = os.Remove(files.template)
+	if err != nil {
+		log.Warnf("Failed to delete %s due to %v", files.valueFileName, err)
+	}
+	err = os.Remove(files.appInfoFileName)
+	if err != nil {
+		log.Warnf("Failed to delete %s due to %v", files.valueFileName, err)
+	}
+}
+
+func submitJobInternal(name, namespace string, generateName bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface) (string, error) {
+	configMap, err := submitConfigMap(name, namespace, generateName, clientset)
+	if err != nil {
+		return "", err
+	}
+	jobName := configMap.Name
+	jobFiles, err := generateJobFiles(jobName, namespace, values, environmentValues, chart)
+	if err != nil {
+		return jobName, err
+	}
+	defer cleanupJobFiles(jobFiles)
+
+	chartName := helm.GetChartName(chart)
+	chartVersion, err := helm.GetChartVersion(chart)
+	if err != nil {
+		return jobName, err
 	}
 
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Create(&configMap)
-	return err
+	err = populateConfigMap(configMap, chartName, chartVersion, jobFiles.envValuesFile, jobFiles.valueFileName, jobFiles.appInfoFileName, namespace, clientset)
+	if err != nil {
+		return jobName, err
+	}
+
+	_, err = kubectl.InstallApps(jobFiles.template, namespace)
+	if err != nil {
+		return jobName, err
+	}
+	return jobName, nil
+}
+
+func SubmitJob(name, namespace string, generateName bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
+	if dryRun {
+		jobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
+		if err != nil {
+			return "", err
+		}
+		fmt.Println("Generate the template on:")
+		fmt.Println(jobFiles.template)
+		return "", nil
+	}
+	jobName, err := submitJobInternal(name, namespace, generateName, values, environmentValues, chart, clientset)
+	if err != nil {
+		return "", err
+	}
+	return jobName, nil
 }

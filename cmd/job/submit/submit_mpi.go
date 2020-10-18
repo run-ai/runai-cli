@@ -154,13 +154,9 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 		return fmt.Errorf("the job %s already exists, please delete it first. use 'runai delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 
-	isInteractive := false
-	if submitArgs.Interactive != nil{
-		isInteractive = *submitArgs.Interactive
-	}
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-	err = workflow.SubmitJob(submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, isInteractive, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, true, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
 	if err != nil {
 		return err
 	}

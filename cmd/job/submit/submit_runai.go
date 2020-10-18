@@ -264,17 +264,14 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset, configValues *string) error {
-	err2 := verifyHPOFlags(submitArgs)
-	if err2 != nil {
-		return err2
+	err := verifyHPOFlags(submitArgs)
+	if err != nil {
+		return err
 	}
 
+	fmt.Println(*configValues)
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	isInteractive := false
-	if submitArgs.Interactive != nil{
-		isInteractive = *submitArgs.Interactive
-	}
-	err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, isInteractive, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, true, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}
