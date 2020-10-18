@@ -8,8 +8,8 @@ and which to hide will be verbose, especially when you have a nested struct.
 I create a mechanism to make this definition easier for most use cases
 
 In general, the decision of which fields to hide or show is based on three parameters
-hide - a list of path
-show - a list of path
+hide - a list of paths
+show - a list of paths
 showByDefult - boolean
 
 in case of collision between hide and show list the show is take
