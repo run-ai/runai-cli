@@ -1,4 +1,4 @@
-            ┌⦿ Address          ┌⦿ Address 2    
+            ╭⦿ Address          ╭⦿ Address 2    
 Name   Age  ├⚬ x        y       ├⚬ x          y
 ────   ───  │  ─        ─       │  ─          ─
 moshe  30   │  3        552.39  │  3          552.39
