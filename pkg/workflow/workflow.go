@@ -32,30 +32,23 @@ type JobFiles struct {
 *	delete training job with the job name
 **/
 
-func DeleteJob(namespace, configMapName string, clientset kubernetes.Interface) error {
-	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", namespace)
+func DeleteJob(namespace, jobName string) error {
+	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
 		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
+	} else {
+		result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+		log.Debugf("%s", result)
+		if err != nil {
+			log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
+		}
+	}
+
+	err = kubectl.DeleteAppConfigMap(jobName, namespace)
+	if err != nil {
+		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
+		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
 		return err
-	}
-
-	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
-	log.Debugf("%s", result)
-	if err != nil {
-		log.Warnf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
-	}
-
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
-
-	if err != nil {
-		log.Debugf("Skip deletion of ConfigMap %s, because the ConfigMap does not exist.", configMapName)
-		return nil
-	}
-
-	err = kubectl.DeleteAppConfigMap(configMapName, namespace)
-	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, configMapName)
 	}
 
 	return nil

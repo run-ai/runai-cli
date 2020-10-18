@@ -269,9 +269,8 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 		return err
 	}
 
-	fmt.Println(*configValues)
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, true, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, raUtil.IsBoolPTrue(submitArgs.GenerateName), submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}
