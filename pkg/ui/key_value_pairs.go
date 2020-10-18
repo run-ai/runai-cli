@@ -10,6 +10,8 @@ import (
 const (
 	GroupPrefix = "▿ "
 	FieldPrefix = "  "
+	valuePrefix = "➯ "
+	IndentationPrefix = "  ┆ "
 )
 
 type (
@@ -191,12 +193,12 @@ func renderPairChildren(w io.Writer, t reflect.Value, pair PairMeta, root interf
 	var err error
 	for _, c := range pair.children {
 		fieldTypeP := getNesstedVal(t, append(c.Path, c.Key))
-		indentationStr := multiStr("  ", indentation)
+		indentationStr := multiStr(IndentationPrefix, indentation)
 
 		if c.isGroup && fieldTypeP != nil {
 			// print the group title
 			groupTitleOutput := indentationStr + GroupPrefix + c.Title
-			fmt.Fprint(w, groupTitleOutput+"\t\n\t\n")
+			fmt.Fprint(w, groupTitleOutput+"\t\n")
 			err = renderPairChildren(w, *fieldTypeP, c, root, indentation+1)
 			if err != nil {
 				return err
@@ -229,9 +231,9 @@ func renderPairChildren(w io.Writer, t reflect.Value, pair PairMeta, root interf
 		}
 
 		// print:
-		//   Key         ⊜ Value
+		//   Key         ➯ Value
 		keyOutput := indentationStr + FieldPrefix + c.Title
-		valueOutput := indentationStr + "⊜ " + val + "\n\t"
+		valueOutput := multiStr("  ", indentation) + valuePrefix + val
 		Line(w, keyOutput, valueOutput)
 	}
 	return nil

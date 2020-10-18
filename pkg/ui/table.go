@@ -10,7 +10,7 @@ import (
 // DECLERATION: currently sub grouping are not supported
 
 const (
-	groupSeperation = "┌⦿ "
+	groupSeperation = "╭⦿ "
 	titleSeperation = "├⚬ "
 	rowsSeperation  = "│  "
 )
