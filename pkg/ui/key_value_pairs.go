@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-	"strings"
 )
 
 const (
@@ -21,12 +20,7 @@ type (
 	}
 
 	KeyValuePairsOpt struct {
-		// set the default for the root struct (any root fields will be hidden by default if is true)
-		HideAllByDefault bool
-		// which field paths to show
-		Show []string
-		// which field paths to hide
-		Hide []string
+		DisplayOpt
 		// map format name into a function
 		Formatts FormattersByName
 	}
@@ -40,7 +34,7 @@ type (
 
 	PairMeta struct {
 		FieldMeta
-		perant   *PairMeta
+		parent   *PairMeta
 		isGroup  bool
 		groupTag *GroupTag
 		children []PairMeta
@@ -58,19 +52,7 @@ func CreateKeyValuePairs(model interface{}, opt KeyValuePairsOpt) KeyValuePairs 
 		opt:       opt,
 	}
 
-	isShowAllByDefault := true
-
-	if opt.HideAllByDefault {
-		isShowAllByDefault = false
-	} else if opt.Show != nil {
-		// if there is at least one filed on the root of the struct
-		for _, path := range opt.Show {
-			if !strings.Contains(path, ".") {
-				isShowAllByDefault = false
-				break
-			}
-		}
-	}
+	isShowAllByDefault := opt.rootShowByDefault()
 
 	data.addFields(data.modelType, []string{}, &data.base, isShowAllByDefault)
 
@@ -85,20 +67,11 @@ func (td *keyValuePairsData) addFields(modelType reflect.Type, path []string, pe
 }
 
 func (td *keyValuePairsData) addField(fieldType reflect.StructField, path []string, perantPair *PairMeta, showByDefult bool) {
-	// if need to hide the field
+	
 	absolutePath := getPerentPath( perantPair, append(path, fieldType.Name))
-	absolutePathStr := strings.Join(absolutePath, ".")
- 
-	if td.opt.Hide != nil {
-		if contains(td.opt.Hide, absolutePathStr) {
-			showByDefult = false
-		}
-	}
-	if td.opt.Show != nil {
-		if contains(td.opt.Show, absolutePathStr) {
-			showByDefult = true
-		}
-	}
+
+	showByDefult = td.opt.calcFiledShowByDefult(absolutePath, showByDefult )
+
 	if isStructGroup(fieldType) {
 		td.addGroup(fieldType, path, perantPair, showByDefult)
 		return
@@ -113,7 +86,7 @@ func (td *keyValuePairsData) addField(fieldType reflect.StructField, path []stri
 	}
 	perantPair.children = append(perantPair.children, PairMeta{
 		FieldMeta: fieldMeta,
-		perant:    perantPair,
+		parent:    perantPair,
 	})
 }
 
@@ -136,7 +109,7 @@ func (td *keyValuePairsData) addGroup(field reflect.StructField, path []string, 
 			FieldMeta: fieldMeta,
 			isGroup:   true,
 			groupTag:  &groupTag,
-			perant:    grandPerantFiled,
+			parent:    grandPerantFiled,
 			children:  []PairMeta{},
 		}
 		// reset the path
@@ -179,7 +152,7 @@ func getPerentPath(perentPairMeta *PairMeta, currentPath []string) []string {
 			perentGroupPath = perentPairMeta.Path
 		}
 		return getPerentPath(
-			perentPairMeta.perant,
+			perentPairMeta.parent,
 			append(
 				perentGroupPath,
 				currentPath...

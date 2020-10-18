@@ -20,8 +20,8 @@ type Person struct {
 
 func TestTable(t *testing.T) {
 	t.Run("General Case", func(t *testing.T) {
-		expactedPath := "test_expected/table_test_1.txt"
-		expected := from_file(expactedPath)
+		expectedPath := "test_expected/table_test_1.txt"
+		expected := from_file(expectedPath)
 		b := new(bytes.Buffer)
 		w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 		addr := Address{y: float32ptr(552.38956564), x: 3}
@@ -40,7 +40,7 @@ func TestTable(t *testing.T) {
 		got := b.String()
 
 		// for test debugging
-		// record_at_file(expactedPath, got)
+		// record_at_file(expectedPath, got)
 
 		if got != expected {
 			t.Errorf("Strings dont match expected:\n\n%s\n result: \n\n%s", expected, got)

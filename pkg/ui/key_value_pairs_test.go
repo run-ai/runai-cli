@@ -20,8 +20,8 @@ func TestKeyValuePairs(t *testing.T) {
 	t.Run("General Case", func(t *testing.T) {
 
 		b := new(bytes.Buffer)
-		expactedPath := "test_expected/key_value_pairs_test_1.txt"
-		expected := from_file(expactedPath)
+		expectedPath := "test_expected/key_value_pairs_test_1.txt"
+		expected := from_file(expectedPath)
 		w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 		addr := Address{y: float32ptr(552.38956564), x: 3}
 		data := Person{"moshe", 30, addr, &addr}
@@ -36,7 +36,7 @@ func TestKeyValuePairs(t *testing.T) {
 		got := b.String()
 
 		// for test debugging
-		// record_at_file(expactedPath, got)
+		// record_at_file(expectedPath, got)
 
 		if got != expected {
 			t.Errorf("Strings dont match expected:\n\n%s\nresult: \n\n%s", expected, got)

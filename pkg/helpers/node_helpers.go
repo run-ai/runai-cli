@@ -66,7 +66,7 @@ func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
 	}
 }
 
-func AddNodeToClusterNodes(cnv *types.ClusterNodesView, status types.NodeStatus, gpu *types.NodeGPUResource) {
+func AddNodeGPUsToClusterNodes(cnv *types.ClusterNodesView, status types.NodeStatus, gpu *types.NodeGPUResource) {
 	if gpu == nil {
 		return
 	}

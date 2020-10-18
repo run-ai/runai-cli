@@ -36,12 +36,7 @@ type (
 	}
 
 	TableOpt struct {
-		// set the default for the root struct (any root fields will be hidden by default if is true)
-		HideAllByDefault bool
-		// which field paths to show
-		Show []string
-		// which field paths to hide
-		Hide []string
+		DisplayOpt
 		// map format name into a function
 		Formatts FormattersByName
 	}
@@ -61,19 +56,7 @@ func CreateTable(model interface{}, opt TableOpt) Table {
 		opt:       opt,
 	}
 
-	isShowAllByDefault := true
-
-	if opt.HideAllByDefault {
-		isShowAllByDefault = false
-	} else if opt.Show != nil {
-		// if there is at least one filed on the root of the struct
-		for _, path := range opt.Show {
-			if !strings.Contains(path, ".") {
-				isShowAllByDefault = false
-				break
-			}
-		}
-	}
+	isShowAllByDefault := opt.rootShowByDefault()
 
 	defaultGroup := NewGroupTag("")
 	td.groups = []GroupTag{defaultGroup}
@@ -91,18 +74,9 @@ func (td *tableData) addFields(modelType reflect.Type, path []string, groupTag G
 }
 
 func (td *tableData) addField(fieldType reflect.StructField, path []string, groupTag GroupTag, showByDefult bool) {
-	// if need to hide the field
-	pathStr := strings.Join(append(path, fieldType.Name), ".")
-	if td.opt.Hide != nil {
-		if contains(td.opt.Hide, pathStr) {
-			showByDefult = false
-		}
-	}
-	if td.opt.Show != nil {
-		if contains(td.opt.Show, pathStr) {
-			showByDefult = true
-		}
-	}
+
+	showByDefult = td.opt.calcFiledShowByDefult(append(path, fieldType.Name), showByDefult )
+	
 	if isStructGroup(fieldType) {
 		td.addGroup(fieldType, path, groupTag, showByDefult)
 		return

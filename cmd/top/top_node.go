@@ -132,7 +132,7 @@ func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
 			GPUMem: nodeResourcesConvertor.ToGpuMemory(),
 		}
 
-		helpers.AddNodeToClusterNodes(&clsData, nodeView.Info.Status, nodeView.GPUs)
+		helpers.AddNodeGPUsToClusterNodes(&clsData, nodeView.Info.Status, nodeView.GPUs)
 		rows = append(rows, nodeView)
 	}
 
@@ -143,8 +143,10 @@ func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
 
 	ui.Title(w, "GENERAL NODES INFO")
 	err := ui.CreateTable(types.NodeView{}, ui.TableOpt{
-		Hide: hiddenFields,
-		Show: generalNodeInfoFields,
+		DisplayOpt: ui.DisplayOpt{
+			Hide: hiddenFields,
+			Show: generalNodeInfoFields,
+		},
 	}).Render(w, rows).Error()
 
 	if err != nil {
@@ -153,8 +155,10 @@ func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
 
 	ui.Title(w, "CPU & MEMORY NODES INFO")
 	err = ui.CreateTable(types.NodeView{}, ui.TableOpt{
-		Hide: hiddenFields,
-		Show: gpuAndGpuMemoryFields,
+		DisplayOpt: ui.DisplayOpt{
+			Hide: hiddenFields,
+			Show: gpuAndGpuMemoryFields,
+		},
 	}).Render(w, rows).Error()
 
 	if err != nil {
@@ -163,8 +167,10 @@ func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
 
 	ui.Title(w, "GPU & GPU MEMORY NODES INFO")
 	err = ui.CreateTable(types.NodeView{}, ui.TableOpt{
-		Hide: hiddenFields,
-		Show: cpuAndMemoryFields,
+		DisplayOpt: ui.DisplayOpt{
+			Hide: hiddenFields,
+			Show: cpuAndMemoryFields,
+		},
 	}).Render(w, rows).Error()
 
 	if err != nil {
@@ -189,7 +195,7 @@ func displayTopNodesDetails(nodeInfos []nodeService.NodeInfo) {
 		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
 		gpus := nodeResourcesConvertor.ToGpus()
 
-		helpers.AddNodeToClusterNodes(&clsData, generalNodeInfo.Status, gpus)
+		helpers.AddNodeGPUsToClusterNodes(&clsData, generalNodeInfo.Status, gpus)
 
 		if len(generalNodeInfo.Role) == 0 {
 			generalNodeInfo.Role = "<none>"

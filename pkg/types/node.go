@@ -42,8 +42,8 @@ type NodeGeneralInfo struct {
 type NodeView struct {
 	Info   NodeGeneralInfo     `group:"GENERAL,flatten"`
 	CPUs   *NodeCPUResource    `group:"CPU"`
-	GPUs   *NodeGPUResource    `group:"GPU" def:"<none>"`
 	Mem    *NodeMemoryResource `group:"MEMORY"`
+	GPUs   *NodeGPUResource    `group:"GPU" def:"<none>"`
 	GPUMem *NodeMemoryResource `group:"GPU MEMORY" def:"<none>"`
 }
 
