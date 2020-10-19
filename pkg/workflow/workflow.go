@@ -2,6 +2,8 @@ package workflow
 
 import (
 	"fmt"
+	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/types"
 	"os"
 	"strconv"
 
@@ -16,9 +18,9 @@ import (
 )
 
 const (
-	FamilyNameLabelSelectorName = "FamilyName"
-	FamilyIndexLabelSelectorName = "FamilyIndex"
-	ConfigMapGenerationRetries = 5
+	FamilyNameLabelSelectorName  = "FamilyName"
+	familyIndexLabelSelectorName = "FamilyIndex"
+	configMapGenerationRetries   = 5
 	)
 
 type JobFiles struct {
@@ -32,7 +34,13 @@ type JobFiles struct {
 *	delete training job with the job name
 **/
 
-func DeleteJob(namespace, jobName string) error {
+func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
+	namespace := namespaceInfo.Namespace
+	_, err := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
+	if err != nil {
+		return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
+	}
+
 	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
 		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
@@ -125,7 +133,7 @@ func getConfigMapLabelSelector(configMapName string) string {
 func getSmallestUnoccupiedIndex(configMaps []corev1.ConfigMap) int {
 	occupationMap := make(map[string]bool)
 	for _, configMap := range configMaps {
-		occupationMap[configMap.Labels[FamilyIndexLabelSelectorName]] = true
+		occupationMap[configMap.Labels[familyIndexLabelSelectorName]] = true
 	}
 
 	for i := 1; i < len(configMaps); i++ {
@@ -153,11 +161,11 @@ func submitConfigMap(name, namespace string, generateName bool, clientset kubern
 	}
 
 	if !generateName {
-		return nil, fmt.Errorf("seems like there is another job with the name %s, you can use the --generate-name flag", maybeConfigMapName)
+		return nil, fmt.Errorf("there is another job with the name %s, you can either delete it or you can use the --generate-name flag", maybeConfigMapName)
 	}
 
 	configMapLabelSelector := getConfigMapLabelSelector(maybeConfigMapName)
-	for i := 0; i < ConfigMapGenerationRetries; i ++ {
+	for i := 0; i < configMapGenerationRetries; i ++ {
 		existingConfigMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: configMapLabelSelector})
 		if err != nil {
 			return nil, err
@@ -171,13 +179,13 @@ func submitConfigMap(name, namespace string, generateName bool, clientset kubern
 		}
 	}
 
-	return nil, fmt.Errorf("could not create job, please try again later")
+	return nil, fmt.Errorf("job creation has failed. Please try again")
 }
 
 func createEmptyConfigMap(name, baseName, namespace string, index int, clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
 	labels := make(map[string]string)
 	labels[kubectl.JOB_CONFIG_LABEL_KEY] = kubectl.JOB_CONFIG_LABEL_VALUES
-	labels[FamilyIndexLabelSelectorName] = strconv.Itoa(index)
+	labels[familyIndexLabelSelectorName] = strconv.Itoa(index)
 	labels[FamilyNameLabelSelectorName] = baseName
 
 	configMap := corev1.ConfigMap{

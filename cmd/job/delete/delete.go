@@ -50,7 +50,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = workflow.DeleteJob(namespaceInfo.Namespace, jobName)
+				err = workflow.DeleteJob(jobName, namespaceInfo, kubeClient.GetClientset())
 				if err != nil {
 					log.Error(err)
 				}
