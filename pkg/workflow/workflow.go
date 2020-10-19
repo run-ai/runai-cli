@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	FamilyNameLabelSelectorName  = "FamilyName"
-	familyIndexLabelSelectorName = "FamilyIndex"
-	configMapGenerationRetries   = 5
+	BaseNameLabelSelectorName  = "FamilyName"
+	baseIndexLabelSelectorName = "FamilyIndex"
+	configMapGenerationRetries = 5
 	)
 
 type JobFiles struct {
@@ -94,26 +94,28 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 		envValuesFile, err = getDefaultValuesFile(environmentValues)
 		if err != nil {
 			log.Debugln(err)
+			cleanupSingleFile(valueFileName)
 			return nil, fmt.Errorf("Error getting default values file of cluster")
 		}
-	}
-
-	if err != nil {
-		log.Debugln(err)
-		return nil, fmt.Errorf("Error getting default values file of cluster")
 	}
 
 	// 2. Generate Template file
 	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, envValuesFile, chart)
 	if err != nil {
+		cleanupSingleFile(environmentValues)
+		cleanupSingleFile(valueFileName)
 		return nil, err
 	}
 
 	// 3. Generate AppInfo file
 	appInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
 	if err != nil {
+		cleanupSingleFile(template)
+		cleanupSingleFile(environmentValues)
+		cleanupSingleFile(valueFileName)
 		return nil, err
 	}
+
 
 	jobFiles := &JobFiles{
 		valueFileName:   valueFileName,
@@ -127,13 +129,13 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 }
 
 func getConfigMapLabelSelector(configMapName string) string {
-	return fmt.Sprintf("%s=%s", FamilyNameLabelSelectorName, configMapName)
+	return fmt.Sprintf("%s=%s", BaseNameLabelSelectorName, configMapName)
 }
 
 func getSmallestUnoccupiedIndex(configMaps []corev1.ConfigMap) int {
 	occupationMap := make(map[string]bool)
 	for _, configMap := range configMaps {
-		occupationMap[configMap.Labels[familyIndexLabelSelectorName]] = true
+		occupationMap[configMap.Labels[baseIndexLabelSelectorName]] = true
 	}
 
 	for i := 1; i < len(configMaps); i++ {
@@ -185,8 +187,8 @@ func submitConfigMap(name, namespace string, generateName bool, clientset kubern
 func createEmptyConfigMap(name, baseName, namespace string, index int, clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
 	labels := make(map[string]string)
 	labels[kubectl.JOB_CONFIG_LABEL_KEY] = kubectl.JOB_CONFIG_LABEL_VALUES
-	labels[familyIndexLabelSelectorName] = strconv.Itoa(index)
-	labels[FamilyNameLabelSelectorName] = baseName
+	labels[baseIndexLabelSelectorName] = strconv.Itoa(index)
+	labels[BaseNameLabelSelectorName] = baseName
 
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -228,19 +230,20 @@ func populateConfigMap(configMap *corev1.ConfigMap, chartName, chartVersion, env
 	return err
 }
 
+func cleanupSingleFile(file string) {
+	if _, err := os.Stat(file); err == nil {
+		err = os.Remove(file)
+		if err != nil {
+			log.Warnf("Failed to delete %s due to %v", file, err)
+		}
+	}
+}
+
 func cleanupJobFiles(files *JobFiles) {
-	err := os.Remove(files.valueFileName)
-	if err != nil {
-		log.Warnf("Failed to delete %s due to %v", files.valueFileName, err)
-	}
-	err = os.Remove(files.template)
-	if err != nil {
-		log.Warnf("Failed to delete %s due to %v", files.valueFileName, err)
-	}
-	err = os.Remove(files.appInfoFileName)
-	if err != nil {
-		log.Warnf("Failed to delete %s due to %v", files.valueFileName, err)
-	}
+	cleanupSingleFile(files.valueFileName)
+	cleanupSingleFile(files.template)
+	cleanupSingleFile(files.appInfoFileName)
+	cleanupSingleFile(files.envValuesFile)
 }
 
 func submitJobInternal(name, namespace string, generateName bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface) (string, error) {
@@ -267,6 +270,7 @@ func submitJobInternal(name, namespace string, generateName bool, values interfa
 	}
 
 	_, err = kubectl.InstallApps(jobFiles.template, namespace)
+	fmt.Println(jobFiles.template)
 	if err != nil {
 		return jobName, err
 	}

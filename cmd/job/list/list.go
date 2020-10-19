@@ -85,7 +85,7 @@ func NewListCommand() *cobra.Command {
 				os.Exit(1)
 			} else {
 				for _, item := range configMaps.Items {
-					if item.Labels[workflow.FamilyNameLabelSelectorName] != "" {
+					if item.Labels[workflow.BaseNameLabelSelectorName] != "" {
 						if jobsMap[item.Name] == false {
 							fmt.Println(item.Name)
 							invalidJobs = append(invalidJobs, item.Name)
@@ -144,7 +144,7 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, invalidJobs []str
 	}
 
 	for _, invalidJob := range invalidJobs {
-		ui.Line(w, invalidJob, "Invalid job. Please delete it!", "", "", "", "", "", "", "", "", "")
+		ui.Line(w, invalidJob, "Invalid job", "", "", "", "", "", "", "", "", "")
 	}
 	_ = w.Flush()
 }
