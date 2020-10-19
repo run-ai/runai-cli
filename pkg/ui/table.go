@@ -225,7 +225,7 @@ func toColumn(field reflect.StructField, formatMap FormattersByName, path []stri
 	fieldMeta, err := createFieldMeta(field, formatMap, path )
 
 	if err != nil {
-		return Column{}, nil
+		return Column{}, err
 	}
 	return Column{
 		FieldMeta: fieldMeta,
