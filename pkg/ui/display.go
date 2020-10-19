@@ -44,7 +44,7 @@ func (opt *DisplayOpt) rootShowByDefault() bool {
 		// if there is at least one field on the root of the struct
 		for _, path := range opt.Show {
 			if !strings.Contains(path, ".") {
-				return true
+				return false
 			}
 		}
 	}

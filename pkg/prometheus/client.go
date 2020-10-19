@@ -17,8 +17,9 @@ type (
 	MetricStatusResult string
 	MetricType string
 	QueryNameToQuery = map[string]string
-	// MetricResultsByItems is a map of itemId => item[key] => MetricValue
-	MetricResultsByItems = map[string]map[string][]MetricValue
+	// MetricResultsByItems is a map of itemId => item[key] => MetricResult
+	MetricResultsByItems = map[string]MetricResultsByQueryName
+	MetricResultsByQueryName = map[string]*[]MetricResult
 
 	Metric struct {
 		Status MetricStatusResult     `json:"status,inline"`
@@ -158,13 +159,18 @@ func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) ( 
 			if !ok {
 				return nil, fmt.Errorf("[Prometheus] Failed to find key: (%s) on the metric query: %s => %s",itemID, queryName, q[queryName] )
 			}
-			val := metricResult.Value
 			item, created := results[key]
 			if !created {
-				item = map[string][]MetricValue{}
+				item = map[string]*[]MetricResult{}
 				results[key] = item
 			}
-			item[queryName] = val
+			itemResult, ok := item[queryName]
+			if !ok {
+				itemResult = &[]MetricResult{}
+				item[queryName] = itemResult
+			}
+
+			*itemResult = append(*itemResult, metricResult)
 		}
 		
 	}

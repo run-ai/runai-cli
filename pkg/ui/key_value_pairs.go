@@ -9,8 +9,9 @@ import (
 const (
 	GroupPrefix = "▿ "
 	FieldPrefix = "  "
-	valuePrefix = "➯ "
-	IndentationPrefix = "  ┆ "
+	KeySuffix = ":"
+	valuePrefix = ""
+	IndentationPrefix = "  "
 )
 
 type (
@@ -170,8 +171,8 @@ func renderPairChildren(w io.Writer, t reflect.Value, pair PairMeta, root interf
 
 		if c.isGroup && fieldTypeP != nil {
 			// print the group title
-			groupTitleOutput := indentationStr + GroupPrefix + c.Title
-			fmt.Fprint(w, groupTitleOutput+"\t\n")
+			groupTitleOutput := indentationStr + GroupPrefix + c.Title + KeySuffix
+			fmt.Fprint(w, groupTitleOutput+"\n")
 			err = renderPairChildren(w, *fieldTypeP, c, root, indentation+1)
 			if err != nil {
 				return err
@@ -205,8 +206,8 @@ func renderPairChildren(w io.Writer, t reflect.Value, pair PairMeta, root interf
 
 		// print:
 		//   Key         ➯ Value
-		keyOutput := indentationStr + FieldPrefix + c.Title
-		valueOutput := multiStr("  ", indentation) + valuePrefix + val
+		keyOutput := indentationStr + FieldPrefix + c.Title + KeySuffix
+		valueOutput :=  valuePrefix + val
 		Line(w, keyOutput, valueOutput)
 	}
 	return nil

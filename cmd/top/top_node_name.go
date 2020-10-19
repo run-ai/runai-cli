@@ -37,8 +37,8 @@ Available node names:
 }
 
 func displayTopNode(nodeInfo *nodeService.NodeInfo) {
-
-	nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
+	nodeResources := nodeInfo.GetResourcesStatus()
+	nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeResources)
 
 	nodeView := types.NodeView{
 		Info:   nodeInfo.GetGeneralInfo(),
@@ -59,8 +59,17 @@ func displayTopNode(nodeInfo *nodeService.NodeInfo) {
 	if err != nil {
 		fmt.Print(err)
 	}
+
+	ui.Title(w, "NODE GPUs INFO")
+
+	err = ui.CreateTable(types.GPU{}, ui.TableOpt{}).
+		Render(w, nodeResources.GpuUnits).
+		Error()
+	if err != nil {
+		fmt.Print(err)
+	}
+
 	_ = w.Flush()
 
 	// todo: print node's pods list
-	// todo: print node's gpus list
 }
