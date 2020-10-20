@@ -34,14 +34,27 @@ type JobFiles struct {
 *	delete training job with the job name
 **/
 
+
+func getServerConfigMapNameByJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) (string, error) {
+	namespace := namespaceInfo.Namespace
+	maybeConfigMapNames := []string{jobName, fmt.Sprintf("%s-%s", jobName, "runai"),fmt.Sprintf("%s-%s", jobName, "mpijob")}
+	for _, maybeConfigMapName := range maybeConfigMapNames {
+		configMap, err := clientset.CoreV1().ConfigMaps(namespace).Get(maybeConfigMapName, metav1.GetOptions{})
+		if err == nil {
+			return configMap.Name, nil
+		}
+	}
+	return "", cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
+}
+
 func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
 	namespace := namespaceInfo.Namespace
-	_, err := clientset.CoreV1().ConfigMaps(namespace).Get(jobName, metav1.GetOptions{})
+	configMapName, err := getServerConfigMapNameByJob(jobName, namespaceInfo, clientset)
 	if err != nil {
-		return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
+		return err
 	}
 
-	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
+	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", namespace)
 	if err != nil {
 		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
 	} else {
@@ -52,10 +65,10 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 		}
 	}
 
-	err = kubectl.DeleteAppConfigMap(jobName, namespace)
+	err = kubectl.DeleteAppConfigMap(configMapName, namespace)
 	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
+		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
+		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, configMapName)
 		return err
 	}
 
