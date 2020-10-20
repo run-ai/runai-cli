@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package top
+package node
 
 import (
 	"fmt"
@@ -20,9 +20,7 @@ import (
 	"strconv"
 	"text/tabwriter"
 
-	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/cmd/util"
-	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/helpers"
 	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
 	"github.com/run-ai/runai-cli/pkg/types"
@@ -34,13 +32,6 @@ import (
 
 var (
 	showDetails         bool
-	defaultHiddenFields = []string{
-		"Mem.Allocatable",
-		"CPUs.Allocatable",
-		"GPUs.Allocatable",
-		"GPUMem.Allocatable",
-		"GPUMem.Requested",
-	}
 
 	generalNodeInfoFields = []string{
 		"Info",
@@ -62,41 +53,18 @@ var (
 func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "node [NODE_NAME]",
+		Use:   "node",
 		Short: "Display information about nodes in the cluster.",
 		Args:  cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 
-			kubeClient, err := client.GetClient()
+			nodeInfos, err := getNodeInfos()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			clientset := kubeClient.GetClientset()
-			allPods, err := trainer.AcquireAllActivePods(clientset)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			nd := nodeService.NewNodeDescriber(clientset, allPods)
-			nodeInfos, warning, err := nd.GetAllNodeInfos()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			} else if len(warning) > 0 {
-				fmt.Println(warning)
-			}
 
-			if len(nodeInfos) == 0 {
-				fmt.Println("No available node found in cluster")
-				return
-			}
-
-			if len(args) > 0 {
-				nodeName := args[0]
-				handleDisplayTopNode(nodeInfos, nodeName)
-
-			} else {
+			if len(*nodeInfos) > 0 {
 				displayTopNodes(nodeInfos)
 			}
 
@@ -107,7 +75,7 @@ func NewTopNodeCommand() *cobra.Command {
 	return command
 }
 
-func displayTopNodes(nodes []nodeService.NodeInfo) {
+func displayTopNodes(nodes *[]nodeService.NodeInfo) {
 	if showDetails {
 		displayTopNodesDetails(nodes)
 	} else {
@@ -115,13 +83,13 @@ func displayTopNodes(nodes []nodeService.NodeInfo) {
 	}
 }
 
-func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
+func displayTopNodesSummary(nodeInfos *[]nodeService.NodeInfo) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	rows := []types.NodeView{}
 
-	for _, nodeInfo := range nodeInfos {
+	for _, nodeInfo := range *nodeInfos {
 
 		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
 		nodeView := types.NodeView{
@@ -184,12 +152,12 @@ func displayTopNodesSummary(nodeInfos []nodeService.NodeInfo) {
 	_ = w.Flush()
 }
 
-func displayTopNodesDetails(nodeInfos []nodeService.NodeInfo) {
+func displayTopNodesDetails(nodeInfos *[]nodeService.NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	fmt.Fprintf(w, "\n")
-	for _, nodeInfo := range nodeInfos {
-
+	for _, nodeInfo := range *nodeInfos {
+	 
 		generalNodeInfo := nodeInfo.GetGeneralInfo()
 
 		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())

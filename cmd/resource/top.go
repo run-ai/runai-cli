@@ -12,34 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package top
+package resource
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/run-ai/runai-cli/cmd/node"
+	"github.com/run-ai/runai-cli/cmd/job"
+
 	// podv1 "k8s.io/api/core/v1"
 )
 
-var (
-	topLong = `Display information about nodes and jobs.
-
-Available Commands:
-  node        Display Resource (GPU) usage of nodes
-  job         Display Resource (GPU) usage of pods
-    `
-)
 
 func NewTopCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "top",
-		Short: "Display information about nodes and jobs.",
+		Short: "Display top information about Runai resources.",
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
 	}
 
 	// create subcommands
-	command.AddCommand(NewTopNodeCommand())
-	command.AddCommand(NewTopJobCommand())
+	command.AddCommand(node.NewTopNodeCommand())
+	command.AddCommand(job.NewTopJobCommand())
 
 	return command
 }

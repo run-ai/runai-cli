@@ -55,12 +55,12 @@ func (opt *DisplayOpt) calcFiledShowByDefult(path []string ,parentShowByDefault 
 	pathStr := strings.Join(path, ".")
 
 	if opt.Hide != nil {
-		if contains(opt.Hide, pathStr) {
+		if Contains(opt.Hide, pathStr) {
 			return false
 		}
 	}
 	if opt.Show != nil {
-		if contains(opt.Show, pathStr) {
+		if Contains(opt.Show, pathStr) {
 			return true
 		}
 	}

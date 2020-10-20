@@ -28,7 +28,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/exec"
 	"github.com/run-ai/runai-cli/cmd/get"
 	"github.com/run-ai/runai-cli/cmd/template"
-	"github.com/run-ai/runai-cli/cmd/top"
+	"github.com/run-ai/runai-cli/cmd/resource"
 	"github.com/run-ai/runai-cli/cmd/global"
 
 	"github.com/run-ai/runai-cli/pkg/config"
@@ -74,7 +74,8 @@ func NewCommand() *cobra.Command {
 	// command.AddCommand(NewLogViewerCommand())
 	command.AddCommand(logs.NewLogsCommand())
 	command.AddCommand(deleteJob.NewDeleteCommand())
-	command.AddCommand(top.NewTopCommand())
+	command.AddCommand(resource.NewTopCommand())
+	command.AddCommand(resource.NewDescribeCommand())
 	command.AddCommand(raCmd.NewVersionCmd())
 	// command.AddCommand(NewDataCommand())
 	// command.AddCommand(NewCompletionCommand())
