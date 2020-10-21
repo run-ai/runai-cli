@@ -31,8 +31,7 @@ func NewGetCommand() *cobra.Command {
 	command.Flags().MarkHidden("events")
 	command.Flags().MarkHidden("output")
 
-	// create subcommands
-	// command.AddCommand(job.NewDescribeJobCommand())
-
+	// todo: create subcommands (get job, project ...)
+	
 	return command
 }
