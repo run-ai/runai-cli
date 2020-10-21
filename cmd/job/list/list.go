@@ -87,7 +87,6 @@ func NewListCommand() *cobra.Command {
 				for _, item := range configMaps.Items {
 					if item.Labels[workflow.BaseNameLabelSelectorName] != "" {
 						if jobsMap[item.Name] == false {
-							fmt.Println(item.Name)
 							invalidJobs = append(invalidJobs, item.Name)
 						}
 					}

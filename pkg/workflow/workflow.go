@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	BaseNameLabelSelectorName  = "FamilyName"
-	baseIndexLabelSelectorName = "FamilyIndex"
+	BaseNameLabelSelectorName  = "base-name"
+	baseIndexLabelSelectorName = "base-name-index"
 	configMapGenerationRetries = 5
 	)
 
@@ -176,7 +176,7 @@ func submitConfigMap(name, namespace string, generateName bool, clientset kubern
 	}
 
 	if !generateName {
-		return nil, fmt.Errorf("there is another job with the name %s, you can either delete it or you can use the --generate-name flag", maybeConfigMapName)
+		return nil, fmt.Errorf("the job %s already exists, either delete it first (use 'runai delete <job-name>' ) or submit the job again using the flag --generate-name", name)
 	}
 
 	configMapLabelSelector := getConfigMapLabelSelector(maybeConfigMapName)
@@ -283,7 +283,6 @@ func submitJobInternal(name, namespace string, generateName bool, values interfa
 	}
 
 	_, err = kubectl.InstallApps(jobFiles.template, namespace)
-	fmt.Println(jobFiles.template)
 	if err != nil {
 		return jobName, err
 	}
