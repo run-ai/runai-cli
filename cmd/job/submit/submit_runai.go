@@ -29,17 +29,21 @@ import (
 const (
 	submitExamples = `
 # Start a Training job.
-runai submit train1 -i gcr.io/run-ai-demo/quickstart -g 1
+runai submit --name train1 -i gcr.io/run-ai-demo/quickstart -g 1
 
 # Start an interactive job.
-runai submit build1 -i python -g 1 --interactive --attach
+runai submit --name build1 -i python -g 1 --interactive --attach
 
 # Use GPU Fractions
-runai submit frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
+runai submit --name frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
 
 # Hyperparameter Optimization
-runai submit hpo1 -i gcr.io/run-ai-demo/quickstart-hpo -g 1  \
-    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo`
+runai submit --name hpo1 -i gcr.io/run-ai-demo/quickstart-hpo -g 1  \
+    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo
+
+# Auto generate job name
+runai submit -i gcr.io/run-ai-demo/quickstart -g 1
+`
 )
 
 var (
@@ -51,7 +55,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "submit [NAME]",
+		Use:     "submit",
 		Short:   "Submit a new job.",
 		Example: submitExamples,
 		Args:    cobra.RangeArgs(0, 1),
@@ -270,7 +274,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, raUtil.IsBoolPTrue(submitArgs.GenerateName), submitArgs, *configValues, runaiChart, clientset, dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, *configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}

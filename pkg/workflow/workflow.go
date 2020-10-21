@@ -160,34 +160,33 @@ func getSmallestUnoccupiedIndex(configMaps []corev1.ConfigMap) int {
 	return len(configMaps)
 }
 
-func getConfigMapName(name string, index int) string {
-	if index == 0 {
+func getConfigMapName(name string, index int, generateSuffix bool) string {
+	if !generateSuffix {
 		return name
 	}
 	return fmt.Sprintf("%s-%d", name, index)
 }
 
-func submitConfigMap(name, namespace string, generateName bool, clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
-	maybeConfigMapName := getConfigMapName(name, 0)
+func submitConfigMap(name, namespace string, generateSuffix bool, clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
+	maybeConfigMapName := getConfigMapName(name, 0, generateSuffix)
 
-	configMap, err := createEmptyConfigMap(name, name, namespace, 0, clientset)
+	configMap, err := createEmptyConfigMap(maybeConfigMapName, name, namespace, 0, clientset)
 	if err == nil {
 		return configMap, nil
 	}
 
-	if !generateName {
+	if !generateSuffix {
 		return nil, fmt.Errorf("the job %s already exists, either delete it first (use 'runai delete <job-name>' ) or submit the job again using the flag --generate-name", name)
 	}
 
-	configMapLabelSelector := getConfigMapLabelSelector(maybeConfigMapName)
+	configMapLabelSelector := getConfigMapLabelSelector(name)
 	for i := 0; i < configMapGenerationRetries; i ++ {
 		existingConfigMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: configMapLabelSelector})
 		if err != nil {
 			return nil, err
 		}
 		configMapIndex := getSmallestUnoccupiedIndex(existingConfigMaps.Items)
-		maybeConfigMapName = getConfigMapName(name, configMapIndex)
-
+		maybeConfigMapName = getConfigMapName(name, configMapIndex, generateSuffix)
 		configMap, err = createEmptyConfigMap(maybeConfigMapName, name, namespace, configMapIndex, clientset)
 		if err == nil {
 			return configMap, nil
@@ -259,8 +258,8 @@ func cleanupJobFiles(files *JobFiles) {
 	cleanupSingleFile(files.envValuesFile)
 }
 
-func submitJobInternal(name, namespace string, generateName bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface) (string, error) {
-	configMap, err := submitConfigMap(name, namespace, generateName, clientset)
+func submitJobInternal(name, namespace string, generateSuffix bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface) (string, error) {
+	configMap, err := submitConfigMap(name, namespace, generateSuffix, clientset)
 	if err != nil {
 		return "", err
 	}
@@ -289,7 +288,7 @@ func submitJobInternal(name, namespace string, generateName bool, values interfa
 	return jobName, nil
 }
 
-func SubmitJob(name, namespace string, generateName bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
+func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
 	if dryRun {
 		jobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
 		if err != nil {
@@ -299,7 +298,7 @@ func SubmitJob(name, namespace string, generateName bool, values interface{}, en
 		fmt.Println(jobFiles.template)
 		return "", nil
 	}
-	jobName, err := submitJobInternal(name, namespace, generateName, values, environmentValues, chart, clientset)
+	jobName, err := submitJobInternal(name, namespace, generateSuffix, values, environmentValues, chart, clientset)
 	if err != nil {
 		return "", err
 	}
