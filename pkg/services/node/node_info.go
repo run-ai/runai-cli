@@ -86,7 +86,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	}
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Allocatable, ni.Node.Status.Allocatable)
-	nodeResStatus.AllocatedGPUsUnits = nodeResStatus.FractionalAllocatedGpuUnits + int(podResStatus.Limited.GPUs)
+	nodeResStatus.GPUsInUse = nodeResStatus.FractionalAllocatedGpuUnits + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
 	

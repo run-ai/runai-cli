@@ -16,12 +16,12 @@ type NodeCPUResource struct {
 }
 
 type NodeGPUResource struct {
-	Capacity          int     `title:"CAPACITY" def:"0"`
-	Allocatable       float64 `title:"ALLOCATABLE"`
-	Unhealthy         int     `title:"UNHEALTHY"`
-	Allocated 		  float64 `title:"ALLOCATED"`
-	AllocatedUnits    int     `title:"ALLOCATED UNITS"`
-	Usage             float64 `title:"USAGE" format:"%"`
+	Capacity    int     `title:"CAPACITY" def:"0"`
+	Allocatable float64 `title:"ALLOCATABLE"`
+	Unhealthy   int     `title:"UNHEALTHY"`
+	InUse       int     `title:"IN USE"`
+	Allocated   float64 `title:"ALLOCATED"`
+	Usage       float64 `title:"USAGE" format:"%"`
 }
 
 type NodeMemoryResource struct {

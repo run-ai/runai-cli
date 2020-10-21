@@ -15,7 +15,7 @@ func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
 
 	ui.Title(w, "CLUSTER NODES INFO")
 
-	fmt.Fprintf(w, "Allocated Units/Total GPUs In Cluster:\t")
+	fmt.Fprintf(w, "In use/Total GPUs In Cluster:\t")
 	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(cnv.GPUs), 10),
 		strconv.FormatInt(int64(cnv.AllocatedGpuUnits), 10))
 	var gpuUsage float64 = 0
@@ -33,7 +33,7 @@ func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
 		} else {
 			gpuUsage = 0
 		}
-		fmt.Fprintf(w, "Allocated Units/Total GPUs(Active) In Cluster:\t")
+		fmt.Fprintf(w, "In use/Total GPUs(Active) In Cluster:\t")
 		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
 			strconv.FormatInt(int64(cnv.AllocatedGpuUnits), 10),
 			strconv.FormatInt(int64(cnv.GPUsOnReadyNode), 10),
@@ -71,7 +71,7 @@ func AddNodeGPUsToClusterNodes(cnv *types.ClusterNodesView, status types.NodeSta
 		return
 	}
 	cnv.GPUs += gpu.Capacity
-	cnv.AllocatedGpuUnits += gpu.AllocatedUnits
+	cnv.AllocatedGpuUnits += gpu.InUse
 	cnv.AllocatedGpu += gpu.Allocated
 	cnv.UnhealthyGPUs += gpu.Unhealthy
 	if status == types.NodeReady {
