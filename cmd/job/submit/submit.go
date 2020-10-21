@@ -125,7 +125,8 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
-	GenerateName			   *bool			 `yaml:"generateName,omitempty"`
+	namePrefix				   string			 `yaml:"namePrefix,omitempty"`
+	generateSuffix 			   bool
 }
 
 type dataDirVolume struct {
@@ -200,14 +201,13 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&nameParameter, "name", "", "Job name")
-	flagSet.MarkDeprecated("name", "please use positional argument instead")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
-	flags.AddBoolNullableFlag(flagSet, &submitArgs.GenerateName, "generate-name", "", "Generate suffix to the job if the original name is used")
+	flagSet.StringVar(&submitArgs.namePrefix, "job-name-prefix", "", "Use this value as job name and generate suffix to the job name")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
 	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
@@ -258,13 +258,23 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
 	util.SetLogLevel(global.LogLevel)
 	var name string
-	if nameParameter == "" && len(args) >= 1 {
-		name = args[0]
-	} else {
+	if nameParameter != "" {
+		if len(args) > 0 || submitArgs.namePrefix != "" {
+			submitArgs.generateSuffix = false
+			log.Warn("Using the name provided with --name flag. Ignoring the other options")
+		}
 		name = nameParameter
-	}
-
-	if name == "" {
+	} else if len(args) > 0 {
+		if submitArgs.namePrefix != "" {
+			log.Warn("Ignoring --job-name-prefix flag")
+			submitArgs.generateSuffix = false
+		}
+		log.Warn("Provide name without --name flag has been deprecated")
+		name = args[0]
+	} else if submitArgs.namePrefix != "" {
+		name = submitArgs.namePrefix
+		submitArgs.generateSuffix = true
+	} else {
 		cmd.Help()
 		fmt.Println("")
 		return fmt.Errorf("Name must be provided for the job.")
