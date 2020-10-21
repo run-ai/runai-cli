@@ -101,7 +101,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 
 			// set total
 			prom.SetFloatFromFirstMetric(&nodeResStatus.Capacity.GPUMemory, ni.PrometheusData, TotalGpusMemoryPQ),
-			setGpuUnitsFromPromData(&nodeResStatus.GpuUnits, ni.PrometheusData),
+			setGpuUnitsFromPromDataAndPods(&nodeResStatus.GpuUnits, ni.PrometheusData, ni.Pods),
 		)
 
 		if err != nil {
@@ -122,7 +122,7 @@ func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
 	return ok
 }
 
-func setGpuUnitsFromPromData(value *[]types.GPU, data prom.MetricResultsByQueryName) error {
+func setGpuUnitsFromPromDataAndPods(value *[]types.GPU, data prom.MetricResultsByQueryName, pods []v1.Pod) error {
 	result := []types.GPU{}
 	metricsValuesByGpus, err := prom.GroupMetrics("gpu", data, GpuIdleTimePQ,UsedGpuPQ, UsedGpuMemoryPQ, TotalGpuMemoryPQ, GpuUsedByPod)
 
@@ -130,12 +130,14 @@ func setGpuUnitsFromPromData(value *[]types.GPU, data prom.MetricResultsByQueryN
 		return  err
 	}
 
+	fractionAllocatedGpus := util.GetSharedGPUsIndexUsedInPods(pods)
 
 	for gpuIndex, valuesByQueryNames := range metricsValuesByGpus {
 
-		allocated := "False"
-		if valuesByQueryNames[TotalGpuMemoryPQ] == 100 {
-			allocated = "True"
+		allocated := valuesByQueryNames[GpuUsedByPod]
+		fractionAllocated, isFraction := fractionAllocatedGpus[gpuIndex]
+		if isFraction {
+			allocated = fractionAllocated * 100 
 		}
 		result = append(result, types.GPU {
 			IndexID: gpuIndex,
