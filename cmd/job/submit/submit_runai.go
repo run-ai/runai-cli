@@ -39,7 +39,11 @@ runai submit --name frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
 
 # Hyperparameter Optimization
 runai submit --name hpo1 -i gcr.io/run-ai-demo/quickstart-hpo -g 1  \
-    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo`
+    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo
+
+# Auto generate job name
+runai submit -i gcr.io/run-ai-demo/quickstart -g 1
+`
 )
 
 var (
