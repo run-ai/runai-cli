@@ -275,9 +275,8 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		name = submitArgs.namePrefix
 		submitArgs.generateSuffix = true
 	} else {
-		cmd.Help()
-		fmt.Println("")
-		return fmt.Errorf("Name must be provided for the job.")
+		name = "job"
+		submitArgs.generateSuffix = true
 	}
 
 	var errs = validation.IsDNS1035Label(name)
