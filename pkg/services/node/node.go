@@ -21,7 +21,8 @@ var (
         UsedGpuPQ: `(sum(runai_node_gpu_utilization) by (node, gpu))`,
         UsedGpuMemoryPQ: `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node, gpu))`,
         TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node, gpu))`,
-        GpuIdleTimePQ: `(sum(time()-runai_node_gpu_last_not_idle_time) by (node, gpu))`,  
+		GpuIdleTimePQ: `(sum(time()-runai_node_gpu_last_not_idle_time) by (node, gpu))`,
+		GpuUsedByPod: `sum(runai_gpus_is_running_with_pod2 * 100) by (node, gpu)`,
 	}
 )
 
