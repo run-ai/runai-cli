@@ -38,6 +38,7 @@ import (
 
 const (
 	runaiNamespace = "runai"
+	jobDefaultName = "job"
 
 	// flag group names
 	AliasesAndShortcutsFlagGroup flags.FlagGroupName = "Aliases/Shortcuts"
@@ -275,7 +276,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		name = submitArgs.namePrefix
 		submitArgs.generateSuffix = true
 	} else {
-		name = "job"
+		name = jobDefaultName
 		submitArgs.generateSuffix = true
 	}
 
