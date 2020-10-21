@@ -26,7 +26,7 @@ func (c *NodeResourcesStatusConvertor) ToGpus() *types.NodeGPUResource {
 		Capacity:          int(nrs.Capacity.GPUs),
 		Allocatable:       nrs.Allocatable.GPUs,
 		Unhealthy:         int(nrs.Capacity.GPUs) - int(nrs.Allocatable.GPUs),
-		AllocatedUnits:    nrs.AllocatedGPUsUnits,
+		InUse:    nrs.GPUsInUse,
 		AllocatedFraction: nrs.Allocated.GPUs,
 		Usage:             nrs.Usage.GPUs,
 	}

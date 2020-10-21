@@ -19,7 +19,7 @@ type NodeGPUResource struct {
 	Capacity          int     `title:"CAPACITY" def:"0"`
 	Allocatable       float64 `title:"ALLOCATABLE"`
 	Unhealthy         int     `title:"UNHEALTHY"`
-	AllocatedUnits    int     `title:"ALLOCATED UNITS"`
+	InUse    		  int     `title:"IN USE"`
 	AllocatedFraction float64 `title:"ALLOCATED FRACTION"`
 	Usage             float64 `title:"USAGE" format:"%"`
 }
