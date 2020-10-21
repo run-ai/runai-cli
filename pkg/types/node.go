@@ -50,7 +50,7 @@ type NodeView struct {
 type ClusterNodesView struct {
 	GPUs                  int
 	UnhealthyGPUs         int
-	AllocatedGpuUnits     int
-	AllocatedGpu float64
+	GPUsInUse     int
+	AllocatedGpus float64
 	GPUsOnReadyNode       int
 }
