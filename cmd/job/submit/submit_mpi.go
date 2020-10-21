@@ -35,7 +35,7 @@ import (
 const (
 	SubmitMpiCommand = "submit-mpi"
 	mpiExamples      = `
-runai submit-mpi distributed-job --processes=2 -g 1 \
+runai submit-mpi --name distributed-job --processes=2 -g 1 \
 	-i gcr.io/run-ai-demo/quickstart-distributed`
 )
 
