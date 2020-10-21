@@ -15,12 +15,21 @@ import (
 )
 
 
+const (
+	describeNodeExample = `
+# Describe a node
+  runai describe node [NODE_NAME]
+
+# Describe all nodes
+  runai describe node`
+)
+
 func NewDescribeNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:   "node [...NODE_NAME]",
 		Short: "Display detailed information about nodes in the cluster.",
-		Args:  cobra.RangeArgs(0, 1),
+		Example: describeNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
 
 			nodeInfos, err := getNodeInfos()
@@ -36,7 +45,7 @@ func NewDescribeNodeCommand() *cobra.Command {
 			}
 
 			if len(args) > 0 {
-				handleDescriveSpecificNodes(nodeInfos, args...)
+				handleDescribeSpecificNodes(nodeInfos, args...)
 			} else {
 				
 				describeNodes(nodeInfos)
@@ -48,7 +57,7 @@ func NewDescribeNodeCommand() *cobra.Command {
 }
 
 
-func handleDescriveSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
+func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
 	nodeNames := []string{}
 	matchsNodeInfos := []*nodeService.NodeInfo{}
 

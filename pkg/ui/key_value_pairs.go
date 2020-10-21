@@ -60,29 +60,29 @@ func CreateKeyValuePairs(model interface{}, opt KeyValuePairsOpt) KeyValuePairs 
 	return &data
 }
 
-func (td *keyValuePairsData) addFields(modelType reflect.Type, path []string, perantPair *PairMeta, showByDefult bool) {
+func (kvd *keyValuePairsData) addFields(modelType reflect.Type, path []string, perantPair *PairMeta, showByDefult bool) {
 	fieldsCount := modelType.NumField()
 	for i := 0; i < fieldsCount; i++ {
-		td.addField(modelType.Field(i), path, perantPair, showByDefult)
+		kvd.addField(modelType.Field(i), path, perantPair, showByDefult)
 	}
 }
 
-func (td *keyValuePairsData) addField(fieldType reflect.StructField, path []string, perantPair *PairMeta, showByDefult bool) {
+func (kvd *keyValuePairsData) addField(fieldType reflect.StructField, path []string, perantPair *PairMeta, showByDefult bool) {
 	
 	absolutePath := getPerentPath( perantPair, append(path, fieldType.Name))
 
-	showByDefult = td.opt.calcFiledShowByDefult(absolutePath, showByDefult )
+	showByDefult = kvd.opt.calcFieldShowByDefault(absolutePath, showByDefult )
 
 	if isStructGroup(fieldType) {
-		td.addGroup(fieldType, path, perantPair, showByDefult)
+		kvd.addGroup(fieldType, path, perantPair, showByDefult)
 		return
 	}
 	if !showByDefult {
 		return
 	}
-	fieldMeta, err := createFieldMeta(fieldType, td.opt.Formatts, path)
+	fieldMeta, err := createFieldMeta(fieldType, kvd.opt.Formatts, path)
 	if err != nil {
-		td.err = err
+		kvd.err = err
 		return
 	}
 	perantPair.children = append(perantPair.children, PairMeta{
@@ -91,15 +91,15 @@ func (td *keyValuePairsData) addField(fieldType reflect.StructField, path []stri
 	})
 }
 
-func (td *keyValuePairsData) addGroup(field reflect.StructField, path []string, perantPair *PairMeta, showByDefult bool) {
+func (kvd *keyValuePairsData) addGroup(field reflect.StructField, path []string, perantPair *PairMeta, showByDefult bool) {
 	groupTag := NewGroupTag(field.Tag.Get(groupTagName))
 	groupPath := append(path, field.Name)
 	var grandPerantFiled *PairMeta
 
 	if !groupTag.Flatten {
-		fieldMeta, err := createFieldMeta(field, td.opt.Formatts, path)
+		fieldMeta, err := createFieldMeta(field, kvd.opt.Formatts, path)
 		if err != nil {
-			td.err = err
+			kvd.err = err
 			return
 		}
 		if len(groupTag.Name) > 0 {
@@ -117,29 +117,29 @@ func (td *keyValuePairsData) addGroup(field reflect.StructField, path []string, 
 		groupPath = []string{}
 	}
 
-	td.addFields(UnwrapTypePtr(field.Type), groupPath, perantPair, showByDefult)
+	kvd.addFields(UnwrapTypePtr(field.Type), groupPath, perantPair, showByDefult)
 
 	if grandPerantFiled != nil {
 		grandPerantFiled.children = append(grandPerantFiled.children, *perantPair)
 	}
 }
 
-func (td *keyValuePairsData) Render(w io.Writer, row interface{}) KeyValuePairs {
-	if td.err != nil {
-		return td
+func (kvd *keyValuePairsData) Render(w io.Writer, row interface{}) KeyValuePairs {
+	if kvd.err != nil {
+		return kvd
 	}
 
-	err := renderPairChildren(w, reflect.ValueOf(row), td.base, row, 0)
+	err := renderPairChildren(w, reflect.ValueOf(row), kvd.base, row, 0)
 
 	if err != nil {
-		td.err = err
+		kvd.err = err
 	}
 
-	return td
+	return kvd
 }
 
-func (td *keyValuePairsData) Error() error {
-	return td.err
+func (kvd *keyValuePairsData) Error() error {
+	return kvd.err
 }
 
 /// helpers

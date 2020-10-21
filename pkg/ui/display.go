@@ -51,7 +51,7 @@ func (opt *DisplayOpt) rootShowByDefault() bool {
 	return true
 }
 
-func (opt *DisplayOpt) calcFiledShowByDefult(path []string ,parentShowByDefault bool) bool{
+func (opt *DisplayOpt) calcFieldShowByDefault(path []string ,parentShowByDefault bool) bool {
 	pathStr := strings.Join(path, ".")
 
 	if opt.Hide != nil {

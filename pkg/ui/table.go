@@ -75,7 +75,7 @@ func (td *tableData) addFields(modelType reflect.Type, path []string, groupTag G
 
 func (td *tableData) addField(fieldType reflect.StructField, path []string, groupTag GroupTag, showByDefult bool) {
 
-	showByDefult = td.opt.calcFiledShowByDefult(append(path, fieldType.Name), showByDefult )
+	showByDefult = td.opt.calcFieldShowByDefault(append(path, fieldType.Name), showByDefult )
 	
 	if isStructGroup(fieldType) {
 		td.addGroup(fieldType, path, groupTag, showByDefult)
