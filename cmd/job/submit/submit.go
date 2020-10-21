@@ -208,7 +208,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
-	flagSet.StringVar(&submitArgs.namePrefix, "job-name-prefix", "", "Use this value as job name and generate suffix to the job name")
+	flagSet.StringVar(&submitArgs.namePrefix, "job-name-prefix", "", "Specifies prefix for the job name and add index at the end")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
 	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
@@ -261,16 +261,17 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	var name string
 	if nameParameter != "" {
 		if len(args) > 0 || submitArgs.namePrefix != "" {
-			submitArgs.generateSuffix = false
-			log.Warn("Using the name provided with --name flag. Ignoring the other options")
+			log.Info("Ignoring the positional argument name")
+		}
+		if submitArgs.namePrefix != "" {
+			log.Info("Ignoring the --job-name-prefix flag")
 		}
 		name = nameParameter
 	} else if len(args) > 0 {
 		if submitArgs.namePrefix != "" {
-			log.Warn("Ignoring --job-name-prefix flag")
-			submitArgs.generateSuffix = false
+			log.Info("Ignoring --job-name-prefix flag")
 		}
-		log.Warn("Provide name without --name flag has been deprecated")
+		log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
 		name = args[0]
 	} else if submitArgs.namePrefix != "" {
 		name = submitArgs.namePrefix
