@@ -271,7 +271,8 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		if submitArgs.namePrefix != "" {
 			log.Info("Ignoring --job-name-prefix flag")
 		}
-		log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
+		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
+		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
 		name = args[0]
 	} else if submitArgs.namePrefix != "" {
 		name = submitArgs.namePrefix
