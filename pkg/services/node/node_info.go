@@ -24,6 +24,7 @@ const (
 	UsedGpusPQ        = "usedGpus"
 	GpuIdleTimePQ     = "gpuIdleTime"
 	UsedGpuPQ         = "usedGpu"
+	GpuUsedByPod	  = "gpuUsedByPod"
 	UsedGpuMemoryPQ   = "usedGpuMemory"
 	TotalGpuMemoryPQ  = "totalGpuMemory"
 )
@@ -123,15 +124,22 @@ func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
 
 func setGpuUnitsFromPromData(value *[]types.GPU, data prom.MetricResultsByQueryName) error {
 	result := []types.GPU{}
-	metricsValuesByGpus, err := prom.GroupMetrics("gpu", data, GpuIdleTimePQ,UsedGpuPQ, UsedGpuMemoryPQ, TotalGpuMemoryPQ)
+	metricsValuesByGpus, err := prom.GroupMetrics("gpu", data, GpuIdleTimePQ,UsedGpuPQ, UsedGpuMemoryPQ, TotalGpuMemoryPQ, GpuUsedByPod)
 
 	if err != nil {
 		return  err
 	}
 
+
 	for gpuIndex, valuesByQueryNames := range metricsValuesByGpus {
+
+		allocated := "False"
+		if valuesByQueryNames[TotalGpuMemoryPQ] == 100 {
+			allocated = "True"
+		}
 		result = append(result, types.GPU {
 			IndexID: gpuIndex,
+			Allocated: allocated,
 			Memory: valuesByQueryNames[TotalGpuMemoryPQ],
 			MemoryUsage: valuesByQueryNames[UsedGpuMemoryPQ],
 			IdleTime: valuesByQueryNames[GpuIdleTimePQ],
