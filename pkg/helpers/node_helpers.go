@@ -71,8 +71,8 @@ func AddNodeGPUsToClusterNodes(cnv *types.ClusterNodesView, status types.NodeSta
 		return
 	}
 	cnv.GPUs += gpu.Capacity
-	cnv.AllocatedGpuUnits += gpu.InUse
-	cnv.AllocatedGpuFractions += gpu.AllocatedFraction
+	cnv.AllocatedGpuUnits += gpu.Allocated
+	cnv.AllocatedGpuFractions += gpu.InUse
 	cnv.UnhealthyGPUs += gpu.Unhealthy
 	if status == types.NodeReady {
 		cnv.GPUsOnReadyNode += gpu.Capacity
