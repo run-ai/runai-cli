@@ -38,6 +38,7 @@ import (
 
 const (
 	runaiNamespace = "runai"
+	jobDefaultName = "job"
 
 	// flag group names
 	AliasesAndShortcutsFlagGroup flags.FlagGroupName = "Aliases/Shortcuts"
@@ -125,6 +126,8 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
+	namePrefix				   string			 `yaml:"namePrefix,omitempty"`
+	generateSuffix 			   bool
 }
 
 type dataDirVolume struct {
@@ -199,13 +202,13 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&nameParameter, "name", "", "Job name")
-	flagSet.MarkDeprecated("name", "please use positional argument instead")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
+	flagSet.StringVar(&submitArgs.namePrefix, "job-name-prefix", "", "Set defined prefix for the job name and add index as suffix")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
 	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
@@ -256,16 +259,27 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
 	util.SetLogLevel(global.LogLevel)
 	var name string
-	if nameParameter == "" && len(args) >= 1 {
-		name = args[0]
-	} else {
+	if nameParameter != "" {
+		if len(args) > 0 {
+			log.Info("Received both positional argument and --name flag. Ignoring the positional argument name")
+		}
+		if submitArgs.namePrefix != "" {
+			log.Info("Received both --job-name-prefix and --name flags. Ignoring the --job-name-prefix flag")
+		}
 		name = nameParameter
-	}
-
-	if name == "" {
-		cmd.Help()
-		fmt.Println("")
-		return fmt.Errorf("Name must be provided for the job.")
+	} else if len(args) > 0 {
+		if submitArgs.namePrefix != "" {
+			log.Info("Received both positional argument and --job-name-prefix flags. Ignoring the --job-name-prefix flag")
+		}
+		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
+		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
+		name = args[0]
+	} else if submitArgs.namePrefix != "" {
+		name = submitArgs.namePrefix
+		submitArgs.generateSuffix = true
+	} else {
+		name = jobDefaultName
+		submitArgs.generateSuffix = true
 	}
 
 	var errs = validation.IsDNS1035Label(name)
