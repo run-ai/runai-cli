@@ -22,6 +22,7 @@ const (
 	runaiTrainType                  = "Train"
 	runaiInteractiveType            = "Interactive"
 	runaiPreemptibleInteractiveType = "Interactive-Preemptible"
+	createdByRunAILabel 		    = "createdBy=RunaiJob"
 )
 
 type RunaiTrainer struct {
@@ -201,7 +202,7 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 		return nil, nil
 	}
 
-	labels := []string{}
+	labels := []string{createdByRunAILabel}
 	for key, value := range podSpecJob.Selector.MatchLabels {
 		labels = append(labels, fmt.Sprintf("%s=%s", key, value))
 	}
