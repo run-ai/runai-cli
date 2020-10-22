@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 const (
 	describeNodeExample = `
 # Describe a node
@@ -27,13 +26,13 @@ const (
 func NewDescribeNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "node [...NODE_NAME]",
-		Short: "Display detailed information about nodes in the cluster.",
+		Use:     "node [...NODE_NAME]",
+		Short:   "Display detailed information about nodes in the cluster.",
 		Example: describeNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
 
 			nodeInfos, err := getNodeInfos()
-			
+
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -47,7 +46,7 @@ func NewDescribeNodeCommand() *cobra.Command {
 			if len(args) > 0 {
 				handleDescribeSpecificNodes(nodeInfos, args...)
 			} else {
-				
+
 				describeNodes(nodeInfos)
 			}
 		},
@@ -56,7 +55,6 @@ func NewDescribeNodeCommand() *cobra.Command {
 	return command
 }
 
-
 func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
 	nodeNames := []string{}
 	matchsNodeInfos := []*nodeService.NodeInfo{}
@@ -64,8 +62,8 @@ func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNode
 	for i := range *nodeInfos {
 		nodeInfo := &(*nodeInfos)[i]
 		nodeNames = append(nodeNames, nodeInfo.Node.Name)
-		if ui.Contains(selectedNodeNames ,nodeInfo.Node.Name )  {
-			matchsNodeInfos = append( matchsNodeInfos,nodeInfo)
+		if ui.Contains(selectedNodeNames, nodeInfo.Node.Name) {
+			matchsNodeInfos = append(matchsNodeInfos, nodeInfo)
 		}
 	}
 	if len(matchsNodeInfos) != len(selectedNodeNames) {
@@ -75,7 +73,7 @@ func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNode
 			if !ui.Contains(nodeNames, nodeName) {
 				notFoundNodeNames = append(notFoundNodeNames, nodeName)
 			}
-		} 
+		}
 		fmt.Printf(
 			`No match found for node(s) '%s'
 
@@ -88,7 +86,7 @@ Available node names:
 	for i := range matchsNodeInfos {
 		describeNode(matchsNodeInfos[i])
 	}
-	
+
 }
 
 func describeNodes(nodes *[]nodeService.NodeInfo) {
@@ -111,8 +109,9 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	ui.Title(w, nodeView.Info.Name)
 
-	ui.Title(w, "NODE SUMMERY INFO")
+	ui.SubTitle(w, "NODE SUMMERY INFO")
 
 	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
 		DisplayOpt: ui.DisplayOpt{Hide: defaultHiddenFields},
@@ -122,14 +121,19 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 		fmt.Print(err)
 	}
 
-	ui.Title(w, "NODE GPUs INFO")
+	if len(nodeResources.GpuUnits) > 0 {
 
-	err = ui.CreateTable(types.GPU{}, ui.TableOpt{}).
-		Render(w, nodeResources.GpuUnits).
-		Error()
-	if err != nil {
-		fmt.Print(err)
+		ui.SubTitle(w, "NODE GPUs INFO")
+
+		err = ui.CreateTable(types.GPU{}, ui.TableOpt{}).
+			Render(w, nodeResources.GpuUnits).
+			Error()
+		if err != nil {
+			fmt.Print(err)
+		}
 	}
+
+	ui.End(w)
 
 	_ = w.Flush()
 
