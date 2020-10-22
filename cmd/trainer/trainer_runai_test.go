@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
-
 )
 
 var (
@@ -298,6 +297,13 @@ func testResourceIncluded(resources []cmdTypes.Resource, name string, resourceTy
 
 func createPodOwnedBy(podName string, labelSelector map[string]string, ownerUUID string, ownerKind string, ownerName string) *v1.Pod {
 	controller := true
+	
+	if labelSelector == nil {
+		labelSelector = map[string]string{}
+	}
+	// adding the created by runai label
+	labelSelector[createdByLabelKey] = createdByRunAILabelValue
+
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
