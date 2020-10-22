@@ -39,6 +39,9 @@ import (
 const (
 	runaiNamespace = "runai"
 	jobDefaultName = "job"
+	dashArg = "--"
+	commandFlag = "command"
+	oldCommandFlag = "old-command"
 
 	// flag group names
 	AliasesAndShortcutsFlagGroup flags.FlagGroupName = "Aliases/Shortcuts"
@@ -98,7 +101,7 @@ type submitArgs struct {
 	GPUInt              *int     `yaml:"gpuInt,omitempty"`
 	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
-	Args                []string `yaml:"args,omitempty"`
+	SpecArgs                []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
 	CPULimit            string   `yaml:"cpuLimit,omitempty"`
 	Memory              string   `yaml:"memory,omitempty"`
@@ -116,7 +119,8 @@ type submitArgs struct {
 	RunAsGroup                 string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
 	RunAsCurrentUser           bool
-	Command                    []string          `yaml:"command"`
+	SpecCommand                []string          `yaml:"command"`
+	Command                    bool              `yaml:"isCommand"`
 	LocalImage                 *bool             `yaml:"localImage,omitempty"`
 	LargeShm                   *bool             `yaml:"shm,omitempty"`
 	Ports                      []string          `yaml:"ports,omitempty"`
@@ -214,10 +218,13 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	flagSet.MarkDeprecated("always-pull-image", "please use 'image-pull-policy=Always' instead.")
-	flagSet.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	flagSet.StringArrayVar(&(submitArgs.SpecArgs), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	flagSet.MarkDeprecated("args", "please use positional arguments instead")
 	flagSet.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
-	flagSet.StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
+	flagSet.StringArrayVar(&(submitArgs.SpecCommand), oldCommandFlag, []string{}, "Run this command on container start. Use together with --args.")
+	flagSet.MarkHidden(oldCommandFlag)
+	flagSet.BoolVar(&submitArgs.Command, commandFlag, false, "Use the command instead of args")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
 	flagSet.MarkDeprecated("local-image", "please use 'image-pull-policy=Never' instead.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
@@ -258,29 +265,11 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
 	util.SetLogLevel(global.LogLevel)
-	var name string
-	if nameParameter != "" {
-		if len(args) > 0 {
-			log.Info("Received both positional argument and --name flag. Ignoring the positional argument name")
-		}
-		if submitArgs.namePrefix != "" {
-			log.Info("Received both --job-name-prefix and --name flags. Ignoring the --job-name-prefix flag")
-		}
-		name = nameParameter
-	} else if len(args) > 0 {
-		if submitArgs.namePrefix != "" {
-			log.Info("Received both positional argument and --job-name-prefix flags. Ignoring the --job-name-prefix flag")
-		}
-		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
-		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
-		name = args[0]
-	} else if submitArgs.namePrefix != "" {
-		name = submitArgs.namePrefix
-		submitArgs.generateSuffix = true
-	} else {
-		name = jobDefaultName
-		submitArgs.generateSuffix = true
-	}
+
+	name := getJobName(cmd, args, submitArgs)
+	submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd, args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
+	fmt.Println(submitArgs.SpecCommand)
+	fmt.Println(submitArgs.SpecArgs)
 
 	var errs = validation.IsDNS1035Label(name)
 	if len(errs) > 0 {
@@ -451,4 +440,65 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	}
 
 	return newIndex, false, nil
+}
+
+func getSpecCommandAndArgs(cmd *cobra.Command, positionalArgs, commandArgs, argsArgs []string, isCommand bool) ([]string, []string){
+	argsLenAtDash := cmd.ArgsLenAtDash()
+	if argsLenAtDash == -1 {
+		argsLenAtDash = len(positionalArgs)
+	}
+	containerArgs := positionalArgs[argsLenAtDash:]
+	if len(containerArgs) != 0 {
+		if isCommand {
+			return containerArgs, []string{}
+		}
+		return []string{}, containerArgs
+	}
+	return commandArgs, argsArgs
+}
+
+func getJobName(cmd *cobra.Command,args []string, submitArgs *submitArgs) string {
+	argsLenAtDash := cmd.ArgsLenAtDash()
+	if argsLenAtDash != -1 {
+		args = args[:argsLenAtDash]
+	}
+	if nameParameter != "" {
+		if len(args) > 0 {
+			log.Info("Received both positional argument and --name flag. Ignoring the positional argument name")
+		}
+		if submitArgs.namePrefix != "" {
+			log.Info("Received both --job-name-prefix and --name flags. Ignoring the --job-name-prefix flag")
+		}
+		return nameParameter
+	} else if len(args) > 0 {
+		if submitArgs.namePrefix != "" {
+			log.Info("Received both positional argument and --job-name-prefix flags. Ignoring the --job-name-prefix flag")
+		}
+		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
+		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
+		return args[0]
+	} else if submitArgs.namePrefix != "" {
+		submitArgs.generateSuffix = true
+		return submitArgs.namePrefix
+	}
+	submitArgs.generateSuffix = true
+	return jobDefaultName
+}
+
+func AlignArgsPreParsing(args []string) []string {
+	dashIndex := -1
+	for i, arg := range args {
+		if arg == dashArg {
+			dashIndex = i
+		}
+	}
+
+	if dashIndex == -1 {
+		for i, arg := range args {
+			if arg == fmt.Sprintf("%s%s", dashArg, commandFlag) {
+				args[i] = fmt.Sprintf("%s%s", dashArg, oldCommandFlag)
+			}
+		}
+	}
+	return args
 }

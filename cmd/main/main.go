@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/job/submit"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -55,6 +56,7 @@ func main() {
 		defer trace.Stop()
 	}
 
+	os.Args = submit.AlignArgsPreParsing(os.Args)
 	if err := root.NewCommand().Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

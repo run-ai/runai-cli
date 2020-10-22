@@ -58,7 +58,6 @@ func NewRunaiJobCommand() *cobra.Command {
 		Use:     "submit",
 		Short:   "Submit a new job.",
 		Example: submitExamples,
-		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
 			if err != nil {
@@ -236,13 +235,13 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		sa.ServiceType = jupyterServiceType
 		log.Infof("Using default jupyter notebook service type %s", jupyterServiceType)
 	}
-	if len(sa.Command) == 0 && sa.ServiceType == "ingress" {
-		sa.Command = []string{jupyterCommand}
+	if len(sa.SpecCommand) == 0 && sa.ServiceType == "ingress" {
+		sa.SpecCommand = []string{jupyterCommand}
 		log.Infof("Using default jupyter notebook command for using ingress service \"%s\"", jupyterCommand)
 	}
-	if len(sa.Args) == 0 && sa.ServiceType == "ingress" {
+	if len(sa.SpecArgs) == 0 && sa.ServiceType == "ingress" {
 		baseUrlArg := fmt.Sprintf(jupyterArgs, sa.Project, sa.Name)
-		sa.Args = []string{baseUrlArg}
+		sa.SpecArgs = []string{baseUrlArg}
 		log.Infof("Using default jupyter notebook command argument for using ingress service \"%s\"", baseUrlArg)
 	}
 }
