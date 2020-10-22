@@ -50,7 +50,7 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 		promData, promErr = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
 	}
 	if promErr != nil {
-		warning = fmt.Sprintf("Missing some data. \nreason: Can't access to the prometheus server, \ncause error: %s", err)
+		warning = fmt.Sprintf("Missing some data. \nreason: Can't access to the prometheus server, \ncause error: %s", promErr)
 	}
 
 	for _, node := range nodeList.Items {
