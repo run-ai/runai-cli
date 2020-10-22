@@ -53,7 +53,7 @@ func handleSpecificNodes(nodeInfos *[]nodeService.NodeInfo, displayFunction func
 		return
 	}
 
-	// show all in no node selected
+	// show all if no node selected
 	if len(selectedNodeNames) == 0 {
 		displayFunction(nodeInfos)
 
