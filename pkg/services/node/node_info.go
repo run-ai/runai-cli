@@ -145,7 +145,7 @@ func setGpuUnitsFromPromDataAndPods(value *[]types.GPU, data prom.MetricResultsB
 			Memory: valuesByQueryNames[TotalGpuMemoryPQ],
 			MemoryUsage: valuesByQueryNames[UsedGpuMemoryPQ],
 			IdleTime: valuesByQueryNames[GpuIdleTimePQ],
-			Used: valuesByQueryNames[UsedGpuPQ],
+			UTIL: valuesByQueryNames[UsedGpuPQ],
 		})
 	}
 
