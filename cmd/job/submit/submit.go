@@ -224,7 +224,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
 	flagSet.StringArrayVar(&(submitArgs.SpecCommand), oldCommandFlag, []string{}, "Run this command on container start. Use together with --args.")
 	flagSet.MarkHidden(oldCommandFlag)
-	flagSet.BoolVar(&submitArgs.Command, commandFlag, false, "Use the command instead of args")
+	flagSet.BoolVar(&submitArgs.Command, commandFlag, false, "If true and extra arguments are present, use them as the 'command' field in the container, rather than the 'args' field which is the default.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
 	flagSet.MarkDeprecated("local-image", "please use 'image-pull-policy=Never' instead.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
@@ -496,6 +496,7 @@ func AlignArgsPreParsing(args []string) []string {
 	if dashIndex == -1 {
 		for i, arg := range args {
 			if arg == fmt.Sprintf("%s%s", dashArg, commandFlag) {
+				log.Info(fmt.Sprintf("using %s%s to pass string argument has been deprecated. please use positional arguments instead", dashArg, commandFlag))
 				args[i] = fmt.Sprintf("%s%s", dashArg, oldCommandFlag)
 			}
 		}

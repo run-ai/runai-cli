@@ -55,7 +55,8 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "submit",
+		Use:     "submit [flags] -- [COMMAND] [args...] [options]",
+		DisableFlagsInUseLine: true,
 		Short:   "Submit a new job.",
 		Example: submitExamples,
 		Run: func(cmd *cobra.Command, args []string) {
