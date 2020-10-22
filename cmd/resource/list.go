@@ -13,7 +13,7 @@ const (
 # Get list of the jobs
 runai list job
 
-# get list of jobs from all projects
+# Get list of jobs from all projects
 runai list job -A
 
 # Get list of the nodes
@@ -27,7 +27,7 @@ func NewListCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: "Display resource list. By default displays the job list",
+		Short: "Display resource list. By default displays the job list.",
 		Example: listExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			job.RunJobList(cmd, args, false)

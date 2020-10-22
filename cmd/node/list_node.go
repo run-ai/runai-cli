@@ -17,6 +17,9 @@ const (
 	listNodeExample = `
 # Get list of the nodes
 runai list node
+
+# Get list of specific nodes
+runai list node NODE_NAME_1 NODE_NAME_2
 `
 )
 
@@ -34,7 +37,7 @@ func NewListNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     "node [...NODE_NAME]",
-		Short:   "Display a list of nodes of the cluster.",
+		Short:   "Display a list of nodes from the cluster.",
 		Example: listNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
 
@@ -43,11 +46,6 @@ func NewListNodeCommand() *cobra.Command {
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
-			}
-
-			if len(*nodeInfos) == 0 {
-				fmt.Println("No available node found in cluster")
-				return
 			}
 
 			handleListSpecificNodes(nodeInfos, args...)
