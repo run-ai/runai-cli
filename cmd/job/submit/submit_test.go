@@ -95,3 +95,18 @@ func TestGetSpecCommandAndArgsBothIgnoreOld(t *testing.T) {
 	assert.Equal(t, args[0], "sleep")
 	assert.Equal(t, args[1], "60")
 }
+
+func TestGetSpecCommandAndArgsWithMorePositionalArgument(t *testing.T) {
+	positionalArgs := []string{"Test", "sleep", "60"}
+	commandArgs := []string{}
+	argsArgs := []string{}
+	isCommand := false
+	argsLenAtDash := 1
+
+	command, args := getSpecCommandAndArgs(argsLenAtDash, positionalArgs, commandArgs, argsArgs, isCommand)
+
+	assert.Equal(t, len(command), 0)
+	assert.Equal(t, len(args), 2)
+	assert.Equal(t, args[0], "sleep")
+	assert.Equal(t, args[1], "60")
+}
