@@ -267,7 +267,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	util.SetLogLevel(global.LogLevel)
 
 	name := getJobName(cmd, args, submitArgs)
-	submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd, args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
+	submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
 	fmt.Println(submitArgs.SpecCommand)
 	fmt.Println(submitArgs.SpecArgs)
 
@@ -442,8 +442,7 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	return newIndex, false, nil
 }
 
-func getSpecCommandAndArgs(cmd *cobra.Command, positionalArgs, commandArgs, argsArgs []string, isCommand bool) ([]string, []string){
-	argsLenAtDash := cmd.ArgsLenAtDash()
+func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsArgs []string, isCommand bool) ([]string, []string){
 	if argsLenAtDash == -1 {
 		argsLenAtDash = len(positionalArgs)
 	}
