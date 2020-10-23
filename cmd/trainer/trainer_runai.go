@@ -226,7 +226,7 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 
 	filteredPods := []v1.Pod{}
 	for _, pod := range podList.Items {
-		if pod.OwnerReferences[0].UID == podSpecJob.UID {
+		if pod.OwnerReferences != nil && pod.OwnerReferences[0].UID == podSpecJob.UID {
 			filteredPods = append(filteredPods, pod)
 		}
 	}
