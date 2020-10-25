@@ -55,7 +55,6 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
 		Example: mpiExamples,
-		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {

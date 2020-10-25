@@ -219,7 +219,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	flagSet.MarkDeprecated("always-pull-image", "please use 'image-pull-policy=Always' instead.")
 	flagSet.StringArrayVar(&(submitArgs.SpecArgs), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
-	flagSet.MarkDeprecated("args", "please use positional arguments instead")
+	flagSet.MarkDeprecated("args", "please use positional arguments with combination of -- instead")
 	flagSet.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
 	flagSet.StringArrayVar(&(submitArgs.SpecCommand), oldCommandFlag, []string{}, "Run this command on container start. Use together with --args.")
@@ -266,10 +266,12 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
 	util.SetLogLevel(global.LogLevel)
 
-	name := getJobName(cmd, args, submitArgs)
+	name, generateSuffix, err := getJobNameWithSuffixGenerationFlag(cmd, args, submitArgs)
+	if err != nil {
+		return err
+	}
+	submitArgs.generateSuffix = generateSuffix
 	submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
-	fmt.Println(submitArgs.SpecCommand)
-	fmt.Println(submitArgs.SpecArgs)
 
 	var errs = validation.IsDNS1035Label(name)
 	if len(errs) > 0 {
@@ -446,42 +448,40 @@ func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsA
 	if argsLenAtDash == -1 {
 		argsLenAtDash = len(positionalArgs)
 	}
-	containerArgs := positionalArgs[argsLenAtDash:]
-	if len(containerArgs) != 0 {
+	argsAfterDash := positionalArgs[argsLenAtDash:]
+	if len(argsAfterDash) != 0 {
 		if isCommand {
-			return containerArgs, []string{}
+			return argsAfterDash, []string{}
 		}
-		return []string{}, containerArgs
+		return []string{}, argsAfterDash
 	}
 	return commandArgs, argsArgs
 }
 
-func getJobName(cmd *cobra.Command,args []string, submitArgs *submitArgs) string {
-	argsLenAtDash := cmd.ArgsLenAtDash()
-	if argsLenAtDash != -1 {
-		args = args[:argsLenAtDash]
+func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command,args []string, submitArgs *submitArgs) (string, bool, error) {
+	argsLenUntilDash := cmd.ArgsLenAtDash()
+	if argsLenUntilDash != -1 {
+		args = args[:argsLenUntilDash]
 	}
 	if nameParameter != "" {
 		if len(args) > 0 {
-			log.Info("Received both positional argument and --name flag. Ignoring the positional argument name")
+			return "", false, fmt.Errorf("received both positional argument and --name flag. Ignoring the positional argument name")
 		}
 		if submitArgs.namePrefix != "" {
-			log.Info("Received both --job-name-prefix and --name flags. Ignoring the --job-name-prefix flag")
+			return "", false, fmt.Errorf("received both --job-name-prefix and --name flags. Ignoring the --job-name-prefix flag")
 		}
-		return nameParameter
+		return nameParameter, false, nil
 	} else if len(args) > 0 {
 		if submitArgs.namePrefix != "" {
-			log.Info("Received both positional argument and --job-name-prefix flags. Ignoring the --job-name-prefix flag")
+			return "", false, fmt.Errorf("received both positional argument and --job-name-prefix flags. Ignoring the --job-name-prefix flag")
 		}
 		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
 		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
-		return args[0]
+		return args[0], false, nil
 	} else if submitArgs.namePrefix != "" {
-		submitArgs.generateSuffix = true
-		return submitArgs.namePrefix
+		return submitArgs.namePrefix, true, nil
 	}
-	submitArgs.generateSuffix = true
-	return jobDefaultName
+	return jobDefaultName, true, nil
 }
 
 func AlignArgsPreParsing(args []string) []string {
@@ -495,7 +495,7 @@ func AlignArgsPreParsing(args []string) []string {
 	if dashIndex == -1 {
 		for i, arg := range args {
 			if arg == fmt.Sprintf("%s%s", dashArg, commandFlag) {
-				log.Info(fmt.Sprintf("using %s%s to pass string argument has been deprecated. please use positional arguments instead", dashArg, commandFlag))
+				log.Info(fmt.Sprintf("using %s%s to pass string argument has been deprecated. please see usage info", dashArg, commandFlag))
 				args[i] = fmt.Sprintf("%s%s", dashArg, oldCommandFlag)
 			}
 		}
