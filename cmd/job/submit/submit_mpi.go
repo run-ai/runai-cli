@@ -160,13 +160,15 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 		return err
 	}
 
-	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
-	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+	if !dryRun {
+		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
+		fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 
-	if submitArgs.Attach != nil && *submitArgs.Attach {
-		if err := attach.Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn), raUtil.IsBoolPTrue(submitArgs.TTY), "", attach.DefaultAttachTimeout); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+		if submitArgs.Attach != nil && *submitArgs.Attach {
+			if err := attach.Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn), raUtil.IsBoolPTrue(submitArgs.TTY), "", attach.DefaultAttachTimeout); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		}
 	}
 
