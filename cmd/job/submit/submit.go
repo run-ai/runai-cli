@@ -458,10 +458,11 @@ func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsA
 	return commandArgs, argsArgs
 }
 
-func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, argsUntilDash []string, submitArgs *submitArgs) (string, bool, error) {
+func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submitArgs *submitArgs) (string, bool, error) {
 	argsLenUntilDash := cmd.ArgsLenAtDash()
+	var argsUntilDash []string
 	if argsLenUntilDash != -1 {
-		argsUntilDash = argsUntilDash[:argsLenUntilDash]
+		argsUntilDash = args[:argsLenUntilDash]
 	}
 	if nameParameter != "" {
 		if len(argsUntilDash) > 0 {
@@ -485,7 +486,7 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, argsUntilDash []stri
 }
 
 func AlignArgsPreParsing(args []string) []string {
-	if strings.ToLower(args[1]) != submitCommand && strings.ToLower(args[1]) != SubmitMpiCommand {
+	if args[1] != submitCommand && args[1] != SubmitMpiCommand {
 		return args
 	}
 
