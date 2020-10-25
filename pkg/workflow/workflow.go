@@ -108,7 +108,7 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 		if err != nil {
 			log.Debugln(err)
 			cleanupSingleFile(valueFileName)
-			return nil, fmt.Errorf("Error getting default values file of cluster")
+			return nil, fmt.Errorf("error getting default values file of cluster")
 		}
 	}
 
@@ -176,7 +176,7 @@ func submitConfigMap(name, namespace string, generateSuffix bool, clientset kube
 	}
 
 	if !generateSuffix {
-		return nil, fmt.Errorf("the job %s already exists, either delete it first (use 'runai delete <job-name>' ) or submit the job again using the flag --generate-name", name)
+		return nil, fmt.Errorf("the job %s already exists, please delete it first (use 'runai delete %s')", name, name)
 	}
 
 	configMapLabelSelector := getConfigMapLabelSelector(name)

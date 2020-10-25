@@ -27,6 +27,7 @@ import (
 )
 
 const (
+	submitCommand = "submit"
 	submitExamples = `
 # Start a Training job.
 runai submit --name train1 -i gcr.io/run-ai-demo/quickstart -g 1
@@ -55,10 +56,10 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "submit",
+		Use:     "submit [flags] -- [COMMAND] [args...] [options]",
+		DisableFlagsInUseLine: true,
 		Short:   "Submit a new job.",
 		Example: submitExamples,
-		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
 			if err != nil {
@@ -236,13 +237,13 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		sa.ServiceType = jupyterServiceType
 		log.Infof("Using default jupyter notebook service type %s", jupyterServiceType)
 	}
-	if len(sa.Command) == 0 && sa.ServiceType == "ingress" {
-		sa.Command = []string{jupyterCommand}
+	if len(sa.SpecCommand) == 0 && sa.ServiceType == "ingress" {
+		sa.SpecCommand = []string{jupyterCommand}
 		log.Infof("Using default jupyter notebook command for using ingress service \"%s\"", jupyterCommand)
 	}
-	if len(sa.Args) == 0 && sa.ServiceType == "ingress" {
+	if len(sa.SpecArgs) == 0 && sa.ServiceType == "ingress" {
 		baseUrlArg := fmt.Sprintf(jupyterArgs, sa.Project, sa.Name)
-		sa.Args = []string{baseUrlArg}
+		sa.SpecArgs = []string{baseUrlArg}
 		log.Infof("Using default jupyter notebook command argument for using ingress service \"%s\"", baseUrlArg)
 	}
 }
@@ -278,9 +279,11 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	if err != nil {
 		return err
 	}
+	if !dryRun {
+		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
+		fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+	}
 
-	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
-	fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 	return nil
 }
 
