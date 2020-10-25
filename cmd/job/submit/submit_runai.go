@@ -27,6 +27,7 @@ import (
 )
 
 const (
+	submitCommand = "submit"
 	submitExamples = `
 # Start a Training job.
 runai submit --name train1 -i gcr.io/run-ai-demo/quickstart -g 1

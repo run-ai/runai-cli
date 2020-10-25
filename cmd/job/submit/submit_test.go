@@ -7,7 +7,7 @@ import (
 )
 
 func TestArgsAlignmentNoCommand(t *testing.T) {
-	acceptedArgs := []string{"-i", "test.io/lab-test", "-g", "1"}
+	acceptedArgs := []string{"runai", "submit", "-i", "test.io/lab-test", "-g", "1"}
 
 	alignedArgs := AlignArgsPreParsing(acceptedArgs)
 
@@ -19,22 +19,32 @@ func TestArgsAlignmentNoCommand(t *testing.T) {
 }
 
 func TestArgsAlignmentOldCommand(t *testing.T) {
-	acceptedArgs := []string{"-i", "test.io/lab-test", "-g", "1", "--command", "bash"}
+	acceptedArgs := []string{"runai", "submit", "-i", "test.io/lab-test", "-g", "1", "--command", "bash"}
 
 	alignedArgs := AlignArgsPreParsing(acceptedArgs)
 
-	if alignedArgs[4] != fmt.Sprintf("%s%s", dashArg, oldCommandFlag) {
-		t.Errorf("The command %s was suppose to change to %s, instead got %s", fmt.Sprintf("%s%s", dashArg, commandFlag), fmt.Sprintf("%s%s", dashArg, oldCommandFlag), alignedArgs[4])
+	if alignedArgs[6] != fmt.Sprintf("%s%s", dashArg, oldCommandFlag) {
+		t.Errorf("The command %s was suppose to change to %s, instead got %s", fmt.Sprintf("%s%s", dashArg, commandFlag), fmt.Sprintf("%s%s", dashArg, oldCommandFlag), alignedArgs[6])
 	}
 }
 
 func TestArgsAlignmentNewCommand(t *testing.T) {
-	acceptedArgs := []string{"-i", "test.io/lab-test", "-g", "1", "--command", "--", "bash"}
+	acceptedArgs := []string{"runai", "submit", "-i", "test.io/lab-test", "-g", "1", "--command", "--", "bash"}
 
 	alignedArgs := AlignArgsPreParsing(acceptedArgs)
 
-	if alignedArgs[4] != fmt.Sprintf("%s%s", dashArg, commandFlag) {
-		t.Errorf("The command %s was suppose to stay to %s, instead got %s", fmt.Sprintf("%s%s", dashArg, commandFlag), fmt.Sprintf("%s%s", dashArg, commandFlag), alignedArgs[4])
+	if alignedArgs[6] != fmt.Sprintf("%s%s", dashArg, commandFlag) {
+		t.Errorf("The command %s was suppose to stay to %s, instead got %s", fmt.Sprintf("%s%s", dashArg, commandFlag), fmt.Sprintf("%s%s", dashArg, commandFlag), alignedArgs[6])
+	}
+}
+
+func TestArgsAlignmentNotSubmit(t *testing.T) {
+	acceptedArgs := []string{"runai", "list", "-i", "test.io/lab-test", "-g", "1", "--command", "bash"}
+
+	alignedArgs := AlignArgsPreParsing(acceptedArgs)
+
+	if alignedArgs[6] != fmt.Sprintf("%s%s", dashArg, commandFlag) {
+		t.Errorf("The command %s was suppose to stay to %s, instead got %s", fmt.Sprintf("%s%s", dashArg, commandFlag), fmt.Sprintf("%s%s", dashArg, commandFlag), alignedArgs[6])
 	}
 }
 
