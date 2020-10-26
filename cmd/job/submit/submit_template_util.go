@@ -1,27 +1,24 @@
 package submit
 
 import (
-	yaml "gopkg.in/yaml.v2"
-	"os"
+	"github.com/run-ai/runai-cli/pkg/templates"
 	"strings"
 )
 
 func applyTemplate(templateYaml string, args *submitArgs) error {
-	var templateArgs submitArgs
-	resolvedTemplateYaml := os.ExpandEnv(templateYaml)
-	err := yaml.Unmarshal([]byte(resolvedTemplateYaml), &templateArgs)
+	template, err := templates.GetSubmitTemplateFromYaml(templateYaml, true)
 	if err != nil {
 		return err
 	}
 
-	*args = mergeTemplateSubmitArgs(*args, templateArgs)
+	*args = mergeTemplateToSubmitArgs(*args, template)
 	return nil
 }
 
-func mergeTemplateSubmitArgs(cliArgs, templateArgs submitArgs) submitArgs {
-	cliArgs.EnvironmentVariable = mergeEnvironmentVariables(&cliArgs.EnvironmentVariable, &templateArgs.EnvironmentVariable)
-	cliArgs.Volumes = append(cliArgs.Volumes, templateArgs.Volumes...)
-	return cliArgs
+func mergeTemplateToSubmitArgs(args submitArgs, template *templates.SubmitTemplate) submitArgs {
+	args.EnvironmentVariable = mergeEnvironmentVariables(&args.EnvironmentVariable, &template.EnvVariables)
+	args.Volumes = append(args.Volumes, template.Volumes...)
+	return args
 }
 
 func mergeEnvironmentVariables(cliEnvVars, templateEnvVars *[]string) []string {
