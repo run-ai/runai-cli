@@ -64,7 +64,7 @@ func mergeTemplateToRunaiSubmitArgs(args submitRunaiJobArgs, template *templates
 
 func mergeTemplateToMpiSubmitArgs(args submitMPIJobArgs, template *templates.SubmitTemplate) submitMPIJobArgs {
 	args.submitArgs = mergeTemplateToSubmitArgs(args.submitArgs, template)
-	args.NumberProcesses = mergeIntFlags(args.NumberProcesses, template.Processes)
+	args.Processes = mergeIntFlags(args.Processes, template.Processes)
 	return args
 }
 
