@@ -58,13 +58,13 @@ var (
 	nameParameter string
 	dryRun        bool
 
-	envs        []string
-	selectors   []string
-	tolerations []string
-	dataset     []string
-	dataDirs    []string
-	annotations []string
-	configArg   string
+	envs         []string
+	selectors    []string
+	tolerations  []string
+	dataset      []string
+	dataDirs     []string
+	annotations  []string
+	templateName string
 )
 
 // The common parts of the submitAthd
@@ -106,7 +106,7 @@ type submitArgs struct {
 	CPULimit            string   `yaml:"cpuLimit,omitempty"`
 	Memory              string   `yaml:"memory,omitempty"`
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
-	EnvironmentVariable []string `yaml:"environment,omitempty"`
+	EnvironmentVariable []string `yaml:"environment"`
 
 	ImagePullPolicy            string   `yaml:"imagePullPolicy"`
 	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`
@@ -207,7 +207,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&nameParameter, "name", "", "Job name")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
-	flagSet.StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
+	flagSet.StringVarP(&(templateName), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
@@ -263,7 +263,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 }
 
-func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
+func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface) error {
 	util.SetLogLevel(global.LogLevel)
 
 	name, generateSuffix, err := getJobNameWithSuffixGenerationFlag(cmd, args, submitArgs)
@@ -339,18 +339,21 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	configs := templates.NewTemplates(clientset)
-	var configToUse *templates.Template
-	if configArg == "" {
-		configToUse, err = configs.GetDefaultTemplate()
+	var templateToUse *templates.Template
+	if templateName == "" {
+		templateToUse, err = configs.GetDefaultTemplate()
 	} else {
-		configToUse, err = configs.GetTemplate(configArg)
-		if configToUse == nil {
-			return fmt.Errorf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
+		templateToUse, err = configs.GetTemplate(templateName)
+		if templateToUse == nil {
+			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
 		}
 	}
 
-	if configToUse != nil {
-		*configValues = configToUse.Values
+	if templateToUse != nil {
+		err = applyTemplate(templateToUse.Values, submitArgs)
+		if err != nil {
+			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
+		}
 	}
 
 	// by default when the user set --attach the --stdin and --tty set to true
@@ -374,19 +377,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 	return nil
 }
-
-var (
-	submitLong = `Submit a job.
-
-Available Commands:
-  tfjob,tf             Submit a TFJob.
-  horovod,hj           Submit a Horovod Job.
-  mpijob,mpi           Submit a MPIJob.
-  standalonejob,sj     Submit a standalone Job.
-  tfserving,tfserving  Submit a Serving Job.
-  volcanojob,vj        Submit a VolcanoJob.
-    `
-)
 
 func transformSliceToMap(sets []string, split string) (valuesMap map[string]string) {
 	valuesMap = map[string]string{}

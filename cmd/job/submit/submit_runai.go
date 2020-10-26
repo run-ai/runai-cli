@@ -76,10 +76,9 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			clientset := kubeClient.GetClientset()
-			configValues := ""
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
-			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
+			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -95,7 +94,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
-			err = submitRunaiJob(args, submitArgs, clientset, *runaijobClient, &configValues)
+			err = submitRunaiJob(args, submitArgs, clientset, *runaijobClient)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -268,14 +267,14 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset, configValues *string) error {
+func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset) error {
 	err := verifyHPOFlags(submitArgs)
 	if err != nil {
 		return err
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}
