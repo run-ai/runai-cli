@@ -7,7 +7,6 @@ require (
 	github.com/Azure/go-autorest/autorest v0.9.6 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/frankban/quicktest v1.9.0 // indirect
-	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/spec v0.19.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/snappy v0.0.1 // indirect

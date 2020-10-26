@@ -106,7 +106,7 @@ type submitArgs struct {
 	CPULimit            string   `yaml:"cpuLimit,omitempty"`
 	Memory              string   `yaml:"memory,omitempty"`
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
-	EnvironmentVariable []string `yaml:"environment"`
+	EnvironmentVariable []string `yaml:"environment,omitempty"`
 
 	ImagePullPolicy            string   `yaml:"imagePullPolicy"`
 	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`

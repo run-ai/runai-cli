@@ -14,11 +14,11 @@ func applyTemplate(templateYaml string, args *submitArgs) error {
 		return err
 	}
 
-	*args = mergeSubmitArgs(*args, templateArgs)
+	*args = mergeTemplateSubmitArgs(*args, templateArgs)
 	return nil
 }
 
-func mergeSubmitArgs(cliArgs, templateArgs submitArgs) submitArgs {
+func mergeTemplateSubmitArgs(cliArgs, templateArgs submitArgs) submitArgs {
 	cliArgs.EnvironmentVariable = mergeEnvironmentVariables(&cliArgs.EnvironmentVariable, &templateArgs.EnvironmentVariable)
 	cliArgs.Volumes = append(cliArgs.Volumes, templateArgs.Volumes...)
 	return cliArgs
