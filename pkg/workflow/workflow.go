@@ -25,7 +25,6 @@ const (
 
 type JobFiles struct {
 	valueFileName   string
-	envValuesFile   string
 	template        string
 	appInfoFileName string
 }
@@ -79,43 +78,15 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 *	Submit training job
 **/
 
-func getDefaultValuesFile(environmentValues string) (string, error) {
-	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
-	if err != nil {
-		return "", err
-	}
-
-	_, err = valueFile.WriteString(environmentValues)
-
-	if err != nil {
-		return "", err
-	}
-
-	log.Debugf("Wrote default cluster values file to path %s", valueFile.Name())
-
-	return valueFile.Name(), nil
-}
-
-func generateJobFiles(name string, namespace string, values interface{}, environmentValues string, chart string) (*JobFiles, error) {
+func generateJobFiles(name string, namespace string, values interface{}, chart string) (*JobFiles, error) {
 	valueFileName, err := helm.GenerateValueFile(values)
 	if err != nil {
 		return nil, err
 	}
 
-	envValuesFile := ""
-	if environmentValues != "" {
-		envValuesFile, err = getDefaultValuesFile(environmentValues)
-		if err != nil {
-			log.Debugln(err)
-			cleanupSingleFile(valueFileName)
-			return nil, fmt.Errorf("error getting default values file of cluster")
-		}
-	}
-
 	// 2. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, envValuesFile, chart)
+	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart)
 	if err != nil {
-		cleanupSingleFile(environmentValues)
 		cleanupSingleFile(valueFileName)
 		return nil, err
 	}
@@ -124,7 +95,6 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 	appInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
 	if err != nil {
 		cleanupSingleFile(template)
-		cleanupSingleFile(environmentValues)
 		cleanupSingleFile(valueFileName)
 		return nil, err
 	}
@@ -132,7 +102,6 @@ func generateJobFiles(name string, namespace string, values interface{}, environ
 
 	jobFiles := &JobFiles{
 		valueFileName:   valueFileName,
-		envValuesFile:   envValuesFile,
 		template:        template,
 		appInfoFileName: appInfoFileName,
 	}
@@ -215,16 +184,9 @@ func createEmptyConfigMap(name, baseName, namespace string, index int, clientset
 	return acceptedConfigMap, nil
 }
 
-func populateConfigMap(configMap *corev1.ConfigMap, chartName, chartVersion, envValuesFile, valuesFileName, appInfoFileName, namespace string, clientset kubernetes.Interface) error {
+func populateConfigMap(configMap *corev1.ConfigMap, chartName, chartVersion, valuesFileName, appInfoFileName, namespace string, clientset kubernetes.Interface) error {
 	data := make(map[string]string)
 	data[chartName] = chartVersion
-	if envValuesFile != "" {
-		envFileContent, err := ioutil.ReadFile(envValuesFile)
-		if err != nil {
-			return err
-		}
-		data["env-values"] = string(envFileContent)
-	}
 	valuesFileContent, err := ioutil.ReadFile(valuesFileName)
 	if err != nil {
 		return err
@@ -255,16 +217,15 @@ func cleanupJobFiles(files *JobFiles) {
 	cleanupSingleFile(files.valueFileName)
 	cleanupSingleFile(files.template)
 	cleanupSingleFile(files.appInfoFileName)
-	cleanupSingleFile(files.envValuesFile)
 }
 
-func submitJobInternal(name, namespace string, generateSuffix bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface) (string, error) {
+func submitJobInternal(name, namespace string, generateSuffix bool, values interface{}, chart string, clientset kubernetes.Interface) (string, error) {
 	configMap, err := submitConfigMap(name, namespace, generateSuffix, clientset)
 	if err != nil {
 		return "", err
 	}
 	jobName := configMap.Name
-	jobFiles, err := generateJobFiles(jobName, namespace, values, environmentValues, chart)
+	jobFiles, err := generateJobFiles(jobName, namespace, values, chart)
 	if err != nil {
 		return jobName, err
 	}
@@ -276,7 +237,7 @@ func submitJobInternal(name, namespace string, generateSuffix bool, values inter
 		return jobName, err
 	}
 
-	err = populateConfigMap(configMap, chartName, chartVersion, jobFiles.envValuesFile, jobFiles.valueFileName, jobFiles.appInfoFileName, namespace, clientset)
+	err = populateConfigMap(configMap, chartName, chartVersion, jobFiles.valueFileName, jobFiles.appInfoFileName, namespace, clientset)
 	if err != nil {
 		return jobName, err
 	}
@@ -288,9 +249,9 @@ func submitJobInternal(name, namespace string, generateSuffix bool, values inter
 	return jobName, nil
 }
 
-func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
+func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
 	if dryRun {
-		jobFiles, err := generateJobFiles(name, namespace, values, environmentValues, chart)
+		jobFiles, err := generateJobFiles(name, namespace, values, chart)
 		if err != nil {
 			return "", err
 		}
@@ -298,7 +259,7 @@ func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, 
 		fmt.Println(jobFiles.template)
 		return "", nil
 	}
-	jobName, err := submitJobInternal(name, namespace, generateSuffix, values, environmentValues, chart, clientset)
+	jobName, err := submitJobInternal(name, namespace, generateSuffix, values, chart, clientset)
 	if err != nil {
 		return "", err
 	}
