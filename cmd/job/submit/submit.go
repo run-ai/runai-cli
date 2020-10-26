@@ -26,8 +26,6 @@ import (
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/clusterConfig"
-	"github.com/run-ai/runai-cli/pkg/config"
-	"github.com/run-ai/runai-cli/pkg/templates"
 	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -113,12 +111,12 @@ type submitArgs struct {
 	Volumes                    []string `yaml:"volume,omitempty"`
 	PersistentVolumes          []string `yaml:"persistentVolumes,omitempty"`
 	WorkingDir                 string   `yaml:"workingDir,omitempty"`
-	PreventPrivilegeEscalation bool     `yaml:"preventPrivilegeEscalation"`
+	PreventPrivilegeEscalation *bool     `yaml:"preventPrivilegeEscalation"`
 	CreateHomeDir              *bool    `yaml:"createHomeDir,omitempty"`
 	RunAsUser                  string   `yaml:"runAsUser,omitempty"`
 	RunAsGroup                 string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
-	RunAsCurrentUser           bool
+	RunAsCurrentUser           *bool
 	SpecCommand                []string          `yaml:"command"`
 	Command                    bool              `yaml:"isCommand"`
 	LocalImage                 *bool             `yaml:"localImage,omitempty"`
@@ -130,7 +128,7 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
-	namePrefix				   string			 `yaml:"namePrefix,omitempty"`
+	NamePrefix				   string			 `yaml:"namePrefix,omitempty"`
 	generateSuffix 			   bool
 }
 
@@ -212,7 +210,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
-	flagSet.StringVar(&submitArgs.namePrefix, "job-name-prefix", "", "Set defined prefix for the job name and add index as suffix")
+	flagSet.StringVar(&submitArgs.NamePrefix, "job-name-prefix", "", "Set defined prefix for the job name and add index as suffix")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
 	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
@@ -231,7 +229,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
-	flagSet.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.RunAsCurrentUser), "run-as-user", "", "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
@@ -255,7 +253,8 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet = fbg.GetOrAddFlagSet(AccessControlFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
-	flagSet.BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", "", "Prevent the job’s container from gaining additional privileges after start.")
+
 	flagSet.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 	flagSet.MarkHidden("user")
 
@@ -298,7 +297,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 
 	submitArgs.Namespace = namespaceInfo.Namespace
 	submitArgs.Project = namespaceInfo.ProjectName
-	if clusterConfig.EnforceRunAsUser || submitArgs.RunAsCurrentUser {
+	if clusterConfig.EnforceRunAsUser || raUtil.IsBoolPTrue(submitArgs.RunAsCurrentUser) {
 		currentUser, err := user.Current()
 		if err != nil {
 			return fmt.Errorf("Could not retrieve the current user: %s", err.Error())
@@ -321,7 +320,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	if clusterConfig.EnforcePreventPrivilegeEscalation {
-		submitArgs.PreventPrivilegeEscalation = true
+		*submitArgs.PreventPrivilegeEscalation = true
 	}
 
 	err = HandleVolumesAndPvc(submitArgs)
@@ -336,24 +335,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	} else {
 		submitArgs.Labels = make(map[string]string)
 		submitArgs.Labels["runai/job-index"] = index
-	}
-
-	configs := templates.NewTemplates(clientset)
-	var templateToUse *templates.Template
-	if templateName == "" {
-		templateToUse, err = configs.GetDefaultTemplate()
-	} else {
-		templateToUse, err = configs.GetTemplate(templateName)
-		if templateToUse == nil {
-			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
-		}
-	}
-
-	if templateToUse != nil {
-		err = applyTemplate(templateToUse.Values, submitArgs)
-		if err != nil {
-			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
-		}
 	}
 
 	// by default when the user set --attach the --stdin and --tty set to true
@@ -458,19 +439,19 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submi
 		if len(argsUntilDash) > 0 {
 			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
 		}
-		if submitArgs.namePrefix != "" {
+		if submitArgs.NamePrefix != "" {
 			return "", false, fmt.Errorf("expecred either --job-name-prefix or --name flag")
 		}
 		return nameParameter, false, nil
 	} else if len(argsUntilDash) > 0 {
-		if submitArgs.namePrefix != "" {
+		if submitArgs.NamePrefix != "" {
 			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
 		}
 		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
 		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
 		return argsUntilDash[0], false, nil
-	} else if submitArgs.namePrefix != "" {
-		return submitArgs.namePrefix, true, nil
+	} else if submitArgs.NamePrefix != "" {
+		return submitArgs.NamePrefix, true, nil
 	}
 	return jobDefaultName, true, nil
 }

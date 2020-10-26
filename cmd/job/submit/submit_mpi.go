@@ -16,6 +16,8 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/templates"
+	"k8s.io/client-go/kubernetes"
 	"os"
 	"path"
 
@@ -76,6 +78,13 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
+			err = applyMpiTemplate(clientset, &submitArgs)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			err = submitMPIJob(cmd, args, &submitArgs, kubeClient)
 			if err != nil {
 				fmt.Println(err)
@@ -87,11 +96,33 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	fbg := flags.NewFlagsByGroups(command)
 	submitArgs.addCommonFlags(fbg)
 	fg := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
-	fg.IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
+	flags.AddIntNullableFlag(fg, &(submitArgs.NumberProcesses), "processes", "Number of distributed training processes.")
 	fbg.UpdateFlagsByGroupsToCmd()
 
 	return command
 
+}
+
+func applyMpiTemplate(clientset kubernetes.Interface, submitArgs *submitMPIJobArgs) error {
+	var err error
+	configs := templates.NewTemplates(clientset)
+	var templateToUse *templates.Template
+	if templateName == "" {
+		templateToUse, err = configs.GetDefaultTemplate()
+	} else {
+		templateToUse, err = configs.GetTemplate(templateName)
+		if templateToUse == nil {
+			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
+		}
+	}
+
+	if templateToUse != nil {
+		err = applyTemplateToSubmitMpijob(templateToUse.Values, submitArgs)
+		if err != nil {
+			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
+		}
+	}
+	return nil
 }
 
 type submitMPIJobArgs struct {
@@ -99,7 +130,7 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	NumberProcesses int `yaml:"numProcesses"` // --workers
+	NumberProcesses *int `yaml:"numProcesses"` // --workers
 	TotalGPUs       int `yaml:"totalGpus"`    // --workers
 }
 
@@ -108,7 +139,11 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	submitArgs.TotalGPUs = submitArgs.NumberProcesses * int(*submitArgs.GPU)
+	numberProcesses := 1
+	if submitArgs.NumberProcesses != nil {
+		numberProcesses = *submitArgs.NumberProcesses
+	}
+	submitArgs.TotalGPUs = numberProcesses * int(*submitArgs.GPU)
 	return nil
 }
 

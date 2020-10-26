@@ -5,13 +5,23 @@ import (
 	"strings"
 )
 
-func applyTemplate(templateYaml string, args *submitArgs) error {
+func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs) error {
 	template, err := templates.GetSubmitTemplateFromYaml(templateYaml, true)
 	if err != nil {
 		return err
 	}
 
-	*args = mergeTemplateToSubmitArgs(*args, template)
+	*args = mergeTemplateToRunaiSubmitArgs(*args, template)
+	return nil
+}
+
+func applyTemplateToSubmitMpijob(templateYaml string, args *submitMPIJobArgs) error {
+	template, err := templates.GetSubmitTemplateFromYaml(templateYaml, true)
+	if err != nil {
+		return err
+	}
+
+	*args = mergeTemplateToMpiSubmitArgs(*args, template)
 	return nil
 }
 
@@ -35,7 +45,26 @@ func mergeTemplateToSubmitArgs(args submitArgs, template *templates.SubmitTempla
 	args.Ports = append(args.Ports, template.Ports...)
 	args.PersistentVolumes = append(args.PersistentVolumes, template.PersistentVolumes...)
 	args.WorkingDir = mergeStringFlags(args.WorkingDir, template.WorkingDir)
+	args.NamePrefix = mergeStringFlags(args.NamePrefix, template.JobNamePrefix)
+	args.PreventPrivilegeEscalation = mergeBoolFlags(args.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation)
+	args.RunAsCurrentUser = mergeBoolFlags(args.RunAsCurrentUser, template.RunAsCurrentUser)
+	return args
+}
 
+func mergeTemplateToRunaiSubmitArgs(args submitRunaiJobArgs, template *templates.SubmitTemplate) submitRunaiJobArgs {
+	args.submitArgs = mergeTemplateToSubmitArgs(args.submitArgs, template)
+	args.BackoffLimit = mergeIntFlags(args.BackoffLimit, template.BackoffLimit)
+	args.Elastic = mergeBoolFlags(args.Elastic, template.Elastic)
+	args.Parallelism = mergeIntFlags(args.Parallelism, template.Parallelism)
+	args.IsPreemptible = mergeBoolFlags(args.IsPreemptible, template.IsPreemptible)
+	args.ServiceType = mergeStringFlags(args.ServiceType, template.ServiceType)
+	args.IsJupyter = mergeBoolFlags(args.IsJupyter, template.IsJupyter)
+	return args
+}
+
+func mergeTemplateToMpiSubmitArgs(args submitMPIJobArgs, template *templates.SubmitTemplate) submitMPIJobArgs {
+	args.submitArgs = mergeTemplateToSubmitArgs(args.submitArgs, template)
+	args.NumberProcesses = mergeIntFlags(args.NumberProcesses, template.Processes)
 	return args
 }
 
@@ -84,6 +113,15 @@ func mergeStringFlags(cliFlag, templateFlag string) string {
 }
 
 func mergeFloat64Flags(cliFlag, templateFlag *float64) *float64 {
+	if cliFlag != nil {
+		return cliFlag
+	} else if templateFlag != nil {
+		return templateFlag
+	}
+	return nil
+}
+
+func mergeIntFlags(cliFlag, templateFlag *int) *int {
 	if cliFlag != nil {
 		return cliFlag
 	} else if templateFlag != nil {

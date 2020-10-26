@@ -2,6 +2,7 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/templates"
 	"math"
 	"os"
 	"path"
@@ -78,6 +79,12 @@ func NewRunaiJobCommand() *cobra.Command {
 			clientset := kubeClient.GetClientset()
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
+			err = applyTemplate(clientset, submitArgs)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
 			if err != nil {
 				fmt.Println(err)
@@ -90,7 +97,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.TTL = &ttlSeconds
 			}
 
-			if submitArgs.IsJupyter {
+			if raUtil.IsBoolPTrue(submitArgs.IsJupyter) {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
@@ -101,7 +108,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			printJobInfoIfNeeded(submitArgs)
-			if submitArgs.IsJupyter || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
+			if raUtil.IsBoolPTrue(submitArgs.IsJupyter) || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(submitArgs.Name, submitArgs.Namespace)
 
 				if err != nil {
@@ -109,7 +116,7 @@ func NewRunaiJobCommand() *cobra.Command {
 					os.Exit(1)
 				}
 
-				if submitArgs.IsJupyter {
+				if raUtil.IsBoolPTrue(submitArgs.IsJupyter) {
 					runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
 					job, err := runaiTrainer.GetTrainingJob(submitArgs.Name, submitArgs.Namespace)
 
@@ -172,6 +179,28 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
+func applyTemplate(clientset kubernetes.Interface, submitArgs *submitRunaiJobArgs) error {
+	var err error
+	configs := templates.NewTemplates(clientset)
+	var templateToUse *templates.Template
+	if templateName == "" {
+		templateToUse, err = configs.GetDefaultTemplate()
+	} else {
+		templateToUse, err = configs.GetTemplate(templateName)
+		if templateToUse == nil {
+			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
+		}
+	}
+
+	if templateToUse != nil {
+		err = applyTemplateToSubmitRunaijob(templateToUse.Values, submitArgs)
+		if err != nil {
+			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
+		}
+	}
+	return nil
+}
+
 func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
 	if submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.IsPreemptible != nil && *submitArgs.IsPreemptible {
 		fmt.Println("Warning: Using the preemptible flag may lead to your resources being preempted without notice")
@@ -207,7 +236,7 @@ type submitRunaiJobArgs struct {
 	Completions      *int   `yaml:"completions,omitempty"`
 	Parallelism      *int   `yaml:"parallelism,omitempty"`
 	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
-	IsJupyter        bool
+	IsJupyter        *bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 	IsOldJob         *bool
@@ -252,7 +281,7 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 	fs := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
-	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
+	flags.AddBoolNullableFlag(fs, &(sa.IsJupyter), "jupyter", "", "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
 	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(fs, &(sa.IsPreemptible), "preemptible", "", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
