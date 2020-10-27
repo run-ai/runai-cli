@@ -3,9 +3,11 @@ package templates
 import (
 	yaml "gopkg.in/yaml.v2"
 	"os"
+	"time"
 )
 
 type SubmitTemplate struct {
+	Name string `yaml:"name,omitempty"`
 	EnvVariables []string `yaml:"environment,omitempty"`
 	Volumes []string `yaml:"volumes,omitempty"`
 	AlwaysPullImage *bool `yaml:"always-pull-image,omitempty"`
@@ -29,6 +31,8 @@ type SubmitTemplate struct {
 	JobNamePrefix string `yaml:"job-name-prefix,omitempty"`
 	PreventPrivilegeEscalation *bool `yaml:"prevent-privilege-escalation,omitempty"`
 	RunAsCurrentUser *bool `yaml:"run-as-user,omitempty"`
+	ExtraArgs []string `yaml:"extra-args,omitempty"`
+	IsCommand *bool `yaml:"command,omitempty"`
 
 	BackoffLimit *int `yaml:"backofflimit,omitempty"`
 	Elastic *bool `yaml:"elastic,omitempty"`
@@ -36,6 +40,7 @@ type SubmitTemplate struct {
 	IsPreemptible *bool `yaml:"preemptible,omitempty"`
 	ServiceType string `yaml:"service-type,omitempty"`
 	IsJupyter *bool `yaml:"jupyter,omitempty"`
+	TtlAfterFinished *time.Duration `yaml:"ttl-after-finish,omitempty"`
 
 	Processes *int `yaml:"processes,omitempty"`
 }
