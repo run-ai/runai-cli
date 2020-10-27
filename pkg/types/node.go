@@ -10,7 +10,7 @@ const (
 type NodeCPUResource struct {
 	Capacity    int     `title:"CAPACITY" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE"`
-	Requested   float64 `title:"REQUESTED"`
+	Allocated   float64 `title:"ALLOCATED"`
 	// Limit float64				`title:"Limit"`
 	Usage float64 `title:"USAGE" format:"%"`
 }
@@ -18,16 +18,16 @@ type NodeCPUResource struct {
 type NodeGPUResource struct {
 	Capacity    int     `title:"CAPACITY" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE"`
-	Unhealthy   int     `title:"UNHEALTHY"`
 	InUse       int     `title:"IN USE"`
 	Allocated   float64 `title:"ALLOCATED"`
-	Usage       float64 `title:"USAGE" format:"%"`
+	Util        float64 `title:"Util." format:"%"`
+	Unhealthy   int     `title:"UNHEALTHY"`
 }
 
 type NodeMemoryResource struct {
 	Capacity    float64 `title:"CAPACITY" format:"memory" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE" format:"memory"`
-	Requested   float64 `title:"REQUESTED" format:"memory"`
+	Allocated   float64 `title:"ALLOCATED" format:"memory"`
 	// Limit float64				`title:"Limit"`
 	Usage float64 `title:"USAGE" format:"memory"`
 }
@@ -48,9 +48,9 @@ type NodeView struct {
 }
 
 type ClusterNodesView struct {
-	GPUs                  int
-	UnhealthyGPUs         int
-	GPUsInUse     int
-	AllocatedGpus float64
-	GPUsOnReadyNode       int
+	GPUs            int
+	UnhealthyGPUs   int
+	GPUsInUse       int
+	AllocatedGpus   float64
+	GPUsOnReadyNode int
 }

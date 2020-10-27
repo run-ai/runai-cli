@@ -14,6 +14,7 @@ var (
 		"Mem.Allocatable",
 		"CPUs.Allocatable",
 		"GPUs.Allocatable",
+		"GPUs.InUse",
 		"GPUMem.Allocatable",
 		"GPUMem.Requested",
 	}
