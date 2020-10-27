@@ -3,7 +3,7 @@ package cluster
 import (
 	"fmt"
 
-	"github.com/run-ai/runai-cli/pkg/util/command"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -44,11 +44,11 @@ func runSetCommand(cmd *cobra.Command, args []string) error {
 }
 
 func newSetClusterCommand() *cobra.Command {
-	commandWrapper := command.NewCommandWrapper(runSetCommand)
+	
 	var command = &cobra.Command{
 		Use:   "set [cluster]",
 		Short: "Set current cluster",
-		Run:   commandWrapper.Run,
+		Run:   commandUtil.WrapRunCommand(runSetCommand),
 		Args:  cobra.RangeArgs(1, 1),
 	}
 

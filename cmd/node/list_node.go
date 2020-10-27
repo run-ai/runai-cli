@@ -37,7 +37,7 @@ func NewListNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     "node [...NODE_NAME]",
-		Short:   "Display a list of nodes from the cluster.",
+		Short:   "List all nodes.",
 		Example: listNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
 
