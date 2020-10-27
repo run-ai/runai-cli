@@ -28,6 +28,7 @@ metadata:
     {{- end }}
     {{- end}}
 spec:
+  backoffLimit: {{ .Values.backoffLimit }}
   {{- if .Values.node_type }}
   nodeSelector:
     run.ai/type: {{ .Values.node_type }}
