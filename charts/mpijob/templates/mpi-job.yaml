@@ -34,6 +34,7 @@ spec:
   {{- end}}
   slotsPerWorker: 1
   cleanPodPolicy: Running
+  backoffLimit: {{ .Values.backoffLimit }}
   mpiReplicaSpecs:
     Launcher:
       replicas: 1

@@ -131,6 +131,7 @@ type submitArgs struct {
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
 	namePrefix				   string			 `yaml:"namePrefix,omitempty"`
+	BackoffLimit     		   *int              `yaml:"backoffLimit,omitempty"`
 	generateSuffix 			   bool
 }
 
@@ -252,6 +253,9 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.HostNetwork), "host-network", "", "Use the host's network stack inside the container.")
 
 	flagSet = fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
+	flags.AddIntNullableFlag(flagSet, &(submitArgs.BackoffLimit), "backoff-limit", "The number of times the job will be retried before failing. Default 6.")
+	flags.AddIntNullableFlag(flagSet, &(submitArgs.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
+	flagSet.MarkDeprecated("backoffLimit", "use backoff-limit instead")
 
 	flagSet = fbg.GetOrAddFlagSet(AccessControlFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
