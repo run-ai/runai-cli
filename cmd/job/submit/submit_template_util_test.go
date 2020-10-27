@@ -50,3 +50,56 @@ func TestMergeFloat64Flag(t *testing.T) {
 
 	assert.Equal(t, *mergeResult, cliFloat64Flag)
 }
+
+func TestMergeCommandAndArgsOnlyTemplateCommand(t *testing.T) {
+	templateIsCommand := true
+	templateExtraArgs := []string{"bash"}
+	cliIsCommand := false
+	cliExtraArgs := []string{}
+
+	command, args := mergeCommandAndArgs(templateIsCommand, cliIsCommand, templateExtraArgs, cliExtraArgs)
+
+	assert.Equal(t, len(args), 0)
+	assert.Equal(t, len(command), 1)
+	assert.Equal(t, command[0], "bash")
+}
+
+func TestMergeCommandAndArgsTemplateCommandOverrideByCli(t *testing.T) {
+	templateIsCommand := true
+	templateExtraArgs := []string{"bash"}
+	cliIsCommand := true
+	cliExtraArgs := []string{"python"}
+
+	command, args := mergeCommandAndArgs(templateIsCommand, cliIsCommand, templateExtraArgs, cliExtraArgs)
+
+	assert.Equal(t, len(args), 0)
+	assert.Equal(t, len(command), 1)
+	assert.Equal(t, command[0], "python")
+}
+
+func TestMergeCommandAndArgsTemplateCommandWithCliArgs(t *testing.T) {
+	templateIsCommand := true
+	templateExtraArgs := []string{"bash"}
+	cliIsCommand := false
+	cliExtraArgs := []string{"echo"}
+
+	command, args := mergeCommandAndArgs(templateIsCommand, cliIsCommand, templateExtraArgs, cliExtraArgs)
+
+	assert.Equal(t, len(args), 1)
+	assert.Equal(t, len(command), 1)
+	assert.Equal(t, command[0], "bash")
+	assert.Equal(t, args[0], "echo")
+}
+
+func TestMergeCommandAndArgsTemplateArgsOverride(t *testing.T) {
+	templateIsCommand := false
+	templateExtraArgs := []string{"bash"}
+	cliIsCommand := false
+	cliExtraArgs := []string{"echo"}
+
+	command, args := mergeCommandAndArgs(templateIsCommand, cliIsCommand, templateExtraArgs, cliExtraArgs)
+
+	assert.Equal(t, len(args), 1)
+	assert.Equal(t, len(command), 0)
+	assert.Equal(t, args[0], "echo")
+}

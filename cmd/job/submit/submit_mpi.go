@@ -74,7 +74,10 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 			clientset := kubeClient.GetClientset()
 
-			err = applyMpiTemplate(clientset, &submitArgs)
+			commandArgs, isCommand := convertOldCommandArgsFlags(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, raUtil.IsBoolPTrue(submitArgs.Command))
+			submitArgs.Command = &isCommand
+
+			err = applyMpiTemplate(clientset, &submitArgs, commandArgs)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -104,7 +107,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 }
 
-func applyMpiTemplate(clientset kubernetes.Interface, submitArgs *submitMPIJobArgs) error {
+func applyMpiTemplate(clientset kubernetes.Interface, submitArgs *submitMPIJobArgs, extraArgs []string) error {
 	var err error
 	configs := templates.NewTemplates(clientset)
 	var templateToUse *templates.Template
@@ -118,7 +121,7 @@ func applyMpiTemplate(clientset kubernetes.Interface, submitArgs *submitMPIJobAr
 	}
 
 	if templateToUse != nil {
-		err = applyTemplateToSubmitMpijob(templateToUse.Values, submitArgs)
+		err = applyTemplateToSubmitMpijob(templateToUse.Values, submitArgs, extraArgs)
 		if err != nil {
 			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
 		}

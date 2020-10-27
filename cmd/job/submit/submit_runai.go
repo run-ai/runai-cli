@@ -79,7 +79,10 @@ func NewRunaiJobCommand() *cobra.Command {
 			clientset := kubeClient.GetClientset()
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
-			err = applyTemplate(clientset, submitArgs)
+			commandArgs, isCommand := convertOldCommandArgsFlags(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, raUtil.IsBoolPTrue(submitArgs.Command))
+			submitArgs.Command = &isCommand
+
+			err = applyTemplate(clientset, submitArgs, commandArgs)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -179,7 +182,7 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
-func applyTemplate(clientset kubernetes.Interface, submitArgs *submitRunaiJobArgs) error {
+func applyTemplate(clientset kubernetes.Interface, submitArgs *submitRunaiJobArgs, extraArgs []string) error {
 	var err error
 	configs := templates.NewTemplates(clientset)
 	var templateToUse *templates.Template
@@ -193,7 +196,7 @@ func applyTemplate(clientset kubernetes.Interface, submitArgs *submitRunaiJobArg
 	}
 
 	if templateToUse != nil {
-		err = applyTemplateToSubmitRunaijob(templateToUse.Values, submitArgs)
+		err = applyTemplateToSubmitRunaijob(templateToUse.Values, submitArgs, extraArgs)
 		if err != nil {
 			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
 		}

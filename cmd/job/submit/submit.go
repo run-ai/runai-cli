@@ -53,7 +53,6 @@ const (
 )
 
 var (
-	nameParameter string
 	dryRun        bool
 
 	envs         []string
@@ -85,7 +84,7 @@ type submitArgs struct {
 	UseENI     bool `yaml:"useENI"`
 
 	Annotations map[string]string `yaml:"annotations"`
-
+	NameParameter string
 	IsNonRoot          bool                      `yaml:"isNonRoot"`
 	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
 	Project            string                    `yaml:"project,omitempty"`
@@ -118,7 +117,7 @@ type submitArgs struct {
 	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
 	RunAsCurrentUser           *bool
 	SpecCommand                []string          `yaml:"command"`
-	Command                    bool              `yaml:"isCommand"`
+	Command                    *bool              `yaml:"isCommand"`
 	LocalImage                 *bool             `yaml:"localImage,omitempty"`
 	LargeShm                   *bool             `yaml:"shm,omitempty"`
 	Ports                      []string          `yaml:"ports,omitempty"`
@@ -203,7 +202,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	}
 
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
-	flagSet.StringVar(&nameParameter, "name", "", "Job name")
+	flagSet.StringVar(&submitArgs.NameParameter, "name", "", "Job name")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(templateName), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
@@ -222,7 +221,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
 	flagSet.StringArrayVar(&(submitArgs.SpecCommand), oldCommandFlag, []string{}, "Run this command on container start. Use together with --args.")
 	flagSet.MarkHidden(oldCommandFlag)
-	flagSet.BoolVar(&submitArgs.Command, commandFlag, false, "If true and extra arguments are present, use them as the 'command' field in the container, rather than the 'args' field which is the default.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.Command, commandFlag, "", "If true and extra arguments are present, use them as the 'command' field in the container, rather than the 'args' field which is the default.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
 	flagSet.MarkDeprecated("local-image", "please use 'image-pull-policy=Never' instead.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
@@ -270,7 +269,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return err
 	}
 	submitArgs.generateSuffix = generateSuffix
-	submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
+	//submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, raUtil.IsBoolPTrue(submitArgs.Command))
 
 	var errs = validation.IsDNS1035Label(name)
 	if len(errs) > 0 {
@@ -415,18 +414,18 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	return newIndex, false, nil
 }
 
-func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsArgs []string, isCommand bool) ([]string, []string){
+func convertOldCommandArgsFlags(argsLenAtDash int, positionalArgs, oldCommand, oldArgs []string, isCommand bool) ([]string, bool) {
 	if argsLenAtDash == -1 {
 		argsLenAtDash = len(positionalArgs)
 	}
+
 	argsAfterDash := positionalArgs[argsLenAtDash:]
 	if len(argsAfterDash) != 0 {
-		if isCommand {
-			return argsAfterDash, []string{}
-		}
-		return []string{}, argsAfterDash
+		return argsAfterDash,isCommand
 	}
-	return commandArgs, argsArgs
+
+	isAnyCommand := len(oldCommand) != 0
+	return append(oldCommand, oldArgs...), isAnyCommand
 }
 
 func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submitArgs *submitArgs) (string, bool, error) {
@@ -435,14 +434,14 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submi
 	if argsLenUntilDash != -1 {
 		argsUntilDash = args[:argsLenUntilDash]
 	}
-	if nameParameter != "" {
+	if submitArgs.NameParameter != "" {
 		if len(argsUntilDash) > 0 {
 			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
 		}
 		if submitArgs.NamePrefix != "" {
 			return "", false, fmt.Errorf("expecred either --job-name-prefix or --name flag")
 		}
-		return nameParameter, false, nil
+		return submitArgs.NameParameter, false, nil
 	} else if len(argsUntilDash) > 0 {
 		if submitArgs.NamePrefix != "" {
 			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)

@@ -1,71 +1,74 @@
 package submit
 
 import (
+	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/templates"
 	"strings"
 )
 
-func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs) error {
+func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs, extraArgs []string) error {
 	template, err := templates.GetSubmitTemplateFromYaml(templateYaml, true)
 	if err != nil {
 		return err
 	}
 
-	*args = mergeTemplateToRunaiSubmitArgs(*args, template)
+	*args = mergeTemplateToRunaiSubmitArgs(*args, template, extraArgs)
 	return nil
 }
 
-func applyTemplateToSubmitMpijob(templateYaml string, args *submitMPIJobArgs) error {
+func applyTemplateToSubmitMpijob(templateYaml string, args *submitMPIJobArgs, extraArgs []string) error {
 	template, err := templates.GetSubmitTemplateFromYaml(templateYaml, true)
 	if err != nil {
 		return err
 	}
 
-	*args = mergeTemplateToMpiSubmitArgs(*args, template)
+	*args = mergeTemplateToMpiSubmitArgs(*args, template, extraArgs)
 	return nil
 }
 
-func mergeTemplateToSubmitArgs(args submitArgs, template *templates.SubmitTemplate) submitArgs {
-	args.EnvironmentVariable = mergeEnvironmentVariables(&args.EnvironmentVariable, &template.EnvVariables)
-	args.Volumes = append(args.Volumes, template.Volumes...)
-	args.AlwaysPullImage = mergeBoolFlags(args.AlwaysPullImage, template.AlwaysPullImage)
-	args.Attach = mergeBoolFlags(args.Attach, template.Attach)
-	args.CPU = mergeStringFlags(args.CPU, template.Cpu)
-	args.CPULimit = mergeStringFlags(args.CPULimit, template.CpuLimit)
-	args.CreateHomeDir = mergeBoolFlags(args.CreateHomeDir, template.CreateHomeDir)
-	args.GPU = mergeFloat64Flags(args.GPU, template.Gpu)
-	args.HostIPC = mergeBoolFlags(args.HostIPC, template.HostIpc)
-	args.HostNetwork = mergeBoolFlags(args.HostNetwork, template.HostNetwork)
-	args.Image = mergeStringFlags(args.Image, template.Image)
-	args.Interactive = mergeBoolFlags(args.Interactive, template.Interactive)
-	args.LargeShm = mergeBoolFlags(args.LargeShm, template.LargeShm)
-	args.LocalImage = mergeBoolFlags(args.LocalImage, template.LocalImage)
-	args.Memory = mergeStringFlags(args.Memory, template.Memory)
-	args.MemoryLimit = mergeStringFlags(args.MemoryLimit, template.MemoryLimit)
-	args.Ports = append(args.Ports, template.Ports...)
-	args.PersistentVolumes = append(args.PersistentVolumes, template.PersistentVolumes...)
-	args.WorkingDir = mergeStringFlags(args.WorkingDir, template.WorkingDir)
-	args.NamePrefix = mergeStringFlags(args.NamePrefix, template.JobNamePrefix)
-	args.PreventPrivilegeEscalation = mergeBoolFlags(args.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation)
-	args.RunAsCurrentUser = mergeBoolFlags(args.RunAsCurrentUser, template.RunAsCurrentUser)
-	return args
+func mergeTemplateToSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, extraArgs []string) submitArgs {
+	submitArgs.NameParameter = mergeStringFlags(submitArgs.NameParameter, template.Name)
+	submitArgs.EnvironmentVariable = mergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
+	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
+	submitArgs.AlwaysPullImage = mergeBoolFlags(submitArgs.AlwaysPullImage, template.AlwaysPullImage)
+	submitArgs.Attach = mergeBoolFlags(submitArgs.Attach, template.Attach)
+	submitArgs.CPU = mergeStringFlags(submitArgs.CPU, template.Cpu)
+	submitArgs.CPULimit = mergeStringFlags(submitArgs.CPULimit, template.CpuLimit)
+	submitArgs.CreateHomeDir = mergeBoolFlags(submitArgs.CreateHomeDir, template.CreateHomeDir)
+	submitArgs.GPU = mergeFloat64Flags(submitArgs.GPU, template.Gpu)
+	submitArgs.HostIPC = mergeBoolFlags(submitArgs.HostIPC, template.HostIpc)
+	submitArgs.HostNetwork = mergeBoolFlags(submitArgs.HostNetwork, template.HostNetwork)
+	submitArgs.Image = mergeStringFlags(submitArgs.Image, template.Image)
+	submitArgs.Interactive = mergeBoolFlags(submitArgs.Interactive, template.Interactive)
+	submitArgs.LargeShm = mergeBoolFlags(submitArgs.LargeShm, template.LargeShm)
+	submitArgs.LocalImage = mergeBoolFlags(submitArgs.LocalImage, template.LocalImage)
+	submitArgs.Memory = mergeStringFlags(submitArgs.Memory, template.Memory)
+	submitArgs.MemoryLimit = mergeStringFlags(submitArgs.MemoryLimit, template.MemoryLimit)
+	submitArgs.Ports = append(submitArgs.Ports, template.Ports...)
+	submitArgs.PersistentVolumes = append(submitArgs.PersistentVolumes, template.PersistentVolumes...)
+	submitArgs.WorkingDir = mergeStringFlags(submitArgs.WorkingDir, template.WorkingDir)
+	submitArgs.NamePrefix = mergeStringFlags(submitArgs.NamePrefix, template.JobNamePrefix)
+	submitArgs.PreventPrivilegeEscalation = mergeBoolFlags(submitArgs.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation)
+	submitArgs.RunAsCurrentUser = mergeBoolFlags(submitArgs.RunAsCurrentUser, template.RunAsCurrentUser)
+	submitArgs.SpecCommand, submitArgs.SpecArgs = mergeCommandAndArgs(raUtil.IsBoolPTrue(template.IsCommand), raUtil.IsBoolPTrue(submitArgs.Command), template.ExtraArgs, extraArgs)
+	return submitArgs
 }
 
-func mergeTemplateToRunaiSubmitArgs(args submitRunaiJobArgs, template *templates.SubmitTemplate) submitRunaiJobArgs {
-	args.submitArgs = mergeTemplateToSubmitArgs(args.submitArgs, template)
-	args.BackoffLimit = mergeIntFlags(args.BackoffLimit, template.BackoffLimit)
-	args.Elastic = mergeBoolFlags(args.Elastic, template.Elastic)
-	args.Parallelism = mergeIntFlags(args.Parallelism, template.Parallelism)
-	args.IsPreemptible = mergeBoolFlags(args.IsPreemptible, template.IsPreemptible)
-	args.ServiceType = mergeStringFlags(args.ServiceType, template.ServiceType)
-	args.IsJupyter = mergeBoolFlags(args.IsJupyter, template.IsJupyter)
-	return args
+func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitRunaiJobArgs {
+	submitArgs.submitArgs = mergeTemplateToSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+	submitArgs.BackoffLimit = mergeIntFlags(submitArgs.BackoffLimit, template.BackoffLimit)
+	submitArgs.Elastic = mergeBoolFlags(submitArgs.Elastic, template.Elastic)
+	submitArgs.Parallelism = mergeIntFlags(submitArgs.Parallelism, template.Parallelism)
+	submitArgs.IsPreemptible = mergeBoolFlags(submitArgs.IsPreemptible, template.IsPreemptible)
+	submitArgs.ServiceType = mergeStringFlags(submitArgs.ServiceType, template.ServiceType)
+	submitArgs.IsJupyter = mergeBoolFlags(submitArgs.IsJupyter, template.IsJupyter)
+	return submitArgs
 }
 
-func mergeTemplateToMpiSubmitArgs(args submitMPIJobArgs, template *templates.SubmitTemplate) submitMPIJobArgs {
-	args.submitArgs = mergeTemplateToSubmitArgs(args.submitArgs, template)
-	args.Processes = mergeIntFlags(args.Processes, template.Processes)
-	return args
+func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitMPIJobArgs {
+	submitArgs.submitArgs = mergeTemplateToSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+	submitArgs.Processes = mergeIntFlags(submitArgs.Processes, template.Processes)
+	return submitArgs
 }
 
 func mergeEnvironmentVariables(cliEnvVars, templateEnvVars *[]string) []string {
@@ -128,4 +131,19 @@ func mergeIntFlags(cliFlag, templateFlag *int) *int {
 		return templateFlag
 	}
 	return nil
+}
+
+func mergeCommandAndArgs(templateIsCommand, cliIsCommand bool, templateExtraArgs, cliExtraArgs []string) ([]string, []string) {
+	if templateIsCommand && !cliIsCommand {
+		return templateExtraArgs, cliExtraArgs
+	} else if templateIsCommand && cliIsCommand {
+		return cliExtraArgs, []string{}
+	} else if !templateIsCommand && cliIsCommand {
+		return cliExtraArgs, []string{}
+	} else {
+		if len(cliExtraArgs) != 0 {
+			return []string{}, cliExtraArgs
+		}
+		return []string{}, templateExtraArgs
+	}
 }
