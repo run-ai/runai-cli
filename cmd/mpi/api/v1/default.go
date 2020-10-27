@@ -41,10 +41,6 @@ func setDefaultsTypeLauncher(spec *common.ReplicaSpec) {
 
 // setDefaultsTypeWorker sets the default value to worker.
 func setDefaultsTypeWorker(spec *common.ReplicaSpec) {
-	if spec.BackoffLimit == nil {
-		spec.BackoffLimit = new(int32)
-		*spec.BackoffLimit = 6
-	}
 }
 
 func SetDefaults_MPIJob(mpiJob *MPIJob) {
