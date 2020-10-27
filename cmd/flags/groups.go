@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/run-ai/runai-cli/pkg/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -28,7 +29,7 @@ func NewFlagsByGroups(cmd *cobra.Command) FlagsByGroups {
 }
 
 func (fg *FlagGroup) usage() string {
-	return fmt.Sprint(fg.Name, ":\n", fg.FlagSet.FlagUsagesWrapped(1))
+	return fmt.Sprint(ui.Bold(fg.Name), "\n", fg.FlagSet.FlagUsagesWrapped(1))
 }
 
 func NewFlagGroup(name FlagGroupName) FlagGroup {
