@@ -4,6 +4,7 @@ import (
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/templates"
 	"strings"
+	"time"
 )
 
 func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs, extraArgs []string) error {
@@ -62,6 +63,7 @@ func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *tem
 	submitArgs.IsPreemptible = mergeBoolFlags(submitArgs.IsPreemptible, template.IsPreemptible)
 	submitArgs.ServiceType = mergeStringFlags(submitArgs.ServiceType, template.ServiceType)
 	submitArgs.IsJupyter = mergeBoolFlags(submitArgs.IsJupyter, template.IsJupyter)
+	submitArgs.TtlAfterFinished = mergeDurationFlags(submitArgs.TtlAfterFinished, template.TtlAfterFinished)
 	return submitArgs
 }
 
@@ -125,6 +127,15 @@ func mergeFloat64Flags(cliFlag, templateFlag *float64) *float64 {
 }
 
 func mergeIntFlags(cliFlag, templateFlag *int) *int {
+	if cliFlag != nil {
+		return cliFlag
+	} else if templateFlag != nil {
+		return templateFlag
+	}
+	return nil
+}
+
+func mergeDurationFlags(cliFlag, templateFlag *time.Duration) *time.Duration {
 	if cliFlag != nil {
 		return cliFlag
 	} else if templateFlag != nil {

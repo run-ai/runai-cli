@@ -50,7 +50,6 @@ runai submit -i gcr.io/run-ai-demo/quickstart -g 1
 
 var (
 	runaiChart       string
-	ttlAfterFinished *time.Duration
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -94,8 +93,8 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if ttlAfterFinished != nil {
-				ttlSeconds := int(math.Round(ttlAfterFinished.Seconds()))
+			if submitArgs.TtlAfterFinished != nil {
+				ttlSeconds := int(math.Round(submitArgs.TtlAfterFinished.Seconds()))
 				log.Debugf("Using time to live seconds %d", ttlSeconds)
 				submitArgs.TTL = &ttlSeconds
 			}
@@ -243,6 +242,7 @@ type submitRunaiJobArgs struct {
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 	IsOldJob         *bool
+	TtlAfterFinished *time.Duration
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -290,7 +290,7 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
 	flags.AddIntNullableFlag(fs, &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
-	flags.AddDurationNullableFlagP(fs, &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
+	flags.AddDurationNullableFlagP(fs, &(sa.TtlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
 	fs.MarkHidden("old-job")
 
