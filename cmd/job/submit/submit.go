@@ -39,8 +39,8 @@ import (
 const (
 	runaiNamespace = "runai"
 	jobDefaultName = "job"
-	dashArg = "--"
-	commandFlag = "command"
+	dashArg        = "--"
+	commandFlag    = "command"
 	oldCommandFlag = "old-command"
 
 	// flag group names
@@ -101,7 +101,7 @@ type submitArgs struct {
 	GPUInt              *int     `yaml:"gpuInt,omitempty"`
 	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
-	SpecArgs                []string `yaml:"args,omitempty"`
+	SpecArgs            []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
 	CPULimit            string   `yaml:"cpuLimit,omitempty"`
 	Memory              string   `yaml:"memory,omitempty"`
@@ -130,8 +130,8 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
-	namePrefix				   string			 `yaml:"namePrefix,omitempty"`
-	generateSuffix 			   bool
+	namePrefix                 string            `yaml:"namePrefix,omitempty"`
+	generateSuffix             bool
 }
 
 type dataDirVolume struct {
@@ -208,7 +208,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&nameParameter, "name", "", "Job name")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
+	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
@@ -231,7 +231,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
-	flagSet.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	flagSet.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run in the context of the current CLI user rather than the root user.")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
@@ -243,7 +243,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet = fbg.GetOrAddFlagSet(StorageFlagGroup)
 	flagSet.StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
-	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
+	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Mount a persistent volume. Syntax: 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
 	flagSet.StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	flagSet.MarkDeprecated("volumes", "please use 'volume' flag instead.")
 
@@ -254,7 +254,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet = fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 
 	flagSet = fbg.GetOrAddFlagSet(AccessControlFlagGroup)
-	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory. Default is true when the --run-as-user flag is set, and false if not.")
 	flagSet.BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
 	flagSet.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 	flagSet.MarkHidden("user")
@@ -444,7 +444,7 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	return newIndex, false, nil
 }
 
-func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsArgs []string, isCommand bool) ([]string, []string){
+func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsArgs []string, isCommand bool) ([]string, []string) {
 	if argsLenAtDash == -1 {
 		argsLenAtDash = len(positionalArgs)
 	}
