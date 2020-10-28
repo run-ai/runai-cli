@@ -5,26 +5,14 @@ import (
 	"io"
 	"reflect"
 	"strings"
-	"strconv"
 )
 
 // DECLERATION: currently sub grouping are not supported
 
-const ( 
-
-	groupSeperation =  "┌⦿ "
-	titleSeperation =  "├⚬ "
-	rowsSeperation =   "│  "
-
-	// tag names
-	titleTagName  = "title"
-	defultTagName = "def"
-	formatTagName = "format"
-	groupTagName  = "group"
-
-	// group flags
-	flattenGroupFlag	= "flatten"
-
+const (
+	groupSeperation = "╭⦿ "
+	titleSeperation = "├⚬ "
+	rowsSeperation  = "│  "
 )
 
 var (
@@ -32,21 +20,12 @@ var (
 )
 
 type (
-	FormatFunction = func(value interface{}, model interface{}) (string, error)
-	FormatterMap = map[string]FormatFunction
-
-	Column struct {
-		Formmater                 FormatFunction
-		Path 					  []string
-		Key, GroupID, Title, Defult string
-	}
-
 	tableData struct {
-		columns   	[]Column
-		modelType 	reflect.Type
-		groups 		[]GroupTag
-		opt 	  	TableOpt
-		err       	error
+		columns   []Column
+		modelType reflect.Type
+		groups    []GroupTag
+		opt       TableOpt
+		err       error
 	}
 
 	Table interface {
@@ -55,89 +34,34 @@ type (
 		RenderRows(w io.Writer, rows interface{}) Table
 		Error() error
 	}
+
+	TableOpt struct {
+		DisplayOpt
+		// map format name into a function
+		Formatts FormattersByName
+	}
+
+	Column struct {
+		FieldMeta
+		GroupID string
+	}
 )
-
-
-func NewTag(tag string) Tag {
-	t :=  Tag {
-		Flags: map[string]bool{},
-		Keys: map[string]string{},
-	}
-	tag = strings.TrimSpace(tag)
-	tagSegments := strings.Split(tag, ",")
-	for i,s := range tagSegments {
-		if (i == 0) {
-			t.Val = s
-			continue
-		}
-		sub := strings.SplitN(s, "=", 1)
-		// check if it is a feature or a flag
-		if len(sub) == 2 {
-			t.Keys[sub[0]] = sub[1]
-		} else {
-			t.Flags[sub[0]] = true
-		}
-	}
-
-	return t;
-
-}
-
-// Tag is a general tag structure
-type Tag struct {
-	Val string // the first value 
-	Flags map[string]bool
-	Keys map[string]string
-}
-
-type GroupTag struct {
-	Name string
-	// to diff groups with the same name
-	ID string
-	// flags
-	Flatten bool
-	// keys
-	Prefix string
-}
-
-type TableOpt struct {
-	// set the default for the root struct (any root fields will be hidden by default if is true)
-	HideAllByDefault bool
-	// which field paths to show
-	Show         []string
-	// which field paths to hide
-	Hide         []string
-	// map format name into a function 
-	Formatts FormatterMap
-}
 
 func CreateTable(model interface{}, opt TableOpt) Table {
 	columns := []Column{}
 
-	td := tableData {
-		columns: columns,
+	td := tableData{
+		columns:   columns,
 		modelType: reflect.TypeOf(model),
-		opt: opt,
+		opt:       opt,
 	}
 
-	isShowAllByDefault := true
-
-	if opt.HideAllByDefault {
-		isShowAllByDefault = false
-	} else if opt.Show != nil {
-		// if there is at least one filed on the root of the struct
-		for _, path := range opt.Show {
-			if !strings.Contains(path, ".") {
-				isShowAllByDefault = false
-				break
-			}
-		}
-	}
+	isShowAllByDefault := opt.rootShowByDefault()
 
 	defaultGroup := NewGroupTag("")
 	td.groups = []GroupTag{defaultGroup}
 
-	td.addFields(td.modelType, []string{},defaultGroup , isShowAllByDefault)
+	td.addFields(td.modelType, []string{}, defaultGroup, isShowAllByDefault)
 
 	return &td
 }
@@ -145,27 +69,18 @@ func CreateTable(model interface{}, opt TableOpt) Table {
 func (td *tableData) addFields(modelType reflect.Type, path []string, groupTag GroupTag, showByDefult bool) {
 	fieldsCount := modelType.NumField()
 	for i := 0; i < fieldsCount; i++ {
-		td.addField( modelType.Field(i), path, groupTag, showByDefult)
+		td.addField(modelType.Field(i), path, groupTag, showByDefult)
 	}
 }
 
 func (td *tableData) addField(fieldType reflect.StructField, path []string, groupTag GroupTag, showByDefult bool) {
-	// if need to hide the field
-	pathStr := strings.Join(append(path, fieldType.Name), ".")
-	if td.opt.Hide != nil {
-		if contains(td.opt.Hide, pathStr) {
-			showByDefult = false
-		}
-	} 
-	if td.opt.Show != nil {
-		if contains(td.opt.Show, pathStr) {
-			showByDefult = true
-		}
-	}
-	if (isStructGroup(fieldType)) {
+
+	showByDefult = td.opt.calcFieldShowByDefault(append(path, fieldType.Name), showByDefult )
+	
+	if isStructGroup(fieldType) {
 		td.addGroup(fieldType, path, groupTag, showByDefult)
 		return
-	} 
+	}
 	if !showByDefult {
 		return
 	}
@@ -180,7 +95,7 @@ func (td *tableData) addField(fieldType reflect.StructField, path []string, grou
 func (td *tableData) addGroup(field reflect.StructField, path []string, groupTag GroupTag, showByDefult bool) {
 	groupTag = NewGroupTag(field.Tag.Get(groupTagName))
 	groupPath := append(path, field.Name)
-	td.groups=  append(td.groups, groupTag)
+	td.groups = append(td.groups, groupTag)
 
 	td.addFields(UnwrapTypePtr(field.Type), groupPath, groupTag, showByDefult)
 }
@@ -196,7 +111,7 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 
 	// add the groups
 	if len(td.groups) > 1 {
-		groupsCount := map[string]int{};
+		groupsCount := map[string]int{}
 		groups := []string{}
 		for _, c := range td.columns {
 			groupsCount[c.GroupID] = groupsCount[c.GroupID] + 1
@@ -211,13 +126,13 @@ func (td *tableData) RenderHeader(w io.Writer) Table {
 				continue
 			}
 			tabs := make([]string, spaces)
-			for i := range tabs{
-				tabs[i]="\t"
+			for i := range tabs {
+				tabs[i] = "\t"
 			}
 			if i > 0 && !tag.Flatten {
 				groupName = groupSeperation + groupName
 			}
-			groups = append(groups, groupName + strings.Join(tabs, ""))
+			groups = append(groups, groupName+strings.Join(tabs, ""))
 			i++
 		}
 		if len(groups) > 0 {
@@ -306,8 +221,20 @@ func (td *tableData) Error() error {
 
 //// helpers
 
+func toColumn(field reflect.StructField, formatMap FormattersByName, path []string, groupTag GroupTag) (Column, error) {
+	fieldMeta, err := createFieldMeta(field, formatMap, path )
+
+	if err != nil {
+		return Column{}, err
+	}
+	return Column{
+		FieldMeta: fieldMeta,
+		GroupID: groupTag.ID,
+	}, nil
+}
+
 func isStructGroup(field reflect.StructField) bool {
-	isStruct := UnwrapTypePtr(field.Type).Kind() == reflect.Struct;
+	isStruct := UnwrapTypePtr(field.Type).Kind() == reflect.Struct
 
 	group := field.Tag.Get(groupTagName)
 	format := field.Tag.Get(formatTagName)
@@ -315,46 +242,3 @@ func isStructGroup(field reflect.StructField) bool {
 	return isStruct && len(group) > 0 && len(format) == 0
 }
 
-func NewGroupTag(tagStr string) GroupTag{
-	tag := NewTag(tagStr)
-	groupId+=1
-	return GroupTag {
-		ID: strconv.Itoa(groupId),
-		Name: tag.Val,
-		Flatten: tag.Flags[flattenGroupFlag] || len(tag.Val)==0,
-	}
-}
-
-func toColumn(field reflect.StructField, formatMap FormatterMap, path []string, groupTag GroupTag) (Column, error) {
-	var formaterFunc FormatFunction
-	key := field.Name
-	title := field.Tag.Get(titleTagName)
-	def := field.Tag.Get(defultTagName)
-	format := field.Tag.Get(formatTagName)
-
-	if len(format) != 0 {
-		f, found := formatMap[format]
-		// if not found search in the default format
-		if !found {
-			f, found =DefaultTableFormat[format]
-		}
-
-		if !found {
-			return Column{}, fmt.Errorf("[Table] Not found format function for format name: %s  on field name: %s . Please make sure to include it in the TableOpt.CustomFormat", format, key)
-		}
-		formaterFunc = f
-	}
-
-	if len(title) == 0 {
-		title = key
-	}
-
-	return Column{
-		Title:     title,
-		Defult:    def,
-		GroupID:   groupTag.ID,
-		Key:       key,
-		Path:      path,
-		Formmater: formaterFunc,
-	}, nil
-}

@@ -60,7 +60,7 @@ func StringifyValue(ft reflect.Value) string {
 
 
 func getNesstedVal(v reflect.Value, path []string) (val *reflect.Value) {
-	val = &v;
+	val = &v
 
 	for _, p := range path {
 		// unwrap the pointers
@@ -72,7 +72,7 @@ func getNesstedVal(v reflect.Value, path []string) (val *reflect.Value) {
 	return 
 }
 
-func contains(s []string, searchterm string) bool {
+func Contains(s []string, searchterm string) bool {
 	for _, a := range s {
         if a ==  searchterm {
             return true

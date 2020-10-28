@@ -13,7 +13,7 @@ import (
 	constants "github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
-	"github.com/run-ai/runai-cli/pkg/util/command"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -160,13 +160,24 @@ func printProjects(infos []*ProjectInfo) {
 	_ = w.Flush()
 }
 
-func newListProjectsCommand() *cobra.Command {
-	commandWrapper := command.NewCommandWrapper(runListCommand)
+func newListProjectsCommand_DEPRECATED() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:   "list",
+		Short: "List all avaliable projects. DEPRECATED! use instead > runai list project.",
+		Run:  commandUtil.WrapRunCommand(runListCommand),
+	}
+
+	return command
+}
+
+func NewListProjectCommand() *cobra.Command {
+
+	var command = &cobra.Command{
+		Use:   "project",
+		Aliases: []string{"projects"},
 		Short: "List all avaliable projects",
-		Run:   commandWrapper.Run,
+		Run:   commandUtil.WrapRunCommand(runListCommand),
 	}
 
 	return command

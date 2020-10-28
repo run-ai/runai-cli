@@ -20,7 +20,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/run-ai/runai-cli/cmd/get"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/pkg/client"
 	podlogs "github.com/run-ai/runai-cli/pkg/podlogs"
@@ -62,7 +62,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
-			job, err := get.SearchTrainingJob(kubeClient, name, "", namespaceInfo)
+			job, err := job.SearchTrainingJob(kubeClient, name, "", namespaceInfo)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
