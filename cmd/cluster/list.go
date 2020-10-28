@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/run-ai/runai-cli/pkg/util/command"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -44,13 +44,25 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func newListClustersCommand() *cobra.Command {
-	commandWrapper := command.NewCommandWrapper(runListCommand)
+func newListClustersCommand_DEPRECATED() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:   "list",
+		Short: "List all avaliable clusters. DEPRECATED! use instead > runai list cluster.",
+		Run: commandUtil.WrapRunCommand(runListCommand),
+	}
+
+	return command
+}
+
+
+func NewListClusterCommand() *cobra.Command {
+
+	var command = &cobra.Command{
+		Use:   "cluster",
+		Aliases:[]string{"clusters"},
 		Short: "List all avaliable clusters",
-		Run:   commandWrapper.Run,
+		Run:   commandUtil.WrapRunCommand(runListCommand),
 	}
 
 	return command

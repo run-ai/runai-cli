@@ -4,8 +4,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/run-ai/runai-cli/cmd/node"
 	"github.com/run-ai/runai-cli/cmd/job"
+	"github.com/run-ai/runai-cli/cmd/project"
+	"github.com/run-ai/runai-cli/cmd/cluster"
 
-	// podv1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -18,6 +19,12 @@ runai list job -A
 
 # Get list of the nodes
 runai list node
+
+# Get list of the projects
+runai list project
+
+# Get list of the clusters
+runai list cluster
 `
 )
 
@@ -39,6 +46,8 @@ func NewListCommand() *cobra.Command {
 	// create subcommands
 	command.AddCommand(node.NewListNodeCommand())
 	command.AddCommand(job.NewListJobCommand())
+	command.AddCommand(project.NewListProjectCommand())
+	command.AddCommand(cluster.NewListClusterCommand())
 
 	return command
 }
