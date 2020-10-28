@@ -18,16 +18,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"text/tabwriter"
 
-	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/helpers"
 	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/ui"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +46,8 @@ var (
 func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "node",
+		Use:   "node [...NODE_NAME]",
+		Aliases: []string{"nodes"},
 		Short: "Display information about nodes in the cluster.",
 		Args:  cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
