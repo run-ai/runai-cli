@@ -93,6 +93,7 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) 
 	ui.Line(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
+
 		status := GetJobRealStatus(jobInfo)
 		nodeName := jobInfo.HostIPOfChief()
 		if strings.Contains(nodeName, ", ") {
