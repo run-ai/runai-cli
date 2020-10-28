@@ -41,6 +41,7 @@ func NewListJobCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:   "job",
+		Aliases: []string{"jobs"},
 		Short: "List all jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
 			RunJobList(cmd, args, allNamespaces)
@@ -51,7 +52,6 @@ func NewListJobCommand() *cobra.Command {
 
 	return command
 }
-
 
 func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 	kubeClient, err := client.GetClient()
@@ -100,7 +100,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 	} else {
 		for _, item := range configMaps.Items {
 			if item.Labels[workflow.BaseNameLabelSelectorName] != "" {
-				if jobsMap[item.Name] == false && isJobCreationTimePass(&item) {
+				if jobsMap[item.Name] == false && isJobCreationTimePass(&item){
 					invalidJobs = append(invalidJobs, item.Name)
 				}
 			}

@@ -74,6 +74,7 @@ func NewDescribeJobCommand() *cobra.Command {
 	printArgs := PrintArgs{}
 	var command = &cobra.Command{
 		Use:   "job JOB_NAME",
+		Aliases: []string{"jobs"},
 		Short: "Display details of a job.",
 		Run: func(cmd *cobra.Command, args []string) {
 
