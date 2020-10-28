@@ -156,7 +156,7 @@ func submitHorovodJob(args []string, submitArgs *submitHorovodJobArgs) (err erro
 		return fmt.Errorf("the job %s already exists, please delete it first via 'arena delete %s'", name, name)
 	}
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, "", horovod_training_chart, clientset)
+	err = workflow.SubmitJob(name, namespace, submitArgs, "", horovod_training_chart, clientset)
 	if err != nil {
 		return err
 	}

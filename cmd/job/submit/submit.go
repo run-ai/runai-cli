@@ -38,6 +38,10 @@ import (
 
 const (
 	runaiNamespace = "runai"
+	jobDefaultName = "job"
+	dashArg        = "--"
+	commandFlag    = "command"
+	oldCommandFlag = "old-command"
 
 	// flag group names
 	AliasesAndShortcutsFlagGroup flags.FlagGroupName = "Aliases/Shortcuts"
@@ -97,7 +101,7 @@ type submitArgs struct {
 	GPUInt              *int     `yaml:"gpuInt,omitempty"`
 	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
-	Args                []string `yaml:"args,omitempty"`
+	SpecArgs            []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
 	CPULimit            string   `yaml:"cpuLimit,omitempty"`
 	Memory              string   `yaml:"memory,omitempty"`
@@ -115,7 +119,8 @@ type submitArgs struct {
 	RunAsGroup                 string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
 	RunAsCurrentUser           bool
-	Command                    []string          `yaml:"command"`
+	SpecCommand                []string          `yaml:"command"`
+	Command                    bool              `yaml:"isCommand"`
 	LocalImage                 *bool             `yaml:"localImage,omitempty"`
 	LargeShm                   *bool             `yaml:"shm,omitempty"`
 	Ports                      []string          `yaml:"ports,omitempty"`
@@ -125,6 +130,8 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
+	namePrefix                 string            `yaml:"namePrefix,omitempty"`
+	generateSuffix             bool
 }
 
 type dataDirVolume struct {
@@ -199,29 +206,32 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&nameParameter, "name", "", "Job name")
-	flagSet.MarkDeprecated("name", "please use positional argument instead")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(configArg), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
+	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
+	flagSet.StringVar(&submitArgs.namePrefix, "job-name-prefix", "", "Set defined prefix for the job name and add index as suffix")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
 	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	flagSet.MarkDeprecated("always-pull-image", "please use 'image-pull-policy=Always' instead.")
-	flagSet.StringArrayVar(&(submitArgs.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	flagSet.StringArrayVar(&(submitArgs.SpecArgs), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
+	flagSet.MarkDeprecated("args", "please use -- with extra arguments. See usage")
 	flagSet.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
-	flagSet.StringArrayVar(&(submitArgs.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
+	flagSet.StringArrayVar(&(submitArgs.SpecCommand), oldCommandFlag, []string{}, "Run this command on container start. Use together with --args.")
+	flagSet.MarkHidden(oldCommandFlag)
+	flagSet.BoolVar(&submitArgs.Command, commandFlag, false, "If true and extra arguments are present, use them as the 'command' field in the container, rather than the 'args' field which is the default.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
 	flagSet.MarkDeprecated("local-image", "please use 'image-pull-policy=Never' instead.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
-	flagSet.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run the job container in the context of the current user of the Run:AI CLI rather than the root user.")
+	flagSet.BoolVar(&(submitArgs.RunAsCurrentUser), "run-as-user", false, "Run in the context of the current CLI user rather than the root user.")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
@@ -233,7 +243,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet = fbg.GetOrAddFlagSet(StorageFlagGroup)
 	flagSet.StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
-	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Kubernetes provisioned persistent volumes to mount into the container. Directives are given in the form 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
+	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Mount a persistent volume. Syntax: 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
 	flagSet.StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	flagSet.MarkDeprecated("volumes", "please use 'volume' flag instead.")
 
@@ -244,7 +254,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet = fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 
 	flagSet = fbg.GetOrAddFlagSet(AccessControlFlagGroup)
-	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory for the user in the container.  Data saved in this directory will not be saved when the container exits. The flag is set by default to true when the --run-as-user flag is used, and false if not.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory. Default is true when the --run-as-user flag is set, and false if not.")
 	flagSet.BoolVar(&(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", false, "Prevent the job’s container from gaining additional privileges after start.")
 	flagSet.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
 	flagSet.MarkHidden("user")
@@ -255,18 +265,13 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface, configValues *string) error {
 	util.SetLogLevel(global.LogLevel)
-	var name string
-	if nameParameter == "" && len(args) >= 1 {
-		name = args[0]
-	} else {
-		name = nameParameter
-	}
 
-	if name == "" {
-		cmd.Help()
-		fmt.Println("")
-		return fmt.Errorf("Name must be provided for the job.")
+	name, generateSuffix, err := getJobNameWithSuffixGenerationFlag(cmd, args, submitArgs)
+	if err != nil {
+		return err
 	}
+	submitArgs.generateSuffix = generateSuffix
+	submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
 
 	var errs = validation.IsDNS1035Label(name)
 	if len(errs) > 0 {
@@ -437,4 +442,68 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	}
 
 	return newIndex, false, nil
+}
+
+func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsArgs []string, isCommand bool) ([]string, []string) {
+	if argsLenAtDash == -1 {
+		argsLenAtDash = len(positionalArgs)
+	}
+	argsAfterDash := positionalArgs[argsLenAtDash:]
+	if len(argsAfterDash) != 0 {
+		if isCommand {
+			return argsAfterDash, []string{}
+		}
+		return []string{}, argsAfterDash
+	}
+	return commandArgs, argsArgs
+}
+
+func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submitArgs *submitArgs) (string, bool, error) {
+	argsLenUntilDash := cmd.ArgsLenAtDash()
+	argsUntilDash := args
+	if argsLenUntilDash != -1 {
+		argsUntilDash = args[:argsLenUntilDash]
+	}
+	if nameParameter != "" {
+		if len(argsUntilDash) > 0 {
+			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
+		}
+		if submitArgs.namePrefix != "" {
+			return "", false, fmt.Errorf("expecred either --job-name-prefix or --name flag")
+		}
+		return nameParameter, false, nil
+	} else if len(argsUntilDash) > 0 {
+		if submitArgs.namePrefix != "" {
+			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
+		}
+		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
+		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
+		return argsUntilDash[0], false, nil
+	} else if submitArgs.namePrefix != "" {
+		return submitArgs.namePrefix, true, nil
+	}
+	return jobDefaultName, true, nil
+}
+
+func AlignArgsPreParsing(args []string) []string {
+	if len(args) < 2 || (args[1] != submitCommand && args[1] != SubmitMpiCommand) {
+		return args
+	}
+
+	dashIndex := -1
+	for i, arg := range args {
+		if arg == dashArg {
+			dashIndex = i
+		}
+	}
+
+	if dashIndex == -1 {
+		for i, arg := range args {
+			if arg == fmt.Sprintf("%s%s", dashArg, commandFlag) {
+				log.Info(fmt.Sprintf("using %s%s as string flag has been deprecated. Please see usage information", dashArg, commandFlag))
+				args[i] = fmt.Sprintf("%s%s", dashArg, oldCommandFlag)
+			}
+		}
+	}
+	return args
 }

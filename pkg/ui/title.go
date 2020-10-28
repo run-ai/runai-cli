@@ -22,3 +22,8 @@ func Line(w io.Writer, fields ...string) {
 func End(w io.Writer) {
 	fmt.Fprintf(w, "\n")
 }
+
+
+func Bold(text interface{}) string {
+	return fmt.Sprint("\033[1m",text,"\033[0m")
+}

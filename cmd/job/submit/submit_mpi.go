@@ -35,7 +35,7 @@ import (
 const (
 	SubmitMpiCommand = "submit-mpi"
 	mpiExamples      = `
-runai submit-mpi distributed-job --processes=2 -g 1 \
+runai submit-mpi --name distributed-job --processes=2 -g 1 \
 	-i gcr.io/run-ai-demo/quickstart-distributed`
 )
 
@@ -55,7 +55,6 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
 		Example: mpiExamples,
-		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {
@@ -156,19 +155,20 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-
-	err = workflow.SubmitJob(submitArgs.Name, submitArgs.Mode, submitArgs.Namespace, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
-	fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+	if !dryRun {
+		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
+		fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 
-	if submitArgs.Attach != nil && *submitArgs.Attach {
-		if err := attach.Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn), raUtil.IsBoolPTrue(submitArgs.TTY), "", attach.DefaultAttachTimeout); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+		if submitArgs.Attach != nil && *submitArgs.Attach {
+			if err := attach.Attach(cmd, submitArgs.Name, raUtil.IsBoolPTrue(submitArgs.StdIn), raUtil.IsBoolPTrue(submitArgs.TTY), "", attach.DefaultAttachTimeout); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		}
 	}
 

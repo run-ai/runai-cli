@@ -27,19 +27,24 @@ import (
 )
 
 const (
+	submitCommand  = "submit"
 	submitExamples = `
 # Start a Training job.
-runai submit train1 -i gcr.io/run-ai-demo/quickstart -g 1
+runai submit --name train1 -i gcr.io/run-ai-demo/quickstart -g 1
 
 # Start an interactive job.
-runai submit build1 -i python -g 1 --interactive --attach
+runai submit --name build1 -i python -g 1 --interactive --attach
 
 # Use GPU Fractions
-runai submit frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
+runai submit --name frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
 
 # Hyperparameter Optimization
-runai submit hpo1 -i gcr.io/run-ai-demo/quickstart-hpo -g 1  \
-    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo`
+runai submit --name hpo1 -i gcr.io/run-ai-demo/quickstart-hpo -g 1  \
+    --parallelism 3 --completions 12 -v /nfs/john/hpo:/hpo
+
+# Auto generate job name
+runai submit -i gcr.io/run-ai-demo/quickstart -g 1
+`
 )
 
 var (
@@ -51,10 +56,10 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "submit [NAME]",
-		Short:   "Submit a new job.",
-		Example: submitExamples,
-		Args:    cobra.RangeArgs(0, 1),
+		Use:                   "submit [flags] -- [COMMAND] [args...] [options]",
+		DisableFlagsInUseLine: true,
+		Short:                 "Submit a new job.",
+		Example:               submitExamples,
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
 			if err != nil {
@@ -232,13 +237,13 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		sa.ServiceType = jupyterServiceType
 		log.Infof("Using default jupyter notebook service type %s", jupyterServiceType)
 	}
-	if len(sa.Command) == 0 && sa.ServiceType == "ingress" {
-		sa.Command = []string{jupyterCommand}
+	if len(sa.SpecCommand) == 0 && sa.ServiceType == "ingress" {
+		sa.SpecCommand = []string{jupyterCommand}
 		log.Infof("Using default jupyter notebook command for using ingress service \"%s\"", jupyterCommand)
 	}
-	if len(sa.Args) == 0 && sa.ServiceType == "ingress" {
+	if len(sa.SpecArgs) == 0 && sa.ServiceType == "ingress" {
 		baseUrlArg := fmt.Sprintf(jupyterArgs, sa.Project, sa.Name)
-		sa.Args = []string{baseUrlArg}
+		sa.SpecArgs = []string{baseUrlArg}
 		log.Infof("Using default jupyter notebook command argument for using ingress service \"%s\"", baseUrlArg)
 	}
 }
@@ -247,14 +252,14 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 	fs := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
-	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "Specify service exposure for interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
-	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook using a pre-created image and a default notebook configuration.")
+	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "External access type to interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
+	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Run a Jupyter notebook using a default image and notebook configuration.")
 	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
-	flags.AddBoolNullableFlag(fs, &(sa.IsPreemptible), "preemptible", "", "Mark an interactive job as preemptible. Preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
-	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "The number of successful pods required for this job to be completed. Used for Hyperparameter optimization.")
-	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "The number of pods this job tries to run in parallel at any time.  Used for Hyperparameter optimization.")
-	flags.AddIntNullableFlag(fs, &(sa.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
-	flags.AddDurationNullableFlagP(fs, &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (e.g. 5s, 2m, 3h).")
+	flags.AddBoolNullableFlag(fs, &(sa.IsPreemptible), "preemptible", "", "Interactive preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
+	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "Number of successful pods required for this job to be completed. Used with HPO.")
+	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "Number of pods to run in parallel at any given time.  Used with HPO.")
+	flags.AddIntNullableFlag(fs, &(sa.BackoffLimit), "backoffLimit", "Number of times the job will be retried before failing. Default 6.")
+	flags.AddDurationNullableFlagP(fs, &(ttlAfterFinished), "ttl-after-finish", "", "The duration, after which a finished job is automatically deleted (e.g. 5s, 2m, 3h).")
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
 	fs.MarkHidden("old-job")
 
@@ -264,19 +269,21 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset, configValues *string) error {
-	err2 := verifyHPOFlags(submitArgs)
-	if err2 != nil {
-		return err2
-	}
-
-	handleRunaiJobCRD(submitArgs, runaiclientset)
-	err := workflow.SubmitJob(submitArgs.Name, trainer.DefaultRunaiTrainingType, submitArgs.Namespace, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	err := verifyHPOFlags(submitArgs)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
-	fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+	handleRunaiJobCRD(submitArgs, runaiclientset)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	if err != nil {
+		return err
+	}
+	if !dryRun {
+		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
+		fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+	}
+
 	return nil
 }
 

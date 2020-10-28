@@ -161,7 +161,6 @@ func SearchTrainingJob(kubeClient *client.Client, jobName string, trainingType s
 			job = jobs[0]
 		}
 	}
-
 	return job, nil
 }
 
@@ -216,6 +215,10 @@ func getTrainingJobsByName(kubeClient *client.Client, name string, namespaceInfo
 
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespaceInfo.Namespace)
+		configMap, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).Get(name, metav1.GetOptions{})
+		if err == nil {
+			return nil, fmt.Errorf("The job %s is invalid. Please delete it", configMap.Name)
+		}
 		return nil, cmdUtil.GetJobDoesNotExistsInNamespaceError(name, namespaceInfo)
 	}
 

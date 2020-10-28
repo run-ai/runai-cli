@@ -16,20 +16,12 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/run-ai/runai-cli/cmd/job"
-	"github.com/run-ai/runai-cli/cmd/trainer"
-
 	"github.com/run-ai/runai-cli/cmd/flags"
-	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/config"
-	"github.com/run-ai/runai-cli/pkg/types"
-	"github.com/run-ai/runai-cli/pkg/util/helm"
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // NewDeleteCommand
@@ -58,7 +50,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(kubeClient, jobName, namespaceInfo, "")
+				err = workflow.DeleteJob(jobName, namespaceInfo, kubeClient.GetClientset())
 				if err != nil {
 					log.Error(err)
 				}
@@ -68,54 +60,4 @@ func NewDeleteCommand() *cobra.Command {
 
 	return command
 }
-
-func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo types.NamespaceInfo, trainingType string) error {
-	var trainingTypes []string
-	// 1. Handle legacy training job
-	err := helm.DeleteRelease(jobName)
-	if err == nil {
-		log.Infof("Delete the job %s successfully.", jobName)
-		return nil
-	}
-
-	log.Debugf("%s wasn't deleted by helm due to %v", jobName, err)
-
-	// 2. Handle training jobs created by arena
-	if trainingType == "" {
-		trainingTypes, err = job.GetTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
-
-		if err != nil {
-			return err
-		}
-
-		if len(trainingTypes) == 0 {
-			runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
-			job, err := runaiTrainer.GetTrainingJob(jobName, namespaceInfo.Namespace)
-			if err == nil && !job.CreatedByCLI() {
-				return fmt.Errorf("the job '%s' exists but was not created using the runai cli", jobName)
-			}
-
-			return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
-		} else if len(trainingTypes) > 1 {
-			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
-				jobName,
-				config.CLIName,
-				jobName,
-				config.CLIName,
-				jobName)
-		}
-	} else {
-		trainingTypes = []string{trainingType}
-	}
-
-	err = workflow.DeleteJob(jobName, namespaceInfo.Namespace, trainingTypes[0], kubeClient.GetClientset())
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("The job '%s' has been deleted successfully\n", jobName)
-	// (TODO: cheyang)3. Handle training jobs created by others, to implement
-	return nil
-}
-
 

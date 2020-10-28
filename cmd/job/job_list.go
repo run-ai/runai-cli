@@ -16,6 +16,8 @@ package job
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/workflow"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -81,12 +83,38 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 				}
 			}
 
+			invalidJobs := []string{}
+			jobsMap := make(map[string]bool)
+			for _, job := range jobs {
+				jobsMap[job.Name()] = true
+			}
+
+			configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(metav1.ListOptions{})
+			if err != nil {
+				log.Errorf("Failed due to %v", err)
+				os.Exit(1)
+			} else {
+				for _, item := range configMaps.Items {
+					if item.Labels[workflow.BaseNameLabelSelectorName] != "" {
+						if jobsMap[item.Name] == false {
+							invalidJobs = append(invalidJobs, item.Name)
+						}
+					}
+				}
+			}
+
 			jobs = trainer.MakeTrainingJobOrderdByAge(jobs)
 
-			displayTrainingJobList(jobs, false)
+			displayTrainingJobList(jobs, invalidJobs)
+		},
+	}
+
+	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list from all projects")
+
+	return command
 }
 
-func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) {
+func displayTrainingJobList(jobInfoList []trainer.TrainingJob, invalidJobs []string) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "GPUs Allocated (Requested)", "PODs Running (Pending)", "SERVICE URL(S)"}
 
@@ -123,6 +151,10 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) 
 			allocatedFromRequestedGPUs,
 			runningOfActivePods,
 			strings.Join(jobInfo.ServiceURLs(), ", "))
+	}
+
+	for _, invalidJob := range invalidJobs {
+		ui.Line(w, invalidJob, "Invalid job", "", "", "", "", "", "", "", "", "")
 	}
 	_ = w.Flush()
 }
