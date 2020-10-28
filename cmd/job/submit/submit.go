@@ -460,7 +460,7 @@ func getSpecCommandAndArgs(argsLenAtDash int, positionalArgs, commandArgs, argsA
 
 func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submitArgs *submitArgs) (string, bool, error) {
 	argsLenUntilDash := cmd.ArgsLenAtDash()
-	var argsUntilDash []string
+	argsUntilDash := args
 	if argsLenUntilDash != -1 {
 		argsUntilDash = args[:argsLenUntilDash]
 	}
