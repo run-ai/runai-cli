@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package job_list
+package job
 
 import (
 	"fmt"
@@ -32,13 +32,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewListCommand() *cobra.Command {
+func NewListJobCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
-		Use:   "list",
+		Use:   "job",
 		Short: "List all jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
-			kubeClient, err := client.GetClient()
+			RunJobList(cmd, args, allNamespaces)
+		},
+	}
+
+	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list from all projects")
+
+	return command
+}
+
+
+func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
+	kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -74,12 +85,6 @@ func NewListCommand() *cobra.Command {
 			jobs = trainer.MakeTrainingJobOrderdByAge(jobs)
 
 			displayTrainingJobList(jobs, false)
-		},
-	}
-
-	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list from all projects")
-
-	return command
 }
 
 func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) {

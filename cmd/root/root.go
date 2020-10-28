@@ -20,7 +20,6 @@ import (
 	
 	raCmd "github.com/run-ai/runai-cli/cmd"
 	deleteJob "github.com/run-ai/runai-cli/cmd/job/delete"
-	listJob "github.com/run-ai/runai-cli/cmd/job/list"
 	submitJob "github.com/run-ai/runai-cli/cmd/job/submit"
 	"github.com/run-ai/runai-cli/cmd/project"
 	"github.com/run-ai/runai-cli/cmd/logs"
@@ -67,7 +66,6 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(submitJob.NewRunaiJobCommand())
 	command.AddCommand(submitJob.NewRunaiSubmitMPIJobCommand()) // hidden command
 	// command.AddCommand(NewServeCommand())
-	command.AddCommand(listJob.NewListCommand())
 	// command.AddCommand(NewPruneCommand())
 	// command.AddCommand(NewLogViewerCommand())
 	command.AddCommand(logs.NewLogsCommand())
@@ -75,6 +73,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(resource.NewGetCommand())
 	command.AddCommand(resource.NewTopCommand())
 	command.AddCommand(resource.NewDescribeCommand())
+	command.AddCommand(resource.NewListCommand())
 	command.AddCommand(raCmd.NewVersionCmd())
 	// command.AddCommand(NewDataCommand())
 	// command.AddCommand(NewCompletionCommand())

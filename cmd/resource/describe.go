@@ -11,7 +11,7 @@ import (
 func NewDescribeCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "describe",
-		Short: "Display detailed information about Runai resources.",
+		Short: "Display detailed information about resources.",
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},

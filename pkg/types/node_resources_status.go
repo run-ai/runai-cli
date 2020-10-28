@@ -5,8 +5,9 @@ type NodeResourcesStatus struct {
 	Allocatable                  ResourceList
 	Limited                      ResourceList
 	Allocated                    ResourceList
-	AllocatedGPUsUnits         	 int
+	GPUsInUse         	 		 int
 	FractionalAllocatedGpuUnits  int
 	Requested                    ResourceList
 	Usage                        ResourceList
+	GpuUnits					 []GPU
 }
