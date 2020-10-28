@@ -3,7 +3,6 @@ package node
 import (
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/pkg/helpers"
@@ -38,17 +37,9 @@ func NewDescribeNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if len(*nodeInfos) == 0 {
-				fmt.Println("No available node found in cluster")
-				return
-			}
+			handleDescribeSpecificNodes(nodeInfos, args...)
+		
 
-			if len(args) > 0 {
-				handleDescribeSpecificNodes(nodeInfos, args...)
-			} else {
-
-				describeNodes(nodeInfos)
-			}
 		},
 	}
 
@@ -56,42 +47,14 @@ func NewDescribeNodeCommand() *cobra.Command {
 }
 
 func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
-	nodeNames := []string{}
-	matchsNodeInfos := []*nodeService.NodeInfo{}
 
-	for i := range *nodeInfos {
-		nodeInfo := &(*nodeInfos)[i]
-		nodeNames = append(nodeNames, nodeInfo.Node.Name)
-		if ui.Contains(selectedNodeNames, nodeInfo.Node.Name) {
-			matchsNodeInfos = append(matchsNodeInfos, nodeInfo)
-		}
-	}
-	if len(matchsNodeInfos) != len(selectedNodeNames) {
-		notFoundNodeNames := []string{}
-
-		for _, nodeName := range selectedNodeNames {
-			if !ui.Contains(nodeNames, nodeName) {
-				notFoundNodeNames = append(notFoundNodeNames, nodeName)
-			}
-		}
-		fmt.Printf(
-			`No match found for node(s) '%s'
-
-Available node names:
-%s
-
-`, notFoundNodeNames, "\t"+strings.Join(nodeNames, "\n\t"))
-	}
-
-	for i := range matchsNodeInfos {
-		describeNode(matchsNodeInfos[i])
-	}
+	handleSpecificNodes(nodeInfos, describeNodes, selectedNodeNames...)	
 
 }
 
-func describeNodes(nodes *[]nodeService.NodeInfo) {
-	for i := range *nodes {
-		describeNode(&(*nodes)[i])
+func describeNodes(nodeInfos *[]nodeService.NodeInfo) {
+	for _, nodeInfo := range *nodeInfos {
+		describeNode(&nodeInfo)
 	}
 }
 
