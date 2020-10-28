@@ -15,7 +15,7 @@ func NewClusterCommand() *cobra.Command {
 		},
 	}
 
-	command.AddCommand(newListClustersCommand())
+	command.AddCommand(newListClustersCommand_DEPRECATED())
 	command.AddCommand(newSetClusterCommand())
 	return command
 }
