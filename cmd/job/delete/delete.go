@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/run-ai/runai-cli/cmd/get"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -82,7 +82,7 @@ func deleteTrainingJob(kubeClient *client.Client, jobName string, namespaceInfo 
 
 	// 2. Handle training jobs created by arena
 	if trainingType == "" {
-		trainingTypes, err = get.GetTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
+		trainingTypes, err = job.GetTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
 
 		if err != nil {
 			return err

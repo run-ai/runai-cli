@@ -4,7 +4,7 @@ package resource
 import (
 	"github.com/spf13/cobra"
 	"github.com/run-ai/runai-cli/cmd/node"
-
+	"github.com/run-ai/runai-cli/cmd/job"
 )
 
 
@@ -19,6 +19,7 @@ func NewDescribeCommand() *cobra.Command {
 
 	// create subcommands
 	command.AddCommand(node.NewDescribeNodeCommand())
+	command.AddCommand(job.NewDescribeJobCommand())
 
 	return command
 }
