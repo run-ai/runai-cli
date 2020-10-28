@@ -10,33 +10,37 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const promethesNodeLabelID = "node"
-
 var (
-	nodePQs = prom.QueryNameToQuery{
-		TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
+	promethesNodeLabelID = "node"
+	nodePQs              = prom.QueryNameToQuery{
+		TotalGpusMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
 		UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
-		UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
-		UsedCpuMemoryPQ:  `runai_node_memory_used_bytes`,
+		UsedGpusMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
+		UsedCpusMemoryPQ:  `runai_node_memory_used_bytes`,
 		UsedCpusPQ:       `runai_node_cpu_utilization * 100`,
+        UsedGpuPQ: `(sum(runai_node_gpu_utilization) by (node, gpu))`,
+        UsedGpuMemoryPQ: `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node, gpu))`,
+        TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node, gpu))`,
+		GpuIdleTimePQ: `(sum(time()-runai_node_gpu_last_not_idle_time) by (node, gpu))`,
+		GpuUsedByPod: `sum(runai_gpus_is_running_with_pod2 * 100) by (node, gpu)`,
 	}
 )
 
-type Describer struct {
+type NodeDescriber struct {
 	client  kubernetes.Interface
 	allPods []v1.Pod
 }
 
-func NewNodeDescriber(client kubernetes.Interface, pods []v1.Pod) *Describer {
-	return &Describer{
+func NewNodeDescriber(client kubernetes.Interface, pods []v1.Pod) *NodeDescriber {
+	return &NodeDescriber{
 		client:  client,
 		allPods: pods,
 	}
 }
 
-func (d *Describer) GetAllNodeInfos() ([]Info, string, error) {
+func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 	var warning string
-	var nodeInfoList []Info
+	nodeInfoList := []NodeInfo{}
 
 	nodeList, err := d.client.CoreV1().Nodes().List(metav1.ListOptions{})
 
@@ -46,28 +50,29 @@ func (d *Describer) GetAllNodeInfos() ([]Info, string, error) {
 
 	var promData prom.MetricResultsByItems
 
-	promClient, err := prom.BuildPrometheusClient(d.client)
+	promClient, promErr := prom.BuildPrometheusClient(d.client)
 	if err == nil {
-		promData, err = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
+		promData, promErr = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
 	}
-	if err != nil {
-		warning = fmt.Sprintf("Missing some data. \nreason: Can't access to the prometheus server, \ncause error: %s", err)
+	if promErr != nil {
+		warning = fmt.Sprintf("Missing some data. \nreason: Can't access to the prometheus server, \ncause error: %s", promErr)
 	}
 
 	for _, node := range nodeList.Items {
-		pods := d.GetPodsFromNode(node)
+		pods := d.getPodsFromNode(node)
+		promNodeData, _ := promData[node.Name]
 		nodeInfo := NewNodeInfo(
 			node,
 			pods,
-			promData,
+			promNodeData,
 		)
 		nodeInfoList = append(nodeInfoList, nodeInfo)
 	}
 	return nodeInfoList, warning, err
 }
 
-func (d *Describer) GetPodsFromNode(node v1.Node) []v1.Pod {
-	var pods []v1.Pod
+func (d *NodeDescriber) getPodsFromNode(node v1.Node) []v1.Pod {
+	pods := []v1.Pod{}
 	if !util.IsNodeReady(node) {
 		return pods
 	}

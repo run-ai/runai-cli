@@ -8,7 +8,11 @@ import (
 
 // Title print a title
 func Title(w io.Writer, title string) {
-	fmt.Fprintf(w, "\n\n─────────────◼ %s ◼─────────────\n\n", title)
+	fmt.Fprintf(w, "\n\n──────◆  %s  ◆──────\n\n", title)
+}
+
+func SubTitle(w io.Writer, title string) {
+	fmt.Fprintf(w, "\n%s: \n\n", title)
 }
 
 func Line(w io.Writer, fields ...string) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/util/command"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 )
 
@@ -35,11 +35,11 @@ func runSetCommand(cmd *cobra.Command, args []string) error {
 }
 
 func newSetProjectCommand() *cobra.Command {
-	commandWrapper := command.NewCommandWrapper(runSetCommand)
+
 	var command = &cobra.Command{
 		Use:   "set [PROJECT]",
 		Short: "Set a default project",
-		Run:   commandWrapper.Run,
+		Run:   commandUtil.WrapRunCommand(runSetCommand),
 		Args:  cobra.RangeArgs(1, 1),
 	}
 

@@ -60,3 +60,4 @@ func NewDeleteCommand() *cobra.Command {
 
 	return command
 }
+

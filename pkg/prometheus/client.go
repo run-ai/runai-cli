@@ -22,14 +22,16 @@ const (
 
 type (
 	MetricStatusResult string
-	MetricType         string
-	QueryNameToQuery   = map[string]string
+	MetricType string
+	QueryNameToQuery = map[string]string
 	// MetricResultsByItems is a map of itemId => item[key] => MetricValue
 	MetricResultsByItems = map[string]map[string][]MetricValue
+	MetricResultsByQueryName = map[string]*[]MetricResult
+
 
 	Metric struct {
-		Status MetricStatusResult `json:"status,inline"`
-		Data   MetricData         `json:"data,omitempty"`
+		Status MetricStatusResult     `json:"status,inline"`
+		Data   MetricData 		`json:"data,omitempty"`
 	}
 
 	MetricData struct {
@@ -38,8 +40,8 @@ type (
 	}
 
 	MetricResult struct {
-		Metric map[string]string `json:"metric"`
-		Value  []MetricValue     `json:"value"`
+		Metric map[string]string    `json:"metric"`
+		Value  []MetricValue 		`json:"value"`
 	}
 
 	queryResult struct {
@@ -50,10 +52,27 @@ type (
 
 	MetricValue interface{}
 
-	Client struct {
-		client  kubernetes.Interface
+	Client struct{
+		client kubernetes.Interface
 		service v1.Service
 	}
+)
+
+const (
+
+	SuccessStatus MetricStatusResult = "success"
+	ErrorStatus MetricStatusResult = "error"
+
+	MatrixResult MetricType = "matrix" 
+	VectorResult MetricType = "vector" 
+	ScalarResult MetricType = "scalar" 
+	StringResult MetricType = "string"
+
+	prometheusSchema = "http"
+	// todo: the namespace can be different from runai
+	namespace = "runai"
+	promLabel = "prometheus-operator-prometheus"
+
 )
 
 func BuildPrometheusClient(c kubernetes.Interface) (*Client, error) {
@@ -65,32 +84,33 @@ func BuildPrometheusClient(c kubernetes.Interface) (*Client, error) {
 		return nil, err
 	}
 	ps.service = *service
-
+	
 	return ps, nil
 }
 
+
 func (ps *Client) GetPrometheusService() (service *v1.Service, err error) {
 
-	list, err := ps.client.CoreV1().Services(namespace).List(metav1.ListOptions{
+	list, err := ps.client.CoreV1().Services(namespace).List( metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", promLabel),
 	})
 
 	if err != nil {
-		return
+		return 
 	} else if len(list.Items) > 0 {
 		service = &list.Items[0]
 		return
-	}
+	} 
 
 	return nil, fmt.Errorf("no available services of promethues")
 }
 
-func (ps *Client) Query(query string) (data MetricData, err error) {
+func (ps *Client)  Query( query string) (data MetricData,  err error) {
 	var rst *Metric
 
-	req := ps.client.CoreV1().Services(ps.service.Namespace).ProxyGet(prometheusSchema, ps.service.Name, "9090", "api/v1/query", map[string]string{
+	req := ps.client.CoreV1().Services(ps.service.Namespace).ProxyGet(prometheusSchema, ps.service.Name , "9090", "api/v1/query", map[string]string{
 		"query": query,
-		"time":  strconv.FormatInt(time.Now().Unix(), 10),
+		"time": strconv.FormatInt(time.Now().Unix(), 10),
 	})
 
 	log.Debugf("Query prometheus for by %s in ns %s", query, ps.service.Namespace)
@@ -109,17 +129,23 @@ func (ps *Client) Query(query string) (data MetricData, err error) {
 	}
 	if rst.Status != SuccessStatus {
 		err = fmt.Errorf("failed to query prometheus, status: %s", rst.Status)
-		return
+		return 
 	}
 	if len(rst.Data.Result) == 0 {
 		log.Debugf("The metric is not exist in prometheus for query  %s", query)
 	}
 	data = rst.Data
 	return
+ }
+
+type queryResult struct {
+	name string
+	metric MetricData
+	err error
 }
 
-// GroupMultiQueriesToItems map multipule queries to items by given itemId
-func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) (MetricResultsByItems, error) {
+ // GroupMultiQueriesToItems map multipule queries to items by given itemId
+func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) ( MetricResultsByItems, error) {
 	queryResults := map[string]MetricData{}
 	results := MetricResultsByItems{}
 	var prometheusResultChanel = make(chan queryResult)
@@ -129,7 +155,7 @@ func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) (M
 			prometheusResultChanel <- queryResult{name, metric, err}
 		})(query, queryName)
 	}
-	for i := 0; i < len(q); i++ {
+	for i := 0; i< len(q); i++ {
 		queryResult := <-prometheusResultChanel
 		if queryResult.err != nil {
 			return nil, queryResult.err
@@ -137,23 +163,30 @@ func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) (M
 		queryResults[queryResult.name] = queryResult.metric
 	}
 
-	// map the result to items by the given 'itemId'
+	// map the result to items by the given 'itemId' 
 	for queryName, queryResult := range queryResults {
-		// todo: now we are handling only result type = "vector", consider handling more result type in the future
+		// todo: now we are handling only result type = "vector", consider handling more result type in the future 
 		for _, metricResult := range queryResult.Result {
 			key, ok := metricResult.Metric[itemID]
 			if !ok {
-				return nil, fmt.Errorf("[Prometheus] Failed to find key: (%s) on the metric query: %s => %s", itemID, queryName, q[queryName])
+				return nil, fmt.Errorf("[Prometheus] Failed to find key: (%s) on the metric query: %s => %s",itemID, queryName, q[queryName] )
 			}
 			val := metricResult.Value
 			item, created := results[key]
 			if !created {
-				item = map[string][]MetricValue{}
+				item = map[string]*[]MetricResult{}
 				results[key] = item
 			}
-			item[queryName] = val
-		}
+			itemResult, ok := item[queryName]
+			if !ok {
+				itemResult = &[]MetricResult{}
+				item[queryName] = itemResult
+			}
 
+			*itemResult = append(*itemResult, metricResult)
+		}
+		
 	}
 	return results, nil
 }
+
