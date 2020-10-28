@@ -21,7 +21,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
-	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 
@@ -94,7 +93,8 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, displayGPU bool) 
 	ui.Line(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
-		status := job.GetJobRealStatus(jobInfo)
+
+		status := GetJobRealStatus(jobInfo)
 		nodeName := jobInfo.HostIPOfChief()
 		if strings.Contains(nodeName, ", ") {
 			nodeName = "<multiple>"

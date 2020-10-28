@@ -22,6 +22,15 @@ const (
   runai describe node`
 )
 
+var (
+	describeNodeHiddenFields = []string{
+		"CPUs.Util",
+		"GPUs.Util",
+		"Mem.Usage",
+		"GPUMem.Usage",
+	}
+)
+
 func NewDescribeNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
@@ -38,7 +47,6 @@ func NewDescribeNodeCommand() *cobra.Command {
 			}
 
 			handleDescribeSpecificNodes(nodeInfos, args...)
-		
 
 		},
 	}
@@ -48,7 +56,7 @@ func NewDescribeNodeCommand() *cobra.Command {
 
 func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
 
-	handleSpecificNodes(nodeInfos, describeNodes, selectedNodeNames...)	
+	handleSpecificNodes(nodeInfos, describeNodes, selectedNodeNames...)
 
 }
 
@@ -77,7 +85,7 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 	ui.SubTitle(w, "NODE SUMMERY INFO")
 
 	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
-		DisplayOpt: ui.DisplayOpt{Hide: defaultHiddenFields},
+		DisplayOpt: ui.DisplayOpt{Hide: append(defaultHiddenFields, describeNodeHiddenFields...)},
 	}).Render(w, nodeView).Error()
 
 	if err != nil {
@@ -88,7 +96,11 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 
 		ui.SubTitle(w, "NODE GPUs INFO")
 
-		err = ui.CreateTable(types.GPU{}, ui.TableOpt{}).
+		err = ui.CreateTable(types.GPU{}, ui.TableOpt{
+			DisplayOpt: ui.DisplayOpt{
+				Hide: []string{"MemoryUsage", "IdleTime"},
+			},
+		}).
 			Render(w, nodeResources.GpuUnits).
 			Error()
 		if err != nil {
@@ -96,9 +108,22 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 		}
 	}
 
+	// todo: print node's pods list
+	// this is an old code 
+	// pods := util.GpuPods(nodeInfo.Pods)
+	// if len(pods) > 0 {
+	// 	fmt.Fprintf(w, "\n")
+	// 	fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\t \n")
+	// 	for _, pod := range pods {
+	// 		fmt.Fprintf(w, "%s\t%s\t%s\t\n", pod.Namespace,
+	// 			pod.Name,
+	// 			strconv.FormatInt(util.GpuInPod(pod), 10))
+	// 	}
+	// 	fmt.Fprintf(w, "\n")
+	// }
+
 	ui.End(w)
 
 	_ = w.Flush()
 
-	// todo: print node's pods list
 }

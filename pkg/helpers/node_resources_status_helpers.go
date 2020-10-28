@@ -12,7 +12,7 @@ func (c *NodeResourcesStatusConvertor) ToCpus() *types.NodeCPUResource {
 		Capacity:    int(nrs.Capacity.CPUs) / 1000,
 		Allocatable: nrs.Allocatable.CPUs,
 		Allocated:   nrs.Requested.CPUs / 1000,
-		Usage:       nrs.Usage.CPUs,
+		Util:       nrs.Usage.CPUs,
 	}
 	if result.Capacity == 0 {
 		return nil
