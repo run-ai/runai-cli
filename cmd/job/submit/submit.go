@@ -486,7 +486,7 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submi
 }
 
 func AlignArgsPreParsing(args []string) []string {
-	if args[1] != submitCommand && args[1] != SubmitMpiCommand {
+	if len(args) < 2 || (args[1] != submitCommand && args[1] != SubmitMpiCommand) {
 		return args
 	}
 
