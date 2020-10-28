@@ -16,6 +16,7 @@ package node
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"text/tabwriter"
@@ -31,10 +32,22 @@ import (
 )
 
 var (
-	showDetails         bool
+	showDetails bool
+
+	topNodeFields = []string{
+		"Info.Name",
+		"Info.Status",
+		"GPUs.Capacity",
+		"GPUs.Util",
+		"CPUs.Capacity",
+		"CPUs.Util",
+		"Mem.Capacity",
+		"Mem.Usage",
+	}
 
 	generalNodeInfoFields = []string{
-		"Info",
+		"Info.Name",
+		"Info.Status",
 	}
 
 	cpuAndMemoryFields = []string{
@@ -64,9 +77,7 @@ func NewTopNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if len(*nodeInfos) > 0 {
-				displayTopNodes(nodeInfos)
-			}
+			handleTopSpecificNodes(nodeInfos, showDetails, args...)
 
 		},
 	}
@@ -75,29 +86,35 @@ func NewTopNodeCommand() *cobra.Command {
 	return command
 }
 
-func displayTopNodes(nodes *[]nodeService.NodeInfo) {
-	if showDetails {
-		displayTopNodesDetails(nodes)
-	} else {
-		displayTopNodesSummary(nodes)
-	}
+func handleTopSpecificNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, selectedNodeNames ...string) {
+
+	handleSpecificNodes(nodeInfos, func(nodeInfos *[]nodeService.NodeInfo) {
+		displayTopNodes(nodeInfos, wide, len(selectedNodeNames) == 0)
+	}, selectedNodeNames...)
+
 }
 
-func displayTopNodesSummary(nodeInfos *[]nodeService.NodeInfo) {
+func displayTopNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, showClusterData bool) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	rows := []types.NodeView{}
+	nodesGpuUnits := [][]types.GPU{}
 
 	for _, nodeInfo := range *nodeInfos {
 
-		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
+		nodeResources := nodeInfo.GetResourcesStatus()
+		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeResources)
 		nodeView := types.NodeView{
 			Info:   nodeInfo.GetGeneralInfo(),
 			CPUs:   nodeResourcesConvertor.ToCpus(),
 			GPUs:   nodeResourcesConvertor.ToGpus(),
 			Mem:    nodeResourcesConvertor.ToMemory(),
 			GPUMem: nodeResourcesConvertor.ToGpuMemory(),
+		}
+
+		if wide {
+			nodesGpuUnits = append(nodesGpuUnits, nodeResources.GpuUnits)
 		}
 
 		helpers.AddNodeGPUsToClusterNodes(&clsData, nodeView.Info.Status, nodeView.GPUs)
@@ -109,11 +126,64 @@ func displayTopNodesSummary(nodeInfos *[]nodeService.NodeInfo) {
 		hiddenFields = append(hiddenFields, "GPUs.Unhealthy")
 	}
 
-	ui.Title(w, "GENERAL NODES INFO")
+	if wide {
+		displayTopNodeWide(w, rows, nodesGpuUnits, hiddenFields)
+	} else {
+		displayTopNodeTable(w, rows, hiddenFields)
+	}
+
+	if showClusterData {
+		helpers.RenderClusterNodesView(w, clsData)
+	}
+
+	ui.End(w)
+
+	_ = w.Flush()
+}
+
+func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [][]types.GPU, hiddenFields []string) {
+
+	for i, nodeView := range nodeViews {
+		ui.Title(w, nodeView.Info.Name)
+		ui.SubTitle(w, "NODE SUMMERY INFO")
+
+		err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
+			DisplayOpt: ui.DisplayOpt{HideAllByDefault: true, Show: topNodeFields},
+		}).Render(w, nodeView).Error()
+
+		if err != nil {
+			fmt.Print(err)
+		}
+		nodeGpuUnits := nodesGpuUnits[i]
+		if len(nodeGpuUnits) > 0 {
+
+			ui.SubTitle(w, "NODE GPUs INFO")
+
+			err = ui.CreateTable(types.GPU{}, ui.TableOpt{
+				DisplayOpt: ui.DisplayOpt{
+					Hide: []string{"Allocated"},
+				},
+			}).
+				Render(w, nodeGpuUnits).
+				Error()
+			if err != nil {
+				fmt.Print(err)
+			}
+		}
+
+		ui.End(w)
+
+	}
+}
+
+func displayTopNodeWideTables(w io.Writer, rows []types.NodeView, hiddenFields []string) {
+
+	ui.Title(w, "NODES STATUS")
 	err := ui.CreateTable(types.NodeView{}, ui.TableOpt{
 		DisplayOpt: ui.DisplayOpt{
-			Hide: hiddenFields,
-			Show: generalNodeInfoFields,
+			HideAllByDefault: true,
+			Hide:             hiddenFields,
+			Show:             generalNodeInfoFields,
 		},
 	}).Render(w, rows).Error()
 
@@ -145,11 +215,20 @@ func displayTopNodesSummary(nodeInfos *[]nodeService.NodeInfo) {
 		fmt.Print(err)
 	}
 
-	helpers.RenderClusterNodesView(w, clsData)
+}
 
-	ui.End(w)
+func displayTopNodeTable(w io.Writer, rows []types.NodeView, hiddenFields []string) {
+	err := ui.CreateTable(types.NodeView{}, ui.TableOpt{
+		DisplayOpt: ui.DisplayOpt{
+			HideAllByDefault: true,
+			Hide:             hiddenFields,
+			Show:             topNodeFields,
+		},
+	}).Render(w, rows).Error()
 
-	_ = w.Flush()
+	if err != nil {
+		fmt.Print(err)
+	}
 }
 
 func displayTopNodesDetails(nodeInfos *[]nodeService.NodeInfo) {
@@ -157,7 +236,7 @@ func displayTopNodesDetails(nodeInfos *[]nodeService.NodeInfo) {
 	clsData := types.ClusterNodesView{}
 	fmt.Fprintf(w, "\n")
 	for _, nodeInfo := range *nodeInfos {
-	 
+
 		generalNodeInfo := nodeInfo.GetGeneralInfo()
 
 		nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())

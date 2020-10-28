@@ -11,8 +11,7 @@ type NodeCPUResource struct {
 	Capacity    int     `title:"CAPACITY" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE"`
 	Allocated   float64 `title:"ALLOCATED"`
-	// Limit float64				`title:"Limit"`
-	Usage float64 `title:"USAGE" format:"%"`
+	Util        float64 `title:"Util." format:"%"`
 }
 
 type NodeGPUResource struct {

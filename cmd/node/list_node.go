@@ -27,9 +27,11 @@ var (
 	showListNodeFields = []string{
 		"Info",
 		"CPUs.Capacity",
+		"CPUs.Allocated",
 		"Mem.Capacity",
+		"Mem.Allocated",
 		"GPUs.Capacity",
-		"GPUMem.Capacity",
+		"GPUs.Allocated",
 	}
 )
 
