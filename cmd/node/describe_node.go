@@ -108,9 +108,22 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 		}
 	}
 
+	// todo: print node's pods list
+	// this is an old code 
+	// pods := util.GpuPods(nodeInfo.Pods)
+	// if len(pods) > 0 {
+	// 	fmt.Fprintf(w, "\n")
+	// 	fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\t \n")
+	// 	for _, pod := range pods {
+	// 		fmt.Fprintf(w, "%s\t%s\t%s\t\n", pod.Namespace,
+	// 			pod.Name,
+	// 			strconv.FormatInt(util.GpuInPod(pod), 10))
+	// 	}
+	// 	fmt.Fprintf(w, "\n")
+	// }
+
 	ui.End(w)
 
 	_ = w.Flush()
 
-	// todo: print node's pods list
 }
