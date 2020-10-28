@@ -15,7 +15,7 @@ func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
 
 	ui.Title(w, "CLUSTER NODES INFO")
 
-	fmt.Fprintf(w, "In Use/Total GPUs In Cluster:\t")
+	fmt.Fprintf(w, "In use/Total GPUs In Cluster:\t")
 	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(int64(cnv.GPUs), 10),
 		strconv.FormatInt(int64(cnv.GPUsInUse), 10))
 	var gpuUsage float64 = 0
@@ -33,7 +33,7 @@ func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
 		} else {
 			gpuUsage = 0
 		}
-		fmt.Fprintf(w, "In Use/Total GPUs(Active) In Cluster:\t")
+		fmt.Fprintf(w, "In use/Total GPUs(Active) In Cluster:\t")
 		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
 			strconv.FormatInt(int64(cnv.GPUsInUse), 10),
 			strconv.FormatInt(int64(cnv.GPUsOnReadyNode), 10),

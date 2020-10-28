@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 const (
 	describeNodeExample = `
 # Describe a node
@@ -26,13 +25,13 @@ const (
 func NewDescribeNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "node [...NODE_NAME]",
-		Short: "Display detailed information about nodes in the cluster.",
+		Use:     "node [...NODE_NAME]",
+		Short:   "Display detailed information about nodes in the cluster.",
 		Example: describeNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
 
 			nodeInfos, err := getNodeInfos()
-			
+
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -40,15 +39,17 @@ func NewDescribeNodeCommand() *cobra.Command {
 
 			handleDescribeSpecificNodes(nodeInfos, args...)
 		
+
 		},
 	}
 
 	return command
 }
 
-
 func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
+
 	handleSpecificNodes(nodeInfos, describeNodes, selectedNodeNames...)	
+
 }
 
 func describeNodes(nodeInfos *[]nodeService.NodeInfo) {
@@ -59,7 +60,8 @@ func describeNodes(nodeInfos *[]nodeService.NodeInfo) {
 
 func describeNode(nodeInfo *nodeService.NodeInfo) {
 
-	nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeInfo.GetResourcesStatus())
+	nodeResources := nodeInfo.GetResourcesStatus()
+	nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeResources)
 
 	nodeView := types.NodeView{
 		Info:   nodeInfo.GetGeneralInfo(),
@@ -70,8 +72,9 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	ui.Title(w, nodeView.Info.Name)
 
-	ui.Title(w, "NODE SUMMERY INFO")
+	ui.SubTitle(w, "NODE SUMMERY INFO")
 
 	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
 		DisplayOpt: ui.DisplayOpt{Hide: defaultHiddenFields},
@@ -80,8 +83,22 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 	if err != nil {
 		fmt.Print(err)
 	}
+
+	if len(nodeResources.GpuUnits) > 0 {
+
+		ui.SubTitle(w, "NODE GPUs INFO")
+
+		err = ui.CreateTable(types.GPU{}, ui.TableOpt{}).
+			Render(w, nodeResources.GpuUnits).
+			Error()
+		if err != nil {
+			fmt.Print(err)
+		}
+	}
+
+	ui.End(w)
+
 	_ = w.Flush()
 
 	// todo: print node's pods list
-	// todo: print node's gpus list
 }

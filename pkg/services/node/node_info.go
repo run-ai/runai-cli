@@ -1,7 +1,6 @@
 package node
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/run-ai/runai-cli/pkg/helpers"
@@ -18,25 +17,30 @@ import (
 const (
 
 	// prometheus query names
-	TotalGpuMemoryPQ = "totalGpuMemory"
-	UsedGpuMemoryPQ  = "usedGpuMemory"
-	UsedCpuMemoryPQ  = "usedCpuMemory"
-	UsedCpusPQ       = "usedCpus"
-	UsedGpusPQ       = "usedGpus"
+	TotalGpusMemoryPQ = "totalGpusMemory"
+	UsedGpusMemoryPQ  = "usedGpusMemory"
+	UsedCpusMemoryPQ  = "usedCpusMemory"
+	UsedCpusPQ        = "usedCpus"
+	UsedGpusPQ        = "usedGpus"
+	GpuIdleTimePQ     = "gpuIdleTime"
+	UsedGpuPQ         = "usedGpu"
+	GpuUsedByPod	  = "gpuUsedByPod"
+	UsedGpuMemoryPQ   = "usedGpuMemory"
+	TotalGpuMemoryPQ  = "totalGpuMemory"
 )
 
-func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsByItems) NodeInfo {
+func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsByQueryName) NodeInfo {
 	return NodeInfo{
 		Node:           node,
 		Pods:           pods,
-		PrometheusNode: promNodesMap,
+		PrometheusData: promNodesMap,
 	}
 }
 
 type NodeInfo struct {
 	Node           v1.Node
 	Pods           []v1.Pod
-	PrometheusNode prom.MetricResultsByItems
+	PrometheusData prom.MetricResultsByQueryName
 }
 
 func (ni *NodeInfo) GetStatus() types.NodeStatus {
@@ -85,18 +89,19 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	nodeResStatus.GPUsInUse = nodeResStatus.FractionalAllocatedGpuUnits + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
-	promDataByNode, ok := ni.PrometheusNode[ni.Node.Name]
-	if ok {
+	
+	if ni.PrometheusData != nil {
 		// set usages
 		err := hasError(
-			setFloatPromData(&nodeResStatus.Usage.CPUs, promDataByNode, UsedCpusPQ),
-			setFloatPromData(&nodeResStatus.Usage.GPUs, promDataByNode, UsedGpusPQ),
-			setFloatPromData(&nodeResStatus.Usage.Memory, promDataByNode, UsedCpuMemoryPQ),
-			setFloatPromData(&nodeResStatus.Usage.GPUMemory, promDataByNode, UsedGpuMemoryPQ),
+			prom.SetFloatFromFirstMetric(&nodeResStatus.Usage.CPUs, ni.PrometheusData, UsedCpusPQ),
+			prom.SetFloatFromFirstMetric(&nodeResStatus.Usage.GPUs, ni.PrometheusData, UsedGpusPQ),
+			prom.SetFloatFromFirstMetric(&nodeResStatus.Usage.Memory, ni.PrometheusData, UsedCpusMemoryPQ),
+			prom.SetFloatFromFirstMetric(&nodeResStatus.Usage.GPUMemory, ni.PrometheusData, UsedGpusMemoryPQ),
 			// setFloatPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
 
 			// set total
-			setFloatPromData(&nodeResStatus.Capacity.GPUMemory, promDataByNode, TotalGpuMemoryPQ),
+			prom.SetFloatFromFirstMetric(&nodeResStatus.Capacity.GPUMemory, ni.PrometheusData, TotalGpusMemoryPQ),
+			setGpuUnitsFromPromDataAndPods(&nodeResStatus.GpuUnits, ni.PrometheusData, ni.Pods),
 		)
 
 		if err != nil {
@@ -117,30 +122,34 @@ func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
 	return ok
 }
 
-func setIntPromData(num *int64, m map[string][]prom.MetricValue, key string) error {
-	v, found := m[key]
-	if !found {
-		return nil
+func setGpuUnitsFromPromDataAndPods(value *[]types.GPU, data prom.MetricResultsByQueryName, pods []v1.Pod) error {
+	result := []types.GPU{}
+	metricsValuesByGpus, err := prom.GroupMetrics("gpu", data, GpuIdleTimePQ,UsedGpuPQ, UsedGpuMemoryPQ, TotalGpuMemoryPQ, GpuUsedByPod)
+
+	if err != nil {
+		return  err
 	}
 
-	n, err := strconv.Atoi(v[1].(string))
-	if err != nil {
-		return err
-	}
-	*num = int64(n)
-	return nil
-}
+	fractionAllocatedGpus := util.GetSharedGPUsIndexUsedInPods(pods)
 
-func setFloatPromData(num *float64, m map[string][]prom.MetricValue, key string) error {
-	v, found := m[key]
-	if !found {
-		return nil
+	for gpuIndex, valuesByQueryNames := range metricsValuesByGpus {
+
+		allocated := valuesByQueryNames[GpuUsedByPod]
+		fractionAllocated, isFraction := fractionAllocatedGpus[gpuIndex]
+		if isFraction {
+			allocated = fractionAllocated * 100 
+		}
+		result = append(result, types.GPU {
+			IndexID: gpuIndex,
+			Allocated: allocated,
+			Memory: valuesByQueryNames[TotalGpuMemoryPQ],
+			MemoryUsage: valuesByQueryNames[UsedGpuMemoryPQ],
+			IdleTime: valuesByQueryNames[GpuIdleTimePQ],
+			UTIL: valuesByQueryNames[UsedGpuPQ],
+		})
 	}
-	n, err := strconv.ParseFloat(v[1].(string), 64)
-	if err != nil {
-		return err
-	}
-	*num = n
+
+	*value = result
 	return nil
 }
 

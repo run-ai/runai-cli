@@ -13,11 +13,16 @@ import (
 var (
 	promethesNodeLabelID = "node"
 	nodePQs              = prom.QueryNameToQuery{
-		TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
+		TotalGpusMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
 		UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
-		UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
-		UsedCpuMemoryPQ:  `runai_node_memory_used_bytes`,
+		UsedGpusMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
+		UsedCpusMemoryPQ:  `runai_node_memory_used_bytes`,
 		UsedCpusPQ:       `runai_node_cpu_utilization * 100`,
+        UsedGpuPQ: `(sum(runai_node_gpu_utilization) by (node, gpu))`,
+        UsedGpuMemoryPQ: `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node, gpu))`,
+        TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node, gpu))`,
+		GpuIdleTimePQ: `(sum(time()-runai_node_gpu_last_not_idle_time) by (node, gpu))`,
+		GpuUsedByPod: `sum(runai_gpus_is_running_with_pod2 * 100) by (node, gpu)`,
 	}
 )
 
@@ -54,18 +59,19 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 	}
 
 	for _, node := range nodeList.Items {
-		pods := d.GetPodsFromNode(node)
+		pods := d.getPodsFromNode(node)
+		promNodeData, _ := promData[node.Name] 
 		nodeInfo := NewNodeInfo(
 			node,
 			pods,
-			promData,
+			promNodeData,
 		)
 		nodeInfoList = append(nodeInfoList, nodeInfo)
 	}
 	return nodeInfoList, warning, err
 }
 
-func (d *NodeDescriber) GetPodsFromNode(node v1.Node) []v1.Pod {
+func (d *NodeDescriber) getPodsFromNode(node v1.Node) []v1.Pod {
 	pods := []v1.Pod{}
 	if !util.IsNodeReady(node) {
 		return pods
@@ -79,3 +85,5 @@ func (d *NodeDescriber) GetPodsFromNode(node v1.Node) []v1.Pod {
 
 	return pods
 }
+
+
