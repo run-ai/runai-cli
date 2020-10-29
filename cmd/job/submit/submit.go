@@ -437,12 +437,11 @@ func mergeOldCommandAndArgsWithNew(argsLenAtDash int, positionalArgs, oldCommand
 		return argsAfterDash, isCommand
 	}
 
-	var isAnyCommand *bool
+	isAnyCommand := false
 	if len(oldCommand) != 0 {
-		trueValue := true
-		isAnyCommand = &trueValue
+		isAnyCommand = true
 	}
-	return append(oldCommand, oldArgs...), isAnyCommand
+	return append(oldCommand, oldArgs...), &isAnyCommand
 }
 
 func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submitArgs *submitArgs) (string, bool, error) {

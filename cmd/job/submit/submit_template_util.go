@@ -51,7 +51,8 @@ func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.
 	submitArgs.NamePrefix = mergeStringFlags(submitArgs.NamePrefix, template.JobNamePrefix)
 	submitArgs.PreventPrivilegeEscalation = mergeBoolFlags(submitArgs.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation)
 	submitArgs.RunAsCurrentUser = mergeBoolFlags(submitArgs.RunAsCurrentUser, template.RunAsCurrentUser)
-	submitArgs.SpecCommand, submitArgs.SpecArgs = mergeCommandAndArgs(raUtil.IsBoolPTrue(template.IsCommand), submitArgs.Command, template.ExtraArgs, extraArgs)
+	submitArgs.Command = mergeBoolFlags(submitArgs.Command, template.IsCommand)
+	mergeCommandAndArgs(&submitArgs, template, extraArgs)
 	return submitArgs
 }
 
@@ -144,20 +145,23 @@ func mergeDurationFlags(cliFlag, templateFlag *time.Duration) *time.Duration {
 	return nil
 }
 
-func mergeCommandAndArgs(templateIsCommand bool, cliIsCommandPtr *bool, templateExtraArgs, cliExtraArgs []string) ([]string, []string) {
-	cliIsCommandFlagExists := cliIsCommandPtr != nil
-	if templateIsCommand && cliIsCommandFlagExists && *cliIsCommandPtr {
-		return cliExtraArgs, []string{}
-	} else if templateIsCommand && cliIsCommandFlagExists && !*cliIsCommandPtr {
-		return []string{}, cliExtraArgs
-	} else if templateIsCommand && !cliIsCommandFlagExists {
-		return templateExtraArgs, cliExtraArgs
-	} else if !templateIsCommand && cliIsCommandFlagExists && *cliIsCommandPtr {
-		return cliExtraArgs, []string{}
+func mergeExtraArgs(cliExtraArgs, templateExtraArgs []string) []string {
+	if len(cliExtraArgs) > 0 {
+		return cliExtraArgs
+	} else if len(templateExtraArgs) > 0 {
+		return templateExtraArgs
+	}
+
+	return []string{}
+}
+
+func mergeCommandAndArgs(submitArgs *submitArgs, template *templates.SubmitTemplate, extraArgs []string) {
+	submitArgs.Command = mergeBoolFlags(submitArgs.Command, template.IsCommand)
+	if raUtil.IsBoolPTrue(submitArgs.Command) {
+		submitArgs.SpecCommand = mergeExtraArgs(extraArgs, template.ExtraArgs)
+		submitArgs.SpecArgs = []string{}
 	} else {
-		if len(cliExtraArgs) != 0 {
-			return []string{}, cliExtraArgs
-		}
-		return []string{}, templateExtraArgs
+		submitArgs.SpecCommand = []string{}
+		submitArgs.SpecArgs = mergeExtraArgs(extraArgs, template.ExtraArgs)
 	}
 }

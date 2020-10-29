@@ -55,13 +55,13 @@ func TestGetSpecCommandAndArgsBackwardCompatibility(t *testing.T) {
 	isCommand := false
 	argsLenAtDash := -1
 
-	extraArgs, isCommand := convertOldCommandArgsFlags(argsLenAtDash, positionalArgs, commandArgs, argsArgs, isCommand)
+	extraArgs, isCommandPtr := mergeOldCommandAndArgsWithNew(argsLenAtDash, positionalArgs, commandArgs, argsArgs, &isCommand)
 
 	assert.Equal(t, extraArgs[0], "bash")
 	assert.Equal(t, extraArgs[1], "-c")
 	assert.Equal(t, extraArgs[2], "echo")
 	assert.Equal(t, extraArgs[3], "test")
-	assert.Equal(t, isCommand, true)
+	assert.Equal(t, *isCommandPtr, true)
 }
 
 func TestGetSpecCommandAndArgsBackwardCompatibilityOnlyArgs(t *testing.T) {
@@ -71,11 +71,11 @@ func TestGetSpecCommandAndArgsBackwardCompatibilityOnlyArgs(t *testing.T) {
 	isCommand := false
 	argsLenAtDash := -1
 
-	extraArgs, isCommand := convertOldCommandArgsFlags(argsLenAtDash, positionalArgs, commandArgs, argsArgs, isCommand)
+	extraArgs, isCommandPtr := mergeOldCommandAndArgsWithNew(argsLenAtDash, positionalArgs, commandArgs, argsArgs, &isCommand)
 
 	assert.Equal(t, extraArgs[0], "echo")
 	assert.Equal(t, extraArgs[1], "test")
-	assert.Equal(t, isCommand, false)
+	assert.Equal(t, *isCommandPtr, false)
 }
 
 func TestGetSpecCommandAndArgsNewCommandAsArgs(t *testing.T) {
@@ -85,12 +85,12 @@ func TestGetSpecCommandAndArgsNewCommandAsArgs(t *testing.T) {
 	isCommand := false
 	argsLenAtDash := 0
 
-	extraArgs, command := convertOldCommandArgsFlags(argsLenAtDash, positionalArgs, commandArgs, argsArgs, isCommand)
+	extraArgs, isCommandPtr := mergeOldCommandAndArgsWithNew(argsLenAtDash, positionalArgs, commandArgs, argsArgs, &isCommand)
 
 	assert.Equal(t, len(extraArgs), 2)
 	assert.Equal(t, extraArgs[0], "sleep")
 	assert.Equal(t, extraArgs[1], "60")
-	assert.Equal(t, command, false)
+	assert.Equal(t, *isCommandPtr, false)
 }
 
 func TestGetSpecCommandAndArgsNewCommandAsCommand(t *testing.T) {
@@ -100,12 +100,12 @@ func TestGetSpecCommandAndArgsNewCommandAsCommand(t *testing.T) {
 	isCommand := true
 	argsLenAtDash := 0
 
-	extraArgs, command := convertOldCommandArgsFlags(argsLenAtDash, positionalArgs, commandArgs, argsArgs, isCommand)
+	extraArgs, isCommandPtr := mergeOldCommandAndArgsWithNew(argsLenAtDash, positionalArgs, commandArgs, argsArgs, &isCommand)
 
 	assert.Equal(t, len(extraArgs), 2)
 	assert.Equal(t, extraArgs[0], "sleep")
 	assert.Equal(t, extraArgs[1], "60")
-	assert.Equal(t, command, true)
+	assert.Equal(t, *isCommandPtr, true)
 }
 
 func TestGetSpecCommandAndArgsBothIgnoreOld(t *testing.T) {
@@ -115,12 +115,12 @@ func TestGetSpecCommandAndArgsBothIgnoreOld(t *testing.T) {
 	isCommand := false
 	argsLenAtDash := 0
 
-	extraArgs, command := convertOldCommandArgsFlags(argsLenAtDash, positionalArgs, commandArgs, argsArgs, isCommand)
+	extraArgs, isCommandPtr := mergeOldCommandAndArgsWithNew(argsLenAtDash, positionalArgs, commandArgs, argsArgs, &isCommand)
 
 	assert.Equal(t, len(extraArgs), 2)
 	assert.Equal(t, extraArgs[0], "sleep")
 	assert.Equal(t, extraArgs[1], "60")
-	assert.Equal(t, command, false)
+	assert.Equal(t, *isCommandPtr, false)
 }
 
 func TestGetSpecCommandAndArgsWithMorePositionalArgument(t *testing.T) {
@@ -130,10 +130,10 @@ func TestGetSpecCommandAndArgsWithMorePositionalArgument(t *testing.T) {
 	isCommand := false
 	argsLenAtDash := 1
 
-	extraArgs, command := convertOldCommandArgsFlags(argsLenAtDash, positionalArgs, commandArgs, argsArgs, isCommand)
+	extraArgs, isCommandPtr := mergeOldCommandAndArgsWithNew(argsLenAtDash, positionalArgs, commandArgs, argsArgs, &isCommand)
 
 	assert.Equal(t, len(extraArgs), 2)
 	assert.Equal(t, extraArgs[0], "sleep")
 	assert.Equal(t, extraArgs[1], "60")
-	assert.Equal(t, command, false)
+	assert.Equal(t, *isCommandPtr, false)
 }
