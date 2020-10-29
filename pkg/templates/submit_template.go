@@ -8,7 +8,7 @@ import (
 
 type SubmitTemplate struct {
 	Name string `yaml:"name,omitempty"`
-	EnvVariables []string `yaml:"environment,omitempty"`
+	EnvVariables []string `yaml:"environments,omitempty"`
 	Volumes []string `yaml:"volumes,omitempty"`
 	AlwaysPullImage *bool `yaml:"always-pull-image,omitempty"`
 	Attach *bool `yaml:"attach,omitempty"`
@@ -45,10 +45,8 @@ type SubmitTemplate struct {
 	Processes *int `yaml:"processes,omitempty"`
 }
 
-func GetSubmitTemplateFromYaml(templateYaml string, expandEnvVariables bool) (*SubmitTemplate, error) {
-	if expandEnvVariables {
-		templateYaml = os.ExpandEnv(templateYaml)
-	}
+func GetSubmitTemplateFromYaml(templateYaml string) (*SubmitTemplate, error) {
+	templateYaml = os.ExpandEnv(templateYaml)
 	var template SubmitTemplate
 	err := yaml.Unmarshal([]byte(templateYaml), &template)
 	if err != nil {

@@ -269,7 +269,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return err
 	}
 	submitArgs.generateSuffix = generateSuffix
-	//submitArgs.SpecCommand, submitArgs.SpecArgs = getSpecCommandAndArgs(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, raUtil.IsBoolPTrue(submitArgs.Command))
 
 	var errs = validation.IsDNS1035Label(name)
 	if len(errs) > 0 {
@@ -319,7 +318,8 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	if clusterConfig.EnforcePreventPrivilegeEscalation {
-		*submitArgs.PreventPrivilegeEscalation = true
+		preventPrivilegeEscalation := true
+		submitArgs.PreventPrivilegeEscalation = &preventPrivilegeEscalation
 	}
 
 	err = HandleVolumesAndPvc(submitArgs)
@@ -414,17 +414,34 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	return newIndex, false, nil
 }
 
-func convertOldCommandArgsFlags(argsLenAtDash int, positionalArgs, oldCommand, oldArgs []string, isCommand bool) ([]string, bool) {
+func convertOldCommandArgsFlags(cmd *cobra.Command, submitArgs *submitArgs, args []string) []string {
+	commandArgs, isCommand := mergeOldCommandAndArgsWithNew(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
+	if isCommand != nil && *isCommand {
+		submitArgs.SpecCommand = commandArgs
+		submitArgs.SpecArgs = []string{}
+	} else {
+		submitArgs.SpecCommand = []string{}
+		submitArgs.SpecArgs = commandArgs
+	}
+	submitArgs.Command = isCommand
+	return commandArgs
+}
+
+func mergeOldCommandAndArgsWithNew(argsLenAtDash int, positionalArgs, oldCommand, oldArgs []string, isCommand *bool) ([]string, *bool) {
 	if argsLenAtDash == -1 {
 		argsLenAtDash = len(positionalArgs)
 	}
 
 	argsAfterDash := positionalArgs[argsLenAtDash:]
 	if len(argsAfterDash) != 0 {
-		return argsAfterDash,isCommand
+		return argsAfterDash, isCommand
 	}
 
-	isAnyCommand := len(oldCommand) != 0
+	var isAnyCommand *bool
+	if len(oldCommand) != 0 {
+		trueValue := true
+		isAnyCommand = &trueValue
+	}
 	return append(oldCommand, oldArgs...), isAnyCommand
 }
 

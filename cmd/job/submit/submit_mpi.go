@@ -74,8 +74,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 			clientset := kubeClient.GetClientset()
 
-			commandArgs, isCommand := convertOldCommandArgsFlags(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, raUtil.IsBoolPTrue(submitArgs.Command))
-			submitArgs.Command = &isCommand
+			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 
 			err = applyMpiTemplate(clientset, &submitArgs, commandArgs)
 			if err != nil {

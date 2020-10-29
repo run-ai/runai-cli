@@ -8,7 +8,7 @@ import (
 )
 
 func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs, extraArgs []string) error {
-	template, err := templates.GetSubmitTemplateFromYaml(templateYaml, true)
+	template, err := templates.GetSubmitTemplateFromYaml(templateYaml)
 	if err != nil {
 		return err
 	}
@@ -18,7 +18,7 @@ func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs
 }
 
 func applyTemplateToSubmitMpijob(templateYaml string, args *submitMPIJobArgs, extraArgs []string) error {
-	template, err := templates.GetSubmitTemplateFromYaml(templateYaml, true)
+	template, err := templates.GetSubmitTemplateFromYaml(templateYaml)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func applyTemplateToSubmitMpijob(templateYaml string, args *submitMPIJobArgs, ex
 	return nil
 }
 
-func mergeTemplateToSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, extraArgs []string) submitArgs {
+func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, extraArgs []string) submitArgs {
 	submitArgs.NameParameter = mergeStringFlags(submitArgs.NameParameter, template.Name)
 	submitArgs.EnvironmentVariable = mergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
 	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
@@ -51,12 +51,12 @@ func mergeTemplateToSubmitArgs(submitArgs submitArgs, template *templates.Submit
 	submitArgs.NamePrefix = mergeStringFlags(submitArgs.NamePrefix, template.JobNamePrefix)
 	submitArgs.PreventPrivilegeEscalation = mergeBoolFlags(submitArgs.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation)
 	submitArgs.RunAsCurrentUser = mergeBoolFlags(submitArgs.RunAsCurrentUser, template.RunAsCurrentUser)
-	submitArgs.SpecCommand, submitArgs.SpecArgs = mergeCommandAndArgs(raUtil.IsBoolPTrue(template.IsCommand), raUtil.IsBoolPTrue(submitArgs.Command), template.ExtraArgs, extraArgs)
+	submitArgs.SpecCommand, submitArgs.SpecArgs = mergeCommandAndArgs(raUtil.IsBoolPTrue(template.IsCommand), submitArgs.Command, template.ExtraArgs, extraArgs)
 	return submitArgs
 }
 
 func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitRunaiJobArgs {
-	submitArgs.submitArgs = mergeTemplateToSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
 	submitArgs.BackoffLimit = mergeIntFlags(submitArgs.BackoffLimit, template.BackoffLimit)
 	submitArgs.Elastic = mergeBoolFlags(submitArgs.Elastic, template.Elastic)
 	submitArgs.Parallelism = mergeIntFlags(submitArgs.Parallelism, template.Parallelism)
@@ -68,7 +68,7 @@ func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *tem
 }
 
 func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitMPIJobArgs {
-	submitArgs.submitArgs = mergeTemplateToSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
 	submitArgs.Processes = mergeIntFlags(submitArgs.Processes, template.Processes)
 	return submitArgs
 }
@@ -144,12 +144,15 @@ func mergeDurationFlags(cliFlag, templateFlag *time.Duration) *time.Duration {
 	return nil
 }
 
-func mergeCommandAndArgs(templateIsCommand, cliIsCommand bool, templateExtraArgs, cliExtraArgs []string) ([]string, []string) {
-	if templateIsCommand && !cliIsCommand {
-		return templateExtraArgs, cliExtraArgs
-	} else if templateIsCommand && cliIsCommand {
+func mergeCommandAndArgs(templateIsCommand bool, cliIsCommandPtr *bool, templateExtraArgs, cliExtraArgs []string) ([]string, []string) {
+	cliIsCommandFlagExists := cliIsCommandPtr != nil
+	if templateIsCommand && cliIsCommandFlagExists && *cliIsCommandPtr {
 		return cliExtraArgs, []string{}
-	} else if !templateIsCommand && cliIsCommand {
+	} else if templateIsCommand && cliIsCommandFlagExists && !*cliIsCommandPtr {
+		return []string{}, cliExtraArgs
+	} else if templateIsCommand && !cliIsCommandFlagExists {
+		return templateExtraArgs, cliExtraArgs
+	} else if !templateIsCommand && cliIsCommandFlagExists && *cliIsCommandPtr {
 		return cliExtraArgs, []string{}
 	} else {
 		if len(cliExtraArgs) != 0 {

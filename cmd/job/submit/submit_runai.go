@@ -78,8 +78,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			clientset := kubeClient.GetClientset()
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
-			commandArgs, isCommand := convertOldCommandArgsFlags(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, raUtil.IsBoolPTrue(submitArgs.Command))
-			submitArgs.Command = &isCommand
+			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 
 			err = applyTemplate(clientset, submitArgs, commandArgs)
 			if err != nil {
@@ -103,7 +102,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
-			err = submitRunaiJob(args, submitArgs, clientset, *runaijobClient)
+			err = submitRunaiJob(submitArgs, clientset, *runaijobClient)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -299,7 +298,7 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset) error {
+func submitRunaiJob(submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset) error {
 	err := verifyHPOFlags(submitArgs)
 	if err != nil {
 		return err
