@@ -169,7 +169,13 @@ func renderPairChildren(w io.Writer, t reflect.Value, pair PairMeta, root interf
 		fieldTypeP := getNesstedVal(t, append(c.Path, c.Key))
 		indentationStr := multiStr(IndentationPrefix, indentation)
 
+		// do nothing if it is a group but have no children
+		if c.isGroup && len(c.children) == 0 {
+			continue
+		}
+
 		if c.isGroup && fieldTypeP != nil {
+			
 			// print the group title
 			groupTitleOutput := indentationStr + GroupPrefix + c.Title + KeySuffix
 			fmt.Fprint(w, groupTitleOutput+"\n")

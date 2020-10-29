@@ -19,7 +19,10 @@ var (
 		"GPUs.Allocatable",
 		"GPUs.InUse",
 		"GPUMem.Allocatable",
-		"GPUMem.Requested",
+	})
+
+	unhealthyGpusPath = ui.EnsureStringPaths(types.NodeView{}, []string{
+		"GPUs.Unhealthy",
 	})
 )
 
