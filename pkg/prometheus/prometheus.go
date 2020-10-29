@@ -12,6 +12,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	SuccessStatus MetricStatusResult = "success"
+	prometheusSchema = "http"
+	// todo: the namespace can be different from runai
+	namespace = "runai"
+	promLabel = "prometheus-operator-prometheus"
+)
 
 type (
 	MetricStatusResult string
@@ -35,6 +42,12 @@ type (
 		Value  []MetricValue 		`json:"value"`
 	}
 
+	queryResult struct {
+		name string
+		metric MetricData
+		err error
+	}
+
 	MetricValue interface{}
 
 	Client struct{
@@ -43,25 +56,7 @@ type (
 	}
 )
 
-const (
-
-	SuccessStatus MetricStatusResult = "success"
-	ErrorStatus MetricStatusResult = "error"
-
-	MatrixResult MetricType = "matrix" 
-	VectorResult MetricType = "vector" 
-	ScalarResult MetricType = "scalar" 
-	StringResult MetricType = "string"
-
-	prometheusSchema = "http"
-	// todo: the namespace can be different from runai
-	namespace = "runai"
-	promLabel = "prometheus-operator-prometheus"
-
-)
-
 func BuildPrometheusClient(c kubernetes.Interface) (*Client, error) {
-
 	ps := &Client {
 		client: c,
 	}
@@ -88,11 +83,10 @@ func (ps *Client) GetPrometheusService() (service *v1.Service, err error) {
 		return
 	} 
 	
-	return nil, fmt.Errorf("No available services of promethues")
-
+	return nil, fmt.Errorf("no available services of promethues")
 }
 
-func (ps *Client)  Query( query string) (data MetricData,  err error) {
+func (ps *Client) Query( query string) (data MetricData,  err error) {
 	var rst *Metric
 
 	req := ps.client.CoreV1().Services(ps.service.Namespace).ProxyGet(prometheusSchema, ps.service.Name , "9090", "api/v1/query", map[string]string{
@@ -124,12 +118,6 @@ func (ps *Client)  Query( query string) (data MetricData,  err error) {
 	data = rst.Data
 	return
  }
-
-type queryResult struct {
-	name string
-	metric MetricData
-	err error
-}
 
  // GroupMultiQueriesToItems map multipule queries to items by given itemId
 func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) ( MetricResultsByItems, error) {
@@ -170,4 +158,3 @@ func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) ( 
 	}
 	return results, nil
 }
-
