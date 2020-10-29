@@ -36,7 +36,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const creationJobTime = 10
+const jobInvalidStateOnCreationTimeInSeconds = 10
 
 func NewListCommand() *cobra.Command {
 	var allNamespaces bool
@@ -109,7 +109,7 @@ func NewListCommand() *cobra.Command {
 }
 
 func isJobCreationTimePass(configMap *v1.ConfigMap) bool {
-	return time.Now().Sub(configMap.CreationTimestamp.Time).Seconds() > creationJobTime
+	return time.Now().Sub(configMap.CreationTimestamp.Time).Seconds() > jobInvalidStateOnCreationTimeInSeconds
 }
 
 func displayTrainingJobList(jobInfoList []trainer.TrainingJob, invalidJobs []string) {
