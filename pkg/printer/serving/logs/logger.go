@@ -13,7 +13,7 @@ type ServingPodLogPrinter struct {
 }
 
 func NewServingPodLogPrinter(job servejob.Serving, logArgs *podlogs.OuterRequestArgs) (*ServingPodLogPrinter, error) {
-	names := []string{}
+	var names []string
 	for _, pod := range job.AllPods() {
 		names = append(names, path.Base(pod.ObjectMeta.SelfLink))
 	}

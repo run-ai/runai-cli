@@ -71,10 +71,10 @@ func BuildGPUShareNodeInfo(allPods []v1.Pod, node v1.Node) (*GPUShareNodeInfo, e
 //Create  ShareNodeInfos for all gpushare nodes
 func buildGPUShareNodeInfosWithPods(pods []v1.Pod, nodes []v1.Node) []*GPUShareNodeInfo {
 	nodeMap := map[string]*GPUShareNodeInfo{}
-	nodeList := []*GPUShareNodeInfo{}
+	var nodeList []*GPUShareNodeInfo
 
 	for _, node := range nodes {
-		var info *GPUShareNodeInfo = &GPUShareNodeInfo{}
+		var info = &GPUShareNodeInfo{}
 		if value, ok := nodeMap[node.Name]; ok {
 			info = value
 		} else {
@@ -112,8 +112,7 @@ func buildGPUShareNodeInfosWithPods(pods []v1.Pod, nodes []v1.Node) []*GPUShareN
 
 //Create  ShareNodeInfo for one node
 func buildGPUShareNodeInfoWithPods(pods []v1.Pod, node v1.Node) *GPUShareNodeInfo {
-
-	var info *GPUShareNodeInfo = &GPUShareNodeInfo{}
+	var info = &GPUShareNodeInfo{}
 	info.node = node
 	info.pods = []v1.Pod{}
 	info.GpuCount = getGPUCountInNode(node)

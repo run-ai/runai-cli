@@ -14,11 +14,10 @@ const (
 	ResourceTypeJob         = ResourceType("Job")
 	ResourceTypeStatefulSet = ResourceType("StatefulSet")
 	ResourceTypeReplicaset  = ResourceType("ReplicaSet")
-	ResourceTypeRunaiJob    = ResourceType("RunaiJob")
 )
 
 func PodResources(pods []v1.Pod) []Resource {
-	resources := []Resource{}
+	var resources []Resource
 	for _, pod := range pods {
 		resources = append(resources, Resource{
 			Name:         pod.Name,

@@ -1,7 +1,5 @@
 package types
 
-
-
 type NodeStatus string
 
 const (
@@ -13,7 +11,6 @@ type NodeCPUResource struct {
 	Capacity    int     `title:"CAPACITY"`
 	Allocatable float64 `title:"ALLOCATABLE"`
 	Requested   float64 `title:"REQUESTED"`
-	// Limit float64				`title:"Limit"`
 	Usage float64 `title:"USAGE" format:"%"`
 }
 
@@ -30,7 +27,6 @@ type NodeMemoryResource struct {
 	Capacity    float64 `title:"CAPACITY" format:"memory"`
 	Allocatable float64 `title:"ALLOCATABLE" format:"memory"`
 	Requested   float64 `title:"REQUESTED" format:"memory"`
-	// Limit float64				`title:"Limit"`
 	Usage float64 `title:"USAGE" format:"memory"`
 }
 

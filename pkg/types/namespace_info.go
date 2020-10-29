@@ -1,9 +1,9 @@
 package types
 
-const ALL_PROJECTS = "all"
+const AllProjects = "all"
 
 type NamespaceInfo struct {
 	Namespace             string
 	ProjectName           string
-	BackwardCompatability bool
+	BackwardCompatibility bool
 }
