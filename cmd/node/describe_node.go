@@ -23,12 +23,12 @@ const (
 )
 
 var (
-	describeNodeHiddenFields = []string{
+	describeNodeHiddenFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"CPUs.Util",
 		"GPUs.Util",
 		"Mem.Usage",
 		"GPUMem.Usage",
-	}
+	})
 )
 
 func NewDescribeNodeCommand() *cobra.Command {

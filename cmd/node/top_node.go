@@ -31,7 +31,7 @@ import (
 var (
 	showDetails bool
 
-	topNodeFields = []string{
+	topNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Info.Name",
 		"Info.Status",
 		"GPUs.Capacity",
@@ -40,7 +40,7 @@ var (
 		"CPUs.Util",
 		"Mem.Capacity",
 		"Mem.Usage",
-	}
+	})
 )
 
 func NewTopNodeCommand() *cobra.Command {
