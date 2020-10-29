@@ -46,6 +46,10 @@ var (
 		"GPUMem.Capacity",
 		"GPUMem.Usage",
 	})
+
+	topNodeHiddenGpuUnitFields = ui.EnsureStringPaths(types.GPU{}, []string{
+		"Allocated",
+	})
 )
 
 func NewTopNodeCommand() *cobra.Command {
@@ -140,7 +144,7 @@ func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [
 
 			err = ui.CreateTable(types.GPU{}, ui.TableOpt{
 				DisplayOpt: ui.DisplayOpt{
-					Hide: []string{"Allocated"},
+					Hide: topNodeHiddenGpuUnitFields,
 				},
 			}).
 				Render(w, nodeGpuUnits).
