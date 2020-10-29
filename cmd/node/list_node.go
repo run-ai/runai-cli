@@ -26,12 +26,12 @@ runai list node NODE_NAME_1 NODE_NAME_2
 var (
 	showListNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Info",
+		"CPUs.Allocatable",
 		"CPUs.Allocated",
-		"GPUs.Free",
-		"Mem.Capacity",
+		"Mem.Allocatable",
 		"Mem.Allocated",
-		"GPUs.Capacity",
-		"GPUs.Allocated",
+		"GPUs.Allocatable",
+		"GPUs.Free",
 	})
 )
 

@@ -27,7 +27,11 @@ var (
 		"CPUs.Util",
 		"GPUs.Util",
 		"Mem.Usage",
-		"GPUMem.Usage",
+		"GPUMem",
+	})
+
+	describeNodeShowGpuUnitFields = ui.EnsureStringPaths(types.GPU{}, []string{
+		"IndexID", "Allocated",
 	})
 )
 
@@ -48,7 +52,6 @@ func NewDescribeNodeCommand() *cobra.Command {
 			}
 
 			handleDescribeSpecificNodes(nodeInfos, args...)
-
 		},
 	}
 
@@ -99,7 +102,7 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 
 		err = ui.CreateTable(types.GPU{}, ui.TableOpt{
 			DisplayOpt: ui.DisplayOpt{
-				Hide: []string{"MemoryUsage", "IdleTime"},
+				Show: describeNodeShowGpuUnitFields,
 			},
 		}).
 			Render(w, nodeResources.GpuUnits).
