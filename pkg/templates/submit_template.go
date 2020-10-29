@@ -3,46 +3,55 @@ package templates
 import (
 	yaml "gopkg.in/yaml.v2"
 	"os"
-	"time"
 )
 
+type TemplateField struct {
+	Required *bool `yaml:"required,omitempty"`
+	Value string `yaml:"value,omitempty"`
+}
+
+type TemplateListField struct {
+	Required *bool `yaml:"required,omitempty"`
+	Value []string `yaml:"value,omitempty"`
+}
+
 type SubmitTemplate struct {
-	Name string `yaml:"name,omitempty"`
+	Name *TemplateField `yaml:"name,omitempty"`
 	EnvVariables []string `yaml:"environments,omitempty"`
 	Volumes []string `yaml:"volumes,omitempty"`
-	AlwaysPullImage *bool `yaml:"always-pull-image,omitempty"`
-	Attach *bool `yaml:"attach,omitempty"`
-	Cpu string `yaml:"cpu,omitempty"`
-	CpuLimit string `yaml:"cpu-limit,omitempty"`
-	CreateHomeDir *bool `yaml:"create-home-dir,omitempty"`
-	Gpu *float64 `yaml:"gpu,omitempty"`
-	HostIpc *bool `yaml:"host-ipc,omitempty"`
-	HostNetwork *bool `yaml:"host-network,omitempty"`
-	Image string `yaml:"image,omitempty"`
-	Interactive *bool `yaml:"interactive,omitempty"`
-	LargeShm *bool `yaml:"large-shm,omitempty"`
-	LocalImage *bool `yaml:"local-image,omitempty"`
-	Memory string `yaml:"memory,omitempty"`
-	MemoryLimit string `yaml:"memory-limit,omitempty"`
-	NodeType string `yaml:"node-type,omitempty"`
+	AlwaysPullImage *TemplateField `yaml:"always-pull-image,omitempty"`
+	Attach *TemplateField `yaml:"attach,omitempty"`
+	Cpu *TemplateField `yaml:"cpu,omitempty"`
+	CpuLimit *TemplateField `yaml:"cpu-limit,omitempty"`
+	CreateHomeDir *TemplateField `yaml:"create-home-dir,omitempty"`
+	Gpu *TemplateField `yaml:"gpu,omitempty"`
+	HostIpc *TemplateField `yaml:"host-ipc,omitempty"`
+	HostNetwork *TemplateField `yaml:"host-network,omitempty"`
+	Image *TemplateField `yaml:"image,omitempty"`
+	Interactive *TemplateField `yaml:"interactive,omitempty"`
+	LargeShm *TemplateField `yaml:"large-shm,omitempty"`
+	LocalImage *TemplateField `yaml:"local-image,omitempty"`
+	Memory *TemplateField `yaml:"memory,omitempty"`
+	MemoryLimit *TemplateField `yaml:"memory-limit,omitempty"`
+	NodeType *TemplateField `yaml:"node-type,omitempty"`
 	Ports []string `yaml:"ports,omitempty"`
 	PersistentVolumes []string `yaml:"pvcs,omitempty"`
-	WorkingDir string `yaml:"working-dir,omitempty"`
-	JobNamePrefix string `yaml:"job-name-prefix,omitempty"`
-	PreventPrivilegeEscalation *bool `yaml:"prevent-privilege-escalation,omitempty"`
-	RunAsCurrentUser *bool `yaml:"run-as-user,omitempty"`
+	WorkingDir *TemplateField `yaml:"working-dir,omitempty"`
+	JobNamePrefix *TemplateField `yaml:"job-name-prefix,omitempty"`
+	PreventPrivilegeEscalation *TemplateField `yaml:"prevent-privilege-escalation,omitempty"`
+	RunAsCurrentUser *TemplateField `yaml:"run-as-user,omitempty"`
 	ExtraArgs []string `yaml:"extra-args,omitempty"`
-	IsCommand *bool `yaml:"command,omitempty"`
+	IsCommand *TemplateField `yaml:"command,omitempty"`
 
-	BackoffLimit *int `yaml:"backofflimit,omitempty"`
-	Elastic *bool `yaml:"elastic,omitempty"`
-	Parallelism *int `yaml:"parallelism,omitempty"`
-	IsPreemptible *bool `yaml:"preemptible,omitempty"`
-	ServiceType string `yaml:"service-type,omitempty"`
-	IsJupyter *bool `yaml:"jupyter,omitempty"`
-	TtlAfterFinished *time.Duration `yaml:"ttl-after-finish,omitempty"`
+	BackoffLimit *TemplateField `yaml:"backofflimit,omitempty"`
+	Elastic *TemplateField `yaml:"elastic,omitempty"`
+	Parallelism *TemplateField `yaml:"parallelism,omitempty"`
+	IsPreemptible *TemplateField `yaml:"preemptible,omitempty"`
+	ServiceType *TemplateField `yaml:"service-type,omitempty"`
+	IsJupyter *TemplateField `yaml:"jupyter,omitempty"`
+	TtlAfterFinished *TemplateField `yaml:"ttl-after-finish,omitempty"`
 
-	Processes *int `yaml:"processes,omitempty"`
+	Processes *TemplateField `yaml:"processes,omitempty"`
 }
 
 func GetSubmitTemplateFromYaml(templateYaml string) (*SubmitTemplate, error) {
