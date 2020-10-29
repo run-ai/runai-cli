@@ -24,15 +24,15 @@ runai list node NODE_NAME_1 NODE_NAME_2
 )
 
 var (
-	showListNodeFields = []string{
+	showListNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Info",
-		"CPUs.Capacity",
 		"CPUs.Allocated",
+		"GPUs.Free",
 		"Mem.Capacity",
 		"Mem.Allocated",
 		"GPUs.Capacity",
 		"GPUs.Allocated",
-	}
+	})
 )
 
 func NewListNodeCommand() *cobra.Command {

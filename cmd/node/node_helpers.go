@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/run-ai/runai-cli/pkg/ui"
+	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
 	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
@@ -12,14 +13,14 @@ import (
 )
 
 var (
-	defaultHiddenFields = []string{
+	defaultHiddenFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Mem.Allocatable",
 		"CPUs.Allocatable",
 		"GPUs.Allocatable",
 		"GPUs.InUse",
 		"GPUMem.Allocatable",
 		"GPUMem.Requested",
-	}
+	})
 )
 
 func getNodeInfos() (*[]nodeService.NodeInfo, error) {
