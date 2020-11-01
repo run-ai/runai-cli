@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"text/tabwriter"
 
@@ -65,12 +66,17 @@ func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNode
 }
 
 func describeNodes(nodeInfos *[]nodeService.NodeInfo) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	
 	for _, nodeInfo := range *nodeInfos {
-		describeNode(&nodeInfo)
+		describeNode(w, &nodeInfo)
 	}
+
+	ui.End(w)
+	_ = w.Flush()
 }
 
-func describeNode(nodeInfo *nodeService.NodeInfo) {
+func describeNode(w io.Writer, nodeInfo *nodeService.NodeInfo) {
 
 	nodeResources := nodeInfo.GetResourcesStatus()
 	nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeResources)
@@ -83,10 +89,8 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 		GPUMem: nodeResourcesConvertor.ToGpuMemory(),
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	ui.Title(w, nodeView.Info.Name)
 
-	ui.SubTitle(w, "NODE SUMMERY INFO")
+	ui.LineDivider(w)
 
 	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
 		DisplayOpt: ui.DisplayOpt{Hide: append(defaultHiddenFields, describeNodeHiddenFields...)},
@@ -126,8 +130,6 @@ func describeNode(nodeInfo *nodeService.NodeInfo) {
 	// 	fmt.Fprintf(w, "\n")
 	// }
 
-	ui.End(w)
 
-	_ = w.Flush()
 
 }
