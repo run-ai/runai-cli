@@ -152,6 +152,10 @@ func (s submitArgs) check() error {
 		return fmt.Errorf("--name must be set")
 	}
 
+	if len(s.Image) == 0 {	
+		return fmt.Errorf("-i, --image must be set")
+	}
+
 	// return fmt.Errorf("must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character.")
 	err := util.ValidateJobName(s.Name)
 	if err != nil {

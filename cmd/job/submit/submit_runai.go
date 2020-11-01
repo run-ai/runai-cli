@@ -67,9 +67,9 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if len(submitArgs.Image) == 0 {
+			if err = submitArgs.check(); err != nil {
 				cmd.HelpFunc()(cmd, args)
-				fmt.Print("\n-i, --image must be set\n\n")
+				fmt.Println("\n", err, "\n ")
 				os.Exit(1)
 			}
 
@@ -288,6 +288,15 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kub
 	if !dryRun {
 		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 		fmt.Printf("You can run `%s get %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
+	}
+
+	return nil
+}
+
+func (submitRunaiArgs *submitRunaiJobArgs) check() error {
+	err := submitRunaiArgs.submitArgs.check()
+	if err != nil {
+		return err
 	}
 
 	return nil

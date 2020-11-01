@@ -62,6 +62,12 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if err = submitArgs.check(); err != nil {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Println("\n", err, "\n ")
+				os.Exit(1)
+			}
+
 			chartPath, err := util.GetChartsFolder()
 			if err != nil {
 				fmt.Println(err)
@@ -105,10 +111,6 @@ type submitMPIJobArgs struct {
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
-	err = submitArgs.check()
-	if err != nil {
-		return err
-	}
 	submitArgs.TotalGPUs = submitArgs.NumberProcesses * int(*submitArgs.GPU)
 	return nil
 }
@@ -117,10 +119,6 @@ func (submitArgs submitMPIJobArgs) check() error {
 	err := submitArgs.submitArgs.check()
 	if err != nil {
 		return err
-	}
-
-	if submitArgs.Image == "" {
-		return fmt.Errorf("--image must be set")
 	}
 
 	return nil
