@@ -14,11 +14,7 @@ import (
 
 var (
 	defaultHiddenFields = ui.EnsureStringPaths(types.NodeView{}, []string{
-		"Mem.Allocatable",
-		"CPUs.Allocatable",
-		"GPUs.Allocatable",
 		"GPUs.InUse",
-		"GPUMem.Allocatable",
 	})
 
 	unhealthyGpusPath = ui.EnsureStringPaths(types.NodeView{}, []string{

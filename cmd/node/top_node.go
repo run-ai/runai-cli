@@ -30,10 +30,10 @@ import (
 
 var (
 	showDetails bool
+	
 
 	topNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Info.Name",
-		"Info.Status",
 		"GPUs.Capacity",
 		"GPUs.Util",
 		"CPUs.Capacity",
@@ -117,8 +117,6 @@ func displayTopNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, showClusterDa
 		displayTopNodeTable(w, nodeViews, clsData.UnhealthyGPUs == 0)
 	}
 
-	ui.End(w)
-
 	_ = w.Flush()
 }
 
@@ -127,8 +125,7 @@ func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [
 	showFields := append(topNodeFields, detailedTopNodeExtraFields...)
 	
 	for i, nodeView := range nodeViews {
-		ui.Title(w, nodeView.Info.Name)
-		ui.SubTitle(w, "NODE SUMMERY INFO")
+		ui.LineDivider(w)
 
 		err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
 			DisplayOpt: ui.DisplayOpt{HideAllByDefault: true, Show: showFields},
@@ -153,10 +150,8 @@ func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [
 				fmt.Print(err)
 			}
 		}
-
-		ui.End(w)
-
 	}
+	ui.End(w)
 }
 
 func displayTopNodeTable(w io.Writer, rows []types.NodeView, showUnhealthyGpus bool ) {

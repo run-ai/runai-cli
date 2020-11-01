@@ -11,6 +11,10 @@ func Title(w io.Writer, title string) {
 	fmt.Fprintf(w, "\n\n──────◆  %s  ◆──────\n\n", title)
 }
 
+func LineDivider(w io.Writer) {
+	fmt.Fprintf(w, "\n\n────────────────────────\n\n")
+}
+
 func SubTitle(w io.Writer, title string) {
 	fmt.Fprintf(w, "\n%s: \n\n", title)
 }

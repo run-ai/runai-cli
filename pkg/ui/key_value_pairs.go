@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	GroupPrefix = "▿ "
-	FieldPrefix = "  "
+	GroupPrefix = ""
+	FieldPrefix = ""
 	KeySuffix = ":"
 	valuePrefix = ""
 	IndentationPrefix = "  "

@@ -36,7 +36,7 @@ func TestKeyValuePairs(t *testing.T) {
 		got := b.String()
 
 		// for test debugging
-		// record_at_file(expectedPath, got)
+		record_at_file(expectedPath, got)
 
 		if got != expected {
 			t.Errorf("Strings dont match expected:\n\n%s\nresult: \n\n%s", expected, got)
