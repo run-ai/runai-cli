@@ -2,6 +2,7 @@ package submit
 
 import (
 	"fmt"
+	log "github.com/golang/glog"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/templates"
 	"strconv"
@@ -9,12 +10,14 @@ import (
 	"time"
 )
 
+func recoverFromMissingFlag(err *error) {
+	if r := recover(); r != nil {
+		*err = fmt.Errorf(r.(string))
+	}
+}
+
 func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs, extraArgs []string) (err error) {
-	defer (func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf(r.(string))
-		}
-	})()
+	defer recoverFromMissingFlag(&err)
 
 	template, err := templates.GetSubmitTemplateFromYaml(templateYaml)
 	if err != nil {
@@ -185,84 +188,72 @@ func mergeCommandAndArgs(submitArgs *submitArgs, template *templates.SubmitTempl
 func applyTemplateFieldForFloat64(cliFlag *float64, templateField *templates.TemplateField, fieldName string) *float64 {
 	var value *float64
 	required := false
+	var templateFlag *float64
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := strconv.ParseFloat(templateField.Value, 64)
-		if err != nil && templateField.Value != "" {
-			value = mergeFloat64Flags(cliFlag, &templateFieldValue)
-		} else {
-			value = mergeFloat64Flags(cliFlag, nil)
+		if err == nil && templateField.Value != "" {
+			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+			templateFlag = &templateFieldValue
 		}
-	} else {
-		value = mergeFloat64Flags(cliFlag, nil)
 	}
 
-	if value == nil && required {
-		panic(fmt.Sprintf("Field %s is required", fieldName))
-	}
+	value = mergeFloat64Flags(cliFlag, templateFlag)
+	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
 	return value
 }
 
 func applyTemplateFieldForInt(cliFlag *int, templateField *templates.TemplateField, fieldName string) *int {
 	var value *int
 	required := false
+	var templateFlag *int
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := strconv.Atoi(templateField.Value)
-		if err != nil && templateField.Value != "" {
-			value = mergeIntFlags(cliFlag, &templateFieldValue)
-		} else {
-			value = mergeIntFlags(cliFlag, nil)
+		if err == nil && templateField.Value != "" {
+			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+			templateFlag = &templateFieldValue
 		}
-	} else {
-		value = mergeIntFlags(cliFlag, nil)
 	}
 
-	if value == nil && required {
-		panic(fmt.Sprintf("Field %s is required", fieldName))
-	}
+	value = mergeIntFlags(cliFlag, templateFlag)
+	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
 	return value
 }
 
 func applyTemplateFieldForBool(cliFlag *bool, templateField *templates.TemplateField, fieldName string) *bool {
 	var value *bool
 	required := false
+	var templateFlag *bool
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := strconv.ParseBool(templateField.Value)
-		if err != nil && templateField.Value != "" {
-			value = mergeBoolFlags(cliFlag, &templateFieldValue)
-		} else {
-			value = mergeBoolFlags(cliFlag, nil)
+		if err == nil && templateField.Value != "" {
+			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+			templateFlag = &templateFieldValue
 		}
-	} else {
-		value = mergeBoolFlags(cliFlag, nil)
 	}
 
-	if value == nil && required {
-		panic(fmt.Sprintf("Field %s is required", fieldName))
-	}
+	value = mergeBoolFlags(cliFlag, templateFlag)
+	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
 	return value
 }
 
 func applyTemplateFieldForDuration(cliFlag *time.Duration, templateField *templates.TemplateField, fieldName string) *time.Duration {
 	var value *time.Duration
 	required := false
+	var templateFlag *time.Duration
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := time.ParseDuration(templateField.Value)
-		if err != nil && templateField.Value != "" {
-			value = mergeDurationFlags(cliFlag, &templateFieldValue)
-		} else {
-			value = mergeDurationFlags(cliFlag, nil)
+		if err == nil && templateField.Value != "" {
+			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+			templateFlag = &templateFieldValue
 		}
-	} else {
-		value = mergeDurationFlags(cliFlag, nil)
 	}
 
-	if value == nil && required {
-		panic(fmt.Sprintf("Field %s is required", fieldName))
-	}
+	value = mergeDurationFlags(cliFlag, templateFlag)
+	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
 	return value
 }
 
@@ -280,4 +271,10 @@ func applyTemplateFieldForString(cliFlag string, templateField *templates.Templa
 		panic(fmt.Sprintf("Field %s is required", fieldName))
 	}
 	return value
+}
+
+func validateValueIsNotRequiredAndNil(valueIsNil, required bool, fieldName string) {
+	if valueIsNil && required {
+		panic(fmt.Sprintf("Field %s is required", fieldName))
+	}
 }
