@@ -40,7 +40,7 @@ type SimplePod struct {
 
 // create the printer
 func NewServingJobPrinter(job servejob.Serving) ServingJobPrinter {
-	simplePodList := []SimplePod{}
+	var simplePodList []SimplePod
 	for ind, pod := range job.AllPods() {
 		hostIP := pod.Status.HostIP
 		if hostIP == "" {

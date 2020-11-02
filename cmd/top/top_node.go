@@ -93,7 +93,7 @@ func NewTopNodeCommand() *cobra.Command {
 	return command
 }
 
-func displayTopNode(nodes []nodeService.NodeInfo) {
+func displayTopNode(nodes []nodeService.Info) {
 	if showDetails {
 		displayTopNodeDetails(nodes)
 	} else {
@@ -101,7 +101,7 @@ func displayTopNode(nodes []nodeService.NodeInfo) {
 	}
 }
 
-func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
+func displayTopNodeSummary(nodeInfos []nodeService.Info) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
@@ -164,7 +164,7 @@ func displayTopNodeSummary(nodeInfos []nodeService.NodeInfo) {
 	_ = w.Flush()
 }
 
-func displayTopNodeDetails(nodeInfos []nodeService.NodeInfo) {
+func displayTopNodeDetails(nodeInfos []nodeService.Info) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	fmt.Fprintf(w, "\n")

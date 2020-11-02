@@ -34,7 +34,7 @@ func GetJobDoesNotExistsInNamespaceError(jobName string, namespaceInfo types.Nam
 }
 
 func PrintShowingJobsInNamespaceMessage(namespaceInfo types.NamespaceInfo) {
-	if namespaceInfo.ProjectName != types.ALL_PROJECTS {
+	if namespaceInfo.ProjectName != types.AllProjects {
 		if namespaceInfo.ProjectName != "" {
 			fmt.Printf("Showing jobs for project %s\n", namespaceInfo.ProjectName)
 		} else {
