@@ -67,12 +67,6 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if len(submitArgs.Image) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				fmt.Print("\n-i, --image must be set\n\n")
-				os.Exit(1)
-			}
-
 			runaiChart = path.Join(chartsFolder, "runai")
 
 			kubeClient, err := client.GetClient()
@@ -89,6 +83,12 @@ func NewRunaiJobCommand() *cobra.Command {
 			err = applyTemplate(clientset, submitArgs, commandArgs)
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			if len(submitArgs.Image) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Print("\n-i, --image must be set\n\n")
 				os.Exit(1)
 			}
 
