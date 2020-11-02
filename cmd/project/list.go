@@ -99,7 +99,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		if project, found := projects[queue.Metadata.Name]; found {
-			project.deservedGPUs = fmt.Sprintf("%.1f", queue.Spec.DeservedGpus)
+			project.deservedGPUs = fmt.Sprintf("%.2f", queue.Spec.DeservedGpus)
 			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
 			project.nodeAffinityInteractive = strings.Join(queue.Spec.NodeAffinityInteractiveTypes, ",")
 			project.nodeAffinityTraining = strings.Join(queue.Spec.NodeAffinityTrainTypes, ",")
