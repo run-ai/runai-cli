@@ -29,11 +29,7 @@ func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs
 }
 
 func applyTemplateToSubmitMpijob(templateYaml string, args *submitMPIJobArgs, extraArgs []string) (err error) {
-	defer (func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf(r.(string))
-		}
-	})()
+	defer recoverFromMissingFlag(&err)
 
 	template, err := templates.GetSubmitTemplateFromYaml(templateYaml)
 	if err != nil {
