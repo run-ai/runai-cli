@@ -80,7 +80,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 
-			err = applyTemplate(clientset, submitArgs, commandArgs)
+			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -180,25 +180,30 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
-func applyTemplate(clientset kubernetes.Interface, submitArgs *submitRunaiJobArgs, extraArgs []string) error {
-	var err error
-	configs := templates.NewTemplates(clientset)
-	var templateToUse *templates.Template
-	if templateName == "" {
-		templateToUse, err = configs.GetDefaultTemplate()
-	} else {
-		templateToUse, err = configs.GetTemplate(templateName)
-		if templateToUse == nil {
+func applyTemplate(submitArgs *submitRunaiJobArgs, extraArgs []string, clientset kubernetes.Interface) error {
+	templatesHandler := templates.NewTemplates(clientset)
+
+	templateToUse, err := templatesHandler.GetDefaultTemplate()
+	if err != nil {
+		return err
+	}
+
+	if templateName != "" {
+		userTemplate, err := templatesHandler.GetTemplate(templateName)
+		if err != nil {
 			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
 		}
+
+		templateToUse = userTemplate
 	}
 
 	if templateToUse != nil {
-		err = applyTemplateToSubmitRunaijob(templateToUse.Values, submitArgs, extraArgs)
+		err := applyTemplateToSubmitRunaijob(templateToUse.Values, submitArgs, extraArgs)
 		if err != nil {
 			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
 		}
 	}
+
 	return nil
 }
 
