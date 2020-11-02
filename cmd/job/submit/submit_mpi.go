@@ -76,7 +76,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 
-			err = applyMpiTemplate(clientset, &submitArgs, commandArgs)
+			err = applyMpiTemplate(&submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -106,25 +106,43 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 }
 
-func applyMpiTemplate(clientset kubernetes.Interface, submitArgs *submitMPIJobArgs, extraArgs []string) error {
-	var err error
-	configs := templates.NewTemplates(clientset)
-	var templateToUse *templates.Template
-	if templateName == "" {
-		templateToUse, err = configs.GetDefaultTemplate()
-	} else {
-		templateToUse, err = configs.GetTemplate(templateName)
-		if templateToUse == nil {
-			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
-		}
+func applyMpiTemplate(submitArgs *submitMPIJobArgs, extraArgs []string, clientset kubernetes.Interface) error {
+	templatesHandler := templates.NewTemplates(clientset)
+	var submitTemplateToUse *templates.SubmitTemplate
+
+	defaultTemplate, err := templatesHandler.GetDefaultTemplate()
+	if err != nil {
+		return err
 	}
 
-	if templateToUse != nil {
-		err = applyTemplateToSubmitMpijob(templateToUse.Values, submitArgs, extraArgs)
+	if templateName != "" {
+		userTemplate, err := templatesHandler.GetTemplate(templateName)
+		if err != nil {
+			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
+		}
+
+		if defaultTemplate != nil {
+			mergedTemplate, err := templates.MergeSubmitTemplatesYamls(defaultTemplate.Values, userTemplate.Values)
+			if err != nil {
+				return err
+			}
+			submitTemplateToUse = mergedTemplate
+		}
+	} else {
+		templateToUse, err := templates.GetSubmitTemplateFromYaml(defaultTemplate.Values)
+		if err != nil {
+			return err
+		}
+		submitTemplateToUse = templateToUse
+	}
+
+	if submitTemplateToUse != nil {
+		err := applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs, extraArgs)
 		if err != nil {
 			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
 		}
 	}
+
 	return nil
 }
 

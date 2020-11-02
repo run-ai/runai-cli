@@ -4,7 +4,22 @@ import (
 	"reflect"
 )
 
-func MergeSubmitTemplates(base, patch SubmitTemplate) SubmitTemplate {
+func MergeSubmitTemplatesYamls(baseYaml, patchYaml string) (*SubmitTemplate, error) {
+	baseTemplate, err := GetSubmitTemplateFromYaml(baseYaml)
+	if err != nil {
+		return nil, err
+	}
+
+	patchTemplate, err := GetSubmitTemplateFromYaml(patchYaml)
+	if err != nil {
+		return nil, err
+	}
+
+	mergedTemplate := mergeSubmitTemplates(*baseTemplate, *patchTemplate)
+	return &mergedTemplate, nil
+}
+
+func mergeSubmitTemplates(base, patch SubmitTemplate) SubmitTemplate {
 	basePtrValue := reflect.ValueOf(&base)
 	baseValue := basePtrValue.Elem()
 
@@ -36,6 +51,9 @@ func mergeTemplateFields(base, patch *TemplateField) *TemplateField{
 		return patch
 	}
 	base.Value = patch.Value
-	*base.Required = *base.Required || *patch.Required
+
+	if patch.Required != nil {
+		base.Required = patch.Required
+	}
 	return base
 }

@@ -16,29 +16,19 @@ func recoverFromMissingFlag(err *error) {
 	}
 }
 
-func applyTemplateToSubmitRunaijob(templateYaml string, args *submitRunaiJobArgs, extraArgs []string) (err error) {
+func applyTemplateToSubmitRunaijob(template *templates.SubmitTemplate, args *submitRunaiJobArgs, extraArgs []string) (err error) {
 	defer recoverFromMissingFlag(&err)
-
-	template, err := templates.GetSubmitTemplateFromYaml(templateYaml)
-	if err != nil {
-		return err
-	}
 
 	*args = mergeTemplateToRunaiSubmitArgs(*args, template, extraArgs)
 	return nil
 }
 
-func applyTemplateToSubmitMpijob(templateYaml string, args *submitMPIJobArgs, extraArgs []string) (err error) {
+func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submitMPIJobArgs, extraArgs []string) (err error) {
 	defer (func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf(r.(string))
 		}
 	})()
-
-	template, err := templates.GetSubmitTemplateFromYaml(templateYaml)
-	if err != nil {
-		return err
-	}
 
 	*args = mergeTemplateToMpiSubmitArgs(*args, template, extraArgs)
 	return nil
