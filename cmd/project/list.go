@@ -40,7 +40,7 @@ type ProjectInfo struct {
 
 type Queue struct {
 	Spec struct {
-		DeservedGpus                 int      `mapstructure:"deservedGpus,omitempty"`
+		DeservedGpus                 float64  `mapstructure:"deservedGpus,omitempty"`
 		InteractiveJobTimeLimitSecs  int      `mapstructure:"interactiveJobTimeLimitSecs,omitempty"`
 		Department                   string   `json:"department,omitempty" protobuf:"bytes,1,opt,name=department"`
 		NodeAffinityInteractiveTypes []string `json:"nodeAffinityInteractiveTypes,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityInteractiveTypes"`
@@ -99,7 +99,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		if project, found := projects[queue.Metadata.Name]; found {
-			project.deservedGPUs = strconv.Itoa(queue.Spec.DeservedGpus)
+			project.deservedGPUs = fmt.Sprintf("%.1f", queue.Spec.DeservedGpus)
 			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
 			project.nodeAffinityInteractive = strings.Join(queue.Spec.NodeAffinityInteractiveTypes, ",")
 			project.nodeAffinityTraining = strings.Join(queue.Spec.NodeAffinityTrainTypes, ",")
