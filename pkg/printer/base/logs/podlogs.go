@@ -92,7 +92,7 @@ func (slp *PodLogPrinter) PrintMultiPodsHelp() {
 	footer := "please use --instance or -i to filter"
 	lines := []string{header}
 	for _, name := range slp.PodNames {
-		lines = append(lines, "    "+name)
+		lines = append(lines, "    " + name)
 	}
 	lines = append(lines, footer)
 	fmt.Println(strings.Join(lines, "\n"))
