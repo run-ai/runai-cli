@@ -157,4 +157,3 @@ func (ps *Client) GroupMultiQueriesToItems(q QueryNameToQuery, itemID string) (M
 	}
 	return results, nil
 }
-
