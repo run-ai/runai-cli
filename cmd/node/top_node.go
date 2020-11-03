@@ -125,7 +125,9 @@ func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [
 	showFields := append(topNodeFields, detailedTopNodeExtraFields...)
 	
 	for i, nodeView := range nodeViews {
-		ui.LineDivider(w)
+		if i > 0 {
+			ui.LineDivider(w)
+		}
 
 		err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
 			DisplayOpt: ui.DisplayOpt{HideAllByDefault: true, Show: showFields},

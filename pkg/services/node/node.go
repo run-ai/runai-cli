@@ -14,7 +14,7 @@ var (
 	promethesNodeLabelID = "node"
 	nodePQs              = prom.QueryNameToQuery{
 		TotalGpusMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
-		UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
+		UsedGpusPQ:       `((sum(runai_node_gpu_utilization) by (node)) / on (node) (count(runai_node_gpu_utilization) by (node)))`,
 		UsedGpusMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
 		UsedCpusMemoryPQ:  `runai_node_memory_used_bytes`,
 		UsedCpusPQ:       `runai_node_cpu_utilization * 100`,
