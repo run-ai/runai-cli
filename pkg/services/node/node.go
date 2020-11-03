@@ -13,7 +13,7 @@ import (
 const promethesNodeLabelID = "node"
 
 var (
-	nodePQs              = prom.QueryNameToQuery{
+	nodePQs = prom.QueryNameToQuery{
 		TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
 		UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
 		UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
