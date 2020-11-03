@@ -12,7 +12,7 @@ import (
 type FlagGroupName string
 
 type FlagGroup struct {
-	Name   FlagGroupName
+	Name    FlagGroupName
 	FlagSet *pflag.FlagSet
 }
 
@@ -34,12 +34,12 @@ func (fg *FlagGroup) usage() string {
 
 func NewFlagGroup(name FlagGroupName) FlagGroup {
 	return FlagGroup{
-		Name:   name,
+		Name:    name,
 		FlagSet: pflag.NewFlagSet(string(name), 0),
 	}
 }
 
-func (fbg *FlagsByGroups) GetOrAddFlagSet(groupName FlagGroupName) (fs *pflag.FlagSet){
+func (fbg *FlagsByGroups) GetOrAddFlagSet(groupName FlagGroupName) (fs *pflag.FlagSet) {
 	for _, item := range *fbg.groupsByOrder {
 		if item.Name == groupName {
 			fs = item.FlagSet
@@ -53,7 +53,7 @@ func (fbg *FlagsByGroups) GetOrAddFlagSet(groupName FlagGroupName) (fs *pflag.Fl
 	return fs
 }
 
-func (fbg *FlagsByGroups) UpdateFlagsByGroupsToCmd() {	
+func (fbg *FlagsByGroups) UpdateFlagsByGroupsToCmd() {
 	updateFlagsByGroupsToCmd(fbg.cmd, *fbg.groupsByOrder...)
 }
 
@@ -80,7 +80,8 @@ Global Flags:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
-Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}`)
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+`)
 }
 
 func flagsGroupUsage(fgs ...FlagGroup) string {

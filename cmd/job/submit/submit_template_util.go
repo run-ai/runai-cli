@@ -24,11 +24,7 @@ func applyTemplateToSubmitRunaijob(template *templates.SubmitTemplate, args *sub
 }
 
 func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submitMPIJobArgs, extraArgs []string) (err error) {
-	defer (func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf(r.(string))
-		}
-	})()
+	defer recoverFromMissingFlag(&err)
 
 	*args = mergeTemplateToMpiSubmitArgs(*args, template, extraArgs)
 	return nil
@@ -107,7 +103,6 @@ func mergeEnvironmentVariables(cliEnvVars, templateEnvVars *[]string) []string {
 	return *cliEnvVars
 }
 
-
 func mergeBoolFlags(cliFlag, templateFlag *bool) *bool {
 	if cliFlag != nil {
 		return cliFlag
@@ -173,7 +168,6 @@ func mergeCommandAndArgs(submitArgs *submitArgs, template *templates.SubmitTempl
 		submitArgs.SpecArgs = mergeExtraArgs(extraArgs, template.ExtraArgs)
 	}
 }
-
 
 func applyTemplateFieldForFloat64(cliFlag *float64, templateField *templates.TemplateField, fieldName string) *float64 {
 	var value *float64

@@ -78,14 +78,14 @@ func getProjectRelatedToNamespace(namespaceName string, kubeClient *client.Clien
 }
 
 func shouldPrintSetDefaultMessage(namespaceInfo types.NamespaceInfo, ignoreBackwardFlagOnError bool) bool {
-	return namespaceInfo.ProjectName == "" && (ignoreBackwardFlagOnError || !namespaceInfo.BackwardCompatability)
+	return namespaceInfo.ProjectName == "" && (ignoreBackwardFlagOnError || !namespaceInfo.BackwardCompatibility)
 }
 
 func GetNamespaceToUseFromProjectFlagIncludingAll(cmd *cobra.Command, kubeClient *client.Client, allFlag bool) (types.NamespaceInfo, error) {
 	if allFlag {
 		return types.NamespaceInfo{
 			Namespace:   metav1.NamespaceAll,
-			ProjectName: types.ALL_PROJECTS,
+			ProjectName: types.AllProjects,
 		}, nil
 	} else {
 		namespaceInfo, err := getNamespaceInfoToUseFromProjectFlag(cmd, kubeClient)

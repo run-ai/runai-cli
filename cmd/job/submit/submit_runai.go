@@ -49,7 +49,7 @@ runai submit -i gcr.io/run-ai-demo/quickstart -g 1
 )
 
 var (
-	runaiChart       string
+	runaiChart string
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -83,6 +83,12 @@ func NewRunaiJobCommand() *cobra.Command {
 			err = applyRunaiTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			if len(submitArgs.Image) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Print("\n-i, --image must be set\n\n")
 				os.Exit(1)
 			}
 
