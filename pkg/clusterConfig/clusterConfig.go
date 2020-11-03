@@ -9,7 +9,7 @@ import (
 )
 
 type ClusterConfig struct {
-	EnforceRunAsUser bool `yaml:"enforceRunAsUser"`
+	EnforceRunAsUser                  bool `yaml:"enforceRunAsUser"`
 	EnforcePreventPrivilegeEscalation bool `yaml:"enforcePreventPrivilegeEscalation"`
 }
 

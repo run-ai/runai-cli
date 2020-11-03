@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	showDetails  bool
+	showDetails         bool
 	defaultHiddenFields = []string{
 		"Mem.Allocatable",
 		"CPUs.Allocatable",
