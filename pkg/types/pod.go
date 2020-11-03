@@ -1,6 +1,5 @@
 package types
 
-
 type PodResourcesStatus struct {
 	Limited ResourceList
 	Allocated ResourceList

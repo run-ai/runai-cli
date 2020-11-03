@@ -16,7 +16,6 @@ import (
 )
 
 const (
-
 	// prometheus query names
 	TotalGpuMemoryPQ = "totalGpuMemory"
 	UsedGpuMemoryPQ  = "usedGpuMemory"
@@ -25,28 +24,28 @@ const (
 	UsedGpusPQ       = "usedGpus"
 )
 
-func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsByItems) NodeInfo {
-	return NodeInfo{
+func NewNodeInfo(node v1.Node, pods []v1.Pod, promNodesMap prom.MetricResultsByItems) Info {
+	return Info{
 		Node:           node,
 		Pods:           pods,
 		PrometheusNode: promNodesMap,
 	}
 }
 
-type NodeInfo struct {
+type Info struct {
 	Node           v1.Node
 	Pods           []v1.Pod
 	PrometheusNode prom.MetricResultsByItems
 }
 
-func (ni *NodeInfo) GetStatus() types.NodeStatus {
+func (ni *Info) GetStatus() types.NodeStatus {
 	if !util.IsNodeReady(ni.Node) {
 		return types.NodeNotReady
 	}
 	return types.NodeReady
 }
 
-func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
+func (ni *Info) GetGeneralInfo() types.NodeGeneralInfo {
 	return types.NodeGeneralInfo{
 		Name:      ni.Node.Name,
 		Role:      strings.Join(util.GetNodeRoles(&ni.Node), ","),
@@ -55,7 +54,7 @@ func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
 	}
 }
 
-func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
+func (ni *Info) GetResourcesStatus() types.NodeResourcesStatus {
 
 	nodeResStatus := types.NodeResourcesStatus{}
 	podResStatus := types.PodResourcesStatus{}
@@ -107,28 +106,14 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	return nodeResStatus
 }
 
-func (nodeInfo *NodeInfo) IsGPUExclusiveNode() bool {
-	value, ok := nodeInfo.Node.Status.Allocatable[util.NVIDIAGPUResourceName]
+func (ni *Info) IsGPUExclusiveNode() bool {
+	value, ok := ni.Node.Status.Allocatable[util.NVIDIAGPUResourceName]
 
 	if ok {
-		ok = (value.Value() > 0)
+		ok = value.Value() > 0
 	}
 
 	return ok
-}
-
-func setIntPromData(num *int64, m map[string][]prom.MetricValue, key string) error {
-	v, found := m[key]
-	if !found {
-		return nil
-	}
-
-	n, err := strconv.Atoi(v[1].(string))
-	if err != nil {
-		return err
-	}
-	*num = int64(n)
-	return nil
 }
 
 func setFloatPromData(num *float64, m map[string][]prom.MetricValue, key string) error {

@@ -30,7 +30,7 @@ func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPo
 	servingVersion := deploy.Labels["servingVersion"]
 	servingName := deploy.Labels["servingName"]
 	servingType := types.ServingTF
-	if stype := KeyMapServingType(servingTypeLabel); stype != types.ServingType("") {
+	if stype := KeyMapServingType(servingTypeLabel); stype != ("") {
 		servingType = stype
 	}
 	serving := Serving{
@@ -71,7 +71,6 @@ func (s Serving) AllSvcs() (svcs []v1.Service) {
 			if service.Labels["servingName"] == s.Name &&
 				KeyMapServingType(service.Labels["servingType"]) == s.ServeType &&
 				service.Labels["servingVersion"] == s.Version {
-				// return service.Spec.ClusterIP
 				svcs = append(svcs, service)
 			}
 		}
@@ -115,7 +114,6 @@ func (s Serving) GetPorts() string {
 	portList := []string{}
 
 	if len(s.AllSvcs()) > 0 {
-		// return s.AllSvcs().Spec.ClusterIP
 		svc := s.AllSvcs()[0]
 		ports := svc.Spec.Ports
 		for _, port := range ports {

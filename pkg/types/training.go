@@ -29,10 +29,6 @@ type JobInfo struct {
 type JobStatus string
 
 const (
-	// JobPending means the job is pending
-	JobPending JobStatus = "PENDING"
-	// JobRunning means the job is running
-	JobRunning JobStatus = "RUNNING"
 	// JobSucceeded means the job is Succeeded
 	JobSucceeded JobStatus = "SUCCEEDED"
 	// JobFailed means the job is failed

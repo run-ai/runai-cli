@@ -1,6 +1,7 @@
 package trainer
 
 import (
+	"k8s.io/client-go/kubernetes"
 	"testing"
 
 	"github.com/run-ai/runai-cli/cmd/constants"
@@ -27,9 +28,15 @@ var runaiPodTemplate = v1.PodTemplateSpec{
 	},
 }
 
+func NewClientForTesting(clientset kubernetes.Interface) *kubeclient.Client {
+	client := kubeclient.Client{}
+	client.SetClientset(clientset)
+	return &client
+}
+
 func getClientWithObject(objects []runtime.Object) (kubeclient.Client, *fakeclientset.Clientset) {
 	client := fake.NewSimpleClientset(objects...)
-	return *kubeclient.NewClientForTesting(client), fakeclientset.NewSimpleClientset()
+	return *NewClientForTesting(client), fakeclientset.NewSimpleClientset()
 }
 
 func getRunaiReplicaSet() *appsv1.ReplicaSet {
