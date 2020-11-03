@@ -176,8 +176,9 @@ func applyTemplateFieldForFloat64(cliFlag *float64, templateField *templates.Tem
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := strconv.ParseFloat(templateField.Value, 64)
-		if err == nil && templateField.Value != "" {
+		if err != nil && templateField.Value != "" {
 			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+		} else {
 			templateFlag = &templateFieldValue
 		}
 	}
@@ -194,8 +195,9 @@ func applyTemplateFieldForInt(cliFlag *int, templateField *templates.TemplateFie
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := strconv.Atoi(templateField.Value)
-		if err == nil && templateField.Value != "" {
+		if err != nil && templateField.Value != "" {
 			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+		} else {
 			templateFlag = &templateFieldValue
 		}
 	}
@@ -212,8 +214,9 @@ func applyTemplateFieldForBool(cliFlag *bool, templateField *templates.TemplateF
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := strconv.ParseBool(templateField.Value)
-		if err == nil && templateField.Value != "" {
+		if err != nil && templateField.Value != "" {
 			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+		} else {
 			templateFlag = &templateFieldValue
 		}
 	}
@@ -230,8 +233,9 @@ func applyTemplateFieldForDuration(cliFlag *time.Duration, templateField *templa
 	if templateField != nil {
 		required = raUtil.IsBoolPTrue(templateField.Required)
 		templateFieldValue, err := time.ParseDuration(templateField.Value)
-		if err == nil && templateField.Value != "" {
+		if err != nil && templateField.Value != "" {
 			log.Info(fmt.Sprintf("could not parse %s flag from template", fieldName))
+		} else {
 			templateFlag = &templateFieldValue
 		}
 	}
