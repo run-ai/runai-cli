@@ -128,7 +128,7 @@ func applyMpiTemplate(submitArgs *submitMPIJobArgs, extraArgs []string, clientse
 			}
 			submitTemplateToUse = mergedTemplate
 		}
-	} else {
+	} else if defaultTemplate != nil {
 		templateToUse, err := templates.GetSubmitTemplateFromYaml(defaultTemplate.Values)
 		if err != nil {
 			return err
@@ -151,9 +151,9 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	Processes *int // --workers
-	NumberProcesses int `yaml:"numProcesses"` // --workers
-	TotalGPUs       int `yaml:"totalGpus"`    // --workers
+	Processes       *int // --workers
+	NumberProcesses int  `yaml:"numProcesses"` // --workers
+	TotalGPUs       int  `yaml:"totalGpus"`    // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {

@@ -208,7 +208,7 @@ func applyRunaiTemplate(submitArgs *submitRunaiJobArgs, extraArgs []string, clie
 			}
 			submitTemplateToUse = mergedTemplate
 		}
-	} else {
+	} else if defaultTemplate != nil {
 		templateToUse, err := templates.GetSubmitTemplateFromYaml(defaultTemplate.Values)
 		if err != nil {
 			return err
