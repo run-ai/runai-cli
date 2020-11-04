@@ -110,7 +110,7 @@ func applyMpiTemplate(submitArgs *submitMPIJobArgs, extraArgs []string, clientse
 	templatesHandler := templates.NewTemplates(clientset)
 	var submitTemplateToUse *templates.SubmitTemplate
 
-	defaultTemplate, err := templatesHandler.GetDefaultTemplate()
+	adminTemplate, err := templatesHandler.GetDefaultTemplate()
 	if err != nil {
 		return err
 	}
@@ -121,15 +121,15 @@ func applyMpiTemplate(submitArgs *submitMPIJobArgs, extraArgs []string, clientse
 			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
 		}
 
-		if defaultTemplate != nil {
-			mergedTemplate, err := templates.MergeSubmitTemplatesYamls(defaultTemplate.Values, userTemplate.Values)
+		if adminTemplate != nil {
+			mergedTemplate, err := templates.MergeSubmitTemplatesYamls(userTemplate.Values, adminTemplate.Values)
 			if err != nil {
 				return err
 			}
 			submitTemplateToUse = mergedTemplate
 		}
-	} else if defaultTemplate != nil {
-		templateToUse, err := templates.GetSubmitTemplateFromYaml(defaultTemplate.Values)
+	} else if adminTemplate != nil {
+		templateToUse, err := templates.GetSubmitTemplateFromYaml(adminTemplate.Values)
 		if err != nil {
 			return err
 		}
