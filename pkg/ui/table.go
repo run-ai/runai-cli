@@ -10,9 +10,9 @@ import (
 // DECLERATION: currently sub grouping are not supported
 
 const (
-	groupSeperation = "╭⦿ "
-	titleSeperation = "├⚬ "
-	rowsSeperation  = "│  "
+	groupSeperation = "│ "
+	titleSeperation = "│ "
+	rowsSeperation  = "│ "
 )
 
 var (
