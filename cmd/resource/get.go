@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"fmt"
+	
 	"github.com/spf13/cobra"
 	"github.com/run-ai/runai-cli/cmd/job"
 )
@@ -10,11 +12,14 @@ func NewGetCommand() *cobra.Command {
 	// depreacted args - belong to the old command > runai get [job_name]
 	printArgs := job.PrintArgs{}
 
+	deprecationMessage := "DEPRECATED! use instead > runai describe job"
 
 	var command = &cobra.Command{
 		Use:   "get",
-		Short: "Display details of a job. DEPRECATED! use instead > runai describe job",
+		Short: fmt.Sprint("Display details of a job. ", deprecationMessage),
 		Run: func(cmd *cobra.Command, args []string) {
+
+			fmt.Println("\n", deprecationMessage, "\n")
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				return
