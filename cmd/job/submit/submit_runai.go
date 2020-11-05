@@ -49,7 +49,7 @@ runai submit -i gcr.io/run-ai-demo/quickstart -g 1
 )
 
 var (
-	runaiChart       string
+	runaiChart string
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -67,12 +67,6 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if len(submitArgs.Image) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				fmt.Print("\n-i, --image must be set\n\n")
-				os.Exit(1)
-			}
-
 			runaiChart = path.Join(chartsFolder, "runai")
 
 			kubeClient, err := client.GetClient()
@@ -86,7 +80,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 
-			err = applyTemplate(clientset, submitArgs, commandArgs)
+			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -192,25 +186,54 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
-func applyTemplate(clientset kubernetes.Interface, submitArgs *submitRunaiJobArgs, extraArgs []string) error {
-	var err error
-	configs := templates.NewTemplates(clientset)
-	var templateToUse *templates.Template
-	if templateName == "" {
-		templateToUse, err = configs.GetDefaultTemplate()
-	} else {
-		templateToUse, err = configs.GetTemplate(templateName)
-		if templateToUse == nil {
+func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kubernetes.Interface) error {
+	templatesHandler := templates.NewTemplates(clientset)
+	var submitTemplateToUse *templates.SubmitTemplate
+
+	adminTemplate, err := templatesHandler.GetDefaultTemplate()
+	if err != nil {
+		return err
+	}
+
+	if templateName != "" {
+		userTemplate, err := templatesHandler.GetTemplate(templateName)
+		if err != nil {
 			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
+		}
+
+		if adminTemplate != nil {
+			mergedTemplate, err := templates.MergeSubmitTemplatesYamls(userTemplate.Values, adminTemplate.Values)
+			if err != nil {
+				return err
+			}
+			submitTemplateToUse = mergedTemplate
+		} else {
+			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
+			if err != nil {
+				return fmt.Errorf("Could not apply template %s: %v", templateName, err)
+			}
+		}
+	} else if adminTemplate != nil {
+		templateToUse, err := templates.GetSubmitTemplateFromYaml(adminTemplate.Values)
+		if err != nil {
+			return err
+		}
+		submitTemplateToUse = templateToUse
+	}
+
+	if submitTemplateToUse != nil {
+		switch submitArgs.(type) {
+		case *submitRunaiJobArgs:
+			err = applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs.(*submitRunaiJobArgs), extraArgs)
+		case *submitMPIJobArgs:
+			err = applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs.(*submitMPIJobArgs), extraArgs)
+		}
+
+		if err != nil {
+			return fmt.Errorf("could not submit job due to: %v", err)
 		}
 	}
 
-	if templateToUse != nil {
-		err = applyTemplateToSubmitRunaijob(templateToUse.Values, submitArgs, extraArgs)
-		if err != nil {
-			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
-		}
-	}
 	return nil
 }
 

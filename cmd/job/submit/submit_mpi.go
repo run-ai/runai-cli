@@ -16,8 +16,6 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/templates"
-	"k8s.io/client-go/kubernetes"
 	"os"
 	"path"
 
@@ -76,7 +74,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 
-			err = applyMpiTemplate(clientset, &submitArgs, commandArgs)
+			err = applyTemplate(&submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -106,36 +104,14 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 }
 
-func applyMpiTemplate(clientset kubernetes.Interface, submitArgs *submitMPIJobArgs, extraArgs []string) error {
-	var err error
-	configs := templates.NewTemplates(clientset)
-	var templateToUse *templates.Template
-	if templateName == "" {
-		templateToUse, err = configs.GetDefaultTemplate()
-	} else {
-		templateToUse, err = configs.GetTemplate(templateName)
-		if templateToUse == nil {
-			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
-		}
-	}
-
-	if templateToUse != nil {
-		err = applyTemplateToSubmitMpijob(templateToUse.Values, submitArgs, extraArgs)
-		if err != nil {
-			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
-		}
-	}
-	return nil
-}
-
 type submitMPIJobArgs struct {
 	// for common args
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	Processes *int // --workers
-	NumberProcesses int `yaml:"numProcesses"` // --workers
-	TotalGPUs       int `yaml:"totalGpus"`    // --workers
+	Processes       *int // --workers
+	NumberProcesses int  `yaml:"numProcesses"` // --workers
+	TotalGPUs       int  `yaml:"totalGpus"`    // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {

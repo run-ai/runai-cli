@@ -53,7 +53,7 @@ const (
 )
 
 var (
-	dryRun        bool
+	dryRun bool
 
 	envs         []string
 	selectors    []string
@@ -83,8 +83,8 @@ type submitArgs struct {
 	EnableRDMA bool `yaml:"enableRDMA"` // --rdma
 	UseENI     bool `yaml:"useENI"`
 
-	Annotations map[string]string `yaml:"annotations"`
-	NameParameter string
+	Annotations        map[string]string `yaml:"annotations"`
+	NameParameter      string
 	IsNonRoot          bool                      `yaml:"isNonRoot"`
 	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
 	Project            string                    `yaml:"project,omitempty"`
@@ -110,14 +110,14 @@ type submitArgs struct {
 	Volumes                    []string `yaml:"volume,omitempty"`
 	PersistentVolumes          []string `yaml:"persistentVolumes,omitempty"`
 	WorkingDir                 string   `yaml:"workingDir,omitempty"`
-	PreventPrivilegeEscalation *bool     `yaml:"preventPrivilegeEscalation"`
+	PreventPrivilegeEscalation *bool    `yaml:"preventPrivilegeEscalation"`
 	CreateHomeDir              *bool    `yaml:"createHomeDir,omitempty"`
 	RunAsUser                  string   `yaml:"runAsUser,omitempty"`
 	RunAsGroup                 string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
 	RunAsCurrentUser           *bool
 	SpecCommand                []string          `yaml:"command"`
-	Command                    *bool              `yaml:"isCommand"`
+	Command                    *bool             `yaml:"isCommand"`
 	LocalImage                 *bool             `yaml:"localImage,omitempty"`
 	LargeShm                   *bool             `yaml:"shm,omitempty"`
 	Ports                      []string          `yaml:"ports,omitempty"`
@@ -127,8 +127,8 @@ type submitArgs struct {
 	StdIn                      *bool             `yaml:"stdin,omitempty"`
 	TTY                        *bool             `yaml:"tty,omitempty"`
 	Attach                     *bool             `yaml:"attach,omitempty"`
-	NamePrefix				   string			 `yaml:"namePrefix,omitempty"`
-	generateSuffix 			   bool
+	NamePrefix                 string            `yaml:"namePrefix,omitempty"`
+	generateSuffix             bool
 }
 
 type dataDirVolume struct {
@@ -451,16 +451,11 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submi
 	}
 	if submitArgs.NameParameter != "" {
 		if len(argsUntilDash) > 0 {
+			fmt.Println("From herer")
 			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
-		}
-		if submitArgs.NamePrefix != "" {
-			return "", false, fmt.Errorf("expecred either --job-name-prefix or --name flag")
 		}
 		return submitArgs.NameParameter, false, nil
 	} else if len(argsUntilDash) > 0 {
-		if submitArgs.NamePrefix != "" {
-			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
-		}
 		//TODO: Show the user that the positional argument is deprecated once we feel confortable to tell it the user
 		//log.Info("Submitting the job name as a positional argument has been deprecated, please use --name flag instead")
 		return argsUntilDash[0], false, nil
