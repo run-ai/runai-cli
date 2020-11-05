@@ -264,13 +264,13 @@ func applyTemplateFieldForString(cliFlag string, templateField *templates.Templa
 	}
 
 	if value == "" && required {
-		panic(fmt.Sprintf("Field %s is required", fieldName))
+		panic(fmt.Sprintf("the flag %s is mandatory.", fieldName))
 	}
 	return value
 }
 
 func validateValueIsNotRequiredAndNil(valueIsNil, required bool, fieldName string) {
 	if valueIsNil && required {
-		panic(fmt.Sprintf("Field %s is required", fieldName))
+		panic(fmt.Sprintf("the flag %s is mandatory.", fieldName))
 	}
 }

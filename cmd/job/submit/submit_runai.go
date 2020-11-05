@@ -210,7 +210,7 @@ func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kuberne
 		} else {
 			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
 			if err != nil {
-				return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
+				return fmt.Errorf("Could not apply template %s: %v", templateName, err)
 			}
 		}
 	} else if adminTemplate != nil {
