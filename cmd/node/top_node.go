@@ -30,35 +30,43 @@ import (
 
 var (
 	showDetails bool
-	
 
-	topNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
+	commonTopNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Info.Name",
 		"GPUs.Capacity",
-		"GPUs.Util",
+		"GPUs.Utilization",
 		"CPUs.Capacity",
-		"CPUs.Util",
+		"CPUs.Utilization",
 		"Mem.Capacity",
-		"Mem.Usage",
+	})
+
+	tableTopNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
+		"Mem.UsageAndUtilization",
 	})
 
 	detailedTopNodeExtraFields = ui.EnsureStringPaths(types.NodeView{}, []string{
+		"CPUs.Usage",
+		"Mem.Usage",
+		"Mem.Utilization",
 		"GPUMem.Capacity",
 		"GPUMem.Usage",
+		"GPUMem.Utilization",
 	})
 
 	topNodeHiddenGpuUnitFields = ui.EnsureStringPaths(types.GPU{}, []string{
 		"Allocated",
+		"MemoryUsage",
+		"MemoryUtilization",
 	})
 )
 
 func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "node [...NODE_NAME]",
+		Use:     "node [...NODE_NAME]",
 		Aliases: []string{"nodes"},
-		Short: "Display information about nodes in the cluster.",
-		Args:  cobra.RangeArgs(0, 1),
+		Short:   "Display information about nodes in the cluster.",
+		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 
 			nodeInfos, err := getNodeInfos()
@@ -120,10 +128,10 @@ func displayTopNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, showClusterDa
 	_ = w.Flush()
 }
 
-func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [][]types.GPU ) {
+func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [][]types.GPU) {
 
-	showFields := append(topNodeFields, detailedTopNodeExtraFields...)
-	
+	showFields := append(commonTopNodeFields, detailedTopNodeExtraFields...)
+
 	for i, nodeView := range nodeViews {
 		if i > 0 {
 			ui.LineDivider(w)
@@ -156,17 +164,17 @@ func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [
 	ui.End(w)
 }
 
-func displayTopNodeTable(w io.Writer, rows []types.NodeView, showUnhealthyGpus bool ) {
+func displayTopNodeTable(w io.Writer, rows []types.NodeView, showUnhealthyGpus bool) {
 	hiddenFields := defaultHiddenFields
 	if !showUnhealthyGpus {
-		hiddenFields= append(hiddenFields, unhealthyGpusPath...)
+		hiddenFields = append(hiddenFields, unhealthyGpusPath...)
 	}
 
 	err := ui.CreateTable(types.NodeView{}, ui.TableOpt{
 		DisplayOpt: ui.DisplayOpt{
 			HideAllByDefault: true,
 			Hide:             hiddenFields,
-			Show:             topNodeFields,
+			Show:             append(commonTopNodeFields, tableTopNodeFields...),
 		},
 	}).Render(w, rows).Error()
 
@@ -174,4 +182,3 @@ func displayTopNodeTable(w io.Writer, rows []types.NodeView, showUnhealthyGpus b
 		fmt.Print(err)
 	}
 }
-

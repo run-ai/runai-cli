@@ -11,7 +11,8 @@ type NodeCPUResource struct {
 	Capacity    int     `title:"CAPACITY" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE"`
 	Allocated   float64 `title:"ALLOCATED"`
-	Util        float64 `title:"Util." format:"%"`
+	Utilization float64 `title:"UTILIZATION" format:"%"`
+	Usage       float64 `title:"USAGE"`
 }
 
 type NodeGPUResource struct {
@@ -20,15 +21,18 @@ type NodeGPUResource struct {
 	Allocated   float64 `title:"ALLOCATED"`
 	InUse       int     `title:"IN USE"`
 	Free        int     `title:"FREE"`
-	Util        float64 `title:"Util." format:"%"`
+	Utilization float64 `title:"UTILIZATION" format:"%"`
+	Usage       float64 `title:"USAGE"`
 	Unhealthy   int     `title:"UNHEALTHY"`
 }
 
 type NodeMemoryResource struct {
-	Capacity    float64 `title:"CAPACITY" format:"memory" def:"0"`
-	Allocatable float64 `title:"ALLOCATABLE" format:"memory"`
-	Allocated   float64 `title:"ALLOCATED" format:"memory"`
-	Usage       string  `title:"USAGE"`
+	Capacity            float64 `title:"CAPACITY" format:"memory" def:"0"`
+	Allocatable         float64 `title:"ALLOCATABLE" format:"memory"`
+	Allocated           float64 `title:"ALLOCATED" format:"memory"`
+	Utilization         float64 `title:"UTILIZATION" format:"%"`
+	Usage               float64 `title:"USAGE" format:"memory"`
+	UsageAndUtilization string  `title:"USAGE"`
 }
 
 type NodeGeneralInfo struct {

@@ -25,9 +25,13 @@ const (
 
 var (
 	describeNodeHiddenFields = ui.EnsureStringPaths(types.NodeView{}, []string{
-		"CPUs.Util",
-		"GPUs.Util",
+		"CPUs.Utilization",
+		"CPUs.Usage",
+		"GPUs.Utilization",
+		"GPUs.Usage",
 		"Mem.Usage",
+		"Mem.Utilization",
+		"Mem.UsageAndUtilization",
 		"GPUMem",
 	})
 
@@ -67,8 +71,11 @@ func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNode
 
 func describeNodes(nodeInfos *[]nodeService.NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	
-	for _, nodeInfo := range *nodeInfos {
+
+	for i, nodeInfo := range *nodeInfos {
+		if i > 0 {
+			ui.LineDivider(w)
+		}
 		describeNode(w, &nodeInfo)
 	}
 
@@ -88,9 +95,6 @@ func describeNode(w io.Writer, nodeInfo *nodeService.NodeInfo) {
 		GPUs:   nodeResourcesConvertor.ToGpus(),
 		GPUMem: nodeResourcesConvertor.ToGpuMemory(),
 	}
-
-
-	ui.LineDivider(w)
 
 	err := ui.CreateKeyValuePairs(types.NodeView{}, ui.KeyValuePairsOpt{
 		DisplayOpt: ui.DisplayOpt{Hide: append(defaultHiddenFields, describeNodeHiddenFields...)},
@@ -117,7 +121,7 @@ func describeNode(w io.Writer, nodeInfo *nodeService.NodeInfo) {
 	}
 
 	// todo: print node's pods list
-	// this is an old code 
+	// this is an old code
 	// pods := util.GpuPods(nodeInfo.Pods)
 	// if len(pods) > 0 {
 	// 	fmt.Fprintf(w, "\n")
@@ -129,7 +133,5 @@ func describeNode(w io.Writer, nodeInfo *nodeService.NodeInfo) {
 	// 	}
 	// 	fmt.Fprintf(w, "\n")
 	// }
-
-
 
 }

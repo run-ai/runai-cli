@@ -137,15 +137,22 @@ func setGpuUnitsFromPromDataAndPods(value *[]types.GPU, data prom.MetricResultsB
 		allocated := valuesByQueryNames[GpuUsedByPod]
 		fractionAllocated, isFraction := fractionAllocatedGpus[gpuIndex]
 		if isFraction {
-			allocated = fractionAllocated * 100 
+			allocated = fractionAllocated
 		}
+
+		memory := valuesByQueryNames[TotalGpuMemoryPQ]
+		usage := valuesByQueryNames[UsedGpuMemoryPQ]
+		memoryUsageAndUtilization, utilization := helpers.MemoryUsageAndUtilization(usage, memory)
+
 		result = append(result, types.GPU {
 			IndexID: gpuIndex,
 			Allocated: allocated,
-			Memory: valuesByQueryNames[TotalGpuMemoryPQ],
-			MemoryUsage: valuesByQueryNames[UsedGpuMemoryPQ],
+			Memory: memory,
+			MemoryUsage: usage,
+			MemoryUtilization: utilization,
+			MemoryUsageAndUtilization: memoryUsageAndUtilization,
 			IdleTime: valuesByQueryNames[GpuIdleTimePQ],
-			Util: valuesByQueryNames[UsedGpuPQ],
+			Utilization: valuesByQueryNames[UsedGpuPQ],
 		})
 	}
 
