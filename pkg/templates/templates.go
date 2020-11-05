@@ -22,7 +22,7 @@ type Templates struct {
 const (
 	runaiNamespace         = "runai"
 	runaiConfigLabel       = "runai/template"
-	runaiDefaultAnnotation = "runai/default"
+	runaiDefaultAnnotation = "runai/admin"
 )
 
 func NewTemplates(clientset kubernetes.Interface) Templates {

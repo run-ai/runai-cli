@@ -230,7 +230,7 @@ func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kuberne
 		}
 
 		if err != nil {
-			return fmt.Errorf("could not apply template due to: %v", err)
+			return fmt.Errorf("could not submit job due to: %v", err)
 		}
 	}
 
