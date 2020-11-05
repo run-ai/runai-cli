@@ -80,7 +80,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 
-			err = applyRunaiTemplate(submitArgs, commandArgs, clientset)
+			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -186,7 +186,7 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
-func applyRunaiTemplate(submitArgs *submitRunaiJobArgs, extraArgs []string, clientset kubernetes.Interface) error {
+func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kubernetes.Interface) error {
 	templatesHandler := templates.NewTemplates(clientset)
 	var submitTemplateToUse *templates.SubmitTemplate
 
@@ -207,6 +207,11 @@ func applyRunaiTemplate(submitArgs *submitRunaiJobArgs, extraArgs []string, clie
 				return err
 			}
 			submitTemplateToUse = mergedTemplate
+		} else {
+			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
+			if err != nil {
+				return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
+			}
 		}
 	} else if adminTemplate != nil {
 		templateToUse, err := templates.GetSubmitTemplateFromYaml(adminTemplate.Values)
@@ -217,9 +222,15 @@ func applyRunaiTemplate(submitArgs *submitRunaiJobArgs, extraArgs []string, clie
 	}
 
 	if submitTemplateToUse != nil {
-		err := applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs, extraArgs)
+		switch submitArgs.(type) {
+		case *submitRunaiJobArgs:
+			err = applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs.(*submitRunaiJobArgs), extraArgs)
+		case *submitMPIJobArgs:
+			err = applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs.(*submitMPIJobArgs), extraArgs)
+		}
+
 		if err != nil {
-			return fmt.Errorf("could not apply template %s due to: %v", templateName, err)
+			return fmt.Errorf("could not apply template due to: %v", err)
 		}
 	}
 
