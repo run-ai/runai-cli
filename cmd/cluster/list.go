@@ -50,8 +50,8 @@ func newListClustersCommand_DEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "list",
 		Short: fmt.Sprint("List all avaliable clusters. ", deprecationMessage),
-		Run: commandUtil.WrapRunCommand(func (cmd *cobra.Command, args []string) error {
-			fmt.Println("\n", deprecationMessage, "\n")
+		Run: commandUtil.WrapRunCommand(func(cmd *cobra.Command, args []string) error {
+			fmt.Print("\n", deprecationMessage, "\n\n")
 			return runListCommand(cmd, args)
 		}),
 	}
@@ -59,14 +59,13 @@ func newListClustersCommand_DEPRECATED() *cobra.Command {
 	return command
 }
 
-
 func NewListClusterCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "cluster",
-		Aliases:[]string{"clusters"},
-		Short: "List all avaliable clusters",
-		Run:   commandUtil.WrapRunCommand(runListCommand),
+		Use:     "cluster",
+		Aliases: []string{"clusters"},
+		Short:   "List all avaliable clusters",
+		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 
 	return command
