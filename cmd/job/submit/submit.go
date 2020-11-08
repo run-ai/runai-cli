@@ -451,7 +451,6 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submi
 	}
 	if submitArgs.NameParameter != "" {
 		if len(argsUntilDash) > 0 {
-			fmt.Println("From herer")
 			return "", false, fmt.Errorf("unexpected arguments %v", argsUntilDash)
 		}
 		return submitArgs.NameParameter, false, nil
