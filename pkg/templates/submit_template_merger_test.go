@@ -47,8 +47,8 @@ func TestMergeTemplateFieldsUnOverrideNil(t *testing.T) {
 }
 
 func TestMergeSubmitTemplatesSanity(t *testing.T) {
-	baseSubmitTemplate := SubmitTemplate{Gpu: &TemplateField{Required: &falsePtr}, Name: &TemplateField{Value: "Tester"}, EnvVariables: []string{"a"}}
-	patchSubmitTemplate := SubmitTemplate{Gpu: &TemplateField{Required: &truePtr}, Image: &TemplateField{Value: "MyTestImage"}, EnvVariables: []string{"b"}}
+	baseSubmitTemplate := SubmitTemplate{Gpu: &TemplateField{Required: &falsePtr}, Name: &TemplateField{Value: "Tester"}, EnvVariables: []string{"a=1"}}
+	patchSubmitTemplate := SubmitTemplate{Gpu: &TemplateField{Required: &truePtr}, Image: &TemplateField{Value: "MyTestImage"}, EnvVariables: []string{"b=2"}}
 
 	result := mergeSubmitTemplates(baseSubmitTemplate, patchSubmitTemplate)
 
