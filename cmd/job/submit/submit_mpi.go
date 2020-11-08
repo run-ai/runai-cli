@@ -20,15 +20,12 @@ import (
 	"path"
 
 	"github.com/run-ai/runai-cli/cmd/attach"
-	"github.com/run-ai/runai-cli/cmd/trainer"
-
 	"github.com/run-ai/runai-cli/cmd/flags"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util"
 	"github.com/run-ai/runai-cli/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -156,16 +153,6 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
-	}
-
-	trainer := trainer.NewMPIJobTrainer(*client)
-	job, err := trainer.GetTrainingJob(submitArgs.Name, submitArgs.Namespace)
-	if err != nil {
-		log.Debugf("Check %s exist due to error %v", submitArgs.Name, err)
-	}
-
-	if job != nil {
-		return fmt.Errorf("the job %s already exists, please delete it first. use 'runai delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 
 	// the master is also considered as a worker
