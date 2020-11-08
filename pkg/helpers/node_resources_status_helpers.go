@@ -27,7 +27,7 @@ func (c *NodeResourcesStatusConvertor) ToCpus() *types.NodeCPUResource {
 
 func (c *NodeResourcesStatusConvertor) ToGpus() *types.NodeGPUResource {
 	nrs := (*types.NodeResourcesStatus)(c)
-	capacity := int(nrs.Capacity.GPUs) / 1000
+	capacity := int(nrs.Capacity.GPUs)
 	result := types.NodeGPUResource{
 		Capacity:    capacity,
 		Allocatable: nrs.Allocatable.GPUs,
