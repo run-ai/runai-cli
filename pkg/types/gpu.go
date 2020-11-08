@@ -7,6 +7,6 @@ type GPU struct {
 	Memory                           float64 `title:"MEMORY" format:"memory"`
 	MemoryUsage                      float64 `title:"MEMORY USAGE" format:"memory"`
 	MemoryUtilization				 float64 `title:"MEMORY UTILIZATION" format:"%"`
-	MemoryUsageAndUtilization		 string  `title:"MEMORY USAGE" format:"memory"`
+	MemoryUsageAndUtilization		 string  `title:"MEMORY USAGE"`
 	IdleTime                         float64 `title:"IDLE TIME" format:"time"`
 }
