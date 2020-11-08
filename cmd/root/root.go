@@ -55,29 +55,19 @@ func NewCommand() *cobra.Command {
 		},
 	}
 
-	// command.AddCommand(NewCompletionCommand())
-	// 1. unzip chart
-	// command.AddCommand(NewInstallCommand())
-	//command.AddCommand(NewListCommand())
 	addKubectlFlagsToCmd(command)
 
 	// enable logging
 	command.PersistentFlags().StringVar(&global.LogLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
 
-	// command.AddCommand(NewSubmitCommand())
 	command.AddCommand(submitJob.NewRunaiJobCommand())
-	command.AddCommand(submitJob.NewRunaiSubmitMPIJobCommand()) // hidden command
-	// command.AddCommand(NewServeCommand())
+	command.AddCommand(submitJob.NewRunaiSubmitMPIJobCommand())
 	command.AddCommand(listJob.NewListCommand())
-	// command.AddCommand(NewPruneCommand())
 	command.AddCommand(get.NewGetCommand())
-	// command.AddCommand(NewLogViewerCommand())
 	command.AddCommand(logs.NewLogsCommand())
 	command.AddCommand(deleteJob.NewDeleteCommand())
 	command.AddCommand(top.NewTopCommand())
 	command.AddCommand(raCmd.NewVersionCmd())
-	// command.AddCommand(NewDataCommand())
-	// command.AddCommand(NewCompletionCommand())
 	command.AddCommand(raCmd.NewUpdateCommand())
 	command.AddCommand(exec.NewBashCommand())
 	command.AddCommand(exec.NewExecCommand())
@@ -85,9 +75,6 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(template.NewTemplateCommand())
 	command.AddCommand(project.NewProjectCommand())
 	command.AddCommand(cluster.NewClusterCommand())
-
-	// command.AddCommand(NewWaitCommand())
-	// command.AddCommand(cmd.NewVersionCmd(CLIName))
 
 	return command
 }

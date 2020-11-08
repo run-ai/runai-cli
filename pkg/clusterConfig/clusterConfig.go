@@ -9,7 +9,7 @@ import (
 )
 
 type ClusterConfig struct {
-	EnforceRunAsUser bool `yaml:"enforceRunAsUser"`
+	EnforceRunAsUser                  bool `yaml:"enforceRunAsUser"`
 	EnforcePreventPrivilegeEscalation bool `yaml:"enforcePreventPrivilegeEscalation"`
 }
 
@@ -44,6 +44,6 @@ func GetClusterConfig(clientset kubernetes.Interface) (*ClusterConfig, error) {
 			return &defaultConfig, nil
 		}
 	} else {
-		return &defaultConfig, fmt.Errorf("Error reading cluster configuration, could not find %s key on configmap data", runaiConfigKey)
+		return &defaultConfig, fmt.Errorf("error reading cluster configuration, could not find %s key on configmap data", runaiConfigKey)
 	}
 }

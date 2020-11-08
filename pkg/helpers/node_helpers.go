@@ -12,7 +12,6 @@ import (
 )
 
 func RenderClusterNodesView(w io.Writer, cnv types.ClusterNodesView) {
-
 	ui.Title(w, "CLUSTER NODES INFO")
 
 	fmt.Fprintf(w, "Allocated Units/Total GPUs In Cluster:\t")

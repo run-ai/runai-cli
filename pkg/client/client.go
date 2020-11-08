@@ -78,6 +78,10 @@ func (c *Client) SetCurrentNamespace(namespace string) {
 
 }
 
+func (c *Client) SetClientset(clientset kubernetes.Interface) {
+	c.clientset = clientset
+}
+
 func (c *Client) SetDefaultNamespace(namespace string) error {
 	configAccess := clientcmd.DefaultClientConfig.ConfigAccess()
 	config, err := configAccess.GetStartingConfig()

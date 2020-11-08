@@ -10,9 +10,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const promethesNodeLabelID = "node"
+
 var (
-	promethesNodeLabelID = "node"
-	nodePQs              = prom.QueryNameToQuery{
+	nodePQs = prom.QueryNameToQuery{
 		TotalGpuMemoryPQ: `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node))`,
 		UsedGpusPQ:       `((sum(runai_gpus_is_running_with_pod2) by (node))) + (sum(runai_used_shared_gpu_per_node) by (node))`,
 		UsedGpuMemoryPQ:  `(sum(runai_node_gpu_used_memory * 1024 * 1024) by (node))`,
@@ -21,21 +22,21 @@ var (
 	}
 )
 
-type NodeDescriber struct {
+type Describer struct {
 	client  kubernetes.Interface
 	allPods []v1.Pod
 }
 
-func NewNodeDescriber(client kubernetes.Interface, pods []v1.Pod) *NodeDescriber {
-	return &NodeDescriber{
+func NewNodeDescriber(client kubernetes.Interface, pods []v1.Pod) *Describer {
+	return &Describer{
 		client:  client,
 		allPods: pods,
 	}
 }
 
-func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
+func (d *Describer) GetAllNodeInfos() ([]Info, string, error) {
 	var warning string
-	nodeInfoList := []NodeInfo{}
+	var nodeInfoList []Info
 
 	nodeList, err := d.client.CoreV1().Nodes().List(metav1.ListOptions{})
 
@@ -65,8 +66,8 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 	return nodeInfoList, warning, err
 }
 
-func (d *NodeDescriber) GetPodsFromNode(node v1.Node) []v1.Pod {
-	pods := []v1.Pod{}
+func (d *Describer) GetPodsFromNode(node v1.Node) []v1.Pod {
+	var pods []v1.Pod
 	if !util.IsNodeReady(node) {
 		return pods
 	}

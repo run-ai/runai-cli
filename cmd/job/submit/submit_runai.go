@@ -2,6 +2,7 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/templates"
 	"math"
 	"os"
 	"path"
@@ -48,8 +49,7 @@ runai submit -i gcr.io/run-ai-demo/quickstart -g 1
 )
 
 var (
-	runaiChart       string
-	ttlAfterFinished *time.Duration
+	runaiChart string
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -67,12 +67,6 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if len(submitArgs.Image) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				fmt.Print("\n-i, --image must be set\n\n")
-				os.Exit(1)
-			}
-
 			runaiChart = path.Join(chartsFolder, "runai")
 
 			kubeClient, err := client.GetClient()
@@ -82,33 +76,46 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			clientset := kubeClient.GetClientset()
-			configValues := ""
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
-			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
+			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
+
+			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			if ttlAfterFinished != nil {
-				ttlSeconds := int(math.Round(ttlAfterFinished.Seconds()))
+			if len(submitArgs.Image) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Print("\n-i, --image must be set\n\n")
+				os.Exit(1)
+			}
+
+			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			if submitArgs.TtlAfterFinished != nil {
+				ttlSeconds := int(math.Round(submitArgs.TtlAfterFinished.Seconds()))
 				log.Debugf("Using time to live seconds %d", ttlSeconds)
 				submitArgs.TTL = &ttlSeconds
 			}
 
-			if submitArgs.IsJupyter {
+			if raUtil.IsBoolPTrue(submitArgs.IsJupyter) {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
-			err = submitRunaiJob(args, submitArgs, clientset, *runaijobClient, &configValues)
+			err = submitRunaiJob(submitArgs, clientset, *runaijobClient)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
 			printJobInfoIfNeeded(submitArgs)
-			if submitArgs.IsJupyter || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
+			if raUtil.IsBoolPTrue(submitArgs.IsJupyter) || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(submitArgs.Name, submitArgs.Namespace)
 
 				if err != nil {
@@ -116,7 +123,7 @@ func NewRunaiJobCommand() *cobra.Command {
 					os.Exit(1)
 				}
 
-				if submitArgs.IsJupyter {
+				if raUtil.IsBoolPTrue(submitArgs.IsJupyter) {
 					runaiTrainer := trainer.NewRunaiTrainer(*kubeClient)
 					job, err := runaiTrainer.GetTrainingJob(submitArgs.Name, submitArgs.Namespace)
 
@@ -179,6 +186,57 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
+func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kubernetes.Interface) error {
+	templatesHandler := templates.NewTemplates(clientset)
+	var submitTemplateToUse *templates.SubmitTemplate
+
+	adminTemplate, err := templatesHandler.GetDefaultTemplate()
+	if err != nil {
+		return err
+	}
+
+	if templateName != "" {
+		userTemplate, err := templatesHandler.GetTemplate(templateName)
+		if err != nil {
+			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
+		}
+
+		if adminTemplate != nil {
+			mergedTemplate, err := templates.MergeSubmitTemplatesYamls(userTemplate.Values, adminTemplate.Values)
+			if err != nil {
+				return err
+			}
+			submitTemplateToUse = mergedTemplate
+		} else {
+			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
+			if err != nil {
+				return fmt.Errorf("Could not apply template %s: %v", templateName, err)
+			}
+		}
+	} else if adminTemplate != nil {
+		templateToUse, err := templates.GetSubmitTemplateFromYaml(adminTemplate.Values)
+		if err != nil {
+			return err
+		}
+		submitTemplateToUse = templateToUse
+	}
+
+	if submitTemplateToUse != nil {
+		switch submitArgs.(type) {
+		case *submitRunaiJobArgs:
+			err = applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs.(*submitRunaiJobArgs), extraArgs)
+		case *submitMPIJobArgs:
+			err = applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs.(*submitMPIJobArgs), extraArgs)
+		}
+
+		if err != nil {
+			return fmt.Errorf("could not submit job due to: %v", err)
+		}
+	}
+
+	return nil
+}
+
 func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
 	if submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.IsPreemptible != nil && *submitArgs.IsPreemptible {
 		fmt.Println("Warning: Using the preemptible flag may lead to your resources being preempted without notice")
@@ -214,10 +272,11 @@ type submitRunaiJobArgs struct {
 	Completions      *int   `yaml:"completions,omitempty"`
 	Parallelism      *int   `yaml:"parallelism,omitempty"`
 	BackoffLimit     *int   `yaml:"backoffLimit,omitempty"`
-	IsJupyter        bool
+	IsJupyter        *bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
 	IsOldJob         *bool
+	TtlAfterFinished *time.Duration
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -259,13 +318,13 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 	fs := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "External access type to interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
-	fs.BoolVar(&(sa.IsJupyter), "jupyter", false, "Run a Jupyter notebook using a default image and notebook configuration.")
+	flags.AddBoolNullableFlag(fs, &(sa.IsJupyter), "jupyter", "", "Run a Jupyter notebook using a default image and notebook configuration.")
 	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(fs, &(sa.IsPreemptible), "preemptible", "", "Interactive preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
 	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "Number of successful pods required for this job to be completed. Used with HPO.")
 	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "Number of pods to run in parallel at any given time.  Used with HPO.")
 	flags.AddIntNullableFlag(fs, &(sa.BackoffLimit), "backoffLimit", "Number of times the job will be retried before failing. Default 6.")
-	flags.AddDurationNullableFlagP(fs, &(ttlAfterFinished), "ttl-after-finish", "", "The duration, after which a finished job is automatically deleted (e.g. 5s, 2m, 3h).")
+	flags.AddDurationNullableFlagP(fs, &(sa.TtlAfterFinished), "ttl-after-finish", "", "The duration, after which a finished job is automatically deleted (e.g. 5s, 2m, 3h).")
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
 	fs.MarkHidden("old-job")
 
@@ -274,14 +333,14 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset, configValues *string) error {
+func submitRunaiJob(submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface, runaiclientset runaiclientset.Clientset) error {
 	err := verifyHPOFlags(submitArgs)
 	if err != nil {
 		return err
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, *configValues, runaiChart, clientset, dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}

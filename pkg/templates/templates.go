@@ -19,11 +19,10 @@ type Templates struct {
 	clientset kubernetes.Interface
 }
 
-var (
+const (
 	runaiNamespace         = "runai"
 	runaiConfigLabel       = "runai/template"
-	runaiNameLabel         = "runai/name"
-	runaiDefaultAnnotation = "runai/default"
+	runaiDefaultAnnotation = "runai/admin"
 )
 
 func NewTemplates(clientset kubernetes.Interface) Templates {
@@ -43,7 +42,7 @@ func (cg *Templates) ListTemplates() ([]Template, error) {
 
 	log.Debugf("Found %d templates", len(configsList.Items))
 
-	clusterConfigs := []Template{}
+	var clusterConfigs []Template
 
 	for _, config := range configsList.Items {
 		clusterConfig := Template{}

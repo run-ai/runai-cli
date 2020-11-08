@@ -71,13 +71,22 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 			mpijob_chart = path.Join(chartPath, "mpijob")
 
 			clientset := kubeClient.GetClientset()
-			configValues := ""
-			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset, &configValues)
+
+			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
+
+			err = applyTemplate(&submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			err = submitMPIJob(cmd, args, &submitArgs, kubeClient, &configValues)
+
+			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = submitMPIJob(cmd, args, &submitArgs, kubeClient)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -88,7 +97,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	fbg := flags.NewFlagsByGroups(command)
 	submitArgs.addCommonFlags(fbg)
 	fg := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
-	fg.IntVar(&submitArgs.NumberProcesses, "processes", 1, "Number of distributed training processes.")
+	flags.AddIntNullableFlag(fg, &(submitArgs.Processes), "processes", "Number of distributed training processes.")
 	fbg.UpdateFlagsByGroupsToCmd()
 
 	return command
@@ -100,8 +109,9 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	NumberProcesses int `yaml:"numProcesses"` // --workers
-	TotalGPUs       int `yaml:"totalGpus"`    // --workers
+	Processes       *int // --workers
+	NumberProcesses int  `yaml:"numProcesses"` // --workers
+	TotalGPUs       int  `yaml:"totalGpus"`    // --workers
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
@@ -109,7 +119,12 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	submitArgs.TotalGPUs = submitArgs.NumberProcesses * int(*submitArgs.GPU)
+	numberProcesses := 1
+	if submitArgs.Processes != nil {
+		numberProcesses = *submitArgs.Processes
+	}
+	submitArgs.TotalGPUs = numberProcesses * int(*submitArgs.GPU)
+	submitArgs.NumberProcesses = numberProcesses
 	return nil
 }
 
@@ -137,7 +152,7 @@ func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 }
 
 // Submit MPIJob
-func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArgs, client *client.Client, configValues *string) (err error) {
+func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArgs, client *client.Client) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
@@ -155,7 +170,7 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, *configValues, mpijob_chart, client.GetClientset(), dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, mpijob_chart, client.GetClientset(), dryRun)
 	if err != nil {
 		return err
 	}

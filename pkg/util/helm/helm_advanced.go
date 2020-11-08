@@ -98,7 +98,7 @@ func GenerateValueFile(values interface{}) (valueFileName string, err error) {
 * Exec /usr/local/bin/helm, [template -f /tmp/values313606961 --namespace default --name hj /charts/tf-horovod]
 * returns generated template file: templateFileName
  */
-func GenerateHelmTemplate(name string, namespace string, valueFileName string, defaultValuesFile string, chartName string) (templateFileName string, err error) {
+func GenerateHelmTemplate(name string, namespace string, valueFileName string, chartName string) (templateFileName string, err error) {
 	tempName := fmt.Sprintf("%s.yaml", name)
 	templateFile, err := ioutil.TempFile("", tempName)
 	if err != nil {
@@ -125,13 +125,6 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 		return "", err
 	}
 
-	var defaultValuesFileArg string
-	if defaultValuesFile != "" {
-		defaultValuesFileArg = fmt.Sprintf("-f %s", defaultValuesFile)
-	} else {
-		defaultValuesFileArg = ""
-	}
-
 	args := []string{binary, "template"}
 
 	if helmVersion == HELM_3 {
@@ -144,7 +137,7 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 	}
 
 	args = util.AddNamespaceToArgs(args, namespace)
-	args = append(args, chartName, defaultValuesFileArg, "-f", valueFileName, ">", templateFileName)
+	args = append(args, chartName, "-f", valueFileName, ">", templateFileName)
 
 	log.Debugf("Exec bash -c %v", args)
 
