@@ -20,9 +20,9 @@ type Templates struct {
 }
 
 const (
-	runaiNamespace         = "runai"
-	runaiConfigLabel       = "runai/template"
-	runaiDefaultAnnotation = "runai/admin"
+	runaiNamespace    = "runai"
+	runaiConfigLabel  = "runai/template"
+	adminTemplateName = "template-admin"
 )
 
 func NewTemplates(clientset kubernetes.Interface) Templates {
@@ -48,7 +48,7 @@ func (cg *Templates) ListTemplates() ([]Template, error) {
 		clusterConfig := Template{}
 
 		if config.Annotations != nil {
-			clusterConfig.IsAdmin = config.Annotations[runaiDefaultAnnotation] == "true"
+			clusterConfig.IsAdmin = config.Name == adminTemplateName
 		}
 
 		clusterConfig.Name = config.Data["name"]
