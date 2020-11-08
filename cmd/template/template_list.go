@@ -46,8 +46,8 @@ func PrintTemplates(templates []templates.Template) {
 
 	for _, config := range templates {
 		configName := config.Name
-		if config.IsDefault {
-			configName = fmt.Sprintf("%s (default)", config.Name)
+		if config.IsAdmin {
+			configName = fmt.Sprintf("%s (Admin)", config.Name)
 		}
 		ui.Line(w, configName, config.Description)
 	}

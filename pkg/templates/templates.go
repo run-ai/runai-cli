@@ -12,7 +12,7 @@ type Template struct {
 	Name        string
 	Description string
 	Values      string
-	IsDefault   bool
+	IsAdmin     bool
 }
 
 type Templates struct {
@@ -48,7 +48,7 @@ func (cg *Templates) ListTemplates() ([]Template, error) {
 		clusterConfig := Template{}
 
 		if config.Annotations != nil {
-			clusterConfig.IsDefault = config.Annotations[runaiDefaultAnnotation] == "true"
+			clusterConfig.IsAdmin = config.Annotations[runaiDefaultAnnotation] == "true"
 		}
 
 		clusterConfig.Name = config.Data["name"]
@@ -82,7 +82,7 @@ func (cg *Templates) GetDefaultTemplate() (*Template, error) {
 	}
 
 	for _, config := range configs {
-		if config.IsDefault {
+		if config.IsAdmin {
 			return &config, err
 		}
 	}
