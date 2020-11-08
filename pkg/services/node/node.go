@@ -51,7 +51,7 @@ func (d *NodeDescriber) GetAllNodeInfos() ([]NodeInfo, string, error) {
 	var promData prom.MetricResultsByItems
 
 	promClient, promErr := prom.BuildPrometheusClient(d.client)
-	if err == nil {
+	if promErr == nil {
 		promData, promErr = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
 	}
 	if promErr != nil {
