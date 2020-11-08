@@ -6,7 +6,6 @@ import (
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/templates"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -32,7 +31,7 @@ func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submi
 
 func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, extraArgs []string) submitArgs {
 	submitArgs.NameParameter = applyTemplateFieldForString(submitArgs.NameParameter, template.Name, "name")
-	submitArgs.EnvironmentVariable = mergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
+	submitArgs.EnvironmentVariable = templates.MergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
 	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
 	submitArgs.AlwaysPullImage = applyTemplateFieldForBool(submitArgs.AlwaysPullImage, template.AlwaysPullImage, "always-pull-image")
 	submitArgs.Attach = applyTemplateFieldForBool(submitArgs.Attach, template.Attach, "attach")
@@ -75,32 +74,6 @@ func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templat
 	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
 	submitArgs.Processes = applyTemplateFieldForInt(submitArgs.Processes, template.Processes, "processes")
 	return submitArgs
-}
-
-func mergeEnvironmentVariables(cliEnvVars, templateEnvVars *[]string) []string {
-	cliEnvVarMap := make(map[string]bool)
-
-	for _, cliVar := range *cliEnvVars {
-		maybeKeyVal := strings.Split(cliVar, "=")
-		if len(maybeKeyVal) != 2 {
-			continue
-		}
-		key := maybeKeyVal[0]
-		cliEnvVarMap[key] = true
-	}
-
-	for _, templateVar := range *templateEnvVars {
-		maybeKeyVal := strings.Split(templateVar, "=")
-		if len(maybeKeyVal) != 2 {
-			continue
-		}
-		key := maybeKeyVal[0]
-		if !cliEnvVarMap[key] {
-			*cliEnvVars = append(*cliEnvVars, templateVar)
-		}
-	}
-
-	return *cliEnvVars
 }
 
 func mergeBoolFlags(cliFlag, templateFlag *bool) *bool {
