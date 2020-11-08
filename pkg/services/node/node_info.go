@@ -77,7 +77,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Capacity, ni.Node.Status.Capacity)
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )
 	totalGpus := int(util.AllocatableGpuInNode(ni.Node))
-	// check that the totalGpues is set
+	// check that the totalGpus is set
 	if totalGpus > int(nodeResStatus.Capacity.GPUs) {
 		nodeResStatus.FractionalAllocatedGpuUnits = len(util.GetSharedGPUsIndexUsedInPods(ni.Pods))
 		nodeResStatus.Capacity.GPUs = float64(totalGpus)
