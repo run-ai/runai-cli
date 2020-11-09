@@ -221,7 +221,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
 	flagSet.StringArrayVar(&(submitArgs.SpecCommand), oldCommandFlag, []string{}, "Run this command on container start. Use together with --args.")
 	flagSet.MarkHidden(oldCommandFlag)
-	flags.AddBoolNullableFlag(flagSet, &submitArgs.Command, commandFlag, "", "If true and extra arguments are present, use them as the 'command' field in the container, rather than the 'args' field which is the default.")
+	flags.AddBoolNullableFlag(flagSet, &submitArgs.Command, commandFlag, "", "If true, overrides the image's entrypoint with the command supplied after '--'.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LocalImage, "local-image", "", "Use an image stored locally on the machine running the job.")
 	flagSet.MarkDeprecated("local-image", "please use 'image-pull-policy=Never' instead.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.TTY, "tty", "t", "Allocate a TTY for the container.")
