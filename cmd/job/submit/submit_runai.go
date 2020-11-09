@@ -2,13 +2,14 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/templates"
 	"math"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/run-ai/runai-cli/pkg/templates"
 
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -34,7 +35,7 @@ const (
 runai submit --name train1 -i gcr.io/run-ai-demo/quickstart -g 1
 
 # Start an interactive job.
-runai submit --name build1 -i python -g 1 --interactive --attach
+runai submit --name build1 -i ubuntu -g 1 --interactive --attach
 
 # Use GPU Fractions
 runai submit --name frac05 -i gcr.io/run-ai-demo/quickstart -g 0.5
