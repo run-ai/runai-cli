@@ -45,8 +45,6 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		submitArgs submitMPIJobArgs
 	)
 
-	submitArgs.Mode = "mpijob"
-
 	var command = &cobra.Command{
 		Use:     SubmitMpiCommand + " [NAME]",
 		Short:   "Submit a new MPI job.",
@@ -136,16 +134,6 @@ func (submitArgs submitMPIJobArgs) check() error {
 	}
 
 	return nil
-}
-
-// add k8s nodes labels
-func (submitArgs *submitMPIJobArgs) addMPINodeSelectors() {
-	submitArgs.addNodeSelectors()
-}
-
-// add k8s tolerations for taints
-func (submitArgs *submitMPIJobArgs) addMPITolerations() {
-	submitArgs.addTolerations()
 }
 
 // Submit MPIJob

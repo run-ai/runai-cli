@@ -269,7 +269,6 @@ type submitRunaiJobArgs struct {
 	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
 	ServiceType      string `yaml:"serviceType,omitempty"`
 	Elastic          *bool  `yaml:"elastic,omitempty"`
-	NumberProcesses  int    `yaml:"numProcesses"` // --workers
 	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Completions      *int   `yaml:"completions,omitempty"`
 	Parallelism      *int   `yaml:"parallelism,omitempty"`

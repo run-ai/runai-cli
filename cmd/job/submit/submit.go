@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os/user"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -53,45 +52,17 @@ const (
 )
 
 var (
-	dryRun bool
-
-	envs         []string
-	selectors    []string
-	tolerations  []string
-	dataset      []string
-	dataDirs     []string
-	annotations  []string
+	dryRun       bool
 	templateName string
 )
 
 // The common parts of the submitAthd
 type submitArgs struct {
-	// Name       string   `yaml:"name"`       // --name
-	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
-	Tolerations   []string          `yaml:"tolerations"`   // --toleration
-	Image         string            `yaml:"image"`         // --image
-	Envs          map[string]string `yaml:"envs"`          // --envs
-	// for horovod
-	Mode string `yaml:"mode"`
-	// --mode
-	// SSHPort     int               `yaml:"sshPort"`  // --sshPort
-	Retry int `yaml:"retry"` // --retry
-	// DataDir  string            `yaml:"dataDir"`  // --dataDir
-	DataSet  map[string]string `yaml:"dataset"`
-	DataDirs []dataDirVolume   `yaml:"dataDirs"`
-
-	EnableRDMA bool `yaml:"enableRDMA"` // --rdma
-	UseENI     bool `yaml:"useENI"`
-
-	Annotations        map[string]string `yaml:"annotations"`
-	NameParameter      string
-	IsNonRoot          bool                      `yaml:"isNonRoot"`
-	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
-	Project            string                    `yaml:"project,omitempty"`
-	Interactive        *bool                     `yaml:"interactive,omitempty"`
-	User               string                    `yaml:"user,omitempty"`
-	PriorityClassName  string                    `yaml:"priorityClassName"`
-	// Name       string   `yaml:"name"`       // --name
+	Image               string `yaml:"image"`
+	NameParameter       string
+	Project             string `yaml:"project,omitempty"`
+	Interactive         *bool  `yaml:"interactive,omitempty"`
+	User                string `yaml:"user,omitempty"`
 	Name                string
 	Namespace           string
 	GPU                 *float64 `yaml:"gpu,omitempty"`
@@ -131,19 +102,6 @@ type submitArgs struct {
 	generateSuffix             bool
 }
 
-type dataDirVolume struct {
-	HostPath      string `yaml:"hostPath"`
-	ContainerPath string `yaml:"containerPath"`
-	Name          string `yaml:"name"`
-}
-
-type limitedPodSecurityContext struct {
-	RunAsUser          int64   `yaml:"runAsUser"`
-	RunAsNonRoot       bool    `yaml:"runAsNonRoot"`
-	RunAsGroup         int64   `yaml:"runAsGroup"`
-	SupplementalGroups []int64 `yaml:"supplementalGroups"`
-}
-
 func (s submitArgs) check() error {
 	if s.Name == "" {
 		return fmt.Errorf("--name must be set")
@@ -155,41 +113,7 @@ func (s submitArgs) check() error {
 		return err
 	}
 
-	if s.PriorityClassName != "" {
-		err = util.ValidatePriorityClassName(s.PriorityClassName)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
-}
-
-// get node selectors
-func (submitArgs *submitArgs) addNodeSelectors() {
-	log.Debugf("node selectors: %v", selectors)
-	if len(selectors) == 0 {
-		submitArgs.NodeSelectors = map[string]string{}
-		return
-	}
-	submitArgs.NodeSelectors = transformSliceToMap(selectors, "=")
-}
-
-// get tolerations labels
-func (submitArgs *submitArgs) addTolerations() {
-	log.Debugf("tolerations: %v", tolerations)
-	if len(tolerations) == 0 {
-		submitArgs.Tolerations = []string{}
-		return
-	}
-	submitArgs.Tolerations = []string{}
-	for _, taintKey := range tolerations {
-		if taintKey == "all" {
-			submitArgs.Tolerations = []string{"all"}
-			return
-		}
-		submitArgs.Tolerations = append(submitArgs.Tolerations, taintKey)
-	}
 }
 
 func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
@@ -355,18 +279,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return err
 	}
 	return nil
-}
-
-func transformSliceToMap(sets []string, split string) (valuesMap map[string]string) {
-	valuesMap = map[string]string{}
-	for _, member := range sets {
-		splits := strings.SplitN(member, split, 2)
-		if len(splits) == 2 {
-			valuesMap[splits[0]] = splits[1]
-		}
-	}
-
-	return valuesMap
 }
 
 func getJobIndex(clientset kubernetes.Interface) (string, error) {
