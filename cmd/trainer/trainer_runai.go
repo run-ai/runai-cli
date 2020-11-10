@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/run-ai/runai-cli/cmd/constants"
 	clientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	"github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/scheme"
-	"github.com/run-ai/runai-cli/cmd/constants"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
@@ -234,7 +234,42 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 
 	jobType := rt.getJobType(&podSpecJob)
 	status := getTrainingStatus(podSpecJob.ObjectMeta.Annotations, lastCreatedPod, podSpecJob.ExtraStatus)
-	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runaijob", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
+	serviceUrls, err := rt.getServiceUrlsByLastCreatedPod(lastCreatedPod, namespace)
+	if err != nil {
+		return nil, err
+	}
+	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runaijob", serviceUrls, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
+}
+
+func (rt *RunaiTrainer) getServiceUrlsByLastCreatedPod(lastCreatedPod *v1.Pod, namespace string) ([]string, error) {
+	services, err := rt.getServicesInNamespace(namespace)
+	if err != nil {
+		return []string{}, err
+	}
+
+	nodeIp, err := rt.getNodeIp()
+	if err != nil {
+		return []string{}, err
+	}
+
+	ingressService, err := rt.getIngressService()
+	if err != nil {
+		return []string{}, err
+	}
+
+	ingresses, err := rt.getIngressesForNamespace(namespace)
+	if err != nil {
+		return []string{}, err
+	}
+
+	serviceUrls := []string{}
+	if lastCreatedPod != nil {
+		serviceOfPod := getServiceOfPod(services, lastCreatedPod)
+		if serviceOfPod != nil {
+			serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
+		}
+	}
+	return serviceUrls, nil
 }
 
 func (rt *RunaiTrainer) isRunaiPodObject(metadata metav1.ObjectMeta, template v1.PodTemplateSpec) bool {
@@ -287,29 +322,6 @@ func (rt *RunaiTrainer) IsEnabled() bool {
 
 func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error) {
 	runaiJobs := []TrainingJob{}
-	services, err := rt.getServicesInNamespace(namespace)
-
-	if err != nil {
-		return nil, err
-	}
-
-	nodeIp, err := rt.getNodeIp()
-
-	if err != nil {
-		return nil, err
-	}
-
-	ingressService, err := rt.getIngressService()
-
-	if err != nil {
-		return nil, err
-	}
-
-	ingresses, err := rt.getIngressesForNamespace(namespace)
-
-	if err != nil {
-		return nil, err
-	}
 
 	// Get all pods running with runai scheduler
 	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
@@ -428,13 +440,11 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	for _, jobInfo := range jobPodMap {
 		lastCreatedPod := getLastCreatedPod(jobInfo.pods)
 
-		serviceUrls := []string{}
-		if lastCreatedPod != nil {
-			serviceOfPod := getServiceOfPod(services, lastCreatedPod)
-			if serviceOfPod != nil {
-				serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
-			}
+		serviceUrls, err := rt.getServiceUrlsByLastCreatedPod(lastCreatedPod, namespace)
+		if err != nil {
+			return nil, err
 		}
+
 		jobInfo.status = getTrainingStatus(jobInfo.ObjectMeta.Annotations, lastCreatedPod, jobInfo.status)
 		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, jobInfo.status, jobInfo.parallelism, jobInfo.completions, jobInfo.failed, jobInfo.succeeded))
 	}
@@ -512,7 +522,7 @@ func getServiceEndpoints(nodeIp string, service v1.Service) (urls []string) {
 			} else if port.Port == 443 {
 				url = fmt.Sprintf("https://%s", serviceHostOrIP)
 			} else {
-				url = fmt.Sprintf("http://%s:%d", serviceHostOrIP, port.Port)
+				url = fmt.Sprintf("%s:%d", serviceHostOrIP, port.Port)
 			}
 			urls = append(urls, url)
 		}
@@ -520,7 +530,7 @@ func getServiceEndpoints(nodeIp string, service v1.Service) (urls []string) {
 		urls = []string{"<pending>"}
 	} else if service.Spec.Type == v1.ServiceTypeNodePort {
 		for _, port := range service.Spec.Ports {
-			urls = append(urls, fmt.Sprintf("http://%s:%d", nodeIp, port.NodePort))
+			urls = append(urls, fmt.Sprintf("%s:%d", nodeIp, port.NodePort))
 		}
 	}
 	return urls
