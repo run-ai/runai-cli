@@ -4,10 +4,10 @@ import (
 	"fmt"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/types"
+	"io/ioutil"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
 	"strconv"
-
-	"io/ioutil"
 
 	"github.com/run-ai/runai-cli/pkg/util/helm"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
@@ -142,6 +142,10 @@ func submitConfigMap(name, namespace string, generateSuffix bool, clientset kube
 	configMap, err := createEmptyConfigMap(maybeConfigMapName, name, namespace, 0, clientset)
 	if err == nil {
 		return configMap, nil
+	}
+
+	if apiErr, ok := err.(*errors.StatusError); ok && (apiErr.ErrStatus.Code == 403 || apiErr.ErrStatus.Code == 401) {
+		return nil, err
 	}
 
 	if !generateSuffix {
