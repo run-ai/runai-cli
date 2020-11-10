@@ -322,29 +322,6 @@ func (rt *RunaiTrainer) IsEnabled() bool {
 
 func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error) {
 	runaiJobs := []TrainingJob{}
-	services, err := rt.getServicesInNamespace(namespace)
-
-	if err != nil {
-		return nil, err
-	}
-
-	nodeIp, err := rt.getNodeIp()
-
-	if err != nil {
-		return nil, err
-	}
-
-	ingressService, err := rt.getIngressService()
-
-	if err != nil {
-		return nil, err
-	}
-
-	ingresses, err := rt.getIngressesForNamespace(namespace)
-
-	if err != nil {
-		return nil, err
-	}
 
 	// Get all pods running with runai scheduler
 	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
@@ -463,13 +440,11 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	for _, jobInfo := range jobPodMap {
 		lastCreatedPod := getLastCreatedPod(jobInfo.pods)
 
-		serviceUrls := []string{}
-		if lastCreatedPod != nil {
-			serviceOfPod := getServiceOfPod(services, lastCreatedPod)
-			if serviceOfPod != nil {
-				serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
-			}
+		serviceUrls, err := rt.getServiceUrlsByLastCreatedPod(lastCreatedPod, namespace)
+		if err != nil {
+			return nil, err
 		}
+
 		jobInfo.status = getTrainingStatus(jobInfo.ObjectMeta.Annotations, lastCreatedPod, jobInfo.status)
 		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, jobInfo.status, jobInfo.parallelism, jobInfo.completions, jobInfo.failed, jobInfo.succeeded))
 	}
@@ -540,7 +515,6 @@ func getExternalIPFromAnnotationHack(nodesList *v1.NodeList) string {
 func getServiceEndpoints(nodeIp string, service v1.Service) (urls []string) {
 	if service.Status.LoadBalancer.Ingress != nil && len(service.Status.LoadBalancer.Ingress) != 0 {
 		for _, port := range service.Spec.Ports {
-			fmt.Println(port)
 			serviceHostOrIP := ingressHostOrIP(service)
 			var url string
 			if port.Port == 80 {
