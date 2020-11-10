@@ -44,7 +44,7 @@ spec:
       protocol: 'TCP'
       port: {{ $parts._0 }}
       targetPort: {{ $targetPort }}
-      {{ if eq $.Values.serviceType "nodeport" }}
+      {{ if and (eq $.Values.serviceType "nodeport") (eq (len $parts) 2) }}
       nodePort: {{ $parts._0 }}
       {{ end }}
       {{- end}}
