@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/run-ai/runai-cli/cmd/constants"
 	clientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	"github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/scheme"
-	"github.com/run-ai/runai-cli/cmd/constants"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
@@ -505,6 +505,7 @@ func getExternalIPFromAnnotationHack(nodesList *v1.NodeList) string {
 func getServiceEndpoints(nodeIp string, service v1.Service) (urls []string) {
 	if service.Status.LoadBalancer.Ingress != nil && len(service.Status.LoadBalancer.Ingress) != 0 {
 		for _, port := range service.Spec.Ports {
+			fmt.Println(port)
 			serviceHostOrIP := ingressHostOrIP(service)
 			var url string
 			if port.Port == 80 {
@@ -512,7 +513,7 @@ func getServiceEndpoints(nodeIp string, service v1.Service) (urls []string) {
 			} else if port.Port == 443 {
 				url = fmt.Sprintf("https://%s", serviceHostOrIP)
 			} else {
-				url = fmt.Sprintf("http://%s:%d", serviceHostOrIP, port.Port)
+				url = fmt.Sprintf("%s:%d", serviceHostOrIP, port.Port)
 			}
 			urls = append(urls, url)
 		}
@@ -520,7 +521,7 @@ func getServiceEndpoints(nodeIp string, service v1.Service) (urls []string) {
 		urls = []string{"<pending>"}
 	} else if service.Spec.Type == v1.ServiceTypeNodePort {
 		for _, port := range service.Spec.Ports {
-			urls = append(urls, fmt.Sprintf("http://%s:%d", nodeIp, port.NodePort))
+			urls = append(urls, fmt.Sprintf("%s:%d", nodeIp, port.NodePort))
 		}
 	}
 	return urls
