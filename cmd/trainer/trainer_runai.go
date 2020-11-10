@@ -234,7 +234,42 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 
 	jobType := rt.getJobType(&podSpecJob)
 	status := getTrainingStatus(podSpecJob.ObjectMeta.Annotations, lastCreatedPod, podSpecJob.ExtraStatus)
-	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runaijob", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
+	serviceUrls, err := rt.getServiceUrlsByLastCreatedPod(lastCreatedPod, namespace)
+	if err != nil {
+		return nil, err
+	}
+	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runaijob", serviceUrls, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
+}
+
+func (rt *RunaiTrainer) getServiceUrlsByLastCreatedPod(lastCreatedPod *v1.Pod, namespace string) ([]string, error) {
+	services, err := rt.getServicesInNamespace(namespace)
+	if err != nil {
+		return []string{}, err
+	}
+
+	nodeIp, err := rt.getNodeIp()
+	if err != nil {
+		return []string{}, err
+	}
+
+	ingressService, err := rt.getIngressService()
+	if err != nil {
+		return []string{}, err
+	}
+
+	ingresses, err := rt.getIngressesForNamespace(namespace)
+	if err != nil {
+		return []string{}, err
+	}
+
+	serviceUrls := []string{}
+	if lastCreatedPod != nil {
+		serviceOfPod := getServiceOfPod(services, lastCreatedPod)
+		if serviceOfPod != nil {
+			serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
+		}
+	}
+	return serviceUrls, nil
 }
 
 func (rt *RunaiTrainer) isRunaiPodObject(metadata metav1.ObjectMeta, template v1.PodTemplateSpec) bool {
