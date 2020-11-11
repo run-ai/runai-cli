@@ -152,9 +152,18 @@ spec:
               value: {{ quote $parts._1}}
             {{- end }}
             {{- range $index, $env := .Values.environment }}
-            {{ $parts := split "=" $env }}
-            - name: {{ quote $parts._0 }}
-              value: {{ quote $parts._1}}
+            {{ $envparts := split "=" $env }}
+            - name: {{ quote $envparts._0 }}
+              {{ $envsecretparts := split ":" $envparts._1 }}
+              {{- if eq $envsecretparts._0 "SECRET" }}
+              {{ $envsecretdataparts := split "," $envsecretparts._1 }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ quote $envsecretdataparts._0 }}
+                  key: {{ quote $envsecretdataparts._1 }}
+              {{ else }}
+              value: {{ quote $envparts._1 }}
+              {{- end }}
             {{- end }}
           {{- include "runai-common.job.ports" . | indent 10 }}
           {{- include "runai-common.job.volume.mounts" . | indent 10 }}
