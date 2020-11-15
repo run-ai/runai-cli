@@ -18,7 +18,7 @@ jobs:
         command: |
           ./test.sh
     - slack/status:
-      fail_only: true
+        fail_only: true
   build:
     executor: runai-executor
     steps:
@@ -59,7 +59,7 @@ jobs:
           - "/go/pkg/mod"
           - "/root/.cache/go-build"
     - slack/status:
-      fail_only: true
+        fail_only: true
 
   push:
     executor: runai-executor
