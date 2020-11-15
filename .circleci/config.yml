@@ -15,6 +15,8 @@ jobs:
         name: run test
         command: |
           ./test.sh
+    - slack/status:
+        fail_only: true
   build:
     executor: runai-executor
     steps:
@@ -54,6 +56,8 @@ jobs:
         paths:
           - "/go/pkg/mod"
           - "/root/.cache/go-build"
+    - slack/status:
+        fail_only: true
 
   push:
     executor: runai-executor
@@ -104,6 +108,7 @@ jobs:
           name: upload-version
           command: |
             hub release edit -a darwin/runai-cli-<<pipeline.git.tag>>-darwin-amd64.tar.gz#runai-cli-<<pipeline.git.tag>>-darwin-amd64.tar.gz -a linux/runai-cli-<<pipeline.git.tag>>-linux-amd64.tar.gz#runai-cli-<<pipeline.git.tag>>-linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
+    
 
 
 workflows:
