@@ -2,11 +2,10 @@ package trainer
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/run-ai/runai-cli/cmd/constants"
 	clientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	"github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/scheme"
+	"strings"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
@@ -321,6 +320,26 @@ func (rt *RunaiTrainer) IsEnabled() bool {
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error) {
+	services, err := rt.getServicesInNamespace(namespace)
+	if err != nil {
+		return []TrainingJob{}, err
+	}
+
+	nodeIp, err := rt.getNodeIp()
+	if err != nil {
+		return []TrainingJob{}, err
+	}
+
+	ingressService, err := rt.getIngressService()
+	if err != nil {
+		return []TrainingJob{}, err
+	}
+
+	ingresses, err := rt.getIngressesForNamespace(namespace)
+	if err != nil {
+		return []TrainingJob{}, err
+	}
+
 	runaiJobs := []TrainingJob{}
 
 	// Get all pods running with runai scheduler
@@ -440,9 +459,12 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	for _, jobInfo := range jobPodMap {
 		lastCreatedPod := getLastCreatedPod(jobInfo.pods)
 
-		serviceUrls, err := rt.getServiceUrlsByLastCreatedPod(lastCreatedPod, namespace)
-		if err != nil {
-			return nil, err
+		serviceUrls := []string{}
+		if lastCreatedPod != nil {
+			serviceOfPod := getServiceOfPod(services, lastCreatedPod)
+			if serviceOfPod != nil {
+				serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
+			}
 		}
 
 		jobInfo.status = getTrainingStatus(jobInfo.ObjectMeta.Annotations, lastCreatedPod, jobInfo.status)
