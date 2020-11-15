@@ -5,8 +5,6 @@ executors:
     working_directory: /go/src/github.com/run-ai/runai-cli
 
 version: 2.1
-orbs:
-  slack: circleci/slack@3.4.2
 jobs:
   test:
     executor: runai-executor
@@ -16,8 +14,6 @@ jobs:
         name: run test
         command: |
           ./test.sh
-    - slack/status:
-        fail_only: true
   build:
     executor: runai-executor
     steps:
@@ -57,13 +53,6 @@ jobs:
         paths:
           - "/go/pkg/mod"
           - "/root/.cache/go-build"
-    - slack/notify:
-        color: "#42e2f4"
-        mentions: "yemiwebby,"
-        message: A custom message to notify the channel about the latest build
-    - slack/status:
-        fail_only: true
-        mentions: "yemiwebby"
 
   push:
     executor: runai-executor
