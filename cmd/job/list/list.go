@@ -63,6 +63,7 @@ func NewListCommand() *cobra.Command {
 			}
 
 			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
+
 			jobs := []trainer.TrainingJob{}
 			trainers := trainer.NewTrainers(kubeClient)
 			for _, trainer := range trainers {
