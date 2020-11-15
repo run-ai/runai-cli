@@ -18,7 +18,7 @@ jobs:
         command: |
           ./test.sh
     - slack/status:
-        fail_only: true
+        only_for_branches: master
   build:
     executor: runai-executor
     steps:
@@ -60,6 +60,7 @@ jobs:
           - "/root/.cache/go-build"
     - slack/status:
         fail_only: true
+        only_for_branches: master
 
   push:
     executor: runai-executor
