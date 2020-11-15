@@ -16,7 +16,8 @@ jobs:
         name: run test
         command: |
           ./test.sh
-    - slack/status
+    - slack/status:
+        only_for_branches: omer/args-command
   build:
     executor: runai-executor
     steps:
