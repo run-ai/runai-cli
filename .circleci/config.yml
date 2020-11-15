@@ -5,6 +5,8 @@ executors:
     working_directory: /go/src/github.com/run-ai/runai-cli
 
 version: 2.1
+orbs:
+  slack: circleci/slack@3.4.2
 jobs:
   test:
     executor: runai-executor
@@ -14,6 +16,7 @@ jobs:
         name: run test
         command: |
           ./test.sh
+    - slack/status
   build:
     executor: runai-executor
     steps:
