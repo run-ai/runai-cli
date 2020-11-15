@@ -95,14 +95,7 @@ func NewCommand() *cobra.Command {
 func addKubectlFlagsToCmd(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP(flags.ProjectFlag, "p", "", "Specify the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
 }
-
-func createNamespace(client *kubernetes.Clientset, namespace string) error {
-	ns := &v1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
-		},
-	}
-	_, err := client.CoreV1().Namespaces().Create(ns)
+paces().Create(ns)
 	return err
 }
 
