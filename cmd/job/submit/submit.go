@@ -136,7 +136,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&submitArgs.NamePrefix, "job-name-prefix", "", "Set defined prefix for the job name and add index as suffix")
 
 	flagSet = fbg.GetOrAddFlagSet(ContainerDefinitionFlagGroup)
-	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "the policy of image pull, set by default to \"Always\".")
+	flagSet.StringVar(&(submitArgs.ImagePullPolicy), "image-pull-policy", "Always", "set image pull policy: always, ifNotPresent or never.")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	flagSet.MarkDeprecated("always-pull-image", "please use 'image-pull-policy=Always' instead.")
 	flagSet.StringArrayVar(&(submitArgs.SpecArgs), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
