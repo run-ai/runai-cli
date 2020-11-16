@@ -179,8 +179,8 @@ func newListProjectsCommand_DEPRECATED() *cobra.Command {
 func NewListProjectCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:     "project",
-		Aliases: []string{"projects"},
+		Use:     "projects",
+		Aliases: []string{"project"},
 		Short:   "List all available projects",
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}

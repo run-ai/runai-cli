@@ -41,8 +41,8 @@ const jobInvalidStateOnCreationTimeInSeconds = 10
 func NewListJobCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
-		Use:     "job",
-		Aliases: []string{"jobs"},
+		Use:     "jobs",
+		Aliases: []string{"job"},
 		Short:   "List all jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
 			RunJobList(cmd, args, allNamespaces)

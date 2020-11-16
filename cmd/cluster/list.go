@@ -62,8 +62,8 @@ func newListClustersCommand_DEPRECATED() *cobra.Command {
 func NewListClusterCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:     "cluster",
-		Aliases: []string{"clusters"},
+		Use:     "clusters",
+		Aliases: []string{"cluster"},
 		Short:   "List all avaliable clusters",
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}

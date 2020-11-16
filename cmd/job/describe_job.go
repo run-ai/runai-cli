@@ -1,6 +1,5 @@
 package job
 
-
 import (
 	"encoding/json"
 	"fmt"
@@ -12,21 +11,20 @@ import (
 	"text/tabwriter"
 	"time"
 
-	tens "github.com/run-ai/runai-cli/cmd/tensorboard"
-	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	"github.com/run-ai/runai-cli/cmd/constants"
-	"github.com/run-ai/runai-cli/cmd/trainer"
-	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/util"
 	"github.com/run-ai/runai-cli/cmd/flags"
+	tens "github.com/run-ai/runai-cli/cmd/tensorboard"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 
-	
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -43,9 +41,7 @@ type PrintArgs struct {
 	Output     string
 }
 
-
-func RunDescribeJob_DEPRECATED(cmd *cobra.Command,printArgs PrintArgs, name string)  {
-	
+func RunDescribeJob_DEPRECATED(cmd *cobra.Command, printArgs PrintArgs, name string) {
 
 	kubeClient, err := client.GetClient()
 	if err != nil {
@@ -69,13 +65,12 @@ func RunDescribeJob_DEPRECATED(cmd *cobra.Command,printArgs PrintArgs, name stri
 	printTrainingJob(clientset, job, printArgs)
 }
 
-
 func NewDescribeJobCommand() *cobra.Command {
 	printArgs := PrintArgs{}
 	var command = &cobra.Command{
-		Use:   "job JOB_NAME",
-		Aliases: []string{"jobs"},
-		Short: "Display details of a job.",
+		Use:     "jobs JOB_NAME",
+		Aliases: []string{"job"},
+		Short:   "Display details of a job.",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			if len(args) == 0 {
@@ -113,7 +108,6 @@ func NewDescribeJobCommand() *cobra.Command {
 	command.Flags().MarkDeprecated("events", "default is true")
 	return command
 }
-
 
 /*
 * search the training job with name and training type
@@ -419,12 +413,10 @@ func getSortedEvents(items []v1.Event, resources []types.Resource, podGroupName 
 	return eventAndNames
 }
 
-
-
 /*
 * get App Configs by name, which is created by arena
  */
- func GetTrainingTypes(name, namespace string, clientset kubernetes.Interface) (cms []string, err error) {
+func GetTrainingTypes(name, namespace string, clientset kubernetes.Interface) (cms []string, err error) {
 	configMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return []string{}, err

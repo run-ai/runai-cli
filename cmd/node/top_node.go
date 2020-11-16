@@ -63,8 +63,8 @@ var (
 func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:     "node [...NODE_NAME]",
-		Aliases: []string{"nodes"},
+		Use:     "nodes [...NODE_NAME]",
+		Aliases: []string{"node"},
 		Short:   "Display information about nodes in the cluster.",
 		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {

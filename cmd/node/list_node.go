@@ -38,8 +38,8 @@ var (
 func NewListNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:     "node [...NODE_NAME]",
-		Aliases: []string{"nodes"},
+		Use:     "nodes [...NODE_NAME]",
+		Aliases: []string{"node"},
 		Short:   "List all nodes.",
 		Example: listNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
