@@ -45,7 +45,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 }
 
 func newListClustersCommand_DEPRECATED() *cobra.Command {
-	deprecationMessage := "DEPRECATED! use instead > runai list cluster."
+	deprecationMessage := "Command has been deprecated, use: runai list cluster."
 
 	var command = &cobra.Command{
 		Use:   "list",

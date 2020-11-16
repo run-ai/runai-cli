@@ -162,7 +162,7 @@ func printProjects(infos []*ProjectInfo) {
 
 func newListProjectsCommand_DEPRECATED() *cobra.Command {
 
-	deprecationMessage := "DEPRECATED! use instead > runai list project."
+	deprecationMessage := "Command has been deprecated, use: runai list project."
 
 	var command = &cobra.Command{
 		Use:   "list",
