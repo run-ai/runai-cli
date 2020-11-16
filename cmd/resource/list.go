@@ -40,7 +40,6 @@ func NewListCommand() *cobra.Command {
 	}
 
 	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list jobs from all projects")
-	command.Flags().MarkDeprecated("all-projects", "please use 'runai list jobs -A' instead.")
 
 	// create subcommands
 	command.AddCommand(node.NewListNodeCommand())
