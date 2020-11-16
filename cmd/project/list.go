@@ -166,7 +166,7 @@ func newListProjectsCommand_DEPRECATED() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: fmt.Sprint("List all avaliable projects. ", deprecationMessage),
+		Short: fmt.Sprint("List all available projects. ", deprecationMessage),
 		Run: commandUtil.WrapRunCommand(func(cmd *cobra.Command, args []string) error {
 			fmt.Print("\n", deprecationMessage, "\n\n")
 			return runListCommand(cmd, args)
@@ -181,7 +181,7 @@ func NewListProjectCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:     "project",
 		Aliases: []string{"projects"},
-		Short:   "List all avaliable projects",
+		Short:   "List all available projects",
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 

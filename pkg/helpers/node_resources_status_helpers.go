@@ -12,15 +12,15 @@ type NodeResourcesStatusConvertor types.NodeResourcesStatus
 func (c *NodeResourcesStatusConvertor) ToCpus() *types.NodeCPUResource {
 	nrs := (*types.NodeResourcesStatus)(c)
 	capacity := int(nrs.Capacity.CPUs) / 1000
+	if capacity == 0 {
+		return nil
+	}
 	result := types.NodeCPUResource{
 		Capacity:    capacity,
 		Allocatable: nrs.Allocatable.CPUs / 1000,
 		Allocated:   nrs.Requested.CPUs / 1000,
-		Usage: 		 nrs.Usage.CPUs / 100 * float64(capacity),
+		Usage:       nrs.Usage.CPUs / 100 * float64(capacity),
 		Utilization: nrs.Usage.CPUs,
-	}
-	if result.Capacity == 0 {
-		return nil
 	}
 	return &result
 }
@@ -28,25 +28,29 @@ func (c *NodeResourcesStatusConvertor) ToCpus() *types.NodeCPUResource {
 func (c *NodeResourcesStatusConvertor) ToGpus() *types.NodeGPUResource {
 	nrs := (*types.NodeResourcesStatus)(c)
 	capacity := int(nrs.Capacity.GPUs)
+	if capacity == 0 {
+		return nil
+	}
 	result := types.NodeGPUResource{
 		Capacity:    capacity,
 		Allocatable: nrs.Allocatable.GPUs,
 		Unhealthy:   int(nrs.Capacity.GPUs) - int(nrs.Allocatable.GPUs),
 		Allocated:   nrs.Allocated.GPUs,
-		Usage: 		 nrs.Usage.GPUs / 100 * float64(capacity),
+		Usage:       nrs.Usage.GPUs / 100 * float64(capacity),
 		Utilization: nrs.Usage.GPUs,
 		InUse:       nrs.GPUsInUse,
 		Free:        int(nrs.Capacity.GPUs) - nrs.GPUsInUse,
 	}
-	if result.Capacity == 0 {
-		return nil
-	}
+
 	return &result
 }
 
 func (c *NodeResourcesStatusConvertor) ToMemory() *types.NodeMemoryResource {
 	nrs := (*types.NodeResourcesStatus)(c)
 	usageAndUtilization, util := MemoryUsageAndUtilization(nrs.Usage.Memory, nrs.Capacity.Memory)
+	if nrs.Capacity.Memory == 0 {
+		return nil
+	}
 	result := types.NodeMemoryResource{
 		Capacity:            nrs.Capacity.Memory,
 		Allocatable:         nrs.Allocatable.Memory,
@@ -55,15 +59,15 @@ func (c *NodeResourcesStatusConvertor) ToMemory() *types.NodeMemoryResource {
 		Utilization:         util,
 		UsageAndUtilization: usageAndUtilization,
 	}
-	if result.Capacity == 0 {
-		return nil
-	}
 	return &result
 }
 
 func (c *NodeResourcesStatusConvertor) ToGpuMemory() *types.NodeMemoryResource {
 	nrs := (*types.NodeResourcesStatus)(c)
 	usageAndUtilization, util := MemoryUsageAndUtilization(nrs.Usage.GPUMemory, nrs.Capacity.GPUMemory)
+	if nrs.Capacity.GPUMemory == 0 {
+		return nil
+	}
 	result := types.NodeMemoryResource{
 		Capacity:            nrs.Capacity.GPUMemory,
 		Allocatable:         nrs.Allocatable.GPUMemory,
@@ -71,9 +75,7 @@ func (c *NodeResourcesStatusConvertor) ToGpuMemory() *types.NodeMemoryResource {
 		Utilization:         util,
 		UsageAndUtilization: usageAndUtilization,
 	}
-	if result.Capacity == 0 {
-		return nil
-	}
+
 	return &result
 }
 

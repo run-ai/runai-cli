@@ -1,7 +1,5 @@
 package types
 
-
-
 type NodeStatus string
 
 const (

@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/cmd/exec"
+	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"

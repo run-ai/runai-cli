@@ -1,12 +1,11 @@
 package resource
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/run-ai/runai-cli/cmd/node"
-	"github.com/run-ai/runai-cli/cmd/job"
-	"github.com/run-ai/runai-cli/cmd/project"
 	"github.com/run-ai/runai-cli/cmd/cluster"
-
+	"github.com/run-ai/runai-cli/cmd/job"
+	"github.com/run-ai/runai-cli/cmd/node"
+	"github.com/run-ai/runai-cli/cmd/project"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -28,20 +27,20 @@ runai list cluster
 `
 )
 
-
 func NewListCommand() *cobra.Command {
 	var allNamespaces bool
 
 	var command = &cobra.Command{
-		Use:   "list",
-		Short: "Display resource list. By default displays the job list.",
+		Use:     "list",
+		Short:   "Display resource list. By default displays the job list.",
 		Example: listExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			job.RunJobList(cmd, args, false)
 		},
 	}
 
-	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list from all projects")
+	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list jobs from all projects")
+	command.Flags().MarkDeprecated("all-projects", "please use 'runai list jobs -A' instead.")
 
 	// create subcommands
 	command.AddCommand(node.NewListNodeCommand())

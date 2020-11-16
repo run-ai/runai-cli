@@ -21,7 +21,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/pkg/helpers"
-	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
+	"github.com/run-ai/runai-cli/pkg/nodes"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/ui"
 
@@ -53,7 +53,7 @@ var (
 		"GPUMem.Utilization",
 	})
 
-	topNodeHiddenGpuUnitFields = ui.EnsureStringPaths(types.GPU{}, []string{
+	topNodeHiddenGpusFields = ui.EnsureStringPaths(types.GPU{}, []string{
 		"Allocated",
 		"MemoryUsage",
 		"MemoryUtilization",
@@ -69,14 +69,13 @@ func NewTopNodeCommand() *cobra.Command {
 		Args:    cobra.RangeArgs(0, 1),
 		Run: func(cmd *cobra.Command, args []string) {
 
-			nodeInfos, err := getNodeInfos()
+			nodeInfos, err := getNodeInfos(true)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
 			handleTopSpecificNodes(nodeInfos, showDetails, args...)
-
 		},
 	}
 
@@ -84,20 +83,20 @@ func NewTopNodeCommand() *cobra.Command {
 	return command
 }
 
-func handleTopSpecificNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, selectedNodeNames ...string) {
+func handleTopSpecificNodes(nodeInfos *[]nodes.NodeInfo, wide bool, selectedNodeNames ...string) {
 
-	handleSpecificNodes(nodeInfos, func(nodeInfos *[]nodeService.NodeInfo) {
+	handleSpecificNodes(nodeInfos, func(nodeInfos *[]nodes.NodeInfo) {
 		displayTopNodes(nodeInfos, wide, len(selectedNodeNames) == 0)
 	}, selectedNodeNames...)
 
 }
 
-func displayTopNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, showClusterData bool) {
+func displayTopNodes(nodeInfos *[]nodes.NodeInfo, wide bool, showClusterData bool) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	clsData := types.ClusterNodesView{}
 	nodeViews := []types.NodeView{}
-	nodesGpuUnits := [][]types.GPU{}
+	nodesToGpus := [][]types.GPU{}
 
 	for _, nodeInfo := range *nodeInfos {
 
@@ -112,7 +111,7 @@ func displayTopNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, showClusterDa
 		}
 
 		if wide {
-			nodesGpuUnits = append(nodesGpuUnits, nodeResources.GpuUnits)
+			nodesToGpus = append(nodesToGpus, nodeResources.NodeGPUs)
 		}
 
 		helpers.AddNodeGPUsToClusterNodes(&clsData, nodeView.Info.Status, nodeView.GPUs)
@@ -120,15 +119,16 @@ func displayTopNodes(nodeInfos *[]nodeService.NodeInfo, wide bool, showClusterDa
 	}
 
 	if wide {
-		displayTopNodeWide(w, nodeViews, nodesGpuUnits)
+		displayTopNodeWide(w, nodeViews, nodesToGpus)
 	} else {
-		displayTopNodeTable(w, nodeViews, clsData.UnhealthyGPUs == 0)
+		showUnhealthyGPUs := clsData.UnhealthyGPUs == 0
+		displayTopNodeTable(w, nodeViews, showUnhealthyGPUs)
 	}
 
 	_ = w.Flush()
 }
 
-func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [][]types.GPU) {
+func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesToGPUs [][]types.GPU) {
 
 	showFields := append(commonTopNodeFields, detailedTopNodeExtraFields...)
 
@@ -144,17 +144,17 @@ func displayTopNodeWide(w io.Writer, nodeViews []types.NodeView, nodesGpuUnits [
 		if err != nil {
 			fmt.Print(err)
 		}
-		nodeGpuUnits := nodesGpuUnits[i]
-		if len(nodeGpuUnits) > 0 {
+		nodeGPUs := nodesToGPUs[i]
+		if len(nodeGPUs) > 0 {
 
 			ui.SubTitle(w, "NODE GPUs INFO")
 
 			err = ui.CreateTable(types.GPU{}, ui.TableOpt{
 				DisplayOpt: ui.DisplayOpt{
-					Hide: topNodeHiddenGpuUnitFields,
+					Hide: topNodeHiddenGpusFields,
 				},
 			}).
-				Render(w, nodeGpuUnits).
+				Render(w, nodeGPUs).
 				Error()
 			if err != nil {
 				fmt.Print(err)

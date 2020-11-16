@@ -66,22 +66,22 @@ func CreateTable(model interface{}, opt TableOpt) Table {
 	return &td
 }
 
-func (td *tableData) addFields(modelType reflect.Type, path []string, groupTag GroupTag, showByDefult bool) {
+func (td *tableData) addFields(modelType reflect.Type, path []string, groupTag GroupTag, showByDefault bool) {
 	fieldsCount := modelType.NumField()
 	for i := 0; i < fieldsCount; i++ {
-		td.addField(modelType.Field(i), path, groupTag, showByDefult)
+		td.addField(modelType.Field(i), path, groupTag, showByDefault)
 	}
 }
 
-func (td *tableData) addField(fieldType reflect.StructField, path []string, groupTag GroupTag, showByDefult bool) {
+func (td *tableData) addField(fieldType reflect.StructField, path []string, groupTag GroupTag, showByDefault bool) {
 
-	showByDefult = td.opt.calcFieldShowByDefault(append(path, fieldType.Name), showByDefult )
-	
+	showByDefault = td.opt.calcFieldShowByDefault(append(path, fieldType.Name), showByDefault)
+
 	if isStructGroup(fieldType) {
-		td.addGroup(fieldType, path, groupTag, showByDefult)
+		td.addGroup(fieldType, path, groupTag, showByDefault)
 		return
 	}
-	if !showByDefult {
+	if !showByDefault {
 		return
 	}
 	column, err := toColumn(fieldType, td.opt.Formatts, path, groupTag)
@@ -92,12 +92,12 @@ func (td *tableData) addField(fieldType reflect.StructField, path []string, grou
 	td.columns = append(td.columns, column)
 }
 
-func (td *tableData) addGroup(field reflect.StructField, path []string, groupTag GroupTag, showByDefult bool) {
+func (td *tableData) addGroup(field reflect.StructField, path []string, groupTag GroupTag, showByDefault bool) {
 	groupTag = NewGroupTag(field.Tag.Get(groupTagName))
 	groupPath := append(path, field.Name)
 	td.groups = append(td.groups, groupTag)
 
-	td.addFields(UnwrapTypePtr(field.Type), groupPath, groupTag, showByDefult)
+	td.addFields(UnwrapTypePtr(field.Type), groupPath, groupTag, showByDefault)
 }
 
 func (td *tableData) Render(w io.Writer, rows interface{}) Table {
@@ -222,14 +222,14 @@ func (td *tableData) Error() error {
 //// helpers
 
 func toColumn(field reflect.StructField, formatMap FormattersByName, path []string, groupTag GroupTag) (Column, error) {
-	fieldMeta, err := createFieldMeta(field, formatMap, path )
+	fieldMeta, err := createFieldMeta(field, formatMap, path)
 
 	if err != nil {
 		return Column{}, err
 	}
 	return Column{
 		FieldMeta: fieldMeta,
-		GroupID: groupTag.ID,
+		GroupID:   groupTag.ID,
 	}, nil
 }
 
@@ -241,4 +241,3 @@ func isStructGroup(field reflect.StructField) bool {
 
 	return isStruct && len(group) > 0 && len(format) == 0
 }
-

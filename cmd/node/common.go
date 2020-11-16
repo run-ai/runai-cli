@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/run-ai/runai-cli/pkg/ui"
-	"github.com/run-ai/runai-cli/pkg/types"
-	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
-	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
-
+	"github.com/run-ai/runai-cli/pkg/nodes"
+	"github.com/run-ai/runai-cli/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/ui"
 )
 
 var (
@@ -22,32 +20,25 @@ var (
 	})
 )
 
-func getNodeInfos() (*[]nodeService.NodeInfo, error) {
-		kubeClient, err := client.GetClient()
-		if err != nil {
-			return nil, err
-		}
-		clientset := kubeClient.GetClientset()
-		allPods, err := trainer.AcquireAllActivePods(clientset)
-		if err != nil {
-			return nil, err
-		}
-		nd := nodeService.NewNodeDescriber(clientset, allPods)
-		nodeInfos, warning, err := nd.GetAllNodeInfos()
-		if err != nil {
-			return nil, err
-		} else if len(warning) > 0 {
-			fmt.Println(warning)
-		}
+func getNodeInfos(shouldQueryMetrics bool) (*[]nodes.NodeInfo, error) {
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		return nil, err
+	}
+	clientset := kubeClient.GetClientset()
+	nodeInfos, warning, err := nodes.GetAllNodeInfos(clientset, shouldQueryMetrics)
+	if err != nil {
+		return nil, err
+	} else if len(warning) > 0 {
+		fmt.Println(warning)
+	}
 
-		return &nodeInfos, nil
+	return &nodeInfos, nil
 }
 
-
-func handleSpecificNodes(nodeInfos *[]nodeService.NodeInfo, displayFunction func(*[]nodeService.NodeInfo)  ,selectedNodeNames ...string) {
+func handleSpecificNodes(nodeInfos *[]nodes.NodeInfo, displayFunction func(*[]nodes.NodeInfo), selectedNodeNames ...string) {
 	nodeNames := []string{}
-	matchsNodeInfos := []nodeService.NodeInfo{}
-
+	matchsNodeInfos := []nodes.NodeInfo{}
 
 	if len(*nodeInfos) == 0 {
 		fmt.Println("No available node found in cluster")
@@ -63,8 +54,8 @@ func handleSpecificNodes(nodeInfos *[]nodeService.NodeInfo, displayFunction func
 
 	for _, nodeInfo := range *nodeInfos {
 		nodeNames = append(nodeNames, nodeInfo.Node.Name)
-		if ui.Contains(selectedNodeNames ,nodeInfo.Node.Name )  {
-			matchsNodeInfos = append( matchsNodeInfos, nodeInfo)
+		if ui.Contains(selectedNodeNames, nodeInfo.Node.Name) {
+			matchsNodeInfos = append(matchsNodeInfos, nodeInfo)
 		}
 	}
 	if len(matchsNodeInfos) != len(selectedNodeNames) {
@@ -74,7 +65,7 @@ func handleSpecificNodes(nodeInfos *[]nodeService.NodeInfo, displayFunction func
 			if !ui.Contains(nodeNames, nodeName) {
 				notFoundNodeNames = append(notFoundNodeNames, nodeName)
 			}
-		} 
+		}
 		fmt.Printf(
 			`No match found for node(s) '%s'
 

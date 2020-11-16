@@ -16,13 +16,14 @@ package job
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/workflow"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/run-ai/runai-cli/pkg/workflow"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
@@ -40,9 +41,9 @@ const jobInvalidStateOnCreationTimeInSeconds = 10
 func NewListJobCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
-		Use:   "job",
+		Use:     "job",
 		Aliases: []string{"jobs"},
-		Short: "List all jobs.",
+		Short:   "List all jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
 			RunJobList(cmd, args, allNamespaces)
 		},
@@ -100,7 +101,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 	} else {
 		for _, item := range configMaps.Items {
 			if item.Labels[workflow.BaseNameLabelSelectorName] != "" {
-				if jobsMap[item.Name] == false && isJobCreationTimePass(&item){
+				if jobsMap[item.Name] == false && isJobCreationTimePass(&item) {
 					invalidJobs = append(invalidJobs, item.Name)
 				}
 			}
@@ -110,9 +111,8 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 	jobs = trainer.MakeTrainingJobOrderdByAge(jobs)
 
 	displayTrainingJobList(jobs, invalidJobs)
-		
-}
 
+}
 
 func isJobCreationTimePass(configMap *v1.ConfigMap) bool {
 	return time.Now().Sub(configMap.CreationTimestamp.Time).Seconds() > jobInvalidStateOnCreationTimeInSeconds

@@ -6,7 +6,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/pkg/helpers"
-	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
+	"github.com/run-ai/runai-cli/pkg/nodes"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/ui"
 
@@ -44,7 +44,7 @@ func NewListNodeCommand() *cobra.Command {
 		Example: listNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
 
-			nodeInfos, err := getNodeInfos()
+			nodeInfos, err := getNodeInfos(false)
 
 			if err != nil {
 				fmt.Println(err)
@@ -59,11 +59,11 @@ func NewListNodeCommand() *cobra.Command {
 	return command
 }
 
-func handleListSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
+func handleListSpecificNodes(nodeInfos *[]nodes.NodeInfo, selectedNodeNames ...string) {
 	handleSpecificNodes(nodeInfos, listNodes, selectedNodeNames...)
 }
 
-func listNodes(nodeInfos *[]nodeService.NodeInfo) {
+func listNodes(nodeInfos *[]nodes.NodeInfo) {
 	nodeViews := []types.NodeView{}
 	for _, nodeInfo := range *nodeInfos {
 

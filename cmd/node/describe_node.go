@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/pkg/helpers"
-	nodeService "github.com/run-ai/runai-cli/pkg/services/node"
+	"github.com/run-ai/runai-cli/pkg/nodes"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/ui"
 
@@ -35,7 +35,7 @@ var (
 		"GPUMem",
 	})
 
-	describeNodeShowGpuUnitFields = ui.EnsureStringPaths(types.GPU{}, []string{
+	describeNodeShowGpusFields = ui.EnsureStringPaths(types.GPU{}, []string{
 		"IndexID", "Allocated",
 	})
 )
@@ -48,8 +48,7 @@ func NewDescribeNodeCommand() *cobra.Command {
 		Short:   "Display detailed information about nodes in the cluster.",
 		Example: describeNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
-
-			nodeInfos, err := getNodeInfos()
+			nodeInfos, err := getNodeInfos(false)
 
 			if err != nil {
 				fmt.Println(err)
@@ -63,27 +62,25 @@ func NewDescribeNodeCommand() *cobra.Command {
 	return command
 }
 
-func handleDescribeSpecificNodes(nodeInfos *[]nodeService.NodeInfo, selectedNodeNames ...string) {
-
-	handleSpecificNodes(nodeInfos, describeNodes, selectedNodeNames...)
-
+func handleDescribeSpecificNodes(nodeInfos *[]nodes.NodeInfo, selectedNodeNames ...string) {
+	handleSpecificNodes(nodeInfos, describeNodesPrintFn, selectedNodeNames...)
 }
 
-func describeNodes(nodeInfos *[]nodeService.NodeInfo) {
+func describeNodesPrintFn(nodeInfos *[]nodes.NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	for i, nodeInfo := range *nodeInfos {
 		if i > 0 {
 			ui.LineDivider(w)
 		}
-		describeNode(w, &nodeInfo)
+		describeNodePrintFn(w, &nodeInfo)
 	}
 
 	ui.End(w)
 	_ = w.Flush()
 }
 
-func describeNode(w io.Writer, nodeInfo *nodeService.NodeInfo) {
+func describeNodePrintFn(w io.Writer, nodeInfo *nodes.NodeInfo) {
 
 	nodeResources := nodeInfo.GetResourcesStatus()
 	nodeResourcesConvertor := helpers.NodeResourcesStatusConvertor(nodeResources)
@@ -104,16 +101,16 @@ func describeNode(w io.Writer, nodeInfo *nodeService.NodeInfo) {
 		fmt.Print(err)
 	}
 
-	if len(nodeResources.GpuUnits) > 0 {
+	if len(nodeResources.NodeGPUs) > 0 {
 
 		ui.SubTitle(w, "NODE GPUs INFO")
 
 		err = ui.CreateTable(types.GPU{}, ui.TableOpt{
 			DisplayOpt: ui.DisplayOpt{
-				Show: describeNodeShowGpuUnitFields,
+				Show: describeNodeShowGpusFields,
 			},
 		}).
-			Render(w, nodeResources.GpuUnits).
+			Render(w, nodeResources.NodeGPUs).
 			Error()
 		if err != nil {
 			fmt.Print(err)
