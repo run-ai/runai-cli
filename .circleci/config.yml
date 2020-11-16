@@ -2,6 +2,9 @@ executors:
   runai-executor:
     docker:
       - image: gcr.io/run-ai-staging/circleci-go:latest
+        auth:
+          username: _json_key
+          password: $GCLOUD_SERVICE_KEY
     working_directory: /go/src/github.com/run-ai/runai-cli
 
 version: 2.1
