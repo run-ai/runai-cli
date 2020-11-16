@@ -8,26 +8,31 @@ const (
 )
 
 type NodeCPUResource struct {
-	Capacity    int     `title:"CAPACITY"`
+	Capacity    int     `title:"CAPACITY" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE"`
-	Requested   float64 `title:"REQUESTED"`
-	Usage       float64 `title:"USAGE" format:"%"`
+	Allocated   float64 `title:"ALLOCATED"`
+	Utilization float64 `title:"UTILIZATION" format:"%"`
+	Usage       float64 `title:"USAGE"`
 }
 
 type NodeGPUResource struct {
-	Capacity          int     `title:"CAPACITY"`
-	Allocatable       float64 `title:"ALLOCATABLE"`
-	Unhealthy         int     `title:"UNHEALTHY"`
-	AllocatedUnits    int     `title:"ALLOCATED UNITS"`
-	AllocatedFraction float64 `title:"ALLOCATED FRACTION"`
-	Usage             float64 `title:"USAGE" format:"%"`
+	Capacity    int     `title:"CAPACITY" def:"0"`
+	Allocatable float64 `title:"ALLOCATABLE" def:"0"`
+	Allocated   float64 `title:"ALLOCATED"`
+	InUse       int     `title:"IN USE"`
+	Free        int     `title:"FREE"`
+	Utilization float64 `title:"UTILIZATION" format:"%"`
+	Usage       float64 `title:"USAGE"`
+	Unhealthy   int     `title:"UNHEALTHY"`
 }
 
 type NodeMemoryResource struct {
-	Capacity    float64 `title:"CAPACITY" format:"memory"`
-	Allocatable float64 `title:"ALLOCATABLE" format:"memory"`
-	Requested   float64 `title:"REQUESTED" format:"memory"`
-	Usage       float64 `title:"USAGE" format:"memory"`
+	Capacity            float64 `title:"CAPACITY" format:"memory" def:"0"`
+	Allocatable         float64 `title:"ALLOCATABLE" format:"memory"`
+	Allocated           float64 `title:"ALLOCATED" format:"memory"`
+	Utilization         float64 `title:"UTILIZATION" format:"%"`
+	Usage               float64 `title:"USAGE" format:"memory"`
+	UsageAndUtilization string  `title:"USAGE"`
 }
 
 type NodeGeneralInfo struct {
@@ -38,17 +43,17 @@ type NodeGeneralInfo struct {
 }
 
 type NodeView struct {
-	Info   NodeGeneralInfo    `group:"GENERAL,flatten"`
-	CPUs   NodeCPUResource    `group:"CPU"`
-	GPUs   NodeGPUResource    `group:"GPU"`
-	Mem    NodeMemoryResource `group:"MEMORY"`
-	GPUMem NodeMemoryResource `group:"GPU MEMORY"`
+	Info   NodeGeneralInfo     `group:"GENERAL,flatten"`
+	CPUs   *NodeCPUResource    `group:"CPU"`
+	Mem    *NodeMemoryResource `group:"MEMORY"`
+	GPUs   *NodeGPUResource    `group:"GPU" def:"<none>"`
+	GPUMem *NodeMemoryResource `group:"GPU MEMORY" def:"<none>"`
 }
 
 type ClusterNodesView struct {
-	GPUs                  int
-	UnhealthyGPUs         int
-	AllocatedGpuUnits     int
-	AllocatedGpuFractions float64
-	GPUsOnReadyNode       int
+	GPUs            int
+	UnhealthyGPUs   int
+	GPUsInUse       int
+	AllocatedGpus   float64
+	GPUsOnReadyNode int
 }

@@ -9,7 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 const (
@@ -78,41 +77,3 @@ func PodRunning(pod *v1.Pod) (bool, error) {
 
 	return false, nil
 }
-
-// the following code copied from top node
-
-
-func GetRequestedPodsCPU(pods []v1.Pod) (string) {
-	var cpuTotal resource.Quantity
-	cpuTotal.Set(0)
-
-	for _, pod := range pods {
-		for _, container := range pod.Spec.Containers {
-			quantity, ok := container.Resources.Requests["cpu"]
-			if ok {
-				cpuTotal.Add(quantity)
-			}
-		}
-	}
-
-	return fmt.Sprintf("%.1f", float64(cpuTotal.MilliValue())/1000)
-}
-
-func GetRequestedNodeMemory(pods []v1.Pod) (AllocatableMemory string) {
-
-	var memTotal resource.Quantity
-	memTotal.Set(0)
-
-	for _, pod := range pods {
-		for _, container := range pod.Spec.Containers {
-			quantity, ok := container.Resources.Requests["memory"]
-			if ok {
-				memTotal.Add(quantity)
-			}
-
-		}
-	}
-
-	return fmt.Sprintf("%dM", memTotal.ScaledValue(resource.Mega))
-}
-

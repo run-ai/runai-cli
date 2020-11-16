@@ -3,6 +3,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"reflect"
 	"strconv"
 )
@@ -60,11 +61,11 @@ func StringifyValue(ft reflect.Value) string {
 
 
 func getNesstedVal(v reflect.Value, path []string) (val *reflect.Value) {
-	val = &v;
+	val = &v
 
-	for _, p := range path {
+	for _, key := range path {
 		// unwrap the pointers
-		val = UnwrapValuePtr(val.FieldByName(p))
+		val = UnwrapValuePtr(val.FieldByName(key))
 		if val == nil {
 			return
 		}
@@ -72,7 +73,31 @@ func getNesstedVal(v reflect.Value, path []string) (val *reflect.Value) {
 	return 
 }
 
-func contains(s []string, searchterm string) bool {
+func getNesstedType(t reflect.Type, path []string) (*reflect.Type) {
+	nestedType := t
+
+	for _, key := range path {
+		structField, found := nestedType.FieldByName(key)
+		if !found {
+			return nil
+		}
+		// unwrap the pointers
+		nestedType = UnwrapTypePtr(structField.Type)
+	}
+	return &nestedType
+}
+
+func EnsureStringPaths(obj interface{}, paths []string) []string {
+	objType := reflect.TypeOf(obj)
+	for _, path := range paths {
+		if getNesstedType(objType, strings.Split(path, ".")) == nil {
+			panic(fmt.Sprintf("[EnsureStringPaths]:: Not found path: '%s' on type: %s",path ,objType.Name()))
+		}
+	}
+	return paths
+}
+
+func Contains(s []string, searchterm string) bool {
 	for _, a := range s {
         if a ==  searchterm {
             return true

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package top
+package job
 
 import (
 	"fmt"
@@ -37,6 +37,7 @@ func NewTopJobCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:   "job",
+		Aliases: []string{"jobs"},
 		Short: "Display information about jobs in the cluster.",
 		Run: func(cmd *cobra.Command, args []string) {
 

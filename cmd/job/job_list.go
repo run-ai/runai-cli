@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package job_list
+package job
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/workflow"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
 
+	"github.com/run-ai/runai-cli/pkg/workflow"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/run-ai/runai-cli/cmd/flags"
-	"github.com/run-ai/runai-cli/cmd/get"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 
@@ -38,74 +38,80 @@ import (
 
 const jobInvalidStateOnCreationTimeInSeconds = 10
 
-func NewListCommand() *cobra.Command {
+func NewListJobCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
-		Use:   "list",
-		Short: "List all jobs.",
+		Use:     "job",
+		Aliases: []string{"jobs"},
+		Short:   "List all jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
-			kubeClient, err := client.GetClient()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			if err != nil {
-				log.Errorf("Failed due to %v", err)
-				os.Exit(1)
-			}
-
-			namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
-
-			if err != nil {
-				log.Error(err)
-				os.Exit(1)
-			}
-
-			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
-
-			jobs := []trainer.TrainingJob{}
-			trainers := trainer.NewTrainers(kubeClient)
-			for _, trainer := range trainers {
-				if trainer.IsEnabled() {
-					trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
-					if err != nil {
-						log.Errorf("Failed due to %v", err)
-						os.Exit(1)
-					}
-					jobs = append(jobs, trainingJobs...)
-				}
-			}
-
-			invalidJobs := []string{}
-			jobsMap := make(map[string]bool)
-			for _, job := range jobs {
-				jobsMap[job.Name()] = true
-			}
-
-			configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(metav1.ListOptions{})
-			if err != nil {
-				log.Errorf("Failed due to %v", err)
-				os.Exit(1)
-			} else {
-				for _, item := range configMaps.Items {
-					if item.Labels[workflow.BaseNameLabelSelectorName] != "" {
-						if jobsMap[item.Name] == false && isJobCreationTimePass(&item) {
-							invalidJobs = append(invalidJobs, item.Name)
-						}
-					}
-				}
-			}
-
-			jobs = trainer.MakeTrainingJobOrderdByAge(jobs)
-
-			displayTrainingJobList(jobs, invalidJobs)
+			RunJobList(cmd, args, allNamespaces)
 		},
 	}
 
 	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list from all projects")
 
 	return command
+}
+
+func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if err != nil {
+		log.Errorf("Failed due to %v", err)
+		os.Exit(1)
+	}
+
+	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
+
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
+
+	jobs := []trainer.TrainingJob{}
+	trainers := trainer.NewTrainers(kubeClient)
+	for _, trainer := range trainers {
+		if trainer.IsEnabled() {
+			trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
+			if err != nil {
+				log.Errorf("Failed due to %v", err)
+				os.Exit(1)
+			}
+			jobs = append(jobs, trainingJobs...)
+		}
+	}
+
+	invalidJobs := []string{}
+	jobsMap := make(map[string]bool)
+	for _, job := range jobs {
+		jobsMap[job.Name()] = true
+	}
+
+	configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(metav1.ListOptions{})
+	if err != nil {
+		log.Errorf("Failed due to %v", err)
+		os.Exit(1)
+	} else {
+		for _, item := range configMaps.Items {
+			if item.Labels[workflow.BaseNameLabelSelectorName] != "" {
+				if jobsMap[item.Name] == false && isJobCreationTimePass(&item) {
+					invalidJobs = append(invalidJobs, item.Name)
+				}
+			}
+		}
+	}
+
+	jobs = trainer.MakeTrainingJobOrderdByAge(jobs)
+
+	displayTrainingJobList(jobs, invalidJobs)
+
 }
 
 func isJobCreationTimePass(configMap *v1.ConfigMap) bool {
@@ -119,7 +125,8 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, invalidJobs []str
 	ui.Line(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
-		status := get.GetJobRealStatus(jobInfo)
+
+		status := GetJobRealStatus(jobInfo)
 		nodeName := jobInfo.HostIPOfChief()
 		if strings.Contains(nodeName, ", ") {
 			nodeName = "<multiple>"

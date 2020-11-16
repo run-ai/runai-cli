@@ -17,19 +17,17 @@ package root
 import (
 	"github.com/run-ai/runai-cli/cmd/cluster"
 	"github.com/run-ai/runai-cli/cmd/flags"
-	
+	"github.com/run-ai/runai-cli/cmd/resource"
+
 	raCmd "github.com/run-ai/runai-cli/cmd"
-	deleteJob "github.com/run-ai/runai-cli/cmd/job/delete"
-	listJob "github.com/run-ai/runai-cli/cmd/job/list"
-	submitJob "github.com/run-ai/runai-cli/cmd/job/submit"
-	"github.com/run-ai/runai-cli/cmd/project"
-	"github.com/run-ai/runai-cli/cmd/logs"
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/exec"
-	"github.com/run-ai/runai-cli/cmd/get"
-	"github.com/run-ai/runai-cli/cmd/template"
-	"github.com/run-ai/runai-cli/cmd/top"
 	"github.com/run-ai/runai-cli/cmd/global"
+	deleteJob "github.com/run-ai/runai-cli/cmd/job/delete"
+	submitJob "github.com/run-ai/runai-cli/cmd/job/submit"
+	"github.com/run-ai/runai-cli/cmd/logs"
+	"github.com/run-ai/runai-cli/cmd/project"
+	"github.com/run-ai/runai-cli/cmd/template"
 
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util"
@@ -62,11 +60,14 @@ func NewCommand() *cobra.Command {
 
 	command.AddCommand(submitJob.NewRunaiJobCommand())
 	command.AddCommand(submitJob.NewRunaiSubmitMPIJobCommand())
-	command.AddCommand(listJob.NewListCommand())
-	command.AddCommand(get.NewGetCommand())
+	command.AddCommand(resource.NewListCommand())
+	command.AddCommand(resource.GetCommand())
 	command.AddCommand(logs.NewLogsCommand())
 	command.AddCommand(deleteJob.NewDeleteCommand())
-	command.AddCommand(top.NewTopCommand())
+	command.AddCommand(resource.GetCommand())
+	command.AddCommand(resource.NewTopCommand())
+	command.AddCommand(resource.NewDescribeCommand())
+	command.AddCommand(resource.NewListCommand())
 	command.AddCommand(raCmd.NewVersionCmd())
 	command.AddCommand(raCmd.NewUpdateCommand())
 	command.AddCommand(exec.NewBashCommand())

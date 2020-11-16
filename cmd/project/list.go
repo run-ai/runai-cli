@@ -13,7 +13,7 @@ import (
 	constants "github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
-	"github.com/run-ai/runai-cli/pkg/util/command"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -160,13 +160,29 @@ func printProjects(infos []*ProjectInfo) {
 	_ = w.Flush()
 }
 
-func newListProjectsCommand() *cobra.Command {
-	commandWrapper := command.NewCommandWrapper(runListCommand)
+func newListProjectsCommand_DEPRECATED() *cobra.Command {
+
+	deprecationMessage := "DEPRECATED! use instead > runai list project."
 
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: "List all avaliable projects",
-		Run:   commandWrapper.Run,
+		Short: fmt.Sprint("List all available projects. ", deprecationMessage),
+		Run: commandUtil.WrapRunCommand(func(cmd *cobra.Command, args []string) error {
+			fmt.Print("\n", deprecationMessage, "\n\n")
+			return runListCommand(cmd, args)
+		}),
+	}
+
+	return command
+}
+
+func NewListProjectCommand() *cobra.Command {
+
+	var command = &cobra.Command{
+		Use:     "project",
+		Aliases: []string{"projects"},
+		Short:   "List all available projects",
+		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 
 	return command

@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	RunaiGPUIndex                   = "runai-gpu"
-	RunaiGPUFraction                = "gpu-fraction"
+	RunaiGPUIndex    = "runai-gpu"
+	RunaiGPUFraction = "gpu-fraction"
 	// an annotation on each node
 	RunaiAllocatableGpus            = "runai-allocatable-gpus"
 	NVIDIAGPUResourceName           = "nvidia.com/gpu"
@@ -32,18 +32,7 @@ const (
 	WorkloadCurrentAllocatedGPUs    = "runai-current-allocated-gpus"
 	WorkloadCurrentRequestedGPUs    = "runai-current-requested-gpus"
 	WorkloadTotalRequestedGPUs      = "runai-total-requested-gpus"
-
 )
-
-// filter out the pods with GPU
-func GpuPods(pods []v1.Pod) (podsWithGPU []v1.Pod) {
-	for _, pod := range pods {
-		if GpuInPod(pod) > 0 {
-			podsWithGPU = append(podsWithGPU, pod)
-		}
-	}
-	return podsWithGPU
-}
 
 // The way to get total GPU Count of Node: nvidia.com/gpu
 func TotalGpuInNode(node v1.Node) int64 {
@@ -57,14 +46,17 @@ func TotalGpuInNode(node v1.Node) int64 {
 }
 
 // The way to get allocatble GPU Count of Node
-func AllocatableGpuInNode(node v1.Node) (num int64) {
+func AllocatableGpuInNodeIncludingFractions(node v1.Node) int64 {
 	val, ok := node.Annotations[RunaiAllocatableGpus]
 
 	if ok {
-		num , _ = strconv.ParseInt(val, 10, 64)
+		gpus, err := strconv.ParseInt(val, 10, 64)
+		if err == nil {
+			return gpus
+		}
 	}
-	
-	return 
+
+	return TotalGpuInNode(node)
 }
 
 // The way to get GPU Count of Node: alpha.kubernetes.io/nvidia-gpu
@@ -141,8 +133,8 @@ func GpuInContainerDeprecated(container v1.Container) int64 {
 	return val.Value()
 }
 
-func GetSharedGPUsIndexUsedInPods(pods []v1.Pod) []string {
-	gpuIndexUsed := map[string]bool{}
+func GetSharedGPUsIndexUsedInPods(pods []v1.Pod) map[string]float64 {
+	gpuIndexUsed := map[string]float64{}
 	for _, pod := range pods {
 		if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
 			continue
@@ -154,15 +146,11 @@ func GetSharedGPUsIndexUsedInPods(pods []v1.Pod) []string {
 				continue
 			}
 
-			gpuIndexUsed[gpuIndex] = true
+			gpuAllocated := getGPUFractionUsedByPod(pod)
+
+			gpuIndexUsed[gpuIndex] += gpuAllocated
 		}
 	}
 
-	gpuIndexesArray := []string{}
-
-	for key, _ := range gpuIndexUsed {
-		gpuIndexesArray = append(gpuIndexesArray, key)
-	}
-
-	return gpuIndexesArray
+	return gpuIndexUsed
 }

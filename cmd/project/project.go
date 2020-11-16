@@ -15,7 +15,7 @@ func NewProjectCommand() *cobra.Command {
 		},
 	}
 
-	command.AddCommand(newListProjectsCommand())
+	command.AddCommand(newListProjectsCommand_DEPRECATED())
 	command.AddCommand(newSetProjectCommand())
 	return command
 }
