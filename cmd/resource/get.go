@@ -10,7 +10,7 @@ import (
 func GetCommand() *cobra.Command {
 	printArgs := job.PrintArgs{}
 
-	deprecationMessage := "'get' command is DEPRECATED, please use 'runai describe job [job-name]' instead."
+	deprecationMessage := "'get' command is deprecated, please use 'runai describe job [job-name]' instead."
 
 	var command = &cobra.Command{
 		Use:   "get",
