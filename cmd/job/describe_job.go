@@ -13,7 +13,6 @@ import (
 
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/cmd/flags"
-	tens "github.com/run-ai/runai-cli/cmd/tensorboard"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
@@ -461,12 +460,6 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
 func BuildJobInfo(job trainer.TrainingJob, clientset kubernetes.Interface) *types.JobInfo {
-
-	tensorboard, err := tens.TensorboardURL(job.Name(), job.ChiefPod().Namespace, clientset)
-	if tensorboard == "" || err != nil {
-		log.Debugf("Tensorboard dones't show up because of %v, or tensorboard url %s", err, tensorboard)
-	}
-
 	instances := []types.Instance{}
 	for _, pod := range job.AllPods() {
 		isChief := false
@@ -484,15 +477,14 @@ func BuildJobInfo(job trainer.TrainingJob, clientset kubernetes.Interface) *type
 	}
 
 	return &types.JobInfo{
-		Name:        job.Name(),
-		Namespace:   job.Namespace(),
-		Status:      types.JobStatus(GetJobRealStatus(job)),
-		Duration:    util.ShortHumanDuration(job.Duration()),
-		Trainer:     job.Trainer(),
-		Priority:    getPriorityClass(job),
-		Tensorboard: tensorboard,
-		ChiefName:   job.ChiefPod().Name,
-		Instances:   instances,
+		Name:      job.Name(),
+		Namespace: job.Namespace(),
+		Status:    types.JobStatus(GetJobRealStatus(job)),
+		Duration:  util.ShortHumanDuration(job.Duration()),
+		Trainer:   job.Trainer(),
+		Priority:  getPriorityClass(job),
+		ChiefName: job.ChiefPod().Name,
+		Instances: instances,
 	}
 }
 
