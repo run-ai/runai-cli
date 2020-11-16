@@ -9,7 +9,7 @@ executors:
 
 version: 2.1
 orbs:
-  slack: circleci/slack@4.0
+  slack: circleci/slack@4.1.1
 jobs:
   test:
     executor: runai-executor
@@ -19,7 +19,10 @@ jobs:
         name: run test
         command: |
           ./test.sh
-    - slack/notify
+    - slack/notify:
+        channel: circleci
+        event: fail
+        template: basic_fail_1
   build:
     executor: runai-executor
     steps:
