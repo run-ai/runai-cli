@@ -57,3 +57,4 @@ enablePodSecurityContext: false
 
 # enable priorityClassName
 priorityClassName: ""
+user: ""
