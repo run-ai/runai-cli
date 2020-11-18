@@ -17,7 +17,7 @@ metadata:
     createdBy: "MPIJob"
     project: {{ .Values.project }}
     {{- if .Values.user }}
-    user: {{ .Values.user | quote}}}
+    user: {{ .Values.user | quote}}
     {{- end }}
     {{- if .Values.interactive }}
     priorityClassName: "build"
@@ -42,7 +42,7 @@ spec:
           labels:
             project: {{ .Values.project }}
             {{- if .Values.user }}
-            user: {{ .Values.user | quote}}}
+            user: {{ .Values.user | quote}}
             {{- end }}
           annotations:
             totalGPUs: "{{ .Values.totalGpus }}"
@@ -138,7 +138,7 @@ spec:
           labels:
             project: {{ .Values.project }}
             {{- if .Values.user }}
-            user: {{ .Values.user | quote}}}
+            user: {{ .Values.user | quote}}
             {{- end }}
         spec:
           {{- if .Values.node_type }}
