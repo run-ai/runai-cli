@@ -61,6 +61,9 @@ spec:
         {{- if .Values.gpuFraction }}
         gpu-fraction: "{{ .Values.gpuFraction }}"
         {{- end }}
+        {{- if .Values.gpuMem }}
+        gpu-mem: "{{ .Values.gpuMem }}"
+        {{- end }}
         {{- if .Values.elastic }}
         elastic: {{ .Values.elastic | quote }}
         {{- end }}

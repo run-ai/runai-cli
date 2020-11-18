@@ -68,6 +68,7 @@ type submitArgs struct {
 	GPU                 *float64 `yaml:"gpu,omitempty"`
 	GPUInt              *int     `yaml:"gpuInt,omitempty"`
 	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
+	GPUMem              string   `yaml:"gpuMem,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	SpecArgs            []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
@@ -159,6 +160,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	flagSet.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
 	flagSet.StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
+	flagSet.StringVar(&(submitArgs.GPUMem), "gpu-mem", "", "DONT CARE")
 	flagSet.StringVar(&(submitArgs.MemoryLimit), "memory-limit", "", "Memory limit for this job (1G, 20M)")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.LargeShm, "large-shm", "", "Mount a large /dev/shm device.")
 
