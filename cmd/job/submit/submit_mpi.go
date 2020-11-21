@@ -129,10 +129,6 @@ func (submitArgs submitMPIJobArgs) check() error {
 		return err
 	}
 
-	if submitArgs.Image == "" {
-		return fmt.Errorf("--image must be set")
-	}
-
 	return nil
 }
 
