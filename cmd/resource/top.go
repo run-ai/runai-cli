@@ -15,13 +15,11 @@
 package resource
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/run-ai/runai-cli/cmd/node"
 	"github.com/run-ai/runai-cli/cmd/job"
-
+	"github.com/run-ai/runai-cli/cmd/node"
+	"github.com/spf13/cobra"
 	// podv1 "k8s.io/api/core/v1"
 )
-
 
 func NewTopCommand() *cobra.Command {
 	var command = &cobra.Command{
@@ -33,8 +31,8 @@ func NewTopCommand() *cobra.Command {
 	}
 
 	// create subcommands
-	command.AddCommand(node.NewTopNodeCommand())
-	command.AddCommand(job.NewTopJobCommand())
+	command.AddCommand(node.TopCommand())
+	command.AddCommand(job.TopCommand())
 
 	return command
 }

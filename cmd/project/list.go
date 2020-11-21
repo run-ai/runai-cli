@@ -160,23 +160,19 @@ func printProjects(infos []*ProjectInfo) {
 	_ = w.Flush()
 }
 
-func newListProjectsCommand_DEPRECATED() *cobra.Command {
-
-	deprecationMessage := "'runai project list' command has been deprecated, use: 'runai list project' instead"
+func listCommandDEPRECATED() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "list",
-		Short: fmt.Sprint("List all available projects. ", deprecationMessage),
-		Run: commandUtil.WrapRunCommand(func(cmd *cobra.Command, args []string) error {
-			fmt.Print("\n", deprecationMessage, "\n\n")
-			return runListCommand(cmd, args)
-		}),
+		Use:        "list",
+		Short:      fmt.Sprint("List all available projects."),
+		Run:        commandUtil.WrapRunCommand(runListCommand),
+		Deprecated: "Please use: 'runai list project' instead",
 	}
 
 	return command
 }
 
-func NewListProjectCommand() *cobra.Command {
+func ListCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     "projects",

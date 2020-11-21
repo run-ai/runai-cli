@@ -33,7 +33,7 @@ import (
 	"github.com/run-ai/runai-cli/pkg/util"
 )
 
-func NewTopJobCommand() *cobra.Command {
+func TopCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:     "jobs",

@@ -13,9 +13,10 @@ func NewClusterCommand() *cobra.Command {
 				cmd.HelpFunc()(cmd, args)
 			}
 		},
+		Deprecated: "Please see usage of `runai list clusters` and `runai config cluster` for more information",
 	}
 
-	command.AddCommand(newListClustersCommand_DEPRECATED())
-	command.AddCommand(newSetClusterCommand())
+	command.AddCommand(listCommandDEPRECATED())
+	command.AddCommand(setCommandDEPRECATED())
 	return command
 }

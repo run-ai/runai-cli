@@ -44,27 +44,24 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func newListClustersCommand_DEPRECATED() *cobra.Command {
-	deprecationMessage := "'runai cluster list' command has been deprecated, use: 'runai list cluster' instead"
+func listCommandDEPRECATED() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:   "list",
-		Short: fmt.Sprint("List all avaliable clusters. ", deprecationMessage),
-		Run: commandUtil.WrapRunCommand(func(cmd *cobra.Command, args []string) error {
-			fmt.Print("\n", deprecationMessage, "\n\n")
-			return runListCommand(cmd, args)
-		}),
+		Use:        "list",
+		Short:      fmt.Sprint("List all avaliable clusters."),
+		Run:        commandUtil.WrapRunCommand(runListCommand),
+		Deprecated: "Please use: 'runai list cluster' instead",
 	}
 
 	return command
 }
 
-func NewListClusterCommand() *cobra.Command {
+func ListCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     "clusters",
 		Aliases: []string{"cluster"},
-		Short:   "List all avaliable clusters",
+		Short:   "List all available clusters",
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 

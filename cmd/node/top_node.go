@@ -60,7 +60,7 @@ var (
 	})
 )
 
-func NewTopNodeCommand() *cobra.Command {
+func TopCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     "nodes [...NODE_NAME]",

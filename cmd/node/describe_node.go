@@ -40,7 +40,7 @@ var (
 	})
 )
 
-func NewDescribeNodeCommand() *cobra.Command {
+func DescribeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     "nodes [...NODE_NAME]",
