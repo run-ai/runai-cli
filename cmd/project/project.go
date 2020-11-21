@@ -13,9 +13,10 @@ func NewProjectCommand() *cobra.Command {
 				cmd.HelpFunc()(cmd, args)
 			}
 		},
+		Deprecated: "Please see usage of `runai list projects` and `runai config project` for more information",
 	}
 
-	command.AddCommand(newListProjectsCommand_DEPRECATED())
-	command.AddCommand(newSetProjectCommand())
+	command.AddCommand(listCommandDEPRECATED())
+	command.AddCommand(setCommandDEPRECATED())
 	return command
 }

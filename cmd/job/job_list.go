@@ -38,7 +38,7 @@ import (
 
 const jobInvalidStateOnCreationTimeInSeconds = 10
 
-func NewListJobCommand() *cobra.Command {
+func ListCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:     "jobs",

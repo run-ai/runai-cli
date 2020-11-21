@@ -40,7 +40,7 @@ type PrintArgs struct {
 	Output     string
 }
 
-func RunDescribeJob_DEPRECATED(cmd *cobra.Command, printArgs PrintArgs, name string) {
+func RunDescribeJobDEPRECATED(cmd *cobra.Command, printArgs PrintArgs, name string) {
 
 	kubeClient, err := client.GetClient()
 	if err != nil {
@@ -64,7 +64,7 @@ func RunDescribeJob_DEPRECATED(cmd *cobra.Command, printArgs PrintArgs, name str
 	printTrainingJob(clientset, job, printArgs)
 }
 
-func NewDescribeJobCommand() *cobra.Command {
+func DescribeCommand() *cobra.Command {
 	printArgs := PrintArgs{}
 	var command = &cobra.Command{
 		Use:     "jobs JOB_NAME",

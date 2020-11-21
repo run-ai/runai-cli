@@ -35,7 +35,7 @@ var (
 	})
 )
 
-func NewListNodeCommand() *cobra.Command {
+func ListCommand() *cobra.Command {
 
 	var command = &cobra.Command{
 		Use:     "nodes [...NODE_NAME]",

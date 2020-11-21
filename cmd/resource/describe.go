@@ -3,6 +3,7 @@ package resource
 import (
 	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/node"
+	"github.com/run-ai/runai-cli/cmd/template"
 	"github.com/spf13/cobra"
 )
 
@@ -15,8 +16,9 @@ func NewDescribeCommand() *cobra.Command {
 		},
 	}
 
-	command.AddCommand(node.NewDescribeNodeCommand())
-	command.AddCommand(job.NewDescribeJobCommand())
+	command.AddCommand(node.DescribeCommand())
+	command.AddCommand(job.DescribeCommand())
+	command.AddCommand(template.DescribeCommand())
 
 	return command
 }

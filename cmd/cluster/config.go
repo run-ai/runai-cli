@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func runSetCommand(cmd *cobra.Command, args []string) error {
+func runConfigCommand(cmd *cobra.Command, args []string) error {
 
 	clusterName := args[0]
 
@@ -43,13 +43,27 @@ func runSetCommand(cmd *cobra.Command, args []string) error {
 
 }
 
-func newSetClusterCommand() *cobra.Command {
-	
+func ConfigureCommand() *cobra.Command {
+
 	var command = &cobra.Command{
-		Use:   "set [cluster]",
-		Short: "Set current cluster",
-		Run:   commandUtil.WrapRunCommand(runSetCommand),
-		Args:  cobra.RangeArgs(1, 1),
+		Use:     "cluster [cluster]",
+		Aliases: []string{"clusters"},
+		Short:   "Configure a default cluster",
+		Run:     commandUtil.WrapRunCommand(runConfigCommand),
+		Args:    cobra.RangeArgs(1, 1),
+	}
+
+	return command
+}
+
+func setCommandDEPRECATED() *cobra.Command {
+
+	var command = &cobra.Command{
+		Use:        "set [cluster]",
+		Short:      fmt.Sprint("Set current cluster."),
+		Args:       cobra.RangeArgs(1, 1),
+		Run:        commandUtil.WrapRunCommand(runConfigCommand),
+		Deprecated: "use: 'runai config cluster' instead",
 	}
 
 	return command

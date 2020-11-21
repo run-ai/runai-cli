@@ -13,10 +13,11 @@ func NewTemplateCommand() *cobra.Command {
 				cmd.HelpFunc()(cmd, args)
 			}
 		},
+		Deprecated: "Please see usage of `runai list templates` and `runai describe template` for more information",
 	}
 
-	command.AddCommand(NewTemplateListCommand())
-	command.AddCommand(NewTemplateGetCommand())
+	command.AddCommand(ListCommandDEPRECATED())
+	command.AddCommand(getCommandDEPRECATED())
 
 	return command
 }
