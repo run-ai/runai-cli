@@ -67,8 +67,8 @@ func RunDescribeJobDEPRECATED(cmd *cobra.Command, printArgs PrintArgs, name stri
 func DescribeCommand() *cobra.Command {
 	printArgs := PrintArgs{}
 	var command = &cobra.Command{
-		Use:     "jobs JOB_NAME",
-		Aliases: []string{"job"},
+		Use:     "job JOB_NAME",
+		Aliases: []string{"jobs"},
 		Short:   "Display details of a job.",
 		Run: func(cmd *cobra.Command, args []string) {
 

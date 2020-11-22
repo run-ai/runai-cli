@@ -43,8 +43,8 @@ var (
 func DescribeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:     "nodes [...NODE_NAME]",
-		Aliases: []string{"node"},
+		Use:     "node [...NODE_NAME]",
+		Aliases: []string{"nodes"},
 		Short:   "Display detailed information about nodes in the cluster.",
 		Example: describeNodeExample,
 		Run: func(cmd *cobra.Command, args []string) {
