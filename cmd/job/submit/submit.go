@@ -157,7 +157,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.RunAsCurrentUser), "run-as-user", "", "Run in the context of the current CLI user rather than the root user.")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
-	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "Number of GPUs to allocate to the Job.")
+	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "GPU units to allocate for the Job (0.5, 1).")
 	flagSet.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	flagSet.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
 	flagSet.StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")

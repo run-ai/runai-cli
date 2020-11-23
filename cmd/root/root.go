@@ -43,7 +43,7 @@ import (
 func NewCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   config.CLIName,
-		Short: "runai is the command line interface to RunAI",
+		Short: "runai is a command line interface to a RunAI cluster",
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
@@ -80,7 +80,7 @@ func NewCommand() *cobra.Command {
 }
 
 func addKubectlFlagsToCmd(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringP(flags.ProjectFlag, "p", "", "Specify the project to which the command applies. By default, commands apply to the default project. To change the default project use 'runai project set <project name>'.")
+	cmd.PersistentFlags().StringP(flags.ProjectFlag, "p", "", "Specify the project to which the command applies. By default, commands apply to the default project. To change the default project use ‘runai config project <project name>’.")
 }
 
 func createNamespace(client *kubernetes.Clientset, namespace string) error {
