@@ -166,7 +166,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet = fbg.GetOrAddFlagSet(StorageFlagGroup)
 	flagSet.StringArrayVarP(&(submitArgs.Volumes), "volume", "v", []string{}, "Volumes to mount into the container.")
-	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Mount a persistent volume. Syntax: 'StorageClass[optional]:Size:ContainerMountPath[optional]:ro[optional]")
+	flagSet.StringArrayVar(&(submitArgs.PersistentVolumes), "pvc", []string{}, "Mount a persistent volume. Syntax: 'StorageClass[optional]:Size:ContainerMountPath:ro[optional]")
 	flagSet.StringArrayVar(&(submitArgs.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	flagSet.MarkDeprecated("volumes", "please use 'volume' flag instead.")
 
