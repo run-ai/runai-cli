@@ -39,7 +39,7 @@ func NewListCommand() *cobra.Command {
 		Short:   "Display resource list. By default displays the job list.",
 		Example: listExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			job.RunJobList(cmd, args, false)
+			job.RunJobList(cmd, args, allNamespaces)
 		},
 	}
 
