@@ -53,7 +53,7 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 	namespace := namespaceInfo.Namespace
 	configMapName, err := getServerConfigMapNameByJob(jobName, namespaceInfo, clientset)
 	if err != nil {
-		return deleteJobWithoutConfigMap(jobName, namespaceInfo, clientset)
+		return deleteJobResourcesWithoutConfigMap(jobName, namespaceInfo, clientset)
 	}
 
 	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", namespace)
@@ -77,13 +77,13 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 	return nil
 }
 
-func deleteJobWithoutConfigMap(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
+func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
 	client, err := client.GetClient()
 	if err != nil {
 		return err
 	}
 
-	matchedJobs, err := trainer.GetTrainingJobsByName(jobName, namespaceInfo.Namespace, client)
+	matchedJobs, err := trainer.GetTrainingJobsByTypeMap(jobName, namespaceInfo.Namespace, client)
 	if err != nil {
 		return err
 	} else if len(matchedJobs) == 0 {
@@ -95,7 +95,7 @@ func deleteJobWithoutConfigMap(jobName string, namespaceInfo types.NamespaceInfo
 	for trainerType, jobToDelete := range matchedJobs {
 		jobName := jobToDelete.Name()
 		if jobToDelete.Trainer() == trainer.RunaiInteractiveType {
-			deleteInteractiveJob(jobName, namespaceInfo.Namespace, clientset)
+			deleteInteractiveJobResources(jobName, namespaceInfo.Namespace, clientset)
 		} else {
 			switch trainerType {
 			case trainer.MpiTrainerType:
@@ -121,7 +121,7 @@ func deleteJobWithoutConfigMap(jobName string, namespaceInfo types.NamespaceInfo
 	return nil
 }
 
-func deleteInteractiveJob(jobName, namespace string, clientset kubernetes.Interface) {
+func deleteInteractiveJobResources(jobName, namespace string, clientset kubernetes.Interface) {
 	if _, err := clientset.AppsV1().StatefulSets(namespace).Get(jobName, metav1.GetOptions{}); err == nil {
 		err := clientset.AppsV1().StatefulSets(namespace).Delete(jobName, &metav1.DeleteOptions{})
 		if err != nil {

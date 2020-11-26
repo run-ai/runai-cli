@@ -220,7 +220,7 @@ func IsKnownTrainingType(trainingType string) bool {
 	return false
 }
 
-func GetTrainingJobsByName(name, namespace string, client *client.Client) (map[string]TrainingJob, error) {
+func GetTrainingJobsByTypeMap(name, namespace string, client *client.Client) (map[string]TrainingJob, error) {
 	matchedJobs := make(map[string]TrainingJob)
 	trainers := NewTrainers(client)
 	for _, trainer := range trainers {
