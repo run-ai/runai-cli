@@ -63,7 +63,7 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 		result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 		log.Debugf("%s", result)
 		if err != nil {
-			log.Debugf("%s", err)
+			log.Debugf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.")
 		}
 	}
 
