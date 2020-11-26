@@ -30,7 +30,7 @@ func getNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Cli
 	}
 
 	if shouldPrintSetDefaultMessage(namespaceInfo, ignoreBackwardFlagOnError) {
-		fmt.Println("Please set a default project by running ‘runai project set <project-name>’ or use the flag -p to use a specific project.")
+		fmt.Println("Please set a default project by running ‘runai config project <project-name>’ or use the flag -p to use a specific project.")
 	}
 
 	return namespaceInfo, nil
@@ -95,7 +95,7 @@ func GetNamespaceToUseFromProjectFlagIncludingAll(cmd *cobra.Command, kubeClient
 		}
 
 		if shouldPrintSetDefaultMessage(namespaceInfo, false) {
-			fmt.Println("Please set a default project by running ‘runai project set <project-name>’ or use the flag -A to view all projects, or use the flag -p to view a specific project.")
+			fmt.Println("Please set a default project by running ‘runai config project <project-name>’ or use the flag -A to view all projects, or use the flag -p to view a specific project.")
 		}
 
 		return namespaceInfo, nil

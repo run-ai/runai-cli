@@ -131,7 +131,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&submitArgs.NameParameter, "name", "", "Job name")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(templateName), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai project set <project name>'.")
+	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai config project <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
