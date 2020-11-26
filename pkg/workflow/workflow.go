@@ -100,19 +100,15 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 			switch trainerType {
 			case trainer.MpiTrainerType:
 				mpiKubeClient := mpiClient.NewForConfigOrDie(client.GetRestConfig())
-				if _, err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{}); err == nil {
-					err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
-					if err != nil {
-						log.Warnf(fmt.Sprintf("Failed to remove mpijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
-					}
+				err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
+				if err != nil {
+					log.Warnf(fmt.Sprintf("Failed to remove mpijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
 				}
 			case trainer.DefaultRunaiTrainingType:
 				runaiClient := runaiClient.NewForConfigOrDie(client.GetRestConfig())
-				if _, err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{}); err == nil {
-					err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
-					if err != nil {
-						log.Warnf(fmt.Sprintf("Failed to remove runaijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
-					}
+				err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
+				if err != nil {
+					log.Warnf(fmt.Sprintf("Failed to remove runaijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
 				}
 			}
 		}
@@ -122,23 +118,17 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 }
 
 func deleteInteractiveJobResources(jobName, namespace string, clientset kubernetes.Interface) {
-	if _, err := clientset.AppsV1().StatefulSets(namespace).Get(jobName, metav1.GetOptions{}); err == nil {
-		err := clientset.AppsV1().StatefulSets(namespace).Delete(jobName, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Warnf(fmt.Sprintf("Failed to remove statefulSet %v, it may be removed manually and not by using Run:AI CLI.", jobName))
-		}
+	err := clientset.AppsV1().StatefulSets(namespace).Delete(jobName, &metav1.DeleteOptions{})
+	if err != nil {
+		log.Warnf(fmt.Sprintf("Failed to remove statefulSet %v, it may be removed manually and not by using Run:AI CLI.", jobName))
 	}
-	if _, err := clientset.CoreV1().Services(namespace).Get(jobName, metav1.GetOptions{}); err == nil {
-		err = clientset.CoreV1().Services(namespace).Delete(jobName, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Warnf(fmt.Sprintf("Failed to remove service %v, it may be removed manually and not by using Run:AI CLI.", jobName))
-		}
+	err = clientset.CoreV1().Services(namespace).Delete(jobName, &metav1.DeleteOptions{})
+	if err != nil {
+		log.Warnf(fmt.Sprintf("Failed to remove service %v, it may be removed manually and not by using Run:AI CLI.", jobName))
 	}
-	if _, err := clientset.ExtensionsV1beta1().Ingresses(namespace).Get(jobName, metav1.GetOptions{}); err == nil {
-		err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(jobName, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Warnf(fmt.Sprintf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName))
-		}
+	err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(jobName, &metav1.DeleteOptions{})
+	if err != nil {
+		log.Warnf(fmt.Sprintf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName))
 	}
 }
 
