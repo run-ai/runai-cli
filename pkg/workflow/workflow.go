@@ -2,7 +2,11 @@ package workflow
 
 import (
 	"fmt"
+	mpiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
+	runaiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +25,7 @@ const (
 	BaseNameLabelSelectorName  = "base-name"
 	baseIndexLabelSelectorName = "base-name-index"
 	configMapGenerationRetries = 5
-	)
+)
 
 type JobFiles struct {
 	valueFileName   string
@@ -33,10 +37,9 @@ type JobFiles struct {
 *	delete training job with the job name
 **/
 
-
 func getServerConfigMapNameByJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) (string, error) {
 	namespace := namespaceInfo.Namespace
-	maybeConfigMapNames := []string{jobName, fmt.Sprintf("%s-%s", jobName, "runai"),fmt.Sprintf("%s-%s", jobName, "mpijob")}
+	maybeConfigMapNames := []string{jobName, fmt.Sprintf("%s-%s", jobName, "runai"), fmt.Sprintf("%s-%s", jobName, "mpijob")}
 	for _, maybeConfigMapName := range maybeConfigMapNames {
 		configMap, err := clientset.CoreV1().ConfigMaps(namespace).Get(maybeConfigMapName, metav1.GetOptions{})
 		if err == nil {
@@ -50,7 +53,7 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 	namespace := namespaceInfo.Namespace
 	configMapName, err := getServerConfigMapNameByJob(jobName, namespaceInfo, clientset)
 	if err != nil {
-		return err
+		return deleteJobWithoutConfigMap(jobName, namespaceInfo, clientset)
 	}
 
 	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(configMapName, "app", namespace)
@@ -64,14 +67,79 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 		}
 	}
 
-	err = kubectl.DeleteAppConfigMap(configMapName, namespace)
+	err = clientset.CoreV1().ConfigMaps(namespaceInfo.Namespace).Delete(configMapName, &metav1.DeleteOptions{})
 	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", configMapName, err)
+		log.Warningf("Delete configmap %s failed due to %v. Please clean it manually", configMapName, err)
 		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, configMapName)
 		return err
 	}
 
 	return nil
+}
+
+func deleteJobWithoutConfigMap(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
+	client, err := client.GetClient()
+	if err != nil {
+		return err
+	}
+
+	matchedJobs, err := trainer.GetTrainingJobsByName(jobName, namespaceInfo.Namespace, client)
+	if err != nil {
+		return err
+	} else if len(matchedJobs) == 0 {
+		return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
+	} else if len(matchedJobs) > 1 {
+		return fmt.Errorf("there are multiple jobs named %v", jobName)
+	}
+
+	for trainerType, jobToDelete := range matchedJobs {
+		jobName := jobToDelete.Name()
+		if jobToDelete.Trainer() == trainer.RunaiInteractiveType {
+			deleteInteractiveJob(jobName, namespaceInfo.Namespace, clientset)
+		} else {
+			switch trainerType {
+			case trainer.MpiTrainerType:
+				mpiKubeClient := mpiClient.NewForConfigOrDie(client.GetRestConfig())
+				if _, err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{}); err == nil {
+					err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
+					if err != nil {
+						log.Warnf(fmt.Sprintf("Failed to remove mpijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+					}
+				}
+			case trainer.DefaultRunaiTrainingType:
+				runaiClient := runaiClient.NewForConfigOrDie(client.GetRestConfig())
+				if _, err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{}); err == nil {
+					err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
+					if err != nil {
+						log.Warnf(fmt.Sprintf("Failed to remove runaijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func deleteInteractiveJob(jobName, namespace string, clientset kubernetes.Interface) {
+	if _, err := clientset.AppsV1().StatefulSets(namespace).Get(jobName, metav1.GetOptions{}); err == nil {
+		err := clientset.AppsV1().StatefulSets(namespace).Delete(jobName, &metav1.DeleteOptions{})
+		if err != nil {
+			log.Warnf(fmt.Sprintf("Failed to remove statefulSet %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+		}
+	}
+	if _, err := clientset.CoreV1().Services(namespace).Get(jobName, metav1.GetOptions{}); err == nil {
+		err = clientset.CoreV1().Services(namespace).Delete(jobName, &metav1.DeleteOptions{})
+		if err != nil {
+			log.Warnf(fmt.Sprintf("Failed to remove service %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+		}
+	}
+	if _, err := clientset.ExtensionsV1beta1().Ingresses(namespace).Get(jobName, metav1.GetOptions{}); err == nil {
+		err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(jobName, &metav1.DeleteOptions{})
+		if err != nil {
+			log.Warnf(fmt.Sprintf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+		}
+	}
 }
 
 /**
@@ -98,7 +166,6 @@ func generateJobFiles(name string, namespace string, values interface{}, chart s
 		cleanupSingleFile(valueFileName)
 		return nil, err
 	}
-
 
 	jobFiles := &JobFiles{
 		valueFileName:   valueFileName,
@@ -153,7 +220,7 @@ func submitConfigMap(name, namespace string, generateSuffix bool, clientset kube
 	}
 
 	configMapLabelSelector := getConfigMapLabelSelector(name)
-	for i := 0; i < configMapGenerationRetries; i ++ {
+	for i := 0; i < configMapGenerationRetries; i++ {
 		existingConfigMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: configMapLabelSelector})
 		if err != nil {
 			return nil, err
