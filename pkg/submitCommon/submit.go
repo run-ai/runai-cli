@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package submitCore
+package submitCommon
 
 import (
 	"fmt"
@@ -146,7 +146,7 @@ func (submitArgs *SubmitArgs) AddCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.AlwaysPullImage), "always-pull-image", "", "Always pull latest version of the image.")
 	flagSet.MarkDeprecated("always-pull-image", "please use 'image-pull-policy=Always' instead.")
 	flagSet.StringArrayVar(&(submitArgs.SpecArgs), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
-	flagSet.MarkDeprecated("args", "please use -- with extra submitCore. See usage")
+	flagSet.MarkDeprecated("args", "please use -- with extra submitCommon. See usage")
 	flagSet.StringArrayVarP(&(submitArgs.EnvironmentVariable), "environment", "e", []string{}, "Set environment variables in the container.")
 	flagSet.StringVarP(&(submitArgs.Image), "image", "i", "", "Container image to use when creating the job.")
 	flagSet.StringArrayVar(&(submitArgs.SpecCommand), oldCommandFlag, []string{}, "Run this command on container start. Use together with --args.")
@@ -352,7 +352,7 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submi
 	}
 	if submitArgs.NameParameter != "" {
 		if len(argsUntilDash) > 0 {
-			return "", false, fmt.Errorf("unexpected submitCore %v", argsUntilDash)
+			return "", false, fmt.Errorf("unexpected submitCommon %v", argsUntilDash)
 		}
 		return submitArgs.NameParameter, false, nil
 	} else if len(argsUntilDash) > 0 {

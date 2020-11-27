@@ -64,7 +64,7 @@ func InstallRelease(name string, namespace string, values interface{}, chartName
 		}
 	}
 
-	// 4. prepare the submitCore
+	// 4. prepare the submitCommon
 	args := []string{"install", "-f", valueFile.Name(), "--name", name, chartName}
 	args = util.AddNamespaceToArgs(args, namespace)
 	log.Debugf("Exec %s, %v", binary, args)

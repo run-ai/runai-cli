@@ -196,7 +196,7 @@ func GetChartVersion(chart string) (version string, err error) {
 	}
 	// }
 
-	// 2. prepare the submitCore
+	// 2. prepare the submitCommon
 	args := []string{binary, "inspect", "chart", chart,
 		"|", "grep", "version:"}
 	log.Debugf("Exec bash -c %v", args)

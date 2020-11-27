@@ -17,7 +17,7 @@ package submit
 import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/flags"
-	"github.com/run-ai/runai-cli/pkg/submitCore"
+	"github.com/run-ai/runai-cli/pkg/submitCommon"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -70,7 +70,7 @@ func mergeOldCommandAndArgsWithNew(argsLenAtDash int, positionalArgs, oldCommand
 	return append(oldCommand, oldArgs...), &isAnyCommand
 }
 
-func convertOldCommandArgsFlags(cmd *cobra.Command, submitArgs *submitCore.SubmitArgs, args []string) []string {
+func convertOldCommandArgsFlags(cmd *cobra.Command, submitArgs *submitCommon.SubmitArgs, args []string) []string {
 	commandArgs, isCommand := mergeOldCommandAndArgsWithNew(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
 	if isCommand != nil && *isCommand {
 		submitArgs.SpecCommand = commandArgs

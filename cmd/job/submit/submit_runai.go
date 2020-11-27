@@ -2,7 +2,7 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/submitCore"
+	"github.com/run-ai/runai-cli/pkg/submitCommon"
 	"math"
 	"os"
 	"path"
@@ -192,10 +192,10 @@ func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kuberne
 		return err
 	}
 
-	if submitCore.TemplateName != "" {
-		userTemplate, err := templatesHandler.GetTemplate(submitCore.TemplateName)
+	if submitCommon.TemplateName != "" {
+		userTemplate, err := templatesHandler.GetTemplate(submitCommon.TemplateName)
 		if err != nil {
-			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", submitCore.TemplateName, config.CLIName)
+			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", submitCommon.TemplateName, config.CLIName)
 		}
 
 		if adminTemplate != nil {
@@ -207,7 +207,7 @@ func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kuberne
 		} else {
 			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
 			if err != nil {
-				return fmt.Errorf("Could not apply template %s: %v", submitCore.TemplateName, err)
+				return fmt.Errorf("Could not apply template %s: %v", submitCommon.TemplateName, err)
 			}
 		}
 	} else if adminTemplate != nil {
@@ -258,20 +258,20 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 }
 
 type submitRunaiJobArgs struct {
-	// These submitCore should be omitted when empty, to support default values file created in the cluster
+	// These submitCommon should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	submitCore.SubmitArgs `yaml:",inline"`
-	GPUFractionFixed      string `yaml:"gpuFractionFixed,omitempty"`
-	ServiceType           string `yaml:"serviceType,omitempty"`
-	Elastic               *bool  `yaml:"elastic,omitempty"`
-	TTL                   *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
-	Completions           *int   `yaml:"completions,omitempty"`
-	Parallelism           *int   `yaml:"parallelism,omitempty"`
-	IsJupyter             *bool
-	IsPreemptible         *bool `yaml:"isPreemptible,omitempty"`
-	IsRunaiJob            *bool `yaml:"isRunaiJob,omitempty"`
-	IsOldJob              *bool
-	TtlAfterFinished      *time.Duration
+	submitCommon.SubmitArgs `yaml:",inline"`
+	GPUFractionFixed        string `yaml:"gpuFractionFixed,omitempty"`
+	ServiceType             string `yaml:"serviceType,omitempty"`
+	Elastic                 *bool  `yaml:"elastic,omitempty"`
+	TTL                     *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Completions             *int   `yaml:"completions,omitempty"`
+	Parallelism             *int   `yaml:"parallelism,omitempty"`
+	IsJupyter               *bool
+	IsPreemptible           *bool `yaml:"isPreemptible,omitempty"`
+	IsRunaiJob              *bool `yaml:"isRunaiJob,omitempty"`
+	IsOldJob                *bool
+	TtlAfterFinished        *time.Duration
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -334,11 +334,11 @@ func submitRunaiJob(submitArgs *submitRunaiJobArgs, clientset kubernetes.Interfa
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.GenerateSuffix, submitArgs, runaiChart, clientset, submitCore.DryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.GenerateSuffix, submitArgs, runaiChart, clientset, submitCommon.DryRun)
 	if err != nil {
 		return err
 	}
-	if !submitCore.DryRun {
+	if !submitCommon.DryRun {
 		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 		fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 	}
