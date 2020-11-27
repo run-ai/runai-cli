@@ -41,8 +41,6 @@ var (
 	allMPIjobs []MPIJob
 )
 
-const MpiTrainerType = "mpijob"
-
 // MPI Job Information
 type MPIJob struct {
 	*cmdTypes.BasicJobInfo
@@ -356,7 +354,7 @@ func NewMPIJobTrainer(kubeClient client.Client) Trainer {
 
 	if err != nil {
 		return &MPIJobTrainer{
-			trainerType: MpiTrainerType,
+			trainerType: "mpijob",
 			enabled:     false,
 		}
 	}
@@ -366,7 +364,7 @@ func NewMPIJobTrainer(kubeClient client.Client) Trainer {
 			return &MPIJobTrainer{
 				client:       kubeClient.GetClientset(),
 				mpiclientset: mpiClient.NewForConfigOrDie(kubeClient.GetRestConfig()),
-				trainerType:  MpiTrainerType,
+				trainerType:  "mpijob",
 				enabled:      true,
 			}
 		}
@@ -460,10 +458,10 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 
 func (tt *MPIJobTrainer) getJobType(mpijob *mpi.MPIJob) string {
 	if mpijob != nil && mpijob.Labels != nil && mpijob.Labels["priorityClassName"] == "build" {
-		return RunaiInteractiveType
+		return runaiInteractiveType
 	}
 
-	return RunaiTrainType
+	return runaiTrainType
 }
 
 // Get the training job from Cache

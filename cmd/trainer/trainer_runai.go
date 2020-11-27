@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	RunaiTrainType                  = "Train"
-	RunaiInteractiveType            = "Interactive"
+	runaiTrainType                  = "Train"
+	runaiInteractiveType            = "Interactive"
 	runaiPreemptibleInteractiveType = "Interactive-Preemptible"
 )
 
@@ -479,9 +479,9 @@ func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
 		if job.Labels["priorityClassName"] == "interactive-preemptible" {
 			return runaiPreemptibleInteractiveType
 		}
-		return RunaiInteractiveType
+		return runaiInteractiveType
 	}
-	return RunaiTrainType
+	return runaiTrainType
 }
 
 // Prefer address type by this order: external dns, external ip, internal dns, internal ip
