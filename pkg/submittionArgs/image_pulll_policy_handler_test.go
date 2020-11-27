@@ -1,4 +1,4 @@
-package submit
+package submittionArgs
 
 import (
 	"testing"
@@ -60,8 +60,8 @@ func TestHandleImagePullPolicy(t *testing.T) {
 	}
 }
 
-func setPullPolicySubmitArgs(args *pullPolicyTestArgs) *submitArgs {
-	submitArgs := submitArgs{}
+func setPullPolicySubmitArgs(args *pullPolicyTestArgs) *SubmitArgs {
+	submitArgs := SubmitArgs{}
 	submitArgs.ImagePullPolicy = args.imagePullPolicy
 	submitArgs.AlwaysPullImage = args.alwaysPullImage
 	submitArgs.LocalImage = args.localImage

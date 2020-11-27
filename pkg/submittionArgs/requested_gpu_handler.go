@@ -1,4 +1,4 @@
-package submit
+package submittionArgs
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ const (
 	runaiGPUIndex    = "runai-gpu"
 )
 
-func handleRequestedGPUs(submitArgs *submitArgs) {
+func handleRequestedGPUs(submitArgs *SubmitArgs) {
 	if submitArgs.GPU == nil {
 		return
 	}

@@ -1,6 +1,8 @@
-package submit
+package submittionArgs
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	pullPolicyAlways       = "Always"
@@ -8,7 +10,7 @@ const (
 	pullPolicyNever        = "Never"
 )
 
-func handleImagePullPolicy(submitArgs *submitArgs) (err error) {
+func handleImagePullPolicy(submitArgs *SubmitArgs) (err error) {
 	switch submitArgs.ImagePullPolicy {
 	case pullPolicyAlways, pullPolicyIfNotPresent, pullPolicyNever:
 		if submitArgs.LocalImage != nil && *submitArgs.LocalImage {

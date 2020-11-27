@@ -7,6 +7,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/submittionArgs"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -136,7 +137,8 @@ func deleteInteractiveJobResources(jobName, namespace string, clientset kubernet
 *	Submit training job
 **/
 
-func generateJobFiles(name string, namespace string, values interface{}, chart string) (*JobFiles, error) {
+func generateJobFiles(name, namespace string, values submittionArgs.SubmittionArguments, chart, configMapUid string) (*JobFiles, error) {
+	values.ApplyConfigMapAsParent(configMapUid)
 	valueFileName, err := helm.GenerateValueFile(values)
 	if err != nil {
 		return nil, err
@@ -275,18 +277,19 @@ func cleanupSingleFile(file string) {
 }
 
 func cleanupJobFiles(files *JobFiles) {
-	cleanupSingleFile(files.valueFileName)
+	//cleanupSingleFile(files.valueFileName)
+	fmt.Println(files.valueFileName)
 	cleanupSingleFile(files.template)
 	cleanupSingleFile(files.appInfoFileName)
 }
 
-func submitJobInternal(name, namespace string, generateSuffix bool, values interface{}, chart string, clientset kubernetes.Interface) (string, error) {
+func submitJobInternal(name, namespace string, generateSuffix bool, values submittionArgs.SubmittionArguments, chart string, clientset kubernetes.Interface) (string, error) {
 	configMap, err := submitConfigMap(name, namespace, generateSuffix, clientset)
 	if err != nil {
 		return "", err
 	}
 	jobName := configMap.Name
-	jobFiles, err := generateJobFiles(jobName, namespace, values, chart)
+	jobFiles, err := generateJobFiles(jobName, namespace, values, chart, string(configMap.UID))
 	if err != nil {
 		return jobName, err
 	}
@@ -310,9 +313,9 @@ func submitJobInternal(name, namespace string, generateSuffix bool, values inter
 	return jobName, nil
 }
 
-func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
+func SubmitJob(name, namespace string, generateSuffix bool, values submittionArgs.SubmittionArguments, chart string, clientset kubernetes.Interface, dryRun bool) (string, error) {
 	if dryRun {
-		jobFiles, err := generateJobFiles(name, namespace, values, chart)
+		jobFiles, err := generateJobFiles(name, namespace, values, chart, "")
 		if err != nil {
 			return "", err
 		}

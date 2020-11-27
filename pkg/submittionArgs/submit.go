@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package submit
+package submittionArgs
 
 import (
 	"fmt"
@@ -53,12 +53,16 @@ const (
 )
 
 var (
-	dryRun       bool
-	templateName string
+	DryRun       bool
+	TemplateName string
 )
 
+type SubmittionArguments interface {
+	ApplyConfigMapAsParent(string)
+}
+
 // The common parts of the submitAthd
-type submitArgs struct {
+type SubmitArgs struct {
 	Image               string `yaml:"image"`
 	NameParameter       string
 	Project             string `yaml:"project,omitempty"`
@@ -101,10 +105,11 @@ type submitArgs struct {
 	Attach                     *bool             `yaml:"attach,omitempty"`
 	NamePrefix                 string            `yaml:"namePrefix,omitempty"`
 	BackoffLimit               *int              `yaml:"backoffLimit,omitempty"`
-	generateSuffix             bool
+	ParentUid                  string            `yaml:"parentUid,omitempty"`
+	GenerateSuffix             bool
 }
 
-func (s submitArgs) check() error {
+func (s SubmitArgs) Check() error {
 	if s.Name == "" {
 		return fmt.Errorf("--name must be set")
 	}
@@ -118,7 +123,7 @@ func (s submitArgs) check() error {
 	return nil
 }
 
-func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
+func (submitArgs *SubmitArgs) AddCommonFlags(fbg flags.FlagsByGroups) {
 	var defaultUser string
 	currentUser, err := user.Current()
 	if err != nil {
@@ -130,10 +135,10 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&submitArgs.NameParameter, "name", "", "Job name")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
-	flagSet.StringVarP(&(templateName), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
+	flagSet.StringVarP(&(TemplateName), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai project set <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
-	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
+	flagSet.BoolVar(&DryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
 	flagSet.StringVar(&submitArgs.NamePrefix, "job-name-prefix", "", "Set defined prefix for the job name and add index as suffix")
 
@@ -189,14 +194,14 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 }
 
-func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface) error {
+func (submitArgs *SubmitArgs) SetCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface) error {
 	util.SetLogLevel(global.LogLevel)
 
 	name, generateSuffix, err := getJobNameWithSuffixGenerationFlag(cmd, args, submitArgs)
 	if err != nil {
 		return err
 	}
-	submitArgs.generateSuffix = generateSuffix
+	submitArgs.GenerateSuffix = generateSuffix
 
 	var errs = validation.IsDNS1035Label(name)
 	if len(errs) > 0 {
@@ -245,9 +250,9 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		submitArgs.RunAsGroup = currentUser.Gid
 		// Set the default of CreateHomeDir as true if run-as-user is true
 		// todo: not set as true until testing it
-		// if submitArgs.CreateHomeDir == nil {
+		// if SubmitArgs.CreateHomeDir == nil {
 		// 	t := true
-		// 	submitArgs.CreateHomeDir = &t
+		// 	SubmitArgs.CreateHomeDir = &t
 		// }
 	}
 
@@ -256,7 +261,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		submitArgs.PreventPrivilegeEscalation = &preventPrivilegeEscalation
 	}
 
-	err = HandleVolumesAndPvc(submitArgs)
+	err = handleVolumesAndPvc(submitArgs)
 	if err != nil {
 		return err
 	}
@@ -290,6 +295,10 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return err
 	}
 	return nil
+}
+
+func (s *SubmitArgs) ApplyConfigMapAsParent(uid string) {
+	s.ParentUid = uid
 }
 
 func getJobIndex(clientset kubernetes.Interface) (string, error) {
@@ -336,37 +345,7 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	return newIndex, false, nil
 }
 
-func convertOldCommandArgsFlags(cmd *cobra.Command, submitArgs *submitArgs, args []string) []string {
-	commandArgs, isCommand := mergeOldCommandAndArgsWithNew(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
-	if isCommand != nil && *isCommand {
-		submitArgs.SpecCommand = commandArgs
-		submitArgs.SpecArgs = []string{}
-	} else {
-		submitArgs.SpecCommand = []string{}
-		submitArgs.SpecArgs = commandArgs
-	}
-	submitArgs.Command = isCommand
-	return commandArgs
-}
-
-func mergeOldCommandAndArgsWithNew(argsLenAtDash int, positionalArgs, oldCommand, oldArgs []string, isCommand *bool) ([]string, *bool) {
-	if argsLenAtDash == -1 {
-		argsLenAtDash = len(positionalArgs)
-	}
-
-	argsAfterDash := positionalArgs[argsLenAtDash:]
-	if len(argsAfterDash) != 0 {
-		return argsAfterDash, isCommand
-	}
-
-	isAnyCommand := false
-	if len(oldCommand) != 0 {
-		isAnyCommand = true
-	}
-	return append(oldCommand, oldArgs...), &isAnyCommand
-}
-
-func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submitArgs *submitArgs) (string, bool, error) {
+func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submitArgs *SubmitArgs) (string, bool, error) {
 	argsLenUntilDash := cmd.ArgsLenAtDash()
 	argsUntilDash := args
 	if argsLenUntilDash != -1 {
@@ -385,27 +364,4 @@ func getJobNameWithSuffixGenerationFlag(cmd *cobra.Command, args []string, submi
 		return submitArgs.NamePrefix, true, nil
 	}
 	return jobDefaultName, true, nil
-}
-
-func AlignArgsPreParsing(args []string) []string {
-	if len(args) < 2 || (args[1] != submitCommand && args[1] != SubmitMpiCommand) {
-		return args
-	}
-
-	dashIndex := -1
-	for i, arg := range args {
-		if arg == dashArg {
-			dashIndex = i
-		}
-	}
-
-	if dashIndex == -1 {
-		for i, arg := range args {
-			if arg == fmt.Sprintf("%s%s", dashArg, commandFlag) {
-				log.Info(fmt.Sprintf("using %s%s as string flag has been deprecated. Please see usage information", dashArg, commandFlag))
-				args[i] = fmt.Sprintf("%s%s", dashArg, oldCommandFlag)
-			}
-		}
-	}
-	return args
 }

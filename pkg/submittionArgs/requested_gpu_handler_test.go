@@ -1,4 +1,4 @@
-package submit
+package submittionArgs
 
 import (
 	"strconv"
@@ -48,7 +48,7 @@ func TestGPUSharingManager(t *testing.T) {
 				if tt.shouldRunFractionalGPUJob {
 					t.Errorf("handleSharedGPUsIfNeeded() failed to parse gpuFraction %v, while expecting it to manage", err)
 				} else if float64(*testSubmitArgs.GPUInt) != *submitArgs.GPU {
-					t.Errorf("GPUInt: %v, submitArgs.gpu: %v", *testSubmitArgs.GPUInt, *submitArgs.GPU)
+					t.Errorf("GPUInt: %v, SubmitArgs.gpu: %v", *testSubmitArgs.GPUInt, *submitArgs.GPU)
 				}
 			}
 
@@ -59,8 +59,8 @@ func TestGPUSharingManager(t *testing.T) {
 	}
 }
 
-func setSubmitArgs(args *testArgs) *submitArgs {
-	submitArgs := submitArgs{}
+func setSubmitArgs(args *testArgs) *SubmitArgs {
+	submitArgs := SubmitArgs{}
 	submitArgs.GPU = args.gpu
 	submitArgs.Interactive = args.interactive
 	return &submitArgs

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/golang/glog"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/submittionArgs"
 	"github.com/run-ai/runai-cli/pkg/templates"
 	"strconv"
 	"time"
@@ -29,7 +30,7 @@ func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submi
 	return nil
 }
 
-func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, extraArgs []string) submitArgs {
+func mergeTemplateToCommonSubmitArgs(submitArgs submittionArgs.SubmitArgs, template *templates.SubmitTemplate, extraArgs []string) submittionArgs.SubmitArgs {
 	submitArgs.NameParameter = applyTemplateFieldForString(submitArgs.NameParameter, template.Name, "name")
 	submitArgs.EnvironmentVariable = templates.MergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
 	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
@@ -59,7 +60,7 @@ func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.
 }
 
 func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitRunaiJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+	submitArgs.SubmitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.SubmitArgs, template, extraArgs)
 	submitArgs.BackoffLimit = applyTemplateFieldForInt(submitArgs.BackoffLimit, template.BackoffLimit, "backofflimit")
 	submitArgs.Elastic = applyTemplateFieldForBool(submitArgs.Elastic, template.Elastic, "elastic")
 	submitArgs.Parallelism = applyTemplateFieldForInt(submitArgs.Parallelism, template.Parallelism, "parallelism")
@@ -71,7 +72,7 @@ func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *tem
 }
 
 func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitMPIJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+	submitArgs.SubmitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.SubmitArgs, template, extraArgs)
 	submitArgs.Processes = applyTemplateFieldForInt(submitArgs.Processes, template.Processes, "processes")
 	return submitArgs
 }
@@ -131,7 +132,7 @@ func mergeExtraArgs(cliExtraArgs, templateExtraArgs []string) []string {
 	return []string{}
 }
 
-func mergeCommandAndArgs(submitArgs *submitArgs, template *templates.SubmitTemplate, extraArgs []string) {
+func mergeCommandAndArgs(submitArgs *submittionArgs.SubmitArgs, template *templates.SubmitTemplate, extraArgs []string) {
 	submitArgs.Command = applyTemplateFieldForBool(submitArgs.Command, template.IsCommand, "command")
 	if raUtil.IsBoolPTrue(submitArgs.Command) {
 		submitArgs.SpecCommand = mergeExtraArgs(extraArgs, template.ExtraArgs)

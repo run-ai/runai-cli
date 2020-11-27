@@ -1,4 +1,4 @@
-package submit
+package submittionArgs
 
 import (
 	"runtime/debug"
@@ -17,10 +17,10 @@ const (
 )
 
 func TestNoPvcRequested(t *testing.T) {
-	args := &submitArgs{
+	args := &SubmitArgs{
 		PersistentVolumes: []string{},
 	}
-	err := HandleVolumesAndPvc(args)
+	err := handleVolumesAndPvc(args)
 
 	if err != nil {
 		t.Errorf("Unexpected error %+v", err)
@@ -31,145 +31,145 @@ func TestNoPvcRequested(t *testing.T) {
 
 func TestVolumeParamLength(t *testing.T) {
 	// Wrong length
-	args := &submitArgs{Volumes: []string{""}}
+	args := &SubmitArgs{Volumes: []string{""}}
 	assertValidation(t, args, WrongLengthVolumeParamError)
 
-	args = &submitArgs{Volumes: []string{":::"}}
+	args = &SubmitArgs{Volumes: []string{":::"}}
 	assertValidation(t, args, WrongLengthVolumeParamError)
 
-	args = &submitArgs{Volumes: []string{"::::"}}
+	args = &SubmitArgs{Volumes: []string{"::::"}}
 	assertValidation(t, args, WrongLengthVolumeParamError)
 
 	// Correct length
-	args = &submitArgs{Volumes: []string{":"}}
+	args = &SubmitArgs{Volumes: []string{":"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{Volumes: []string{"myPath:yourPath"}}
+	args = &SubmitArgs{Volumes: []string{"myPath:yourPath"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{Volumes: []string{"::"}}
+	args = &SubmitArgs{Volumes: []string{"::"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{Volumes: []string{"myPath:yourPath:ro"}}
+	args = &SubmitArgs{Volumes: []string{"myPath:yourPath:ro"}}
 	assertNoError(t, args)
 }
 
 func TestPvcParamLength(t *testing.T) {
 	// Wrong length
-	args := &submitArgs{PersistentVolumes: []string{""}}
+	args := &SubmitArgs{PersistentVolumes: []string{""}}
 	assertValidation(t, args, WrongLengthPvcParamError)
 
-	args = &submitArgs{PersistentVolumes: []string{"::::"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"::::"}}
 	assertValidation(t, args, WrongLengthPvcParamError)
 
-	args = &submitArgs{PersistentVolumes: []string{":::::"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":::::"}}
 	assertValidation(t, args, WrongLengthPvcParamError)
 
-	args = &submitArgs{PersistentVolumes: []string{"storage-class:1Gi::ro:notgood"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"storage-class:1Gi::ro:notgood"}}
 	assertValidation(t, args, WrongLengthPvcParamError)
 
 	// Correct length
 
-	args = &submitArgs{PersistentVolumes: []string{":1Gi:/path"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":1Gi:/path"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{PersistentVolumes: []string{"storageclass:1Gi:/path"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"storageclass:1Gi:/path"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{PersistentVolumes: []string{":1Gi:/path:"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":1Gi:/path:"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{PersistentVolumes: []string{":1Gi:/path:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":1Gi:/path:ro"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{PersistentVolumes: []string{"storageclass:1Gi:/path:"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"storageclass:1Gi:/path:"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{PersistentVolumes: []string{"storageclass:1Gi:/path:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"storageclass:1Gi:/path:ro"}}
 	assertNoError(t, args)
 }
 
 func TestNoContainerMountPathGiven(t *testing.T) {
-	args := &submitArgs{PersistentVolumes: []string{":1Gi:"}}
+	args := &SubmitArgs{PersistentVolumes: []string{":1Gi:"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 
-	args = &submitArgs{PersistentVolumes: []string{"storage-class:1Gi:"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"storage-class:1Gi:"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 
-	args = &submitArgs{PersistentVolumes: []string{"storage-class:1Gi::"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"storage-class:1Gi::"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 
-	args = &submitArgs{PersistentVolumes: []string{"storage-class:1Gi::ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"storage-class:1Gi::ro"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 
-	args = &submitArgs{PersistentVolumes: []string{":1Gi::"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":1Gi::"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 
-	args = &submitArgs{PersistentVolumes: []string{":1Gi::ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":1Gi::ro"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 }
 
 func TestNoCapacityGiven(t *testing.T) {
-	args := &submitArgs{PersistentVolumes: []string{"::/path/to"}}
+	args := &SubmitArgs{PersistentVolumes: []string{"::/path/to"}}
 	assertValidation(t, args, MissingCapacityError)
 
-	args = &submitArgs{PersistentVolumes: []string{"::/path/to:"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"::/path/to:"}}
 	assertValidation(t, args, MissingCapacityError)
 
-	args = &submitArgs{PersistentVolumes: []string{"my-storage-class:::"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"my-storage-class:::"}}
 	assertValidation(t, args, MissingCapacityError)
 
-	args = &submitArgs{PersistentVolumes: []string{"my-storage-class::/path/to:"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"my-storage-class::/path/to:"}}
 	assertValidation(t, args, MissingCapacityError)
 
-	args = &submitArgs{PersistentVolumes: []string{"my-storage-class::/path/to:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"my-storage-class::/path/to:ro"}}
 	assertValidation(t, args, MissingCapacityError)
 
-	args = &submitArgs{PersistentVolumes: []string{"::/path/to:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"::/path/to:ro"}}
 	assertValidation(t, args, MissingCapacityError)
 
-	args = &submitArgs{PersistentVolumes: []string{"::/path/to:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"::/path/to:ro"}}
 	assertValidation(t, args, MissingCapacityError)
 }
 
 func TestExistingPvcNoPvcNameGiven(t *testing.T) {
-	args := &submitArgs{PersistentVolumes: []string{":/path/to"}}
+	args := &SubmitArgs{PersistentVolumes: []string{":/path/to"}}
 	assertValidation(t, args, MissingPvcNameError)
 
 	// This will be validated as a dynamic provision param because of the empty string at [0] and len() == 3
-	args = &submitArgs{PersistentVolumes: []string{":/path/to:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":/path/to:ro"}}
 	assertValidation(t, args, BadlyFormattedResourceRequestError)
 
 	// This will be validated as a dynamic provision param because of the empty string at [0] and len() == 3
-	args = &submitArgs{PersistentVolumes: []string{"::ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"::ro"}}
 	assertValidation(t, args, MissingCapacityError)
 
-	args = &submitArgs{PersistentVolumes: []string{":"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":"}}
 	assertValidation(t, args, MissingPvcNameError)
 }
 
 func TestExistingPvcNoMountPathGiven(t *testing.T) {
-	args := &submitArgs{PersistentVolumes: []string{"my-pvc:"}}
+	args := &SubmitArgs{PersistentVolumes: []string{"my-pvc:"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 
-	args = &submitArgs{PersistentVolumes: []string{"my-pvc::ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"my-pvc::ro"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 
-	args = &submitArgs{PersistentVolumes: []string{"my-pvc::"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"my-pvc::"}}
 	assertValidation(t, args, MissingContainerMountPathError)
 }
 
 func TestExistingPvcBadAccessModeFlag(t *testing.T) {
-	args := &submitArgs{PersistentVolumes: []string{"my-pvc:/path1:ra"}}
+	args := &SubmitArgs{PersistentVolumes: []string{"my-pvc:/path1:ra"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
-	args = &submitArgs{PersistentVolumes: []string{"my-pvc:/path1:oops"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"my-pvc:/path1:oops"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
 }
 
 func TestGoodParams(t *testing.T) {
-	args := &submitArgs{
+	args := &SubmitArgs{
 		Name: "MyJob",
 		PersistentVolumes: []string{
 			// Dynamic provision pvc
@@ -186,7 +186,7 @@ func TestGoodParams(t *testing.T) {
 			"my-pvc:/path4:rw",
 		},
 	}
-	err := HandleVolumesAndPvc(args)
+	err := handleVolumesAndPvc(args)
 	if err != nil {
 		t.Fatalf("Unexpected error: %+v", err)
 	}
@@ -209,66 +209,66 @@ func assertPvParam(t *testing.T, expected string, actual string) {
 }
 
 func TestStorageClassValidation(t *testing.T) {
-	args := &submitArgs{PersistentVolumes: []string{"~oops:2Gi:path:ro"}}
+	args := &SubmitArgs{PersistentVolumes: []string{"~oops:2Gi:path:ro"}}
 	assertValidation(t, args, "A Storage Class name must consist of")
 
-	args = &submitArgs{PersistentVolumes: []string{"/a:2Gi:path:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"/a:2Gi:path:ro"}}
 	assertValidation(t, args, "A Storage Class name must consist of")
 
-	args = &submitArgs{PersistentVolumes: []string{"a:2Gi:path:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{"a:2Gi:path:ro"}}
 	assertNoError(t, args)
 }
 
 func TestResourceRequestValidation(t *testing.T) {
-	args := &submitArgs{PersistentVolumes: []string{":/2Gi:path:ro"}}
+	args := &SubmitArgs{PersistentVolumes: []string{":/2Gi:path:ro"}}
 	assertValidation(t, args, BadlyFormattedResourceRequestError)
 
-	args = &submitArgs{PersistentVolumes: []string{":2Gi~:path:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":2Gi~:path:ro"}}
 	assertValidation(t, args, BadlyFormattedResourceRequestError)
 
-	args = &submitArgs{PersistentVolumes: []string{":2Gi:path:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":2Gi:path:ro"}}
 	assertNoError(t, args)
 }
 
 func TestReadOnlyFlagValidation(t *testing.T) {
 	// pvc - bad
-	args := &submitArgs{PersistentVolumes: []string{":2Gi:/path:ra"}}
+	args := &SubmitArgs{PersistentVolumes: []string{":2Gi:/path:ra"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
-	args = &submitArgs{PersistentVolumes: []string{":2Gi:/path:r"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":2Gi:/path:r"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
-	args = &submitArgs{PersistentVolumes: []string{":2Gi:/path:re"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":2Gi:/path:re"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
 	// pvc - good
-	args = &submitArgs{PersistentVolumes: []string{":2Gi:/path:ro"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":2Gi:/path:ro"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{PersistentVolumes: []string{":2Gi:/path:rw"}}
+	args = &SubmitArgs{PersistentVolumes: []string{":2Gi:/path:rw"}}
 	assertNoError(t, args)
 
 	// volume - bad
-	args = &submitArgs{Volumes: []string{"/myPath:/yourPath:rx"}}
+	args = &SubmitArgs{Volumes: []string{"/myPath:/yourPath:rx"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
-	args = &submitArgs{Volumes: []string{"/myPath:/yourPath:roo"}}
+	args = &SubmitArgs{Volumes: []string{"/myPath:/yourPath:roo"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
-	args = &submitArgs{Volumes: []string{"/myPath:/yourPath:rD"}}
+	args = &SubmitArgs{Volumes: []string{"/myPath:/yourPath:rD"}}
 	assertValidation(t, args, InvalidReadOnlyParamError)
 
 	// volume - good
-	args = &submitArgs{Volumes: []string{"/myPath:/yourPath:rw"}}
+	args = &SubmitArgs{Volumes: []string{"/myPath:/yourPath:rw"}}
 	assertNoError(t, args)
 
-	args = &submitArgs{Volumes: []string{"/myPath:/yourPath:ro"}}
+	args = &SubmitArgs{Volumes: []string{"/myPath:/yourPath:ro"}}
 	assertNoError(t, args)
 
 }
 
-func assertValidation(t *testing.T, args *submitArgs, expectedErr string) {
-	err := HandleVolumesAndPvc(args)
+func assertValidation(t *testing.T, args *SubmitArgs, expectedErr string) {
+	err := handleVolumesAndPvc(args)
 	if err == nil {
 		t.Fatalf("Error containing '%s expected\n %v", expectedErr, string(debug.Stack()))
 	} else if !strings.Contains(err.Error(), expectedErr) {
@@ -276,8 +276,8 @@ func assertValidation(t *testing.T, args *submitArgs, expectedErr string) {
 	}
 }
 
-func assertNoError(t *testing.T, args *submitArgs) {
-	err := HandleVolumesAndPvc(args)
+func assertNoError(t *testing.T, args *SubmitArgs) {
+	err := handleVolumesAndPvc(args)
 	if err != nil {
 		t.Fatalf("Unexpected error: '%+v' %v", err, string(debug.Stack()))
 	}

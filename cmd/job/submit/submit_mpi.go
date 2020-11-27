@@ -16,6 +16,7 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/submittionArgs"
 	"os"
 	"path"
 
@@ -67,7 +68,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 			clientset := kubeClient.GetClientset()
 
-			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
+			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.SubmitArgs, args)
 
 			err = applyTemplate(&submitArgs, commandArgs, clientset)
 			if err != nil {
@@ -75,7 +76,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
+			err = submitArgs.SetCommonRun(cmd, args, kubeClient, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -90,7 +91,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	}
 
 	fbg := flags.NewFlagsByGroups(command)
-	submitArgs.addCommonFlags(fbg)
+	submitArgs.AddCommonFlags(fbg)
 	fg := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	flags.AddIntNullableFlag(fg, &(submitArgs.Processes), "processes", "Number of distributed training processes.")
 	fbg.UpdateFlagsByGroupsToCmd()
@@ -101,7 +102,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 type submitMPIJobArgs struct {
 	// for common args
-	submitArgs `yaml:",inline"`
+	submittionArgs.SubmitArgs `yaml:",inline"`
 
 	// for tensorboard
 	Processes       *int // --workers
@@ -124,7 +125,7 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 }
 
 func (submitArgs submitMPIJobArgs) check() error {
-	err := submitArgs.submitArgs.check()
+	err := submitArgs.SubmitArgs.Check()
 	if err != nil {
 		return err
 	}
@@ -141,12 +142,12 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, mpijob_chart, client.GetClientset(), dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.GenerateSuffix, submitArgs, mpijob_chart, client.GetClientset(), submittionArgs.DryRun)
 	if err != nil {
 		return err
 	}
 
-	if !dryRun {
+	if !submittionArgs.DryRun {
 		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 		fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 

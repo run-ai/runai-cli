@@ -2,6 +2,7 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/submittionArgs"
 	"math"
 	"os"
 	"path"
@@ -79,7 +80,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			clientset := kubeClient.GetClientset()
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
-			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
+			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.SubmitArgs, args)
 
 			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
@@ -87,7 +88,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
+			err = submitArgs.SetCommonRun(cmd, args, kubeClient, clientset)
 			if err != nil {
 				cmd.HelpFunc()(cmd, args)
 				fmt.Println(err)
@@ -174,7 +175,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	fbg := flags.NewFlagsByGroups(command)
 
-	submitArgs.addCommonFlags(fbg)
+	submitArgs.AddCommonFlags(fbg)
 	submitArgs.addFlags(fbg)
 
 	fbg.UpdateFlagsByGroupsToCmd()
@@ -191,10 +192,10 @@ func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kuberne
 		return err
 	}
 
-	if templateName != "" {
-		userTemplate, err := templatesHandler.GetTemplate(templateName)
+	if submittionArgs.TemplateName != "" {
+		userTemplate, err := templatesHandler.GetTemplate(submittionArgs.TemplateName)
 		if err != nil {
-			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
+			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", submittionArgs.TemplateName, config.CLIName)
 		}
 
 		if adminTemplate != nil {
@@ -206,7 +207,7 @@ func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kuberne
 		} else {
 			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
 			if err != nil {
-				return fmt.Errorf("Could not apply template %s: %v", templateName, err)
+				return fmt.Errorf("Could not apply template %s: %v", submittionArgs.TemplateName, err)
 			}
 		}
 	} else if adminTemplate != nil {
@@ -259,18 +260,18 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	submitArgs       `yaml:",inline"`
-	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
-	ServiceType      string `yaml:"serviceType,omitempty"`
-	Elastic          *bool  `yaml:"elastic,omitempty"`
-	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
-	Completions      *int   `yaml:"completions,omitempty"`
-	Parallelism      *int   `yaml:"parallelism,omitempty"`
-	IsJupyter        *bool
-	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
-	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
-	IsOldJob         *bool
-	TtlAfterFinished *time.Duration
+	submittionArgs.SubmitArgs `yaml:",inline"`
+	GPUFractionFixed          string `yaml:"gpuFractionFixed,omitempty"`
+	ServiceType               string `yaml:"serviceType,omitempty"`
+	Elastic                   *bool  `yaml:"elastic,omitempty"`
+	TTL                       *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Completions               *int   `yaml:"completions,omitempty"`
+	Parallelism               *int   `yaml:"parallelism,omitempty"`
+	IsJupyter                 *bool
+	IsPreemptible             *bool `yaml:"isPreemptible,omitempty"`
+	IsRunaiJob                *bool `yaml:"isRunaiJob,omitempty"`
+	IsOldJob                  *bool
+	TtlAfterFinished          *time.Duration
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -333,11 +334,11 @@ func submitRunaiJob(submitArgs *submitRunaiJobArgs, clientset kubernetes.Interfa
 	}
 
 	handleRunaiJobCRD(submitArgs, runaiclientset)
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, runaiChart, clientset, dryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.GenerateSuffix, submitArgs, runaiChart, clientset, submittionArgs.DryRun)
 	if err != nil {
 		return err
 	}
-	if !dryRun {
+	if !submittionArgs.DryRun {
 		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 		fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 	}

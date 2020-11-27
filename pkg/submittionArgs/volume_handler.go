@@ -1,4 +1,4 @@
-package submit
+package submittionArgs
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 //
 //            [0]					[1]					[2]
 // --pvc <existing_pvc_name>:<container_mount_path>:[<access_mode>]
-func HandleVolumesAndPvc(args *submitArgs) error {
+func handleVolumesAndPvc(args *SubmitArgs) error {
 	if err := handlePvcParams(args); err != nil {
 		return err
 	} else if err := handleVolumes(args); err != nil {
@@ -25,7 +25,7 @@ func HandleVolumesAndPvc(args *submitArgs) error {
 	return nil
 }
 
-func handlePvcParams(args *submitArgs) (err error) {
+func handlePvcParams(args *SubmitArgs) (err error) {
 	var rebuiltPersistentVolumeParams []string
 	for _, joinedPvcParams := range args.PersistentVolumes {
 		pvcParams := strings.Split(joinedPvcParams, ":")
@@ -125,7 +125,7 @@ func handleDynamicProvisionPvc(pvcParams []string) (rebuiltParams string, err er
 	return fmt.Sprintf("%s:%s:%s:%s", pvcParams[0], pvcParams[1], pvcParams[2], pvcParams[3]), err
 }
 
-func handleVolumes(args *submitArgs) error {
+func handleVolumes(args *SubmitArgs) error {
 	for _, joinedVolumeParams := range args.Volumes {
 		volumeParams := strings.Split(joinedVolumeParams, ":")
 		if len(volumeParams) != 2 && len(volumeParams) != 3 {
