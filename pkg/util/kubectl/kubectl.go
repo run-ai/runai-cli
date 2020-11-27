@@ -433,7 +433,7 @@ func kubectlAttched(args []string) error {
 		return err
 	}
 
-	// 1. prepare the arguments
+	// 1. prepare the submitCore
 	// args := []string{"create", "configmap", name, "--namespace", namespace, fmt.Sprintf("--from-file=%s=%s", name, configFileName)}
 	log.Debugf("Exec %s, %v", binary, args)
 
@@ -460,7 +460,7 @@ func kubectl(args []string) (string, error) {
 		return "", err
 	}
 
-	// 1. prepare the arguments
+	// 1. prepare the submitCore
 	// args := []string{"create", "configmap", name, "--namespace", namespace, fmt.Sprintf("--from-file=%s=%s", name, configFileName)}
 	log.Debugf("Exec %s, %v", binary, args)
 

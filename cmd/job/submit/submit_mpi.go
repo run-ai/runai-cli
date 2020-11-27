@@ -16,7 +16,7 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/submittionArgs"
+	"github.com/run-ai/runai-cli/pkg/submitCore"
 	"os"
 	"path"
 
@@ -102,7 +102,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 type submitMPIJobArgs struct {
 	// for common args
-	submittionArgs.SubmitArgs `yaml:",inline"`
+	submitCore.SubmitArgs `yaml:",inline"`
 
 	// for tensorboard
 	Processes       *int // --workers
@@ -142,12 +142,12 @@ func submitMPIJob(cmd *cobra.Command, args []string, submitArgs *submitMPIJobArg
 
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
-	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.GenerateSuffix, submitArgs, mpijob_chart, client.GetClientset(), submittionArgs.DryRun)
+	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.GenerateSuffix, submitArgs, mpijob_chart, client.GetClientset(), submitCore.DryRun)
 	if err != nil {
 		return err
 	}
 
-	if !submittionArgs.DryRun {
+	if !submitCore.DryRun {
 		fmt.Printf("The job '%s' has been submitted successfully\n", submitArgs.Name)
 		fmt.Printf("You can run `%s describe job %s -p %s` to check the job status\n", config.CLIName, submitArgs.Name, submitArgs.Project)
 

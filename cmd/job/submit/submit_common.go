@@ -17,7 +17,7 @@ package submit
 import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/flags"
-	"github.com/run-ai/runai-cli/pkg/submittionArgs"
+	"github.com/run-ai/runai-cli/pkg/submitCore"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -29,36 +29,6 @@ const (
 	NetworkFlagGroup      flags.FlagGroupName = "Network"
 	JobLifecycleFlagGroup flags.FlagGroupName = "Job Lifecycle"
 )
-
-func mergeOldCommandAndArgsWithNew(argsLenAtDash int, positionalArgs, oldCommand, oldArgs []string, isCommand *bool) ([]string, *bool) {
-	if argsLenAtDash == -1 {
-		argsLenAtDash = len(positionalArgs)
-	}
-
-	argsAfterDash := positionalArgs[argsLenAtDash:]
-	if len(argsAfterDash) != 0 {
-		return argsAfterDash, isCommand
-	}
-
-	isAnyCommand := false
-	if len(oldCommand) != 0 {
-		isAnyCommand = true
-	}
-	return append(oldCommand, oldArgs...), &isAnyCommand
-}
-
-func convertOldCommandArgsFlags(cmd *cobra.Command, submitArgs *submittionArgs.SubmitArgs, args []string) []string {
-	commandArgs, isCommand := mergeOldCommandAndArgsWithNew(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
-	if isCommand != nil && *isCommand {
-		submitArgs.SpecCommand = commandArgs
-		submitArgs.SpecArgs = []string{}
-	} else {
-		submitArgs.SpecCommand = []string{}
-		submitArgs.SpecArgs = commandArgs
-	}
-	submitArgs.Command = isCommand
-	return commandArgs
-}
 
 func AlignArgsPreParsing(args []string) []string {
 	if len(args) < 2 || (args[1] != submitCommand && args[1] != SubmitMpiCommand) {
@@ -81,4 +51,34 @@ func AlignArgsPreParsing(args []string) []string {
 		}
 	}
 	return args
+}
+
+func mergeOldCommandAndArgsWithNew(argsLenAtDash int, positionalArgs, oldCommand, oldArgs []string, isCommand *bool) ([]string, *bool) {
+	if argsLenAtDash == -1 {
+		argsLenAtDash = len(positionalArgs)
+	}
+
+	argsAfterDash := positionalArgs[argsLenAtDash:]
+	if len(argsAfterDash) != 0 {
+		return argsAfterDash, isCommand
+	}
+
+	isAnyCommand := false
+	if len(oldCommand) != 0 {
+		isAnyCommand = true
+	}
+	return append(oldCommand, oldArgs...), &isAnyCommand
+}
+
+func convertOldCommandArgsFlags(cmd *cobra.Command, submitArgs *submitCore.SubmitArgs, args []string) []string {
+	commandArgs, isCommand := mergeOldCommandAndArgsWithNew(cmd.ArgsLenAtDash(), args, submitArgs.SpecCommand, submitArgs.SpecArgs, submitArgs.Command)
+	if isCommand != nil && *isCommand {
+		submitArgs.SpecCommand = commandArgs
+		submitArgs.SpecArgs = []string{}
+	} else {
+		submitArgs.SpecCommand = []string{}
+		submitArgs.SpecArgs = commandArgs
+	}
+	submitArgs.Command = isCommand
+	return commandArgs
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	log "github.com/golang/glog"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
-	"github.com/run-ai/runai-cli/pkg/submittionArgs"
+	"github.com/run-ai/runai-cli/pkg/submitCore"
 	"github.com/run-ai/runai-cli/pkg/templates"
 	"strconv"
 	"time"
@@ -30,7 +30,7 @@ func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submi
 	return nil
 }
 
-func mergeTemplateToCommonSubmitArgs(submitArgs submittionArgs.SubmitArgs, template *templates.SubmitTemplate, extraArgs []string) submittionArgs.SubmitArgs {
+func mergeTemplateToCommonSubmitArgs(submitArgs submitCore.SubmitArgs, template *templates.SubmitTemplate, extraArgs []string) submitCore.SubmitArgs {
 	submitArgs.NameParameter = applyTemplateFieldForString(submitArgs.NameParameter, template.Name, "name")
 	submitArgs.EnvironmentVariable = templates.MergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
 	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
@@ -132,7 +132,7 @@ func mergeExtraArgs(cliExtraArgs, templateExtraArgs []string) []string {
 	return []string{}
 }
 
-func mergeCommandAndArgs(submitArgs *submittionArgs.SubmitArgs, template *templates.SubmitTemplate, extraArgs []string) {
+func mergeCommandAndArgs(submitArgs *submitCore.SubmitArgs, template *templates.SubmitTemplate, extraArgs []string) {
 	submitArgs.Command = applyTemplateFieldForBool(submitArgs.Command, template.IsCommand, "command")
 	if raUtil.IsBoolPTrue(submitArgs.Command) {
 		submitArgs.SpecCommand = mergeExtraArgs(extraArgs, template.ExtraArgs)

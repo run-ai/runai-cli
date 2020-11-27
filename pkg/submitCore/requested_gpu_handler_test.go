@@ -1,4 +1,4 @@
-package submittionArgs
+package submitCore
 
 import (
 	"strconv"
