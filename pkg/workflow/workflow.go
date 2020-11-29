@@ -294,6 +294,10 @@ func submitJobInternal(name, namespace string, generateSuffix bool, values inter
 		return jobName, err
 	}
 
+	_, err = kubectl.UninstallAppsWithAppInfoFile(jobFiles.appInfoFileName, namespace)
+	if err != nil {
+		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
+	}
 	_, err = kubectl.InstallApps(jobFiles.template, namespace)
 	if err != nil {
 		return jobName, err
