@@ -2,6 +2,8 @@ package template
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"text/tabwriter"
 
@@ -16,6 +18,7 @@ func ListCommand() *cobra.Command {
 		Use:     "templates",
 		Aliases: []string{"template"},
 		Short:   "List all templates.",
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			listAllTemplates()
 		},
@@ -45,6 +48,7 @@ func ListCommandDEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "list",
 		Short: "Display information about templates.",
+		PreRun: commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			listAllTemplates()
 		},

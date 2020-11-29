@@ -44,6 +44,7 @@ func NewServingTensorRTCommand() *cobra.Command {
 		Use:     "tensorrt",
 		Short:   "Submit tensorRT inference serving job to deploy and serve machine learning models.",
 		Aliases: []string{"trt"},
+		PreRun: commandUtil.WrapRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			/*if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
