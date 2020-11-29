@@ -82,34 +82,25 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 	if err != nil {
 		return err
 	}
-
-	matchedJobs, err := trainer.GetTrainingJobsByTypeMap(jobName, namespaceInfo.Namespace, client)
+	jobToDelete, err := trainer.SearchTrainingJob(client, jobName, "", namespaceInfo)
 	if err != nil {
-		return err
-	} else if len(matchedJobs) == 0 {
 		return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
-	} else if len(matchedJobs) > 1 {
-		return fmt.Errorf("there are multiple jobs named %v", jobName)
 	}
 
-	for trainerType, jobToDelete := range matchedJobs {
-		jobName := jobToDelete.Name()
-		if jobToDelete.Trainer() == trainer.RunaiInteractiveType {
-			deleteInteractiveJobResources(jobName, namespaceInfo.Namespace, clientset)
+	if jobToDelete.Trainer() == trainer.RunaiInteractiveType {
+		deleteInteractiveJobResources(jobName, namespaceInfo.Namespace, clientset)
+	} else {
+		if jobToDelete.WorkloadType() == trainer.MpiWorkloadType {
+			mpiKubeClient := mpiClient.NewForConfigOrDie(client.GetRestConfig())
+			err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
+			if err != nil {
+				log.Warnf(fmt.Sprintf("Failed to remove mpijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+			}
 		} else {
-			switch trainerType {
-			case trainer.MpiTrainerType:
-				mpiKubeClient := mpiClient.NewForConfigOrDie(client.GetRestConfig())
-				err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
-				if err != nil {
-					log.Warnf(fmt.Sprintf("Failed to remove mpijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
-				}
-			case trainer.DefaultRunaiTrainingType:
-				runaiClient := runaiClient.NewForConfigOrDie(client.GetRestConfig())
-				err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
-				if err != nil {
-					log.Warnf(fmt.Sprintf("Failed to remove runaijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
-				}
+			runaiClient := runaiClient.NewForConfigOrDie(client.GetRestConfig())
+			err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
+			if err != nil {
+				log.Warnf(fmt.Sprintf("Failed to remove runaijob %v, it may be removed manually and not by using Run:AI CLI.", jobName))
 			}
 		}
 	}

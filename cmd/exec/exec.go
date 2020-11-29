@@ -2,11 +2,11 @@ package exec
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 	"os"
-	"time"
 	"strings"
+	"time"
 
-	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
@@ -93,7 +93,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		return
 	}
 
-	job, err := job.SearchTrainingJob(kubeClient, jobName, "", namespace)
+	job, err := trainer.SearchTrainingJob(kubeClient, jobName, "", namespace)
 
 	if err != nil {
 		return
