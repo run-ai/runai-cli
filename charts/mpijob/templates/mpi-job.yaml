@@ -137,7 +137,7 @@ spec:
             gpu-fraction: "{{ .Values.gpuFraction }}"
             {{- end }}
             {{ - if .Values.gpuMemory }}
-            gpu-mem: "{{ .Values.gpuMemory }}"
+            gpu-memory: "{{ .Values.gpuMemory }}"
             {{ - end }}
           labels:
             project: {{ .Values.project }}
