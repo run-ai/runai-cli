@@ -69,6 +69,7 @@ type submitArgs struct {
 	GPU                 *float64 `yaml:"gpu,omitempty"`
 	GPUInt              *int     `yaml:"gpuInt,omitempty"`
 	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
+	GPUMemory           string   `yaml:"gpuMem,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	SpecArgs            []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
