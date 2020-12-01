@@ -16,6 +16,8 @@ package job
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
@@ -39,6 +41,7 @@ func TopCommand() *cobra.Command {
 		Use:     "jobs",
 		Aliases: []string{"job"},
 		Short:   "Display information about jobs in the cluster.",
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
 			kubeClient, err := client.GetClient()

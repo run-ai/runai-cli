@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	"os"
 	"sort"
 	"strconv"
@@ -165,6 +166,7 @@ func listCommandDEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
 		Use:        "list",
 		Short:      fmt.Sprint("List all available projects."),
+		PreRun: 	commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:        commandUtil.WrapRunCommand(runListCommand),
 		Deprecated: "Please use: 'runai list project' instead",
 	}
@@ -178,6 +180,7 @@ func ListCommand() *cobra.Command {
 		Use:     "projects",
 		Aliases: []string{"project"},
 		Short:   "List all available projects",
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 

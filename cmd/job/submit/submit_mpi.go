@@ -16,6 +16,8 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"path"
 
@@ -50,6 +52,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
 		Example: mpiExamples,
+		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {

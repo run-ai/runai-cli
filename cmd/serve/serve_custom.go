@@ -43,6 +43,7 @@ func NewServingCustomCommand() *cobra.Command {
 		Use:     "custom",
 		Short:   "Submit custom serving to deploy and serve machine learning models.",
 		Aliases: []string{"tf"},
+		PreRun: commandUtil.WrapRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			/*if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
