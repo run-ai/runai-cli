@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	constants "github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
@@ -22,10 +21,10 @@ import (
 )
 
 var (
-	queueResource = schema.GroupVersionResource{
-		Group:    "scheduling.incubator.k8s.io",
-		Version:  "v1alpha1",
-		Resource: "queues",
+	projectResource = schema.GroupVersionResource{
+		Group:    "run.ai",
+		Version:  "v1",
+		Resource: "projects",
 	}
 )
 
@@ -39,13 +38,13 @@ type ProjectInfo struct {
 	department                  string
 }
 
-type Queue struct {
+type Project struct {
 	Spec struct {
 		DeservedGpus                 float64  `mapstructure:"deservedGpus,omitempty"`
 		InteractiveJobTimeLimitSecs  int      `mapstructure:"interactiveJobTimeLimitSecs,omitempty"`
 		Department                   string   `json:"department,omitempty" protobuf:"bytes,1,opt,name=department"`
-		NodeAffinityInteractiveTypes []string `json:"nodeAffinityInteractiveTypes,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityInteractiveTypes"`
-		NodeAffinityTrainTypes       []string `json:"nodeAffinityTrainTypes,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityTrainTypes"`
+		NodeAffinityInteractive     []string  `json:"nodeAffinityInteractive,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityInteractive"`
+		NodeAffinityTrain           []string  `json:"nodeAffinityTrain,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityTrain"`
 	} `mapstructure:"spec,omitempty"`
 	Metadata struct {
 		Name string `mapstructure:"name,omitempty"`
@@ -58,53 +57,33 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	clientset := kubeClient.GetClientset()
-
-	namespaceList, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
-
-	if err != nil {
-		return err
-	}
-
 	projects := make(map[string]*ProjectInfo)
-
-	for _, namespace := range namespaceList.Items {
-		if namespace.Labels == nil {
-			continue
-		}
-
-		runaiQueue := namespace.Labels[constants.RUNAI_QUEUE_LABEL]
-
-		if runaiQueue != "" {
-			projects[runaiQueue] = &ProjectInfo{
-				name:           runaiQueue,
-				defaultProject: kubeClient.GetDefaultNamespace() == namespace.Name,
-			}
-		}
-	}
 
 	dynamicClient, err := dynamic.NewForConfig(kubeClient.GetRestConfig())
 	if err != nil {
 		return err
 	}
 
-	queueList, err := dynamicClient.Resource(queueResource).List(metav1.ListOptions{})
+	projectList, err := dynamicClient.Resource(projectResource).List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	for _, queueItem := range queueList.Items {
-		var queue Queue
-		if err := mapstructure.Decode(queueItem.Object, &queue); err != nil {
+	for _, projectItem := range projectList.Items {
+		var project Project
+
+		if err := mapstructure.Decode(projectItem.Object, &project); err != nil {
 			return err
 		}
 
-		if project, found := projects[queue.Metadata.Name]; found {
-			project.deservedGPUs = fmt.Sprintf("%.2f", queue.Spec.DeservedGpus)
-			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
-			project.nodeAffinityInteractive = strings.Join(queue.Spec.NodeAffinityInteractiveTypes, ",")
-			project.nodeAffinityTraining = strings.Join(queue.Spec.NodeAffinityTrainTypes, ",")
-			project.department = queue.Spec.Department
+		projects[project.Metadata.Name] = &ProjectInfo{
+			name:                        project.Metadata.Name,
+			defaultProject:              kubeClient.GetDefaultNamespace() == "runai-"+project.Metadata.Name,
+			deservedGPUs:                fmt.Sprintf("%.2f", project.Spec.DeservedGpus),
+			interactiveJobTimeLimitSecs: strconv.Itoa(project.Spec.InteractiveJobTimeLimitSecs),
+			nodeAffinityInteractive:     strings.Join(project.Spec.NodeAffinityInteractive, ","),
+			nodeAffinityTraining:        strings.Join(project.Spec.NodeAffinityTrain, ","),
+			department:                  project.Spec.Department,
 		}
 	}
 
