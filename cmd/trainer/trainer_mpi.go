@@ -225,6 +225,14 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 	return float64(mj.allocatedGPU)
 }
 
+func (mj *MPIJob) RequestedGPUString() string {
+	requestedGPUs, ok := util.GetRequestedGPUsPerPodGroup(mj.mpijob.Annotations)
+	if ok {
+		return fmt.Sprintf("%v", requestedGPUs)
+	}
+	return "0"
+}
+
 // Get the hostIP of the chief Pod
 func (mj *MPIJob) HostIPOfChief() (hostIP string) {
 	nodeName, ok := getNodeName(mj.mpijob.Annotations)

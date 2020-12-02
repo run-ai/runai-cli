@@ -103,6 +103,16 @@ func GetRequestedGPUsPerPodGroup(trainingAnnotations map[string]string) (float64
 	return 0, false
 }
 
+func GetRequestedGPUString(trainingAnnotations map[string]string) string {
+	if len(trainingAnnotations[PodGroupRequestedGPUs]) > 0 {
+		requestedGPUs, err := strconv.ParseFloat(trainingAnnotations[PodGroupRequestedGPUs], 64)
+		if err == nil {
+			return requestedGPUs, true
+		}
+	}
+	return 0, false
+}
+
 func getGPUFractionUsedByPod(pod v1.Pod) float64 {
 	if pod.Annotations != nil {
 		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[RunaiGPUFraction], 64)
