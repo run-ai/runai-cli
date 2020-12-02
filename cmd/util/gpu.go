@@ -24,14 +24,15 @@ const (
 	RunaiGPUIndex    = "runai-gpu"
 	RunaiGPUFraction = "gpu-fraction"
 	// an annotation on each node
-	RunaiAllocatableGpus            = "runai-allocatable-gpus"
-	NVIDIAGPUResourceName           = "nvidia.com/gpu"
-	ALIYUNGPUResourceName           = "aliyun.com/gpu-mem"
-	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
-	PodGroupRequestedGPUs           = "runai-podgroup-requested-gpus"
-	WorkloadCurrentAllocatedGPUs    = "runai-current-allocated-gpus"
-	WorkloadCurrentRequestedGPUs    = "runai-current-requested-gpus"
-	WorkloadTotalRequestedGPUs      = "runai-total-requested-gpus"
+	RunaiAllocatableGpus               = "runai-allocatable-gpus"
+	NVIDIAGPUResourceName              = "nvidia.com/gpu"
+	ALIYUNGPUResourceName              = "aliyun.com/gpu-mem"
+	DeprecatedNVIDIAGPUResourceName    = "alpha.kubernetes.io/nvidia-gpu"
+	PodGroupRequestedGPUs              = "runai-podgroup-requested-gpus"
+	WorkloadCurrentAllocatedGPUs       = "runai-current-allocated-gpus"
+	WorkloadCurrentAllocatedGPUsMemory = "runai-current-allocated-gpus-memory"
+	WorkloadCurrentRequestedGPUs       = "runai-current-requested-gpus"
+	WorkloadTotalRequestedGPUs         = "runai-total-requested-gpus"
 )
 
 // The way to get total GPU Count of Node: nvidia.com/gpu

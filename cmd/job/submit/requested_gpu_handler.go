@@ -18,9 +18,9 @@ func handleRequestedGPUs(submitArgs *submitArgs) error {
 			return err
 		}
 
-		memoryInMb := memoryQuantity.Value() / 1000000 //Quantity count the size in bytes and K = 1000B and not 1024
+		memoryInMb := memoryQuantity.Value() / (1024 * 1024) //From bytes to mb
 		if memoryInMb < minGpuMemory {
-			return fmt.Errorf("gpu memory must be greater than 100M")
+			return fmt.Errorf("gpu memory must be greater than 100Mb")
 		}
 
 		submitArgs.GPUMemory = fmt.Sprintf("%d", memoryInMb)

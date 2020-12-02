@@ -16,6 +16,7 @@ package trainer
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"sort"
 	"strconv"
 	"strings"
@@ -333,6 +334,13 @@ func (mj *MPIJob) CurrentAllocatedGPUs() float64 {
 
 	// backward compatibility
 	return mj.RequestedGPU()
+}
+
+func (mj *MPIJob) CurrentAllocatedGPUsMemory() string {
+	allocatedGpuMemoryInMb := getAllocatedGpusMemory(mj.mpijob.Annotations)
+	gpuMemoryInBytes := int64(allocatedGpuMemoryInMb) * 1024 * 1024
+	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+	return fmt.Sprintf("%v", quantity)
 }
 
 func (mj *MPIJob) Namespace() string {

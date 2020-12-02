@@ -90,6 +90,7 @@ type TrainingJob interface {
 	Failed() int32
 	CurrentRequestedGPUs() float64
 	CurrentAllocatedGPUs() float64
+	CurrentAllocatedGPUsMemory() string
 	WorkloadType() string
 	TotalRequestedGPUs() float64
 }

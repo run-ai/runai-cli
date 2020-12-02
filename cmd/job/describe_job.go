@@ -307,6 +307,7 @@ func printJobSummary(w io.Writer, job trainer.TrainingJob) {
 	fmt.Fprintf(w, "GPUS: %g\n", job.RequestedGPU())
 	fmt.Fprintf(w, "TOTAL REQUESTED GPUS: %g\n", job.TotalRequestedGPUs())
 	fmt.Fprintf(w, "ALLOCATED GPUS: %g\n", job.CurrentAllocatedGPUs())
+	fmt.Fprintf(w, "ALLOCATED GPUS MEMORY: %v\n", job.CurrentAllocatedGPUsMemory())
 	fmt.Fprintf(w, "RUNNING PODS: %d\n", job.RunningPods())
 	fmt.Fprintf(w, "PENDING PODS: %d\n", job.PendingPods())
 	fmt.Fprintf(w, "PARALLELISM: %d\n", job.Parallelism())

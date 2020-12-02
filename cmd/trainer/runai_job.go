@@ -1,6 +1,8 @@
 package trainer
 
 import (
+	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"strconv"
 	"time"
 
@@ -378,6 +380,13 @@ func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
 		return 0
 	}
 	return rj.RequestedGPU()
+}
+
+func (rj *RunaiJob) CurrentAllocatedGPUsMemory() string {
+	allocatedGpuMemoryInMb := getAllocatedGpusMemory(rj.jobMetadata.Annotations)
+	gpuMemoryInBytes := int64(allocatedGpuMemoryInMb) * 1024 * 1024
+	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+	return fmt.Sprintf("%v", quantity)
 }
 
 func (rj *RunaiJob) WorkloadType() string {
