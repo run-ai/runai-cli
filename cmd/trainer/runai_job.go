@@ -286,6 +286,11 @@ func (rj *RunaiJob) Project() string {
 }
 
 func (rj *RunaiJob) User() string {
+	// Username stored as annotation to support special characters that label values are not allowed to have
+	if userFromAnnotation, exists := rj.podMetadata.Annotations["user"]; exists && userFromAnnotation != "" {
+		return userFromAnnotation
+	}
+	// fallback to old behavior - username set as label.
 	return rj.podMetadata.Labels["user"]
 }
 

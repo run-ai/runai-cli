@@ -64,11 +64,11 @@ spec:
         {{- if .Values.elastic }}
         elastic: {{ .Values.elastic | quote }}
         {{- end }}
-      labels:
-        {{- include "runai-common.charts.label-addition" . | indent 8}}
         {{- if .Values.user }}
         user: {{ .Values.user | quote}}
         {{- end }}
+      labels:
+        {{- include "runai-common.charts.label-addition" . | indent 8}}
     spec:
       {{- if .Values.node_type }}
       nodeSelector:
