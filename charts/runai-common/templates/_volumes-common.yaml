@@ -9,7 +9,7 @@
 {{- $combinedVolume = append $combinedVolume $volume }}
 {{- end}}
 
-{{- if or (.Values.persistentVolumes) (gt (len $combinedVolume) 0) (.Values.shm) }}
+{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm }}
 volumeMounts:
   {{- range $index, $volume := $combinedVolume -}}
   {{ $parts := split ":" $volume }}
@@ -59,7 +59,7 @@ volumeMounts:
   {{- $combinedVolume = append $combinedVolume $volume }}
   {{- end}}
 
-{{- if or (.Values.persistentVolumes) (gt (len $combinedVolume) 0) (.Values.shm) }}
+{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm }}
 volumes:
   {{- range $index, $volume := $combinedVolume -}}
   {{ $parts := split ":" $volume }}
