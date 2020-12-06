@@ -304,7 +304,7 @@ func printJobSummary(w io.Writer, job trainer.TrainingJob) {
 	fmt.Fprintf(w, "TYPE: %s\n", job.Trainer())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "TRAINING DURATION: %s\n", util.ShortHumanDuration(job.Duration()))
-	fmt.Fprintf(w, "GPUS: %g\n", job.RequestedGPU())
+	fmt.Fprintf(w, "GPUS: %v\n", job.RequestedGPUString())
 	fmt.Fprintf(w, "TOTAL REQUESTED GPUS: %v\n", job.TotalRequestedGPUsString())
 	fmt.Fprintf(w, "ALLOCATED GPUS: %g\n", job.CurrentAllocatedGPUs())
 	fmt.Fprintf(w, "ALLOCATED GPUS MEMORY: %v\n", job.CurrentAllocatedGPUsMemory())

@@ -61,6 +61,8 @@ type TrainingJob interface {
 	// Requested GPU count of the Job
 	RequestedGPU() float64
 
+	RequestedGPUMemory() uint64
+
 	RequestedGPUString() string
 
 	// Requested GPU count of the Job

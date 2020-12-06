@@ -241,6 +241,19 @@ func (rj *RunaiJob) RequestedGPU() float64 {
 	return float64(val.Value())
 }
 
+func (rj *RunaiJob) RequestedGPUMemory() uint64 {
+	return util.GetRequestedGPUsMemoryPerPodGroup(rj.jobMetadata.Annotations)
+}
+
+func (rj *RunaiJob) RequestedGPUString() string {
+	if memory := rj.RequestedGPUMemory(); memory != 0 {
+		gpuMemoryInBytes := int64(memory) * 1024 * 1024
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		return fmt.Sprintf("%v", quantity)
+	}
+	return fmt.Sprintf("%v", rj.RequestedGPU())
+}
+
 // Requested GPU count of the Job
 func (rj *RunaiJob) AllocatedGPU() float64 {
 	if rj.chiefPod == nil {
@@ -342,10 +355,6 @@ func (rj *RunaiJob) Succeeded() int32 {
 
 func (rj *RunaiJob) Failed() int32 {
 	return rj.failed
-}
-
-func (rj *RunaiJob) RequestedGPUString() string {
-	return util.GetRequestedGPUString(rj.jobMetadata.Annotations)
 }
 
 func (rj *RunaiJob) CurrentRequestedGPUs() float64 {

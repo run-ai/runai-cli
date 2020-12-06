@@ -230,7 +230,12 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 }
 
 func (mj *MPIJob) RequestedGPUString() string {
-	return util.GetRequestedGPUString(mj.mpijob.Annotations)
+	if memory := mj.RequestedGPUMemory(); memory != 0 {
+		gpuMemoryInBytes := int64(memory) * 1024 * 1024
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		return fmt.Sprintf("%v", quantity)
+	}
+	return fmt.Sprintf("%v", mj.RequestedGPU())
 }
 
 // Get the hostIP of the chief Pod
