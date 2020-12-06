@@ -16,7 +16,6 @@ package submit
 
 import (
 	"fmt"
-	"os"
 	"os/user"
 	"strconv"
 	"syscall"
@@ -202,12 +201,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if len(errs) > 0 {
 		fmt.Println("")
 		return fmt.Errorf("Job names must consist of lower case alphanumeric characters or '-' and start with an alphabetic character (e.g. 'my-name',  or 'abc-123')")
-	}
-
-	if len(submitArgs.Image) == 0 {
-		cmd.HelpFunc()(cmd, args)
-		fmt.Print("\n-i, --image must be set\n\n")
-		os.Exit(1)
 	}
 
 	submitArgs.Name = name
