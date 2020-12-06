@@ -212,6 +212,10 @@ func (mj *MPIJob) RequestedGPU() float64 {
 	return f
 }
 
+func (mj *MPIJob) RequestedGPUMemory() uint64 {
+	return util.GetRequestedGPUsMemoryPerPodGroup(mj.mpijob.Annotations)
+}
+
 // Requested GPU count of the Job
 func (mj *MPIJob) AllocatedGPU() float64 {
 	if mj.allocatedGPU > 0 {
@@ -305,8 +309,21 @@ func (mj *MPIJob) Succeeded() int32 {
 	return 0
 }
 
+func (mj *MPIJob) TotalRequestedGPUsString() string {
+	if memory := mj.TotalRequestedGPUsMemory(); memory != 0 {
+		gpuMemoryInBytes := int64(memory) * 1024 * 1024
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		return fmt.Sprintf("%v", quantity)
+	}
+	return fmt.Sprintf("%v", mj.TotalRequestedGPUs())
+}
+
 func (mj *MPIJob) TotalRequestedGPUs() float64 {
 	return mj.RequestedGPU() * float64(mj.Parallelism())
+}
+
+func (mj *MPIJob) TotalRequestedGPUsMemory() uint64 {
+	return mj.RequestedGPUMemory() * uint64(mj.Parallelism())
 }
 
 func (mj *MPIJob) Failed() int32 {

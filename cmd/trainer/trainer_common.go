@@ -220,6 +220,16 @@ func getTotalAllocatedGPUs(trainingAnnotations map[string]string) (float64, bool
 	return 0, false
 }
 
+func getTotalRequestedGPUsMemory(trainingAnnotations map[string]string) uint64 {
+	if len(trainingAnnotations[util.WorkloadTotalRequestedGPUsMemory]) > 0 {
+		totalRequestedGpusMemory, err := strconv.ParseUint(trainingAnnotations[util.WorkloadTotalRequestedGPUsMemory], 10, 64)
+		if err == nil {
+			return totalRequestedGpusMemory
+		}
+	}
+	return 0
+}
+
 func IsKnownTrainingType(trainingType string) bool {
 	for _, knownType := range KnownTrainingTypes {
 		if trainingType == knownType {

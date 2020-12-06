@@ -94,7 +94,7 @@ type TrainingJob interface {
 	CurrentAllocatedGPUs() float64
 	CurrentAllocatedGPUsMemory() string
 	WorkloadType() string
-	TotalRequestedGPUs() float64
+	TotalRequestedGPUsString() string
 }
 
 type Trainer interface {

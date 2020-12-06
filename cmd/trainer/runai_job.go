@@ -397,6 +397,15 @@ func (rj *RunaiJob) WorkloadType() string {
 	return string(rj.workloadType)
 }
 
+func (rj *RunaiJob) TotalRequestedGPUsString() string {
+	if memory := rj.TotalRequestedGPUsMemory(); memory != 0 {
+		gpuMemoryInBytes := int64(memory) * 1024 * 1024
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		return fmt.Sprintf("%v", quantity)
+	}
+	return fmt.Sprintf("%v", rj.TotalRequestedGPUs())
+}
+
 func (rj *RunaiJob) TotalRequestedGPUs() float64 {
 	totalRequestedGPUs, ok := getTotalAllocatedGPUs(rj.jobMetadata.Annotations)
 	if ok {
@@ -404,4 +413,8 @@ func (rj *RunaiJob) TotalRequestedGPUs() float64 {
 	}
 
 	return rj.RequestedGPU() * float64(rj.Completions())
+}
+
+func (rj *RunaiJob) TotalRequestedGPUsMemory() uint64 {
+	return getTotalRequestedGPUsMemory(rj.jobMetadata.Annotations)
 }
