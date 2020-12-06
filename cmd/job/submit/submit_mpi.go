@@ -52,7 +52,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
 		Example: mpiExamples,
-		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
+		PreRun:  commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {
@@ -81,6 +81,12 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			if len(submitArgs.Image) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Print("\n-i, --image must be set\n\n")
 				os.Exit(1)
 			}
 
