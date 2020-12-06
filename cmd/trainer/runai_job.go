@@ -242,7 +242,19 @@ func (rj *RunaiJob) RequestedGPU() float64 {
 }
 
 func (rj *RunaiJob) RequestedGPUMemory() uint64 {
-	return util.GetRequestedGPUsMemoryPerPodGroup(rj.jobMetadata.Annotations)
+	memory := util.GetRequestedGPUsMemoryPerPodGroup(rj.jobMetadata.Annotations)
+	if memory != 0 {
+		return memory
+	}
+
+	for _, pod := range rj.pods {
+		gpuMemory, err := strconv.ParseUint(pod.Annotations[util.RunaiGPUMemory], 10, 64)
+		if err == nil {
+			memory += gpuMemory
+		}
+	}
+
+	return memory
 }
 
 func (rj *RunaiJob) RequestedGPUString() string {

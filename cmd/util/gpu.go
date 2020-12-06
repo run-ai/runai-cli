@@ -24,6 +24,7 @@ import (
 const (
 	RunaiGPUIndex    = "runai-gpu"
 	RunaiGPUFraction = "gpu-fraction"
+	RunaiGPUMemory   = "gpu-memory"
 	// an annotation on each node
 	RunaiAllocatableGpus               = "runai-allocatable-gpus"
 	NVIDIAGPUResourceName              = "nvidia.com/gpu"
