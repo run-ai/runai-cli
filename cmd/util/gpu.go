@@ -15,6 +15,7 @@
 package util
 
 import (
+	"fmt"
 	"strconv"
 
 	v1 "k8s.io/api/core/v1"
@@ -107,10 +108,10 @@ func GetRequestedGPUString(trainingAnnotations map[string]string) string {
 	if len(trainingAnnotations[PodGroupRequestedGPUs]) > 0 {
 		requestedGPUs, err := strconv.ParseFloat(trainingAnnotations[PodGroupRequestedGPUs], 64)
 		if err == nil {
-			return requestedGPUs, true
+			return fmt.Sprintf("%v", requestedGPUs)
 		}
 	}
-	return 0, false
+	return fmt.Sprintf("%v", 0)
 }
 
 func getGPUFractionUsedByPod(pod v1.Pod) float64 {

@@ -226,11 +226,7 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 }
 
 func (mj *MPIJob) RequestedGPUString() string {
-	requestedGPUs, ok := util.GetRequestedGPUsPerPodGroup(mj.mpijob.Annotations)
-	if ok {
-		return fmt.Sprintf("%v", requestedGPUs)
-	}
-	return "0"
+	return util.GetRequestedGPUString(mj.mpijob.Annotations)
 }
 
 // Get the hostIP of the chief Pod

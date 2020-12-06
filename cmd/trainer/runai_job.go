@@ -344,6 +344,10 @@ func (rj *RunaiJob) Failed() int32 {
 	return rj.failed
 }
 
+func (rj *RunaiJob) RequestedGPUString() string {
+	return util.GetRequestedGPUString(rj.jobMetadata.Annotations)
+}
+
 func (rj *RunaiJob) CurrentRequestedGPUs() float64 {
 	totalRequestedGPUs, ok := getCurrentRequestedGPUs(rj.jobMetadata.Annotations)
 	if ok {
