@@ -16,13 +16,9 @@ import (
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
-	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/util"
-	"github.com/run-ai/runai-cli/pkg/util/kubectl"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -57,7 +53,7 @@ func RunDescribeJobDEPRECATED(cmd *cobra.Command, printArgs PrintArgs, name stri
 		os.Exit(1)
 	}
 
-	job, err := SearchTrainingJob(kubeClient, name, "", namespace)
+	job, err := trainer.SearchTrainingJob(kubeClient, name, "", namespace)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -94,7 +90,7 @@ func DescribeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			job, err := SearchTrainingJob(kubeClient, name, "", namespace)
+			job, err := trainer.SearchTrainingJob(kubeClient, name, "", namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -109,117 +105,6 @@ func DescribeCommand() *cobra.Command {
 
 	command.Flags().MarkDeprecated("events", "default is true")
 	return command
-}
-
-/*
-* search the training job with name and training type
- */
-func SearchTrainingJob(kubeClient *client.Client, jobName string, trainingType string, namespaceInfo types.NamespaceInfo) (job trainer.TrainingJob, err error) {
-	if len(trainingType) > 0 {
-		if trainer.IsKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(kubeClient, jobName, namespaceInfo.Namespace, trainingType)
-			if err != nil {
-				if isTrainingConfigExist(jobName, trainingType, namespaceInfo.Namespace) {
-					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s --type %s'.",
-						jobName,
-						config.CLIName,
-						jobName,
-						trainingType)
-				}
-				return nil, err
-			}
-		} else {
-			return nil, fmt.Errorf("%s is unknown training type, please choose a known type from %v",
-				trainingType,
-				trainer.KnownTrainingTypes)
-		}
-	} else {
-		jobs, errorGetByName := getTrainingJobsByName(kubeClient, jobName, namespaceInfo)
-		if errorGetByName != nil {
-			traningTypes, err := GetTrainingTypes(jobName, namespaceInfo.Namespace, kubeClient.GetClientset())
-			if err != nil {
-				return nil, err
-			}
-			if len(traningTypes) > 0 {
-				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s'.",
-					jobName,
-					config.CLIName,
-					jobName)
-			}
-			return nil, errorGetByName
-		}
-
-		if len(jobs) > 1 {
-			return nil, fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `%s list | grep %s`",
-				jobName,
-				config.CLIName,
-				jobName)
-		} else {
-			job = jobs[0]
-		}
-	}
-	return job, nil
-}
-
-func getTrainingJob(kubeClient *client.Client, name, namespace string) (job trainer.TrainingJob, err error) {
-	// trainers := NewTrainers(client, )
-
-	trainers := trainer.NewTrainers(kubeClient)
-	for _, trainer := range trainers {
-		if trainer.IsSupported(name, namespace) {
-			return trainer.GetTrainingJob(name, namespace)
-		} else {
-			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
-		}
-	}
-
-	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
-}
-
-func getTrainingJobByType(kubeClient *client.Client, name, namespace, trainingType string) (job trainer.TrainingJob, err error) {
-	// trainers := NewTrainers(client, )
-
-	trainers := trainer.NewTrainers(kubeClient)
-	for _, trainer := range trainers {
-		if trainer.Type() == trainingType {
-			return trainer.GetTrainingJob(name, namespace)
-		} else {
-			log.Debugf("the job %s with type %s in namespace %s is not expected type %v",
-				name,
-				trainer.Type(),
-				namespace,
-				trainingType)
-		}
-	}
-
-	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
-}
-
-func getTrainingJobsByName(kubeClient *client.Client, name string, namespaceInfo types.NamespaceInfo) (jobs []trainer.TrainingJob, err error) {
-	jobs = []trainer.TrainingJob{}
-	trainers := trainer.NewTrainers(kubeClient)
-	for _, trainer := range trainers {
-		if trainer.IsSupported(name, namespaceInfo.Namespace) {
-			job, err := trainer.GetTrainingJob(name, namespaceInfo.Namespace)
-			if err != nil {
-				return nil, err
-			}
-			jobs = append(jobs, job)
-		} else {
-			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespaceInfo.Namespace, trainer.Type())
-		}
-	}
-
-	if len(jobs) == 0 {
-		log.Debugf("Failed to find the training job %s in namespace %s", name, namespaceInfo.Namespace)
-		configMap, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).Get(name, metav1.GetOptions{})
-		if err == nil {
-			return nil, fmt.Errorf("The job %s is invalid. Please delete it", configMap.Name)
-		}
-		return nil, cmdUtil.GetJobDoesNotExistsInNamespaceError(name, namespaceInfo)
-	}
-
-	return jobs, nil
 }
 
 func printTrainingJob(client kubernetes.Interface, job trainer.TrainingJob, printArgs PrintArgs) {
@@ -413,50 +298,6 @@ func getSortedEvents(items []v1.Event, resources []types.Resource, podGroupName 
 	})
 
 	return eventAndNames
-}
-
-/*
-* get App Configs by name, which is created by arena
- */
-func GetTrainingTypes(name, namespace string, clientset kubernetes.Interface) (cms []string, err error) {
-	configMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
-	if err != nil {
-		return []string{}, err
-	}
-	cms = []string{}
-	for _, trainingType := range trainer.KnownTrainingTypes {
-		configName := fmt.Sprintf("%s-%s", name, trainingType)
-		for _, configMap := range configMaps.Items {
-			if configName == configMap.Name {
-				cms = append(cms, trainingType)
-			}
-		}
-	}
-
-	return cms, nil
-}
-
-/*
-* get App Configs by name, which is created by arena
- */
-func getServingTypes(name, namespace string) (cms []string) {
-	cms = []string{}
-	for _, servingType := range trainer.KnownServingTypes {
-		found := isTrainingConfigExist(name, servingType, namespace)
-		if found {
-			cms = append(cms, servingType)
-		}
-	}
-
-	return cms
-}
-
-/**
-*  check if the training config exist
- */
-func isTrainingConfigExist(name, trainingType, namespace string) bool {
-	configName := fmt.Sprintf("%s-%s", name, trainingType)
-	return kubectl.CheckAppConfigMap(configName, namespace)
 }
 
 /**

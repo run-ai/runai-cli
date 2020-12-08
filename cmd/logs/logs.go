@@ -16,6 +16,7 @@ package logs
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/auth"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
@@ -23,7 +24,6 @@ import (
 	"time"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
-	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/pkg/client"
 	podlogs "github.com/run-ai/runai-cli/pkg/podlogs"
 	tlogs "github.com/run-ai/runai-cli/pkg/printer/base/logs"
@@ -65,7 +65,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
-			job, err := job.SearchTrainingJob(kubeClient, name, "", namespaceInfo)
+			job, err := trainer.SearchTrainingJob(kubeClient, name, "", namespaceInfo)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
