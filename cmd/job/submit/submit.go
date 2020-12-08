@@ -16,7 +16,6 @@ package submit
 
 import (
 	"fmt"
-	"os"
 	"os/user"
 	"strconv"
 	"syscall"
@@ -131,7 +130,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&submitArgs.NameParameter, "name", "", "Job name")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(templateName), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
-	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai project set <project name>'.")
+	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai config project <project name>'.")
 	// Will not submit the job to the cluster, just print the template to the screen
 	flagSet.BoolVar(&dryRun, "dry-run", false, "Run as dry run")
 	flagSet.MarkHidden("dry-run")
@@ -202,12 +201,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if len(errs) > 0 {
 		fmt.Println("")
 		return fmt.Errorf("Job names must consist of lower case alphanumeric characters or '-' and start with an alphabetic character (e.g. 'my-name',  or 'abc-123')")
-	}
-
-	if len(submitArgs.Image) == 0 {
-		cmd.HelpFunc()(cmd, args)
-		fmt.Print("\n-i, --image must be set\n\n")
-		os.Exit(1)
 	}
 
 	submitArgs.Name = name

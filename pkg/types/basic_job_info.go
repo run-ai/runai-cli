@@ -12,6 +12,7 @@ type ResourceType string
 const (
 	ResourceTypePod         = ResourceType("Pod")
 	ResourceTypeJob         = ResourceType("Job")
+	ResourceTypeRunaiJob    = ResourceType("RunaiJob")
 	ResourceTypeStatefulSet = ResourceType("StatefulSet")
 	ResourceTypeReplicaset  = ResourceType("ReplicaSet")
 )

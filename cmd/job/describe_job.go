@@ -3,6 +3,8 @@ package job
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"io"
 	"os"
 	"sort"
@@ -66,6 +68,7 @@ func DescribeCommand() *cobra.Command {
 		Use:     "job JOB_NAME",
 		Aliases: []string{"jobs"},
 		Short:   "Display details of a job.",
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
 			if len(args) == 0 {

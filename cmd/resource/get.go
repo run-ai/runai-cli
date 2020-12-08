@@ -2,6 +2,8 @@ package resource
 
 import (
 	"github.com/run-ai/runai-cli/cmd/job"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 )
 
@@ -11,6 +13,7 @@ func GetCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "get",
 		Short: "Display details of a job.",
+		PreRun: commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			job.RunDescribeJobDEPRECATED(cmd, printArgs, args[0])
 		},

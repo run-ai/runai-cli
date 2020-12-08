@@ -2,6 +2,8 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"math"
 	"os"
 	"path"
@@ -61,6 +63,7 @@ func NewRunaiJobCommand() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Submit a new job.",
 		Example:               submitExamples,
+		PreRun:                commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
 			if err != nil {
@@ -102,6 +105,12 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			if raUtil.IsBoolPTrue(submitArgs.IsJupyter) {
 				submitArgs.UseJupyterDefaultValues()
+			}
+
+			if len(submitArgs.Image) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Print("\n-i, --image must be set\n\n")
+				os.Exit(1)
 			}
 
 			err = submitRunaiJob(submitArgs, clientset, *runaijobClient)

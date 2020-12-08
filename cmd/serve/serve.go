@@ -190,6 +190,7 @@ func NewServeCommand() *cobra.Command {
 		Use:   "serve",
 		Short: "Serve a job.",
 		Long:  serveLong,
+		PreRun: commandUtil.WrapRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},

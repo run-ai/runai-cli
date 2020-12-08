@@ -46,6 +46,7 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 		Use:     "traffic-split",
 		Short:   "Adjust traffic routing dynamically for tfserving jobs",
 		Aliases: []string{"trs", "traffic-router", "traffic-router-split", "traffic-shift", "traffic-shifting"},
+		PreRun: commandUtil.WrapRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			/*if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

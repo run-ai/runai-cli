@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
 
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
@@ -49,6 +50,7 @@ func ConfigureCommand() *cobra.Command {
 		Use:     "cluster [cluster]",
 		Aliases: []string{"clusters"},
 		Short:   "Configure a default cluster",
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(runConfigCommand),
 		Args:    cobra.RangeArgs(1, 1),
 	}
@@ -62,6 +64,7 @@ func setCommandDEPRECATED() *cobra.Command {
 		Use:        "set [cluster]",
 		Short:      fmt.Sprint("Set current cluster."),
 		Args:       cobra.RangeArgs(1, 1),
+		PreRun:     commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:        commandUtil.WrapRunCommand(runConfigCommand),
 		Deprecated: "use: 'runai config cluster' instead",
 	}

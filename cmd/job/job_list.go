@@ -16,6 +16,8 @@ package job
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -44,6 +46,7 @@ func ListCommand() *cobra.Command {
 		Use:     "jobs",
 		Aliases: []string{"job"},
 		Short:   "List all jobs.",
+		PreRun: commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			RunJobList(cmd, args, allNamespaces)
 		},

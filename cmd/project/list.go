@@ -2,6 +2,10 @@ package project
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/constants"
+	"github.com/run-ai/runai-cli/pkg/auth"
+	log "github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
 	"sort"
 	"strconv"
@@ -10,7 +14,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	constants "github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/ui"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
@@ -26,6 +29,12 @@ var (
 		Version:  "v1alpha1",
 		Resource: "queues",
 	}
+
+	projectResource = schema.GroupVersionResource{
+		Group:    "run.ai",
+		Version:  "v1",
+		Resource: "projects",
+	}
 )
 
 type ProjectInfo struct {
@@ -38,6 +47,7 @@ type ProjectInfo struct {
 	department                  string
 }
 
+// Required for backwards compatibility with clusters that don't have the Project resource yet.
 type Queue struct {
 	Spec struct {
 		DeservedGpus                 float64  `mapstructure:"deservedGpus,omitempty"`
@@ -51,40 +61,95 @@ type Queue struct {
 	} `mapstructure:"metadata,omitempty"`
 }
 
+type Project struct {
+	Spec struct {
+		DeservedGpus                 float64  `mapstructure:"deservedGpus,omitempty"`
+		InteractiveJobTimeLimitSecs  int      `mapstructure:"interactiveJobTimeLimitSecs,omitempty"`
+		Department                   string   `json:"department,omitempty" protobuf:"bytes,1,opt,name=department"`
+		NodeAffinityInteractive     []string  `json:"nodeAffinityInteractive,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityInteractive"`
+		NodeAffinityTrain           []string  `json:"nodeAffinityTrain,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityTrain"`
+	} `mapstructure:"spec,omitempty"`
+	Metadata struct {
+		Name string `mapstructure:"name,omitempty"`
+	} `mapstructure:"metadata,omitempty"`
+}
+
 func runListCommand(cmd *cobra.Command, args []string) error {
 	kubeClient, err := client.GetClient()
 	if err != nil {
 		return err
 	}
 
-	clientset := kubeClient.GetClientset()
+	projects := make(map[string]*ProjectInfo)
 
-	namespaceList, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
-
+	dynamicClient, err := dynamic.NewForConfig(kubeClient.GetRestConfig())
 	if err != nil {
 		return err
 	}
 
-	projects := make(map[string]*ProjectInfo)
+	if err := listProjects(dynamicClient, projects, kubeClient.GetDefaultNamespace()); err != nil {
+		return err
+	} else if len(projects) < 1 {
+		// If list projects didn't populate anything in the map fallback to listing queues
+		if err = listQueues(dynamicClient, kubeClient, projects); err != nil {
+			return err
+		}
+	}
+
+	// Sort the projects, so they will always appear in the same order
+	projectsArray := getSortedProjects(projects)
+	printProjects(projectsArray)
+	return nil
+}
+
+func listProjects(dynamicClient dynamic.Interface, projects map[string]*ProjectInfo, defaultNamespace string) error {
+	projectList, err := dynamicClient.Resource(projectResource).List(metav1.ListOptions{})
+	if errors.IsNotFound(err) {
+		log.Debug(err)
+		// Cluster doesn't know about the 'Project' resource - fallback to listing queues.
+		return nil
+	}
+
+	for _, projectItem := range projectList.Items {
+		var project Project
+
+		if err := mapstructure.Decode(projectItem.Object, &project); err != nil {
+			return err
+		}
+
+		projects[project.Metadata.Name] = &ProjectInfo{
+			name:                        project.Metadata.Name,
+			defaultProject:              defaultNamespace == "runai-"+project.Metadata.Name,
+			deservedGPUs:                fmt.Sprintf("%.2f", project.Spec.DeservedGpus),
+			interactiveJobTimeLimitSecs: strconv.Itoa(project.Spec.InteractiveJobTimeLimitSecs),
+			nodeAffinityInteractive:     strings.Join(project.Spec.NodeAffinityInteractive, ","),
+			nodeAffinityTraining:        strings.Join(project.Spec.NodeAffinityTrain, ","),
+			department:                  project.Spec.Department,
+		}
+	}
+	return nil
+}
+
+// listQueues Provides backwards compatibility for clusters that didn't upgrade to using Projects.
+// This is the exact same code that was here before I changed the list command logic.
+func listQueues(dynamicClient dynamic.Interface, 	kubeClient *client.Client, projects map[string]*ProjectInfo) error {
+	clientset := kubeClient.GetClientset()
+	namespaceList, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
 
 	for _, namespace := range namespaceList.Items {
 		if namespace.Labels == nil {
 			continue
 		}
-
 		runaiQueue := namespace.Labels[constants.RUNAI_QUEUE_LABEL]
-
 		if runaiQueue != "" {
 			projects[runaiQueue] = &ProjectInfo{
 				name:           runaiQueue,
 				defaultProject: kubeClient.GetDefaultNamespace() == namespace.Name,
 			}
 		}
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(kubeClient.GetRestConfig())
-	if err != nil {
-		return err
 	}
 
 	queueList, err := dynamicClient.Resource(queueResource).List(metav1.ListOptions{})
@@ -97,7 +162,6 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		if err := mapstructure.Decode(queueItem.Object, &queue); err != nil {
 			return err
 		}
-
 		if project, found := projects[queue.Metadata.Name]; found {
 			project.deservedGPUs = fmt.Sprintf("%.2f", queue.Spec.DeservedGpus)
 			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
@@ -106,12 +170,6 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 			project.department = queue.Spec.Department
 		}
 	}
-
-	// Sort the projects, so they will always appear in the same order
-	projectsArray := getSortedProjects(projects)
-
-	printProjects(projectsArray)
-
 	return nil
 }
 
@@ -165,6 +223,7 @@ func listCommandDEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
 		Use:        "list",
 		Short:      fmt.Sprint("List all available projects."),
+		PreRun: 	commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:        commandUtil.WrapRunCommand(runListCommand),
 		Deprecated: "Please use: 'runai list project' instead",
 	}
@@ -178,6 +237,7 @@ func ListCommand() *cobra.Command {
 		Use:     "projects",
 		Aliases: []string{"project"},
 		Short:   "List all available projects",
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 

@@ -17,7 +17,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/flags"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	"github.com/run-ai/runai-cli/pkg/client"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -29,6 +31,7 @@ func NewDeleteCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "delete JOB_NAME",
 		Short: "Delete a job and its associated pods.",
+		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
