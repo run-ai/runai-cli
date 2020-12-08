@@ -20,6 +20,7 @@ import (
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"path"
+	"strconv"
 
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -52,7 +53,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
 		Example: mpiExamples,
-		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
+		PreRun:  commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {
@@ -107,9 +108,10 @@ type submitMPIJobArgs struct {
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
-	Processes       *int // --workers
-	NumberProcesses int  `yaml:"numProcesses"` // --workers
-	TotalGPUs       int  `yaml:"totalGpus"`    // --workers
+	Processes       *int    // --workers
+	NumberProcesses int     `yaml:"numProcesses"` // --workers
+	TotalGPUs       float64 `yaml:"totalGpus"`    // --workers
+	TotalGPUsMemory int     `yaml:"totalGpusMemory"`
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
@@ -121,7 +123,19 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	if submitArgs.Processes != nil {
 		numberProcesses = *submitArgs.Processes
 	}
-	submitArgs.TotalGPUs = numberProcesses * int(*submitArgs.GPU)
+
+	gpus := float64(0)
+	if submitArgs.GPU != nil {
+		gpus = *submitArgs.GPU
+	}
+	submitArgs.TotalGPUs = float64(numberProcesses) * gpus
+
+	gpusMemory := uint64(0)
+	if parsedGpusMemory, err := strconv.ParseUint(submitArgs.GPUMemory, 10, 64); err == nil {
+		gpusMemory = parsedGpusMemory
+	}
+	submitArgs.TotalGPUsMemory = numberProcesses * int(gpusMemory)
+
 	submitArgs.NumberProcesses = numberProcesses
 	return nil
 }

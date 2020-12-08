@@ -213,7 +213,22 @@ func (mj *MPIJob) RequestedGPU() float64 {
 }
 
 func (mj *MPIJob) RequestedGPUMemory() uint64 {
-	return util.GetRequestedGPUsMemoryPerPodGroup(mj.mpijob.Annotations)
+	podGroupRequestedGpus := util.GetRequestedGPUsMemoryPerPodGroup(mj.mpijob.Annotations)
+	if podGroupRequestedGpus != 0 {
+		return podGroupRequestedGpus
+	}
+
+	// backward compatibility
+	value, found := mj.mpijob.Annotations["totalGPUsMemory"]
+	if !found {
+		return 0
+	}
+	totalGpusMemory, err := strconv.ParseUint(value, 10, 64)
+	if err != nil {
+		return 0
+	}
+
+	return totalGpusMemory
 }
 
 // Requested GPU count of the Job

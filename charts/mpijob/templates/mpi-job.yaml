@@ -9,6 +9,7 @@ metadata:
   annotations:
     image: "{{ .Values.image }}"
     totalGPUs: "{{ .Values.totalGpus }}"
+    totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
   labels:
     app: {{ template "mpijob.name" . }}
     chart: {{ template "mpijob.chart" . }}
@@ -47,6 +48,7 @@ spec:
             {{- end }}
           annotations:
             totalGPUs: "{{ .Values.totalGpus }}"
+            totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
         spec:
           {{- if .Values.node_type }}
           nodeSelector:
@@ -136,9 +138,9 @@ spec:
             {{- if .Values.gpuFraction }}
             gpu-fraction: "{{ .Values.gpuFraction }}"
             {{- end }}
-            {{ - if .Values.gpuMemory }}
+            {{- if .Values.gpuMemory }}
             gpu-memory: "{{ .Values.gpuMemory }}"
-            {{ - end }}
+            {{- end }}
           labels:
             project: {{ .Values.project }}
             {{- if .Values.user }}
