@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
-	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	"k8s.io/client-go/rest"
@@ -35,8 +34,8 @@ const (
 func NewBashCommand() *cobra.Command {
 	var podName string
 	var command = &cobra.Command{
-		Use:   "bash JOB_NAME",
-		Short: "Get a bash session inside a running job.",
+		Use:    "bash JOB_NAME",
+		Short:  "Get a bash session inside a running job.",
 		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -65,9 +64,9 @@ func NewExecCommand() *cobra.Command {
 	var fileNames []string
 
 	var command = &cobra.Command{
-		Use:   "exec JOB_NAME COMMAND [ARG ...]",
-		Short: "Execute a command inside a running job.",
-		Args:  cobra.MinimumNArgs(2),
+		Use:    "exec JOB_NAME COMMAND [ARG ...]",
+		Short:  "Execute a command inside a running job.",
+		Args:   cobra.MinimumNArgs(2),
 		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
