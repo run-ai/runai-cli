@@ -729,6 +729,11 @@ func (mj *MPIJob) Project() string {
 }
 
 func (mj *MPIJob) User() string {
+	// Username stored as annotation to support special characters that label values are not allowed to have
+	if userFromAnnotation, exists := mj.mpijob.ObjectMeta.Annotations["user"]; exists && userFromAnnotation != "" {
+		return userFromAnnotation
+	}
+	// fallback to old behavior - username set as label.
 	return mj.mpijob.ObjectMeta.Labels["user"]
 }
 
