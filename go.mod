@@ -5,11 +5,13 @@ go 1.13
 require (
 	cloud.google.com/go v0.51.0 // indirect
 	github.com/Azure/go-autorest/autorest v0.9.6 // indirect
+	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/frankban/quicktest v1.9.0 // indirect
 	github.com/go-openapi/spec v0.19.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/int128/oauth2cli v1.13.0 // indirect
 	github.com/kubeflow/mpi-operator v0.2.2 // indirect
 	github.com/magiconair/properties v1.8.0
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -17,12 +19,15 @@ require (
 	github.com/mitchellh/mapstructure v1.2.2
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
+	github.com/pkg/browser v0.0.0-20201207095918-0426ae3fba23 // indirect
+	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.17.6
