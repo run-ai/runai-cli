@@ -46,6 +46,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	var (
 		submitArgs submitMPIJobArgs
 	)
+	submitArgs.GitSync = NewGitSync()
 
 	var command = &cobra.Command{
 		Use:     SubmitMpiCommand + " [NAME]",

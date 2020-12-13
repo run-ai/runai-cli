@@ -262,7 +262,9 @@ func getTokenFromJupyterLogs(logs string) (string, error) {
 }
 
 func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
-	return &submitRunaiJobArgs{}
+	submitArgs := submitRunaiJobArgs{}
+	submitArgs.GitSync = NewGitSync()
+	return &submitArgs
 }
 
 type submitRunaiJobArgs struct {
