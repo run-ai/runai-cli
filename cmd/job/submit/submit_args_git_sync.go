@@ -5,7 +5,10 @@ import (
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 )
 
-const defaultGitSyncImage = "k8s.gcr.io/git-sync/git-sync:v3.2.0"
+const (
+	defaultGitSyncImage  = "k8s.gcr.io/git-sync/git-sync:v3.2.0"
+	defaultSyncDirectory = "/code"
+)
 
 type GitSync struct {
 	Sync           *bool  `yaml:"sync,omitempty"`
@@ -28,6 +31,7 @@ func NewGitSync() *GitSync {
 		Revision:   "",
 		Username:   "",
 		Password:   "",
+		Directory:  "",
 	}
 }
 
@@ -44,6 +48,9 @@ func (gs *GitSync) HandleGitSync() error {
 	}
 	if gs.Image == "" {
 		gs.Image = defaultGitSyncImage
+	}
+	if gs.Directory == "" {
+		gs.Directory = defaultSyncDirectory
 	}
 
 	if gs.Repository == "" || (gs.Branch == "" && gs.Revision == "") {

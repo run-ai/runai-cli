@@ -104,7 +104,7 @@ spec:
         {{- end }}
       {{- if .Values.gitSync.sync }}
       initContainers:
-        - name: gitSync
+        - name: git-sync
           image: {{ .Values.gitSync.image }}
           env: 
             - name: GIT_SYNC_REPO
@@ -129,21 +129,6 @@ spec:
           volumeMounts: 
             - name: code-sync
               mountPath: /code
-          resources:             
-            requests:
-              {{- if .Values.cpu }}
-              cpu: {{ .Values.cpu }}
-              {{- end }}
-              {{- if .Values.memory }}
-              memory: {{ .Values.memory }}
-              {{- end }}
-            limits:
-              {{- if .Values.cpu }}
-              cpu: {{ .Values.cpu }}
-              {{- end }}
-              {{- if .Values.memory }}
-              memory: {{ .Values.memory }}
-              {{- end }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}
