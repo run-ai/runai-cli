@@ -8,6 +8,7 @@ import (
 	"github.com/int128/oauth2cli"
 	"github.com/pkg/browser"
 	"github.com/pkg/errors"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -94,16 +95,6 @@ func (authenticator Authenticator) ToAuthProviderConfig(tokens *KubectlTokens) (
 
 // When a browser is locally available, opens a browser automatically,listens for the response and gets a token with the code in the response.
 func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*KubectlTokens, error) {
-
-	// TODO [by dan]: this is the logic kubelogin does to 'lock' the listen port - not sure if its actually required?
-
-	//_, port, err := net.SplitHostPort(options.ListenAddress)
-	//if err != nil {
-	//	log.Errorf("Bad listen address given: %w", err)
-	//	return nil, err
-	//}
-	//log.Debugf("Trying to lock local port %s", port)
-
 	var (
 		readyChan = make(chan string, 1)
 		eg        errgroup.Group
@@ -127,15 +118,13 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Kub
 		}
 	})
 
-	cliConfig := authenticator.buildCliConfig(options, readyChan)
-
 	eg.Go(func() error {
 		defer close(readyChan)
-		token, err := oauth2cli.GetToken(authenticator.ctx, cliConfig)
+		token, err := oauth2cli.GetToken(authenticator.ctx, authenticator.buildCliConfig(options, readyChan))
 		if err != nil {
 			return fmt.Errorf("error during auth code flow: %w", err)
 		}
-		verified, err := authenticator.verifyToken(authenticator.ctx, token)
+		verified, err := authenticator.verifyToken(token)
 		tokens = verified
 		return err
 	})
@@ -147,9 +136,22 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Kub
 }
 
 // When a browser is not locally available (i.e. an ssh session) shows the url for the user to put in their remotely-available browser and prompts for the code.
-/*func (authenticator Authenticator) RemoteBrowserAuth() KubectlTokens {
+func (authenticator Authenticator) RemoteBrowserAuth() (*KubectlTokens, error) {
+	// TODO [by dan]: pass extras
+	authUrl := authenticator.config.AuthCodeURL(authenticator.state, authenticator.authRequestOptions(make(map[string]string))...)
+	fmt.Printf("Please go to this url in any browser: %s \n\n", authUrl)
+	code, err := auth.ReadPassword("And paste the code here: ")
+	if err != nil {
+		return &KubectlTokens{}, err
+	}
 
-}*/
+	// TODO [by dan]: pass extras
+	if token, err := authenticator.config.Exchange(authenticator.ctx, code, authenticator.authRequestOptions(make(map[string]string))...); err == nil {
+		return authenticator.verifyToken(token)
+	} else {
+		return &KubectlTokens{}, err
+	}
+}
 
 // To be able to use separate connections on separate applications, auth0 requires passing a non-standard grant type and a non-standard scope to tell it what connection to use for
 // the authentication request.
@@ -237,13 +239,13 @@ func (authenticator Authenticator) buildCliConfig(options BrowserAuthOptions, re
 
 // verifyToken verifies the token with the certificates of the provider and the nonce.
 // If the nonce is an empty string, it does not verify the nonce.
-func (authenticator Authenticator) verifyToken(ctx context.Context, token *oauth2.Token) (*KubectlTokens, error) {
+func (authenticator Authenticator) verifyToken(token *oauth2.Token) (*KubectlTokens, error) {
 	idToken, ok := token.Extra("id_token").(string)
 	if !ok {
 		return nil, fmt.Errorf("id_token is missing in the token response: %s", token)
 	}
 	verifier := authenticator.provider.Verifier(&gooidc.Config{ClientID: authenticator.config.ClientID, Now: time.Now})
-	verifiedIDToken, err := verifier.Verify(ctx, idToken)
+	verifiedIDToken, err := verifier.Verify(authenticator.ctx, idToken)
 	if err != nil {
 		return nil, fmt.Errorf("error while verifying ID token: %w", err)
 	}

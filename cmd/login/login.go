@@ -36,8 +36,8 @@ var (
 
 func NewLoginCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   "login",
-		Short: "It logs you in", // TODO [by dan]:
+		Use:          "login",
+		Short:        "It logs you in", // TODO [by dan]:
 		SilenceUsage: true,
 		Args: func(c *cobra.Command, args []string) error {
 			if err := cobra.NoArgs(c, args); err != nil {
@@ -63,22 +63,24 @@ func NewLoginCommand() *cobra.Command {
 				return err
 			}
 			var tokens *oidc.KubectlTokens
+			var authError error
 			switch paramAuthMethod {
 			case AuthMethodBrowser:
 				options := oidc.BrowserAuthOptions{
 					ListenAddress: paramListenAddress,
 					ExtraParams:   make(map[string]string), // TODO [by dan]: pass from flag
 				}
-				tokens, err = authenticator.BrowserAuth(options)
-				if err != nil {
-					return err
-				}
-				//case AuthMethodRemoteBrowser:
+				tokens, authError = authenticator.BrowserAuth(options)
+			case AuthMethodRemoteBrowser:
+				tokens, authError = authenticator.RemoteBrowserAuth()
 
 				//case AuthMethodPassword:
 
 				//case AuthMethodLocalClusterIdpPassword:
 
+			}
+			if authError != nil {
+				return err
 			}
 			newAuthProviderConfig := authenticator.ToAuthProviderConfig(tokens)
 			kubeConfig.AuthInfos[paramKubeConfigUser].AuthProvider = &newAuthProviderConfig
@@ -100,7 +102,7 @@ func NewLoginCommand() *cobra.Command {
 	command.Flags().StringVar(&paramClientId, "client-id", "", "OIDC Client ID")
 	command.Flags().StringVar(&paramClientSecret, "client-secret", "", "OIDC Client Secret")
 	command.Flags().StringVar(&paramIssuerUrl, "issuer-url", DefaultIssuerUrl, "OIDC Issuer URL")
-	command.Flags().StringVar(&paramRedirectUrl, "redirect-url", DefaultRedirectUrl, "OIDC Issuer URL")
+	command.Flags().StringVar(&paramRedirectUrl, "redirect-url", DefaultRedirectUrl, "Auth Response Redirect URL")
 
 	return command
 }
