@@ -2,13 +2,14 @@ package oidc
 
 // These are the minimal required fields to use kubectl's oidc auth plugin
 type AuthProviderConfig struct {
-	ClientId             string
-	ClientSecret         string
-	IdToken              string
-	RefreshToken         string
-	IssuerUrl            string
-	RedirectUrl 		 string
-	Scopes 				 []string
+	AuthMethod   string
+	ClientId     string
+	ClientSecret string
+	IdToken      string
+	RefreshToken string
+	IssuerUrl    string
+	RedirectUrl  string
+	ExtraScopes  []string
 }
 
 type KubectlTokens struct {

@@ -18,10 +18,17 @@ import (
 	gooidc "github.com/coreos/go-oidc"
 )
 
+const AuthProviderName = "oidc"
+
+var (
+	BrowserAuthDefaultScopes = []string{"email", gooidc.ScopeOpenID, gooidc.ScopeOfflineAccess}
+)
+
 type Authenticator struct {
-	provider *gooidc.Provider
-	config   oauth2.Config
-	ctx      context.Context
+	provider  *gooidc.Provider
+	config    oauth2.Config
+	issuerUrl string
+	ctx       context.Context
 
 	// Although its possible to make many requests using a single Authenticator, in practice it is only used once per command thus we put these 2 params here as a convenience
 	// BUT if you ever find yourself using the same Authenticator instance more then once you must pass a new nonce and state each time.
@@ -34,36 +41,56 @@ func NewAuthenticator(config AuthProviderConfig) (*Authenticator, error) {
 
 	provider, err := gooidc.NewProvider(ctx, config.IssuerUrl)
 	if err != nil {
-		log.Infof("failed to create provider: %v", err)
 		return nil, err
 	}
+
+	// TODO [by dan]: supporting this means an extra layer of security, if we wish so
+	// TODO [by dan]: see https://auth0.com/docs/tokens/refresh-tokens#for-single-page-apps
+	//supportedCodeChallengeMethods, err := extractSupportedPKCEMethods(provider)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	conf := oauth2.Config{
 		ClientID:     config.ClientId,
 		ClientSecret: config.ClientSecret,
 		RedirectURL:  config.RedirectUrl,
 		Endpoint:     provider.Endpoint(),
-		Scopes:       config.Scopes,
+		Scopes:       mergeScopes(BrowserAuthDefaultScopes, config.ExtraScopes),
 	}
 
 	return &Authenticator{
-		provider: provider,
-		config:   conf,
-		ctx:      ctx,
-		state:    makeNonce(),
-		nonce:    makeNonce(),
+		provider:  provider,
+		config:    conf,
+		issuerUrl: config.IssuerUrl,
+		ctx:       ctx,
+		state:     makeNonce(),
+		nonce:     makeNonce(),
 	}, nil
 }
 
+// TODO [by dan]: supporting this means an extra layer of security, if we wish so
+// TODO [by dan]: see https://auth0.com/docs/tokens/refresh-tokens#for-single-page-apps
+/*func extractSupportedPKCEMethods(provider *gooidc.Provider) ([]string, error) {
+	var codeChallengeClaims struct {
+		CodeChallengeMethodsSupported []string `json:"code_challenge_methods_supported"`
+	}
+	if err := provider.Claims(&codeChallengeClaims); err != nil {
+		return nil, fmt.Errorf("can't extract supported challenge methods from oidc provider: %w", err)
+	}
+	return codeChallengeClaims.CodeChallengeMethodsSupported, nil
+}*/
+
 func (authenticator Authenticator) ToAuthProviderConfig(tokens *KubectlTokens) (config clientcmdapi.AuthProviderConfig) {
+	config.Config = make(map[string]string)
 	config.Config[ClientId] = authenticator.config.ClientID
 	config.Config[ClientSecret] = authenticator.config.ClientSecret
-	config.Config[IssuerUrl] = authenticator.config.Endpoint.AuthURL
+	config.Config[IssuerUrl] = authenticator.issuerUrl
 	config.Config[IdToken] = tokens.IdToken
 	config.Config[RefreshToken] = tokens.RefreshToken
+	config.Name = AuthProviderName
 	return
 }
-
 
 // When a browser is locally available, opens a browser automatically,listens for the response and gets a token with the code in the response.
 func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*KubectlTokens, error) {
@@ -88,7 +115,7 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Kub
 			if !ok {
 				return nil
 			}
-			log.Infof("opening %s in the browser", url)
+			log.Debugf("opening %s in the browser", url)
 			if err := browser.OpenURL(url); err != nil {
 				err = errors.Wrap(err, "Could not open browser")
 				log.Error(err)
@@ -201,9 +228,9 @@ func (authenticator Authenticator) buildCliConfig(options BrowserAuthOptions, re
 		AuthCodeOptions:        authenticator.authRequestOptions(options.ExtraParams),
 		LocalServerBindAddress: []string{options.ListenAddress},
 		LocalServerReadyChan:   readyChan,
-		RedirectURLHostname:    "localhost",          // Can be made configurable, if needed
-		LocalServerSuccessHTML: RedirectHTMLResponse, // Can be configured however we want (messages, links, logo etc.)
+		RedirectURLHostname:    "localhost", // Can be made configurable, if needed
 		Logf:                   log.Debugf,
+		//TODO LocalServerSuccessHTML: ,  --> Can be configured however we want (messages, links, logo etc.)
 	}
 	return cliConfig
 }
@@ -228,4 +255,18 @@ func (authenticator Authenticator) verifyToken(ctx context.Context, token *oauth
 		RefreshToken: token.RefreshToken,
 		// Theres also token.AccessToken, but it seems the kubectl oidc authenticator knows how to refresh without it.
 	}, nil
+}
+
+func mergeScopes(defaultScopes []string, extraScopes []string) (scopes []string) {
+	set := make(map[string]struct{})
+	for _, scope := range defaultScopes {
+		set[scope] = struct{}{}
+	}
+	for _, scope := range extraScopes {
+		set[scope] = struct{}{}
+	}
+	for scope, _ := range set {
+		scopes = append(scopes, scope)
+	}
+	return
 }
