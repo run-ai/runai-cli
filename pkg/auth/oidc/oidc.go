@@ -89,7 +89,7 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Tok
 			}
 			return nil
 		case <-authenticator.ctx.Done():
-			return fmt.Errorf("context cancelled while waiting for the local server: %w", authenticator.ctx.Err())
+			return fmt.Errorf("context cancelled while waiting for the local server: %v", authenticator.ctx.Err())
 		}
 	})
 
@@ -97,7 +97,7 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Tok
 		defer close(readyChan)
 		token, err := oauth2cli.GetToken(authenticator.ctx, authenticator.buildCliConfig(options, readyChan))
 		if err != nil {
-			return fmt.Errorf("error during auth code flow: %w", err)
+			return fmt.Errorf("error during auth code flow: %v", err)
 		}
 		verified, err := authenticator.verifyAndConvertToken(token)
 		tokens = verified
@@ -105,7 +105,7 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Tok
 	})
 
 	if err := eg.Wait(); err != nil {
-		return nil, fmt.Errorf("error encountered during authentication: %w", err)
+		return nil, fmt.Errorf("error encountered during authentication: %v", err)
 	}
 	return tokens, nil
 }
@@ -267,7 +267,7 @@ func (authenticator Authenticator) verifyToken(idToken string) error {
 	verifier := authenticator.provider.Verifier(&gooidc.Config{ClientID: authenticator.config.ClientID, Now: time.Now})
 	verifiedIDToken, err := verifier.Verify(authenticator.ctx, idToken)
 	if err != nil {
-		return fmt.Errorf("error while verifying ID token: %w", err)
+		return fmt.Errorf("error while verifying ID token: %v", err)
 	}
 	if verifiedIDToken.Nonce != "" && (authenticator.nonce != verifiedIDToken.Nonce) {
 		return fmt.Errorf("token nonce did not match! (expected %s but got %s)", authenticator.nonce, verifiedIDToken.Nonce)

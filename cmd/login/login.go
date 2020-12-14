@@ -193,7 +193,7 @@ func writeAuthProviderConfigToKubeConfig(authProviderConfig AuthProviderConfig, 
 	if err == nil {
 		fmt.Println("Configuration has been updated. You have logged in successfully.")
 	} else {
-		err = fmt.Errorf("failed to save configuration with new auth info: %w", err)
+		err = fmt.Errorf("failed to save configuration with new auth info: %v", err)
 	}
 	return err
 }
