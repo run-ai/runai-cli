@@ -58,8 +58,8 @@ func GetPermissionErrorIfNeeded(err error) error {
 }
 
 func getPermissionError(err error) error {
-	if username, kubeloginErr := GetEmailForCurrentUser(); kubeloginErr != nil {
-		log.Debug("Can't acquire username from kubelogin token cache: ", kubeloginErr)
+	if username, permissionErr := GetEmailForCurrentUser(); permissionErr != nil {
+		log.Debug("Can't acquire username from current user's token: ", permissionErr)
 	} else if username != "" {
 		//Write the original message to debug log so we can actually understand what's going on.
 		log.Debug(err)
