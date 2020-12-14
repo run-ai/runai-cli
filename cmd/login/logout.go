@@ -33,7 +33,7 @@ func NewLogoutCommand() *cobra.Command {
 			} else {
 				return fmt.Errorf("No auth configuration found in kubeconfig for user '%s' \n", paramKubeConfigUser)
 			}
-			fmt.Printf("Auth tokens for user '%s' have been removed.", paramKubeConfigUser)
+			fmt.Printf("Auth tokens for user '%s' have been removed.\n", paramKubeConfigUser)
 			return nil
 		},
 	}
