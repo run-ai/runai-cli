@@ -152,6 +152,7 @@ spec:
             - name: user-data
               emptyDir: {}
           {{- end }}
+          {{- include "runai-common.job.volumes" . | indent 10 }}
           securityContext:
             {{- if .Values.runAsUser }}
             runAsUser: {{ .Values.runAsUser }}
@@ -172,6 +173,7 @@ spec:
                 - mountPath: /home/runai-home
                   name: user-data
               {{- end }}
+              {{- include "runai-common.job.volume.mounts" . | indent 14 }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               name: mpi
