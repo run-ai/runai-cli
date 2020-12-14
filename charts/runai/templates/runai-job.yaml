@@ -162,6 +162,24 @@ spec:
           {{- end}}
           securityContext:
             allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
+          resources:
+            limits:
+              {{- if .Values.gpuInt }}
+              nvidia.com/gpu: {{ .Values.gpuInt }}
+              {{- end}}
+              {{- if .Values.cpuLimit}}
+              cpu: {{ .Values.cpuLimit }}
+              {{- end}}
+              {{- if .Values.memoryLimit}}
+              memory: {{ .Values.memoryLimit }}
+              {{- end }}
+            requests:
+              {{- if .Values.cpu}}
+              cpu: {{ .Values.cpu }}
+              {{- end}}
+              {{- if .Values.memory}}
+              memory: {{ .Values.memory }}
+              {{- end }}
           env:
             {{- if .Values.createHomeDir }}
             - name: "HOME"
