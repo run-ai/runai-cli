@@ -2,16 +2,21 @@ package oidc
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/int128/oauth2cli"
 	"github.com/pkg/browser"
 	"github.com/pkg/errors"
-	"github.com/run-ai/runai-cli/pkg/auth"
+	. "github.com/run-ai/runai-cli/pkg/auth/config"
+	"github.com/run-ai/runai-cli/pkg/auth/util"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"io"
+	"io/ioutil"
+	"mime"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -19,10 +24,13 @@ import (
 	gooidc "github.com/coreos/go-oidc"
 )
 
-const AuthProviderName = "oidc"
+const (
+	Auth0PasswordRealmGrantType = "http://auth0.com/oauth/grant-type/password-realm"
+	MimeTypeUrlEncoded          = "application/x-www-form-urlencoded"
+)
 
 var (
-	BrowserAuthDefaultScopes = []string{"email", gooidc.ScopeOpenID, gooidc.ScopeOfflineAccess}
+	 DefaultScopes = []string{"email", gooidc.ScopeOpenID, gooidc.ScopeOfflineAccess}
 )
 
 type Authenticator struct {
@@ -33,8 +41,9 @@ type Authenticator struct {
 
 	// Although its possible to make many requests using a single Authenticator, in practice it is only used once per command thus we put these 2 params here as a convenience
 	// BUT if you ever find yourself using the same Authenticator instance more then once you must pass a new nonce and state each time.
-	state string
-	nonce string
+	state     string
+	nonce     string
+	authRealm string
 }
 
 func NewAuthenticator(config AuthProviderConfig) (*Authenticator, error) {
@@ -44,70 +53,39 @@ func NewAuthenticator(config AuthProviderConfig) (*Authenticator, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO [by dan]: supporting this means an extra layer of security, if we wish so
-	// TODO [by dan]: see https://auth0.com/docs/tokens/refresh-tokens#for-single-page-apps
-	//supportedCodeChallengeMethods, err := extractSupportedPKCEMethods(provider)
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	conf := oauth2.Config{
 		ClientID:     config.ClientId,
 		ClientSecret: config.ClientSecret,
 		RedirectURL:  config.RedirectUrl,
 		Endpoint:     provider.Endpoint(),
-		Scopes:       mergeScopes(BrowserAuthDefaultScopes, config.ExtraScopes),
+		Scopes:       util.MergeScopes(DefaultScopes, config.ExtraScopes),
 	}
-
 	return &Authenticator{
 		provider:  provider,
 		config:    conf,
 		issuerUrl: config.IssuerUrl,
 		ctx:       ctx,
-		state:     makeNonce(),
-		nonce:     makeNonce(),
+		state:     util.MakeNonce(),
+		nonce:     util.MakeNonce(),
+		authRealm: config.AuthRealm,
 	}, nil
 }
 
-// TODO [by dan]: supporting this means an extra layer of security, if we wish so
-// TODO [by dan]: see https://auth0.com/docs/tokens/refresh-tokens#for-single-page-apps
-/*func extractSupportedPKCEMethods(provider *gooidc.Provider) ([]string, error) {
-	var codeChallengeClaims struct {
-		CodeChallengeMethodsSupported []string `json:"code_challenge_methods_supported"`
-	}
-	if err := provider.Claims(&codeChallengeClaims); err != nil {
-		return nil, fmt.Errorf("can't extract supported challenge methods from oidc provider: %w", err)
-	}
-	return codeChallengeClaims.CodeChallengeMethodsSupported, nil
-}*/
-
-func (authenticator Authenticator) ToAuthProviderConfig(tokens *KubectlTokens) (config clientcmdapi.AuthProviderConfig) {
-	config.Config = make(map[string]string)
-	config.Config[ClientId] = authenticator.config.ClientID
-	config.Config[ClientSecret] = authenticator.config.ClientSecret
-	config.Config[IssuerUrl] = authenticator.issuerUrl
-	config.Config[IdToken] = tokens.IdToken
-	config.Config[RefreshToken] = tokens.RefreshToken
-	config.Name = AuthProviderName
-	return
-}
-
 // When a browser is locally available, opens a browser automatically,listens for the response and gets a token with the code in the response.
-func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*KubectlTokens, error) {
+func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Tokens, error) {
 	var (
 		readyChan = make(chan string, 1)
 		eg        errgroup.Group
-		tokens    *KubectlTokens
+		tokens    *Tokens
 	)
 	eg.Go(func() error {
 		select {
-		case url, ok := <-readyChan:
+		case authUrl, ok := <-readyChan:
 			if !ok {
 				return nil
 			}
-			log.Debugf("opening %s in the browser", url)
-			if err := browser.OpenURL(url); err != nil {
+			log.Debugf("opening %s in the browser", authUrl)
+			if err := browser.OpenURL(authUrl); err != nil {
 				err = errors.Wrap(err, "Could not open browser")
 				log.Error(err)
 				return err
@@ -124,7 +102,7 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Kub
 		if err != nil {
 			return fmt.Errorf("error during auth code flow: %w", err)
 		}
-		verified, err := authenticator.verifyToken(token)
+		verified, err := authenticator.verifyAndConvertToken(token)
 		tokens = verified
 		return err
 	})
@@ -136,72 +114,115 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Kub
 }
 
 // When a browser is not locally available (i.e. an ssh session) shows the url for the user to put in their remotely-available browser and prompts for the code.
-func (authenticator Authenticator) RemoteBrowserAuth() (*KubectlTokens, error) {
+func (authenticator Authenticator) RemoteBrowserAuth() (*Tokens, error) {
 	// TODO [by dan]: pass extras
 	authUrl := authenticator.config.AuthCodeURL(authenticator.state, authenticator.authRequestOptions(make(map[string]string))...)
 	fmt.Printf("Please go to this url in any browser: %s \n\n", authUrl)
-	code, err := auth.ReadPassword("And paste the code here: ")
+	code, err := util.ReadPassword("And paste the code here: ")
 	if err != nil {
-		return &KubectlTokens{}, err
+		return &Tokens{}, err
 	}
 
 	// TODO [by dan]: pass extras
 	if token, err := authenticator.config.Exchange(authenticator.ctx, code, authenticator.authRequestOptions(make(map[string]string))...); err == nil {
-		return authenticator.verifyToken(token)
+		return authenticator.verifyAndConvertToken(token)
 	} else {
-		return &KubectlTokens{}, err
+		return &Tokens{}, err
 	}
 }
 
 // To be able to use separate connections on separate applications, auth0 requires passing a non-standard grant type and a non-standard scope to tell it what connection to use for
 // the authentication request.
-/*func (authenticator Authenticator) Auth0PasswordAuth() KubectlTokens {
-
-}*/
-
-// standard Resource Owner Password Credentials flow, supported by Keycloak
-/*func (authenticator Authenticator) PasswordAuth() KubectlTokens {
-
-}*/
-
-/*func (authenticator Authenticator) authCodeUrl(extraParams map[string]string) string {
-	requestOpts := authenticator.authRequestOptions(extraParams)
-	return authenticator.config.AuthCodeURL(authenticator.state, requestOpts...)
+// There is absolutely 0 support for such a custom case in the oauth2 standard library so we're forced to make this call manually.
+func (authenticator Authenticator) Auth0PasswordAuth(realm string) (*Tokens, error) {
+	// Auth0 has an unfortunate way of making the user/connection separation works so if a realm has been passed we need to use their api accordingly.
+	// See more here: https://auth0.com/docs/flows/call-your-api-using-resource-owner-password-flow#configure-realm-support
+	if realm == "" {
+		// If no realm is passed then this cam be handled as a standard ROPC request, auth0 requires that you set a default connection for the entire tenant and it will be used
+		// to authenticate all requests. For instance our dev and staging tenants are structured like this.
+		return authenticator.PasswordAuth()
+	}
+	var err error
+	var username, password string
+	if username, err = util.ReadString("Username: "); err != nil {
+		return nil, err
+	}
+	if password, err = util.ReadPassword("Password: "); err != nil {
+		return nil, err
+	}
+	return authenticator.auth0ROPC(realm, username, password)
 }
 
-func (authenticator Authenticator) exchangeCodeForToken(code string) KubectlTokens {
-	// TODO [by dan]: verify state!
-
-	oauth2Token, err := authenticator.config.Exchange(authenticator.ctx, code)
+func (authenticator Authenticator) auth0ROPC(realm string, username string, password string) (*Tokens, error) {
+	var req *http.Request
+	var res *http.Response
+	var err error
+	requestParams := url.Values{
+		"grant_type":    {Auth0PasswordRealmGrantType},
+		"realm":         {realm},
+		"username":      {username},
+		"password":      {password},
+		"scope":         {strings.Join(authenticator.config.Scopes, " ")},
+		"client_id":     {authenticator.config.ClientID},
+		"client_secret": {authenticator.config.ClientSecret},
+	}
+	if req, err = http.NewRequest("POST", authenticator.provider.Endpoint().TokenURL, strings.NewReader(requestParams.Encode())); err != nil {
+		return nil, err
+	}
+	req.Header["Content-Type"] = []string{MimeTypeUrlEncoded}
+	if res, err = http.DefaultClient.Do(req); err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(io.LimitReader(res.Body, 1<<20))
 	if err != nil {
-		// handle error
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
 	}
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return nil, fmt.Errorf("bad auth response --> %d : %s / %s", res.StatusCode, res.Status, string(body))
+	}
+	contentType, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type"))
+	return authenticator.getTokenFromROPCAuthResponse(contentType, body)
+}
 
-	// Extract the ID Token from OAuth2 token.
-	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
-	if !ok {
-		// handle missing token
+func (authenticator Authenticator) getTokenFromROPCAuthResponse(contentType string, responseBody []byte) (*Tokens, error) {
+	var token *oauth2.Token
+	switch contentType {
+	case MimeTypeUrlEncoded, "text/plain":
+		formParams, err := url.ParseQuery(string(responseBody))
+		if err != nil {
+			return nil, err
+		}
+		token = (&oauth2.Token{
+			TokenType:    formParams.Get("token_type"),
+			AccessToken:  formParams.Get("access_token"),
+			RefreshToken: formParams.Get("refresh_token"),
+		}).WithExtra(formParams)
+		return authenticator.verifyAndConvertToken(token)
+	default:
+		tokens := &Tokens{}
+		if err := json.Unmarshal(responseBody, tokens); err != nil {
+			return nil, err
+		}
+		return tokens, authenticator.verifyToken(tokens.IdToken)
 	}
+}
 
-	verifier := authenticator.provider.Verifier(&gooidc.Config{ClientID: authenticator.config.ClientID})
-	// Parse and verify ID Token payload.
-	idToken, err := verifier.Verify(authenticator.ctx, rawIDToken)
-	if err != nil {
-		// handle error
+// Resource Owner Password Credentials flow, supported by Keycloak (and probably any other IDP)
+func (authenticator Authenticator) PasswordAuth() (tokens *Tokens, err error) {
+	var username, password string
+	if username, err = util.ReadString("Username: "); err != nil {
+		return nil, err
 	}
-
-	// TODO [by dan]: since we can see the email claim here we can potentially write the user name into kubeconfig and use that instead of the token parsing logic I put here
-	// TODO [by dan]: second option: drop a .userName file in .runai and hold username there
-	// TODO [by dan]: also kubelogin's authentication package does time verification
-	// Extract custom claims
-	var claims struct {
-		Email    string `json:"email"`
-		Verified bool   `json:"email_verified"`
+	if password, err = util.ReadPassword("Password: "); err != nil {
+		return nil, err
 	}
-	if err := idToken.Claims(&claims); err != nil {
-		// handle error
+	if token, err := authenticator.config.PasswordCredentialsToken(authenticator.ctx, username, password); err == nil {
+		return authenticator.verifyAndConvertToken(token)
+	} else {
+		return nil, err
 	}
-}*/
+}
 
 func (authenticator Authenticator) authRequestOptions(extraParams map[string]string) []oauth2.AuthCodeOption {
 	options := []oauth2.AuthCodeOption{
@@ -212,15 +233,6 @@ func (authenticator Authenticator) authRequestOptions(extraParams map[string]str
 		options = append(options, oauth2.SetAuthURLParam(key, value))
 	}
 	return options
-}
-
-func makeNonce() string {
-	buffer := make([]byte, 32)
-	if _, err := rand.Read(buffer); err != nil {
-		log.Debug(err)
-	}
-	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(buffer)
-
 }
 
 func (authenticator Authenticator) buildCliConfig(options BrowserAuthOptions, readyChan chan string) oauth2cli.Config {
@@ -237,38 +249,31 @@ func (authenticator Authenticator) buildCliConfig(options BrowserAuthOptions, re
 	return cliConfig
 }
 
-// verifyToken verifies the token with the certificates of the provider and the nonce.
-// If the nonce is an empty string, it does not verify the nonce.
-func (authenticator Authenticator) verifyToken(token *oauth2.Token) (*KubectlTokens, error) {
+// verifyAndConvertToken calls verifyToken and converts the oauth2 token to our representation of token
+func (authenticator Authenticator) verifyAndConvertToken(token *oauth2.Token) (*Tokens, error) {
 	idToken, ok := token.Extra("id_token").(string)
 	if !ok {
-		return nil, fmt.Errorf("id_token is missing in the token response: %s", token)
+		return nil, fmt.Errorf("id_token is missing in the token response: %v", token)
 	}
-	verifier := authenticator.provider.Verifier(&gooidc.Config{ClientID: authenticator.config.ClientID, Now: time.Now})
-	verifiedIDToken, err := verifier.Verify(authenticator.ctx, idToken)
-	if err != nil {
-		return nil, fmt.Errorf("error while verifying ID token: %w", err)
+	if err := authenticator.verifyToken(idToken); err != nil {
+		return nil, err
 	}
-	if authenticator.nonce != verifiedIDToken.Nonce {
-		return nil, fmt.Errorf("makeNonce did not match (expected %s but got %s)", authenticator.nonce, verifiedIDToken.Nonce)
-	}
-	return &KubectlTokens{
+	return &Tokens{
 		IdToken:      idToken,
 		RefreshToken: token.RefreshToken,
-		// Theres also token.AccessToken, but it seems the kubectl oidc authenticator knows how to refresh without it.
 	}, nil
 }
 
-func mergeScopes(defaultScopes []string, extraScopes []string) (scopes []string) {
-	set := make(map[string]struct{})
-	for _, scope := range defaultScopes {
-		set[scope] = struct{}{}
+// verifyToken verifies the token with the certificates of the provider and the nonce.
+// If the nonce is an empty string, it does not verify the nonce.
+func (authenticator Authenticator) verifyToken(idToken string) error {
+	verifier := authenticator.provider.Verifier(&gooidc.Config{ClientID: authenticator.config.ClientID, Now: time.Now})
+	verifiedIDToken, err := verifier.Verify(authenticator.ctx, idToken)
+	if err != nil {
+		return fmt.Errorf("error while verifying ID token: %w", err)
 	}
-	for _, scope := range extraScopes {
-		set[scope] = struct{}{}
+	if verifiedIDToken.Nonce != "" && (authenticator.nonce != verifiedIDToken.Nonce) {
+		return fmt.Errorf("token nonce did not match! (expected %s but got %s)", authenticator.nonce, verifiedIDToken.Nonce)
 	}
-	for scope, _ := range set {
-		scopes = append(scopes, scope)
-	}
-	return
+	return nil
 }

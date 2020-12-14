@@ -2,31 +2,30 @@ package login
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/auth"
+	. "github.com/run-ai/runai-cli/pkg/auth/config"
 	"github.com/run-ai/runai-cli/pkg/auth/jwt"
 	"github.com/run-ai/runai-cli/pkg/auth/oidc"
+	"github.com/run-ai/runai-cli/pkg/auth/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
-	"strings"
 )
 
 const (
-	KubeConfigUserName                = "runai-oidc"
-	AuthMethodBrowser                 = "browser"
+	// Use 'Remote Browser' when a browser is not locally available for the local session (i.e while using runai cli via ssh)
+	// In this case the cli cannot open a browser and cannot listen for the auth response on localhost:8000 (default) so the redirect must bounce the browser to some generally
+	// available location like app.run.ai/auth or <airgapped-backencd-url>/auth for airgapped envs.
 	AuthMethodRemoteBrowser           = "remote-browser"
+	AuthMethodBrowser                 = "browser"
 	AuthMethodPassword                = "password"
 	AuthMethodLocalClusterIdpPassword = "local-cluster-password" //auth0 and keycloak handle 'password' grant types a bit differently. This flag is for keycloak. The difference is mainly in the redirect url.
-
-	DefaultListenAddress = "127.0.0.1:8000"
-	DefaultIssuerUrl     = "https://runai-prod.auth0.com/"
-	DefaultRedirectUrl   = "https://app.run.ai/auth"
 )
 
 var (
 	paramForce          bool
 	paramKubeConfigUser string
 	paramAuthMethod     string
+	paramAuthRealm      string
 	paramListenAddress  string
 	paramClientId       string
 	paramClientSecret   string
@@ -46,58 +45,52 @@ func NewLoginCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			kubeConfig, err := oidc.ReadKubeConfig()
+			kubeConfig, err := util.ReadKubeConfig()
 			if err != nil {
 				return fmt.Errorf("failed to parse kubeconfig: %v", err)
 			}
-
 			if !shouldDoAuth(kubeConfig) {
 				// Can still override this with --force
 				log.Info("Current configuration seems valid, no need to login again.")
 				return nil
 			}
 			authProviderConfig, err := getOrCreateAuthProviderConfig(kubeConfig)
+			if err != nil {
+				return err
+			}
 			authenticator, err := oidc.NewAuthenticator(authProviderConfig)
 			if err != nil {
 				return err
 			}
-			var tokens *oidc.KubectlTokens
-			var authError error
-			switch paramAuthMethod {
+			var tokens *Tokens
+			switch authProviderConfig.AuthMethod {
 			case AuthMethodBrowser:
-				options := oidc.BrowserAuthOptions{
+				options := BrowserAuthOptions{
 					ListenAddress: paramListenAddress,
 					ExtraParams:   make(map[string]string), // TODO [by dan]: pass from flag
 				}
-				tokens, authError = authenticator.BrowserAuth(options)
+				tokens, err = authenticator.BrowserAuth(options)
 			case AuthMethodRemoteBrowser:
-				tokens, authError = authenticator.RemoteBrowserAuth()
-
-				//case AuthMethodPassword:
-
-				//case AuthMethodLocalClusterIdpPassword:
-
+				tokens, err = authenticator.RemoteBrowserAuth()
+			case AuthMethodPassword:
+				tokens, err = authenticator.Auth0PasswordAuth(paramAuthRealm)
+			case AuthMethodLocalClusterIdpPassword:
+				tokens, err = authenticator.PasswordAuth()
 			}
-			if authError != nil {
+			if err != nil {
 				return err
 			}
-			newAuthProviderConfig := authenticator.ToAuthProviderConfig(tokens)
-			kubeConfig.AuthInfos[paramKubeConfigUser].AuthProvider = &newAuthProviderConfig
-			err = oidc.WriteKubeConfig(kubeConfig)
-			if err == nil {
-				log.Info("Configuration has been updated. You have logged in successfully.")
-			} else {
-				err = fmt.Errorf("failed to save configuration with new auth info: %w", err)
-			}
-			return err
+			return writeAuthProviderConfigToKubeConfig(authProviderConfig, tokens, kubeConfig)
 		},
 	}
 
+	// TODO [by dan]: need to make sure default values don't override existing values in kubeconfig
+
 	command.Flags().BoolVar(&paramForce, "force", false, "Force re-authentication even if a valid config was found")
-	command.Flags().StringVar(&paramKubeConfigUser, "kube-config-user", KubeConfigUserName, "The user defined in the kubeconfig file to operate on, by default a user called runai-oidc is used")
-	command.Flags().StringVar(&paramAuthMethod, "authentication-method", AuthMethodBrowser, "The method to use for initial authentication. can be one of [browser,remote-browser,password]")
+	command.Flags().StringVar(&paramKubeConfigUser, "kube-config-user", DefaultKubeConfigUserName, "The user defined in the kubeconfig file to operate on, by default a user called runai-oidc is used")
+	command.Flags().StringVar(&paramAuthMethod, "authentication-method", DefaultAuthMethod, "The method to use for initial authentication. can be one of [browser,remote-browser,password,local-password]")
 	command.Flags().StringVar(&paramListenAddress, "listen-address", DefaultListenAddress, "[browser only] Address to bind to the local server that accepts redirected auth responses.")
+	command.Flags().StringVar(&paramAuthRealm, "auth-realm", "", "[password only] Governs which realm will be used when authenticating the user with the IDP")
 
 	command.Flags().StringVar(&paramClientId, "client-id", "", "OIDC Client ID")
 	command.Flags().StringVar(&paramClientSecret, "client-secret", "", "OIDC Client Secret")
@@ -119,19 +112,19 @@ func shouldDoAuth(kubeConfig *clientapi.Config) bool {
 	}
 
 	// TODO [by dan]: look at oauth2.Token struct which does this already
-	if userAuth.AuthProvider != nil && len(userAuth.AuthProvider.Config) > 0 && jwt.IsTokenValid(userAuth.AuthProvider.Config[oidc.IdToken]) {
+	if userAuth.AuthProvider != nil && len(userAuth.AuthProvider.Config) > 0 && jwt.IsTokenValid(userAuth.AuthProvider.Config[IdToken]) {
 		return false
 	}
 	return true
 }
 
-func getOrCreateAuthProviderConfig(kubeConfig *clientapi.Config) (authProviderConfig oidc.AuthProviderConfig, err error) {
+func getOrCreateAuthProviderConfig(kubeConfig *clientapi.Config) (authProviderConfig AuthProviderConfig, err error) {
 	shouldPrompt := true
 	// If there's an existing config try to validate and use it for login
 	if userAuth, ok := kubeConfig.AuthInfos[paramKubeConfigUser]; ok {
 		if userAuth.AuthProvider != nil {
-			log.Infof("Found an existing Authentication Provider Config for user %s, attempting to use it to re-login.", paramKubeConfigUser)
-			if authProviderConfig, err = oidc.ProviderConfig(userAuth.AuthProvider); err != nil {
+			fmt.Printf("Found an existing Authentication Provider Config for user %s, attempting to use it to re-login.\n", paramKubeConfigUser)
+			if authProviderConfig, err = ProviderConfig(userAuth.AuthProvider); err != nil {
 				log.Warnf("An auth provider config exists for user %s but is invalid: %v", paramKubeConfigUser, err)
 			} else {
 				shouldPrompt = false
@@ -144,14 +137,14 @@ func getOrCreateAuthProviderConfig(kubeConfig *clientapi.Config) (authProviderCo
 	if shouldPrompt {
 		authProviderConfig, err = promptUserForAuthProvider()
 	}
+	assignParamsIfNeeded(&authProviderConfig)
 	return authProviderConfig, err
 }
 
 // promptUserForAuthProvider prompts user for basic required config so that we can query the identity provider for a token.
-func promptUserForAuthProvider() (config oidc.AuthProviderConfig, err error) {
-	config.AuthMethod = paramAuthMethod
+func promptUserForAuthProvider() (config AuthProviderConfig, err error) {
 	if paramClientId == "" {
-		if clientId, err := auth.ReadString("Client ID: "); err == nil {
+		if clientId, err := util.ReadString("Client ID: "); err == nil {
 			config.ClientId = clientId
 		} else {
 			return config, err
@@ -161,7 +154,7 @@ func promptUserForAuthProvider() (config oidc.AuthProviderConfig, err error) {
 	}
 
 	if paramClientSecret == "" {
-		if clientSecret, err := auth.ReadPassword("Client Secret: "); err == nil {
+		if clientSecret, err := util.ReadPassword("Client Secret: "); err == nil {
 			config.ClientSecret = clientSecret
 		} else {
 			return config, err
@@ -169,25 +162,37 @@ func promptUserForAuthProvider() (config oidc.AuthProviderConfig, err error) {
 	} else {
 		config.ClientSecret = paramClientSecret
 	}
+	return
+}
 
-	if paramIssuerUrl == "" {
-		if issuerUrl, err := auth.ReadString("Issuer URL: "); err == nil {
-			config.IssuerUrl = issuerUrl
-		} else {
-			return config, err
-		}
-	} else {
+// param vars hold defaults so this actually setting user overrides and/or defaults where needed.
+func assignParamsIfNeeded(config *AuthProviderConfig) {
+	if config.AuthMethod == DefaultAuthMethod || config.AuthMethod == "" {
+		config.AuthMethod = paramAuthMethod
+	}
+	if config.AuthRealm == "" {
+		config.AuthRealm = paramAuthRealm
+	}
+	if config.ListenAddress == DefaultListenAddress || config.ListenAddress == "" {
+		config.ListenAddress = paramListenAddress
+	}
+	if config.IssuerUrl == DefaultIssuerUrl || config.IssuerUrl == "" {
 		config.IssuerUrl = paramIssuerUrl
 	}
-	// Make sure issuer url ends with '/'
-	issuerUrl := strings.TrimSuffix(config.IssuerUrl, "/")
-	config.IssuerUrl = issuerUrl + "/"
-
-	// Use 'Remote Browser' when a browser is not locally available for the local session (i.e while using runai cli via ssh)
-	// In this case the cli cannot open a browser and cannot listen for the auth response on localhost:8000 (default) so the redirect must bounce the browser to some generally
-	// available location like app.run.ai/auth or <airgapped-backencd-url>/auth for airgapped envs.
-	if config.AuthMethod == AuthMethodRemoteBrowser {
+	if config.RedirectUrl == DefaultRedirectUrl || config.RedirectUrl == "" {
 		config.RedirectUrl = paramRedirectUrl
 	}
-	return
+}
+
+func writeAuthProviderConfigToKubeConfig(authProviderConfig AuthProviderConfig, tokens *Tokens, kubeConfig *clientapi.Config) error {
+	authProviderConfig.AddTokens(tokens)
+	newAuthProviderConfig := authProviderConfig.ToKubeAuthProviderConfig()
+	kubeConfig.AuthInfos[paramKubeConfigUser].AuthProvider = &newAuthProviderConfig
+	err := util.WriteKubeConfig(kubeConfig)
+	if err == nil {
+		fmt.Println("Configuration has been updated. You have logged in successfully.")
+	} else {
+		err = fmt.Errorf("failed to save configuration with new auth info: %w", err)
+	}
+	return err
 }
