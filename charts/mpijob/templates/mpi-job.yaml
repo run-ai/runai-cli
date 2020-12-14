@@ -158,6 +158,7 @@ spec:
               emptyDir: {}
             {{- end }}
           {{- end }}
+          {{- include "runai-common.job.volumes" . | indent 10 }}
           securityContext:
             {{- if .Values.runAsUser }}
             runAsUser: {{ .Values.runAsUser }}
@@ -212,6 +213,7 @@ spec:
                   name: code-sync
                 {{- end }}
               {{- end }}
+              {{- include "runai-common.job.volume.mounts" . | indent 14 }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               name: mpi
