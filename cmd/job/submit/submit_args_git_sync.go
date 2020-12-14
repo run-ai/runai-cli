@@ -9,6 +9,7 @@ import (
 const (
 	defaultGitSyncImage  = "k8s.gcr.io/git-sync/git-sync:v3.2.0"
 	defaultSyncDirectory = "/code"
+	defaultBranch        = "master"
 )
 
 type GitSync struct {
@@ -28,7 +29,7 @@ func NewGitSync() *GitSync {
 	return &GitSync{
 		Image:      "",
 		ByRevision: false,
-		Branch:     "master",
+		Branch:     "",
 		Revision:   "",
 		Username:   "",
 		Password:   "",
@@ -43,6 +44,8 @@ func (gs *GitSync) HandleGitSync() error {
 
 	if gs.Revision != "" {
 		gs.ByRevision = true
+	} else if gs.Branch == "" {
+		gs.Branch = defaultBranch
 	}
 	if gs.Username != "" || gs.Password != "" {
 		gs.UseCredentials = true
@@ -54,8 +57,8 @@ func (gs *GitSync) HandleGitSync() error {
 		gs.Directory = defaultSyncDirectory
 	}
 
-	if gs.Repository == "" || (gs.Branch == "" && gs.Revision == "") {
-		return fmt.Errorf("git sync must contain Repository, and branch or revision")
+	if gs.Repository == "" {
+		return fmt.Errorf("git sync must contain Repository")
 	}
 	return nil
 }
@@ -69,7 +72,12 @@ func GitSyncFromConnectionString(connectionString string) *GitSync {
 		if len(keyValuePair) != 2 {
 			continue
 		}
-		arguments[keyValuePair[0]] = keyValuePair[1]
+		value := strings.Trim(keyValuePair[1], "'\"")
+		arguments[keyValuePair[0]] = value
+	}
+
+	if len(arguments) == 0 {
+		return nil
 	}
 
 	return ParseGitSyncArguments(arguments)
@@ -77,6 +85,8 @@ func GitSyncFromConnectionString(connectionString string) *GitSync {
 
 func ParseGitSyncArguments(arguments map[string]string) *GitSync {
 	syncObject := NewGitSync()
+	tv := true
+	syncObject.Sync = &tv
 	for key, value := range arguments {
 		switch key {
 		case "source":

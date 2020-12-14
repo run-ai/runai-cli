@@ -27,3 +27,13 @@ func TestGitSyncConnectionStringPartialCS(t *testing.T) {
 	assert.Equal(t, gitSync.Branch, "branch-name")
 	assert.Equal(t, gitSync.Directory, "path/to/sync/to")
 }
+
+func TestGitSyncConnectionStringContainParentheses(t *testing.T) {
+	connectionString := "source=repo-url,branch=\"branch-name\",target='path/to/sync/to'"
+
+	gitSync := GitSyncFromConnectionString(connectionString)
+
+	assert.Equal(t, gitSync.Repository, "repo-url")
+	assert.Equal(t, gitSync.Branch, "branch-name")
+	assert.Equal(t, gitSync.Directory, "path/to/sync/to")
+}

@@ -46,7 +46,6 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	var (
 		submitArgs submitMPIJobArgs
 	)
-	submitArgs.GitSync = NewGitSync()
 
 	var command = &cobra.Command{
 		Use:     SubmitMpiCommand + " [NAME]",
@@ -72,6 +71,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 			clientset := kubeClient.GetClientset()
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
+			submitArgs.GitSync = GitSyncFromConnectionString(gitSyncConnectionString)
 
 			err = applyTemplate(&submitArgs, commandArgs, clientset)
 			if err != nil {

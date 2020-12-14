@@ -83,6 +83,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
+			submitArgs.GitSync = GitSyncFromConnectionString(gitSyncConnectionString)
 
 			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
@@ -262,9 +263,7 @@ func getTokenFromJupyterLogs(logs string) (string, error) {
 }
 
 func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
-	submitArgs := submitRunaiJobArgs{}
-	submitArgs.GitSync = NewGitSync()
-	return &submitArgs
+	return &submitRunaiJobArgs{}
 }
 
 type submitRunaiJobArgs struct {

@@ -67,20 +67,60 @@ spec:
 {{ toYaml .Values.supplementalGroups | indent 14}}
             {{- end }}
           schedulerName: runai-scheduler
-          {{- if  .Values.createHomeDir }}
+          {{- if or .Values.createHomeDir .Values.gitSync.sync }}
           volumes:
+            {{- if .Values.createHomeDir }}
             - name: user-data
               emptyDir: {}
+            {{- end }}
+            {{- if .Values.gitSync.sync }}
+            - name: code-sync
+              emptyDir: {}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.gitSync.sync }}
+          initContainers:
+            - name: git-sync
+              image: {{ .Values.gitSync.image }}
+              env: 
+                - name: GIT_SYNC_REPO
+                  value: {{ .Values.gitSync.repository }}
+                {{- if .Values.gitSync.byRevision }}
+                - name: GIT_SYNC_REV
+                  value: {{ .Values.gitSync.revision }}
+                {{- else }}
+                - name: GIT_SYNC_BRANCH
+                  value: {{ .Values.gitSync.branch }}
+                {{- end }}
+                - name: GIT_SYNC_ROOT
+                  value: /code
+                - name: GIT_SYNC_ONE_TIME
+                  value: "true"
+                {{- if .Values.gitSync.useCredentials }}
+                - name: GIT_SYNC_USERNAME
+                  value: {{ .Values.gitSync.username }}
+                - name: GIT_SYNC_PASSWORD
+                  value: {{ .Values.gitSync.password }}
+                {{- end }}
+              volumeMounts: 
+                - name: code-sync
+                  mountPath: /code
           {{- end }}
           containers:
             - image: "{{ .Values.image }}"
               stdin: {{ .Values.stdin }}
               tty: {{ .Values.tty }}
               name: mpi
-              {{- if  .Values.createHomeDir }}
+              {{- if or .Values.createHomeDir .Values.gitSync.sync }}
               volumeMounts:
+                {{- if .Values.createHomeDir }}
                 - mountPath: /home/runai-home
                   name: user-data
+                {{- end }}
+                {{- if .Values.gitSync.sync }}
+                - mountPath: {{ .Values.gitSync.directory }}
+                  name: code-sync
+                {{- end }}
               {{- end }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
