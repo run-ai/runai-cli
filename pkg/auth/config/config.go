@@ -120,7 +120,7 @@ func ProviderConfig(authConfig *clientapi.AuthProviderConfig) (config AuthProvid
 	}
 
 	if authRealm, exists := authConfig.Config[AuthRealm]; exists {
-		config.AuthMethod = authRealm
+		config.AuthRealm = authRealm
 	}
 
 	if idToken, exists := authConfig.Config[IdToken]; exists {

@@ -73,9 +73,11 @@ func NewLoginCommand() *cobra.Command {
 			case AuthMethodRemoteBrowser:
 				tokens, err = authenticator.RemoteBrowserAuth()
 			case AuthMethodPassword:
-				tokens, err = authenticator.Auth0PasswordAuth(paramAuthRealm)
+				tokens, err = authenticator.Auth0PasswordAuth()
 			case AuthMethodLocalClusterIdpPassword:
 				tokens, err = authenticator.PasswordAuth()
+			default:
+				err = fmt.Errorf("unknown auth method: %s", authProviderConfig.AuthMethod)
 			}
 			if err != nil {
 				return err

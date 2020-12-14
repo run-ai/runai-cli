@@ -33,10 +33,10 @@ func RoleAssertion(assertionFunc func() error) func(cmd *cobra.Command, args []s
 func NamespacedRoleAssertion(assertionFunc func(namespace string) error) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		kubeClient, err := client.GetClient()
-		printErrorAndAbortIfNeeded(auth.GetKubeLoginErrorIfNeeded(err))
+		printErrorAndAbortIfNeeded(auth.GetPermissionErrorIfNeeded(err))
 
 		namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagAndPrintError(cmd, kubeClient)
-		printErrorAndAbortIfNeeded(auth.GetKubeLoginErrorIfNeeded(err))
+		printErrorAndAbortIfNeeded(auth.GetPermissionErrorIfNeeded(err))
 
 		assertionErr := assertionFunc(namespaceInfo.Namespace)
 		printErrorAndAbortIfNeeded(assertionErr)

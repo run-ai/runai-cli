@@ -5,22 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 )
 
-// Can be potentially expanded to deserialize any field from the token.
+// Can be potentially expanded to deserialize any field from the token, our defaults specifically care about the email field
 type Token struct {
 	Subject   string `json:"sub,omitempty"`
 	Email	  string `json:"email,omitempty"`
-}
-
-func DecodeTokenFile(tokenPath string) (token Token, err error) {
-	rawBytes, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return token, err
-	}
-	return Decode(string(rawBytes))
 }
 
 // Decode does not verify signatures!! it is used for viewing purposes only
@@ -30,7 +21,7 @@ func Decode(rawToken string) (token Token, err error) {
 		return token, err
 	}
 	if err := json.NewDecoder(bytes.NewReader(payload)).Decode(&token); err != nil {
-		return token, err
+		return token, fmt.Errorf("error decoding jwt payload: %v", err)
 	}
 	return token, nil
 }
@@ -39,11 +30,11 @@ func Decode(rawToken string) (token Token, err error) {
 func DecodePayloadAsRawJSON(s string) ([]byte, error) {
 	parts := strings.SplitN(s, ".", 3)
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("wants %d segments but got %d segments", 3, len(parts))
+		return nil, fmt.Errorf("malformed jwt, expected %d segments but got %d segments", 3, len(parts))
 	}
 	payloadJSON, err := decodePayload(parts[1])
 	if err != nil {
-		return nil, fmt.Errorf("could not decode the payload: %v", err)
+		return nil, fmt.Errorf("error decoding jwt payload: %v", err)
 	}
 	return payloadJSON, nil
 }

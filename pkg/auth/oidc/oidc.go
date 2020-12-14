@@ -131,10 +131,10 @@ func (authenticator Authenticator) RemoteBrowserAuth() (*Tokens, error) {
 // To be able to use separate connections on separate applications, auth0 requires passing a non-standard grant type and a non-standard scope to tell it what connection to use for
 // the authentication request.
 // There is absolutely 0 support for such a custom case in the oauth2 standard library so we're forced to make this call manually.
-func (authenticator Authenticator) Auth0PasswordAuth(realm string) (*Tokens, error) {
+func (authenticator Authenticator) Auth0PasswordAuth() (*Tokens, error) {
 	// Auth0 has an unfortunate way of making the user/connection separation works so if a realm has been passed we need to use their api accordingly.
 	// See more here: https://auth0.com/docs/flows/call-your-api-using-resource-owner-password-flow#configure-realm-support
-	if realm == "" {
+	if authenticator.authRealm == "" {
 		// If no realm is passed then this cam be handled as a standard ROPC request, auth0 requires that you set a default connection for the entire tenant and it will be used
 		// to authenticate all requests. For instance our dev and staging tenants are structured like this.
 		return authenticator.PasswordAuth()
@@ -147,16 +147,16 @@ func (authenticator Authenticator) Auth0PasswordAuth(realm string) (*Tokens, err
 	if password, err = util.ReadPassword("Password: "); err != nil {
 		return nil, err
 	}
-	return authenticator.auth0ROPC(realm, username, password)
+	return authenticator.auth0ROPC(username, password)
 }
 
-func (authenticator Authenticator) auth0ROPC(realm string, username string, password string) (*Tokens, error) {
+func (authenticator Authenticator) auth0ROPC(username string, password string) (*Tokens, error) {
 	var req *http.Request
 	var res *http.Response
 	var err error
 	requestParams := url.Values{
 		"grant_type":    {Auth0PasswordRealmGrantType},
-		"realm":         {realm},
+		"realm":         {authenticator.authRealm},
 		"username":      {username},
 		"password":      {password},
 		"scope":         {strings.Join(authenticator.config.Scopes, " ")},

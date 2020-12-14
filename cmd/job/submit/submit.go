@@ -297,7 +297,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 func assignUser(submitArgs *submitArgs) {
 	// If its not zero then it was passed as flag by the user
 	if submitArgs.User == "" {
-		if kubeLoginUser, err := auth.GetEmailForCurrentKubeloginToken(); err == nil && kubeLoginUser != "" {
+		if kubeLoginUser, err := auth.GetEmailForCurrentUser(); err == nil && kubeLoginUser != "" {
 			// Try to get user from kubelogin cached token
 			submitArgs.User = kubeLoginUser
 		} else if osUser, err := user.Current(); err == nil {
