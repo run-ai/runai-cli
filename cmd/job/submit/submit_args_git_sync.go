@@ -3,6 +3,7 @@ package submit
 import (
 	"fmt"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
+	"strings"
 )
 
 const (
@@ -57,4 +58,42 @@ func (gs *GitSync) HandleGitSync() error {
 		return fmt.Errorf("git sync must contain Repository, and branch or revision")
 	}
 	return nil
+}
+
+func GitSyncFromConnectionString(connectionString string) *GitSync {
+	parameters := strings.Split(connectionString, ",")
+
+	arguments := make(map[string]string)
+	for _, parameter := range parameters {
+		keyValuePair := strings.Split(parameter, "=")
+		if len(keyValuePair) != 2 {
+			continue
+		}
+		arguments[keyValuePair[0]] = keyValuePair[1]
+	}
+
+	return ParseGitSyncArguments(arguments)
+}
+
+func ParseGitSyncArguments(arguments map[string]string) *GitSync {
+	syncObject := NewGitSync()
+	for key, value := range arguments {
+		switch key {
+		case "source":
+			syncObject.Repository = value
+		case "branch":
+			syncObject.Branch = value
+		case "rev":
+			syncObject.Revision = value
+		case "image":
+			syncObject.Image = value
+		case "username":
+			syncObject.Username = value
+		case "password":
+			syncObject.Password = value
+		case "target":
+			syncObject.Directory = value
+		}
+	}
+	return syncObject
 }
