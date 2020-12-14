@@ -29,9 +29,7 @@ const (
 	MimeTypeUrlEncoded          = "application/x-www-form-urlencoded"
 )
 
-var (
-	 DefaultScopes = []string{"email", gooidc.ScopeOpenID, gooidc.ScopeOfflineAccess}
-)
+var DefaultScopes = []string{"email", gooidc.ScopeOpenID, gooidc.ScopeOfflineAccess}
 
 type Authenticator struct {
 	provider  *gooidc.Provider
@@ -48,7 +46,6 @@ type Authenticator struct {
 
 func NewAuthenticator(config AuthProviderConfig) (*Authenticator, error) {
 	ctx := context.Background()
-
 	provider, err := gooidc.NewProvider(ctx, config.IssuerUrl)
 	if err != nil {
 		return nil, err

@@ -36,7 +36,7 @@ var (
 func NewLoginCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:          "login",
-		Short:        "It logs you in", // TODO [by dan]:
+		Short:        "Authenticates your client with the run:ai Backend",
 		SilenceUsage: true,
 		Args: func(c *cobra.Command, args []string) error {
 			if err := cobra.NoArgs(c, args); err != nil {
@@ -104,7 +104,6 @@ func shouldDoAuth(kubeConfig *clientapi.Config) bool {
 	if paramForce {
 		return true
 	}
-
 	userAuth, ok := kubeConfig.AuthInfos[paramKubeConfigUser]
 	if !ok {
 		fmt.Printf("No auth configuration found in kubeconfig for user '%s' \n", paramKubeConfigUser)

@@ -77,6 +77,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(project.NewProjectCommand())
 	command.AddCommand(cluster.NewClusterCommand())
 	command.AddCommand(login.NewLoginCommand())
+	command.AddCommand(login.NewLogoutCommand())
 
 	return command
 }
