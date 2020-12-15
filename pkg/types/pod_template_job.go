@@ -119,7 +119,7 @@ func PodTemplateJobFromRunaiJob(runaiJob runaijobv1.RunaiJob) *PodTemplateJob {
 	return &PodTemplateJob{
 		ExtraStatus: extraStatus,
 		ObjectMeta:  runaiJob.ObjectMeta,
-		Type:        ResourceTypeJob,
+		Type:        ResourceTypeRunaiJob,
 		Template:    runaiJob.Spec.Template,
 		Selector:    selector,
 		Parallelism: parallelism,

@@ -10,6 +10,9 @@ metadata:
     image: "{{ .Values.image }}"
     totalGPUs: "{{ .Values.totalGpus }}"
     totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
+    {{- if .Values.user }}
+    user: {{ .Values.user | quote}}
+    {{- end }}
   labels:
     app: {{ template "mpijob.name" . }}
     chart: {{ template "mpijob.chart" . }}
@@ -17,9 +20,6 @@ metadata:
     heritage: {{ .Release.Service }}
     createdBy: "MPIJob"
     project: {{ .Values.project }}
-    {{- if .Values.user }}
-    user: {{ .Values.user | quote}}
-    {{- end }}
     {{- if .Values.interactive }}
     priorityClassName: "build"
     {{- end}}
@@ -43,12 +43,12 @@ spec:
         metadata:
           labels:
             project: {{ .Values.project }}
-            {{- if .Values.user }}
-            user: {{ .Values.user | quote}}
-            {{- end }}
           annotations:
             totalGPUs: "{{ .Values.totalGpus }}"
             totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
+            {{- if .Values.user }}
+            user: {{ .Values.user | quote}}
+            {{- end }}
         spec:
           {{- if .Values.node_type }}
           nodeSelector:
@@ -141,11 +141,11 @@ spec:
             {{- if .Values.gpuMemory }}
             gpu-memory: "{{ .Values.gpuMemory }}"
             {{- end }}
-          labels:
-            project: {{ .Values.project }}
             {{- if .Values.user }}
             user: {{ .Values.user | quote}}
             {{- end }}
+          labels:
+            project: {{ .Values.project }}
         spec:
           {{- if .Values.node_type }}
           nodeSelector:
@@ -157,6 +157,7 @@ spec:
             - name: user-data
               emptyDir: {}
           {{- end }}
+          {{- include "runai-common.job.volumes" . | indent 10 }}
           securityContext:
             {{- if .Values.runAsUser }}
             runAsUser: {{ .Values.runAsUser }}
@@ -177,6 +178,7 @@ spec:
                 - mountPath: /home/runai-home
                   name: user-data
               {{- end }}
+              {{- include "runai-common.job.volume.mounts" . | indent 14 }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               name: mpi

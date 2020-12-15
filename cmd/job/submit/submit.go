@@ -16,7 +16,7 @@ package submit
 
 import (
 	"fmt"
-	"os"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	"os/user"
 	"strconv"
 	"syscall"
@@ -120,13 +120,6 @@ func (s submitArgs) check() error {
 }
 
 func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
-	var defaultUser string
-	currentUser, err := user.Current()
-	if err != nil {
-		defaultUser = ""
-	} else {
-		defaultUser = currentUser.Username
-	}
 
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&submitArgs.NameParameter, "name", "", "Job name")
@@ -184,7 +177,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet = fbg.GetOrAddFlagSet(AccessControlFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory. Default is true when the --run-as-user flag is set, and false if not.")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.PreventPrivilegeEscalation), "prevent-privilege-escalation", "", "Prevent the job’s container from gaining additional privileges after start.")
-	flagSet.StringVarP(&(submitArgs.User), "user", "u", defaultUser, "Use different user to run the Job.")
+	flagSet.StringVarP(&(submitArgs.User), "user", "u", "", "Use different user to run the Job.")
 	flagSet.MarkHidden("user")
 
 	flagSet = fbg.GetOrAddFlagSet(SchedulingFlagGroup)
@@ -194,6 +187,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface) error {
 	util.SetLogLevel(global.LogLevel)
 
+	assignUser(submitArgs)
 	name, generateSuffix, err := getJobNameWithSuffixGenerationFlag(cmd, args, submitArgs)
 	if err != nil {
 		return err
@@ -204,12 +198,6 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if len(errs) > 0 {
 		fmt.Println("")
 		return fmt.Errorf("Job names must consist of lower case alphanumeric characters or '-' and start with an alphabetic character (e.g. 'my-name',  or 'abc-123')")
-	}
-
-	if len(submitArgs.Image) == 0 {
-		cmd.HelpFunc()(cmd, args)
-		fmt.Print("\n-i, --image must be set\n\n")
-		os.Exit(1)
 	}
 
 	submitArgs.Name = name
@@ -295,6 +283,19 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return err
 	}
 	return nil
+}
+
+func assignUser(submitArgs *submitArgs) {
+	// If its not zero then it was passed as flag by the user
+	if submitArgs.User == "" {
+		if kubeLoginUser, err := auth.GetEmailForCurrentKubeloginToken(); err == nil && kubeLoginUser != "" {
+			// Try to get user from kubelogin cached token
+			submitArgs.User = kubeLoginUser
+		} else if osUser, err := user.Current(); err == nil {
+			// Fallback to OS user
+			submitArgs.User = osUser.Username
+		}
+	}
 }
 
 func getJobIndex(clientset kubernetes.Interface) (string, error) {

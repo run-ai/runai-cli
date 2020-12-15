@@ -42,6 +42,9 @@ var (
 	allMPIjobs []MPIJob
 )
 
+const MpiTrainerType = "mpijob"
+const MpiWorkloadType = "MPIJob"
+
 // MPI Job Information
 type MPIJob struct {
 	*cmdTypes.BasicJobInfo
@@ -311,7 +314,7 @@ func (mj *MPIJob) PendingPods() int32 {
 }
 
 func (mj *MPIJob) WorkloadType() string {
-	return "MPIJob"
+	return MpiWorkloadType
 }
 
 func (mj *MPIJob) Completions() int32 {
@@ -403,7 +406,7 @@ func NewMPIJobTrainer(kubeClient client.Client) Trainer {
 
 	if err != nil {
 		return &MPIJobTrainer{
-			trainerType: "mpijob",
+			trainerType: MpiTrainerType,
 			enabled:     false,
 		}
 	}
@@ -413,7 +416,7 @@ func NewMPIJobTrainer(kubeClient client.Client) Trainer {
 			return &MPIJobTrainer{
 				client:       kubeClient.GetClientset(),
 				mpiclientset: mpiClient.NewForConfigOrDie(kubeClient.GetRestConfig()),
-				trainerType:  "mpijob",
+				trainerType:  MpiTrainerType,
 				enabled:      true,
 			}
 		}
@@ -507,10 +510,10 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 
 func (tt *MPIJobTrainer) getJobType(mpijob *mpi.MPIJob) string {
 	if mpijob != nil && mpijob.Labels != nil && mpijob.Labels["priorityClassName"] == "build" {
-		return runaiInteractiveType
+		return RunaiInteractiveType
 	}
 
-	return runaiTrainType
+	return RunaiTrainType
 }
 
 // Get the training job from Cache
@@ -775,6 +778,11 @@ func (mj *MPIJob) Project() string {
 }
 
 func (mj *MPIJob) User() string {
+	// Username stored as annotation to support special characters that label values are not allowed to have
+	if userFromAnnotation, exists := mj.mpijob.ObjectMeta.Annotations["user"]; exists && userFromAnnotation != "" {
+		return userFromAnnotation
+	}
+	// fallback to old behavior - username set as label.
 	return mj.mpijob.ObjectMeta.Labels["user"]
 }
 

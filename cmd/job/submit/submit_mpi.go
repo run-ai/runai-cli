@@ -85,6 +85,12 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if len(submitArgs.Image) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Print("\n-i, --image must be set\n\n")
+				os.Exit(1)
+			}
+
 			err = submitMPIJob(cmd, args, &submitArgs, kubeClient)
 			if err != nil {
 				fmt.Println(err)

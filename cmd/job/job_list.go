@@ -38,7 +38,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const jobInvalidStateOnCreationTimeInSeconds = 10
+const jobInvalidStateOnCreationTimeInSeconds = 30
 
 func ListCommand() *cobra.Command {
 	var allNamespaces bool

@@ -20,7 +20,7 @@ func GetKubeLoginErrorIfNeeded(err error) error {
 }
 
 func getKubeLoginError(err error) error {
-	if username, kubeloginErr := getEmailForCurrentKubeloginToken(); kubeloginErr != nil {
+	if username, kubeloginErr := GetEmailForCurrentKubeloginToken(); kubeloginErr != nil {
 		log.Debug("Can't acquire username from kubelogin token cache: ", kubeloginErr)
 	} else if username != "" {
 		//Write the original message to debug log so we can actually understand what's going on.
@@ -39,7 +39,7 @@ func isAuthError(err error) bool {
 // 2. Parse the token
 // 3. Match the username string that appears in the error to the user's email (which is how that user is represented in the UI).
 // If all of the above apply the user's email will be returned
-func getEmailForCurrentKubeloginToken() (email string, err error) {
+func GetEmailForCurrentKubeloginToken() (email string, err error) {
 	var tokenFilePath string
 	var token jwt.Token
 	if tokenFilePath, err = getNewestTokenFile(); err == nil {
