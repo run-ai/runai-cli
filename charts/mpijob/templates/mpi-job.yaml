@@ -9,6 +9,7 @@ metadata:
   annotations:
     image: "{{ .Values.image }}"
     totalGPUs: "{{ .Values.totalGpus }}"
+    totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
     {{- if .Values.user }}
     user: {{ .Values.user | quote}}
     {{- end }}
@@ -44,6 +45,7 @@ spec:
             project: {{ .Values.project }}
           annotations:
             totalGPUs: "{{ .Values.totalGpus }}"
+            totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
             {{- if .Values.user }}
             user: {{ .Values.user | quote}}
             {{- end }}
@@ -135,6 +137,9 @@ spec:
           annotations:
             {{- if .Values.gpuFraction }}
             gpu-fraction: "{{ .Values.gpuFraction }}"
+            {{- end }}
+            {{- if .Values.gpuMemory }}
+            gpu-memory: "{{ .Values.gpuMemory }}"
             {{- end }}
             {{- if .Values.user }}
             user: {{ .Values.user | quote}}

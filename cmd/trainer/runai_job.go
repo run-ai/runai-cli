@@ -1,6 +1,8 @@
 package trainer
 
 import (
+	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"strconv"
 	"time"
 
@@ -239,6 +241,31 @@ func (rj *RunaiJob) RequestedGPU() float64 {
 	return float64(val.Value())
 }
 
+func (rj *RunaiJob) RequestedGPUMemory() uint64 {
+	memory := util.GetRequestedGPUsMemoryPerPodGroup(rj.jobMetadata.Annotations)
+	if memory != 0 {
+		return memory
+	}
+
+	for _, pod := range rj.pods {
+		gpuMemory, err := strconv.ParseUint(pod.Annotations[util.RunaiGPUMemory], 10, 64)
+		if err == nil {
+			memory += gpuMemory
+		}
+	}
+
+	return memory
+}
+
+func (rj *RunaiJob) RequestedGPUString() string {
+	if memory := rj.RequestedGPUMemory(); memory != 0 {
+		gpuMemoryInBytes := int64(memory) * 1024 * 1024
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		return fmt.Sprintf("%v", quantity)
+	}
+	return fmt.Sprintf("%v", rj.RequestedGPU())
+}
+
 // Requested GPU count of the Job
 func (rj *RunaiJob) AllocatedGPU() float64 {
 	if rj.chiefPod == nil {
@@ -385,8 +412,24 @@ func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
 	return rj.RequestedGPU()
 }
 
+func (rj *RunaiJob) CurrentAllocatedGPUsMemory() string {
+	allocatedGpuMemoryInMb := getAllocatedGpusMemory(rj.jobMetadata.Annotations)
+	gpuMemoryInBytes := int64(allocatedGpuMemoryInMb) * 1024 * 1024
+	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+	return fmt.Sprintf("%v", quantity)
+}
+
 func (rj *RunaiJob) WorkloadType() string {
 	return string(rj.workloadType)
+}
+
+func (rj *RunaiJob) TotalRequestedGPUsString() string {
+	if memory := rj.TotalRequestedGPUsMemory(); memory != 0 {
+		gpuMemoryInBytes := int64(memory) * 1024 * 1024
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		return fmt.Sprintf("%v", quantity)
+	}
+	return fmt.Sprintf("%v", rj.TotalRequestedGPUs())
 }
 
 func (rj *RunaiJob) TotalRequestedGPUs() float64 {
@@ -396,4 +439,8 @@ func (rj *RunaiJob) TotalRequestedGPUs() float64 {
 	}
 
 	return rj.RequestedGPU() * float64(rj.Completions())
+}
+
+func (rj *RunaiJob) TotalRequestedGPUsMemory() uint64 {
+	return getTotalRequestedGPUsMemory(rj.jobMetadata.Annotations)
 }

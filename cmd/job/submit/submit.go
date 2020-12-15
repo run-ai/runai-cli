@@ -69,6 +69,7 @@ type submitArgs struct {
 	GPU                 *float64 `yaml:"gpu,omitempty"`
 	GPUInt              *int     `yaml:"gpuInt,omitempty"`
 	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
+	GPUMemory           string   `yaml:"gpuMemory,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	SpecArgs            []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
@@ -151,6 +152,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "GPU units to allocate for the Job (0.5, 1).")
+	flagSet.StringVar(&(submitArgs.GPUMemory), "gpu-memory", "", "GPU Memory to allocate for this job (1Gi, 500Mi)")
 	flagSet.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	flagSet.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
 	flagSet.StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")
@@ -273,7 +275,10 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return fmt.Errorf("--stdin is required for containers with -t/--tty=true")
 	}
 
-	handleRequestedGPUs(submitArgs)
+	if err = handleRequestedGPUs(submitArgs); err != nil {
+		return err
+	}
+
 	if err = handleImagePullPolicy(submitArgs); err != nil {
 		return err
 	}

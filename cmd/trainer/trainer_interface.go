@@ -61,6 +61,10 @@ type TrainingJob interface {
 	// Requested GPU count of the Job
 	RequestedGPU() float64
 
+	RequestedGPUMemory() uint64
+
+	RequestedGPUString() string
+
 	// Requested GPU count of the Job
 	AllocatedGPU() float64
 
@@ -90,8 +94,9 @@ type TrainingJob interface {
 	Failed() int32
 	CurrentRequestedGPUs() float64
 	CurrentAllocatedGPUs() float64
+	CurrentAllocatedGPUsMemory() string
 	WorkloadType() string
-	TotalRequestedGPUs() float64
+	TotalRequestedGPUsString() string
 }
 
 type Trainer interface {
