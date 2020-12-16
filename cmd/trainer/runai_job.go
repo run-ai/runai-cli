@@ -14,6 +14,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const userFieldName = "user"
+
 type RunaiJob struct {
 	*cmdTypes.BasicJobInfo
 	trainerType       string
@@ -313,12 +315,17 @@ func (rj *RunaiJob) Project() string {
 }
 
 func (rj *RunaiJob) User() string {
-	// Username stored as annotation to support special characters that label values are not allowed to have
-	if userFromAnnotation, exists := rj.podMetadata.Annotations["user"]; exists && userFromAnnotation != "" {
+
+	if userFromAnnotation, exists := rj.jobMetadata.Annotations[userFieldName]; exists && userFromAnnotation != "" {
 		return userFromAnnotation
 	}
+
+	// Username stored as annotation to support special characters that label values are not allowed to have
+	if userFromTemplatePodAnnotation, exists := rj.podMetadata.Annotations[userFieldName]; exists && userFromTemplatePodAnnotation != "" {
+		return userFromTemplatePodAnnotation
+	}
 	// fallback to old behavior - username set as label.
-	return rj.podMetadata.Labels["user"]
+	return rj.podMetadata.Labels[userFieldName]
 }
 
 func (rj *RunaiJob) ServiceURLs() []string {
