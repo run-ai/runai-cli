@@ -84,11 +84,6 @@ spec:
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
-      {{- if  .Values.createHomeDir }}
-      volumes:
-        - name: user-data
-          emptyDir: {}
-      {{- end }}
       securityContext:
         {{- if .Values.runAsUser }}
         runAsUser: {{ .Values.runAsUser }}
@@ -102,11 +97,6 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Release.Name }}
-          {{- if .Values.createHomeDir }}
-          volumeMounts:
-            - mountPath: /home/runai-home
-              name: user-data
-          {{- end }}
           command:
           {{ range $index, $command := .Values.command }}
           - {{ quote $command }}
