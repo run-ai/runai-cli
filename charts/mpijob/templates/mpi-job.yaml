@@ -66,21 +66,11 @@ spec:
 {{ toYaml .Values.supplementalGroups | indent 14}}
             {{- end }}
           schedulerName: runai-scheduler
-          {{- if  .Values.createHomeDir }}
-          volumes:
-            - name: user-data
-              emptyDir: {}
-          {{- end }}
           containers:
             - image: "{{ .Values.image }}"
               stdin: {{ .Values.stdin }}
               tty: {{ .Values.tty }}
               name: mpi
-              {{- if  .Values.createHomeDir }}
-              volumeMounts:
-                - mountPath: /home/runai-home
-                  name: user-data
-              {{- end }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -107,10 +97,6 @@ spec:
                   memory: {{ .Values.memory }}
                   {{- end }}
               env:
-                {{- if .Values.createHomeDir }}
-                - name: "HOME"
-                  value: /home/runai-home
-                {{- end }}
                 # Not using concat to support previous version of helm
                 {{- range $index, $env := .Values.environmentDefault }}
                 {{ $parts := split "=" $env }}
@@ -146,11 +132,6 @@ spec:
             run.ai/type: {{ .Values.node_type }}
           {{- end}}
           schedulerName: runai-scheduler
-          {{- if  .Values.createHomeDir }}
-          volumes:
-            - name: user-data
-              emptyDir: {}
-          {{- end }}
           {{- include "runai-common.job.volumes" . | indent 10 }}
           securityContext:
             {{- if .Values.runAsUser }}
@@ -167,11 +148,6 @@ spec:
             - image: "{{ .Values.image }}"
               stdin: {{ .Values.stdin }}
               tty: {{ .Values.tty }}
-              {{- if .Values.createHomeDir }}
-              volumeMounts:
-                - mountPath: /home/runai-home
-                  name: user-data
-              {{- end }}
               {{- include "runai-common.job.volume.mounts" . | indent 14 }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}

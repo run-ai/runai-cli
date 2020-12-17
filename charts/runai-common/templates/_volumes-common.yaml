@@ -9,7 +9,7 @@
 {{- $combinedVolume = append $combinedVolume $volume }}
 {{- end}}
 
-{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm }}
+{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm .Values.createHomeDir }}
 volumeMounts:
   {{- range $index, $volume := $combinedVolume -}}
   {{ $parts := split ":" $volume }}
@@ -22,6 +22,10 @@ volumeMounts:
   {{- if .Values.shm }}
   - mountPath: /dev/shm
     name: dshm
+  {{- end }}
+  {{- if .Values.createHomeDir }}
+  - mountPath: /home/runai-home
+    name: user-data
   {{- end }}
   {{- if .Values.persistentVolumes }}
   {{- range $index, $pvcParam := .Values.persistentVolumes }}
@@ -59,7 +63,7 @@ volumeMounts:
   {{- $combinedVolume = append $combinedVolume $volume }}
   {{- end}}
 
-{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm }}
+{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm .Values.createHomeDir }}
 volumes:
   {{- range $index, $volume := $combinedVolume -}}
   {{ $parts := split ":" $volume }}
@@ -71,6 +75,10 @@ volumes:
   - name: dshm
     emptyDir:
       medium: Memory
+  {{- end }}
+  {{- if .Values.createHomeDir }}
+  - name: user-data
+    emptyDir: {}
   {{- end }}
   {{- range $index, $pvcParam := .Values.persistentVolumes }}
   - name: {{ include "pvc.volume.name" (dict "volumeIndex" $index) }}
