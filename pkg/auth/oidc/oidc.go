@@ -69,7 +69,7 @@ func NewAuthenticator(config AuthProviderConfig) (*Authenticator, error) {
 }
 
 // When a browser is locally available, opens a browser automatically,listens for the response and gets a token with the code in the response.
-func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Tokens, error) {
+func (authenticator Authenticator) BrowserAuth(listenedAddress string) (*Tokens, error) {
 	var (
 		readyChan = make(chan string, 1)
 		eg        errgroup.Group
@@ -95,7 +95,7 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Tok
 
 	eg.Go(func() error {
 		defer close(readyChan)
-		token, err := oauth2cli.GetToken(authenticator.ctx, authenticator.buildCliConfig(options, readyChan))
+		token, err := oauth2cli.GetToken(authenticator.ctx, authenticator.buildCliConfig(listenedAddress, readyChan))
 		if err != nil {
 			return fmt.Errorf("error during auth code flow: %v", err)
 		}
@@ -112,7 +112,6 @@ func (authenticator Authenticator) BrowserAuth(options BrowserAuthOptions) (*Tok
 
 // When a browser is not locally available (i.e. an ssh session) shows the url for the user to put in their remotely-available browser and prompts for the code.
 func (authenticator Authenticator) RemoteBrowserAuth() (*Tokens, error) {
-	// TODO [by dan]: pass extras
 	authUrl := authenticator.config.AuthCodeURL(authenticator.state, authenticator.authRequestOptions(make(map[string]string))...)
 	fmt.Printf("Please go to this url in any browser: %s \n\n", authUrl)
 	code, err := util.ReadPassword("And paste the code here: ")
@@ -120,7 +119,6 @@ func (authenticator Authenticator) RemoteBrowserAuth() (*Tokens, error) {
 		return &Tokens{}, err
 	}
 
-	// TODO [by dan]: pass extras
 	if token, err := authenticator.config.Exchange(authenticator.ctx, code, authenticator.authRequestOptions(make(map[string]string))...); err == nil {
 		return authenticator.verifyAndConvertToken(token)
 	} else {
@@ -232,16 +230,15 @@ func (authenticator Authenticator) authRequestOptions(extraParams map[string]str
 	return options
 }
 
-func (authenticator Authenticator) buildCliConfig(options BrowserAuthOptions, readyChan chan string) oauth2cli.Config {
+func (authenticator Authenticator) buildCliConfig(listenedAddress string, readyChan chan string) oauth2cli.Config {
 	cliConfig := oauth2cli.Config{
 		OAuth2Config:           authenticator.config,
 		State:                  authenticator.state,
-		AuthCodeOptions:        authenticator.authRequestOptions(options.ExtraParams),
-		LocalServerBindAddress: []string{options.ListenAddress},
+		LocalServerBindAddress: []string{listenedAddress},
 		LocalServerReadyChan:   readyChan,
 		RedirectURLHostname:    "localhost", // Can be made configurable, if needed
 		Logf:                   log.Debugf,
-		//TODO LocalServerSuccessHTML: ,  --> Can be configured however we want (messages, links, logo etc.)
+		//LocalServerSuccessHTML: ,  --> Can be configured however we want (messages, links, logo etc.)
 	}
 	return cliConfig
 }

@@ -100,7 +100,7 @@ func getTokenForCurrentKubectlUser() (rawIdToken string, err error) {
 		return rawIdToken, fmt.Errorf("No auth configuration found in kubeconfig for user '%s' ", currentKubeConfigUser)
 	}
 	if userAuth.AuthProvider != nil && len(userAuth.AuthProvider.Config) > 0 {
-		return userAuth.AuthProvider.Config[config.IdToken], nil
+		return userAuth.AuthProvider.Config[config.ParamIdToken], nil
 	}
 	return rawIdToken, fmt.Errorf("No auth configuration found in kubeconfig for user '%s' ", currentKubeConfigUser)
 }

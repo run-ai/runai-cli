@@ -7,18 +7,19 @@ import (
 )
 
 const (
-	ClientId             = "client-id"
-	ClientSecret         = "client-secret"
-	IdToken              = "id-token"
-	RefreshToken         = "refresh-token"
-	IssuerUrl            = "idp-issuer-url"
-	RedirectUrl          = "redirect-url"
-	AuthProviderName     = "oidc"
-	AuthMethod           = "auth-method"
-	ExtraScopes          = "auth-request-extra-scopes"
-	AuthRealm            = "auth-realm"
-	ListenAddress        = "listen-address"
+	ParamClientId        = "client-id"
+	ParamClientSecret    = "client-secret"
+	ParamIdToken         = "id-token"
+	ParamRefreshToken    = "refresh-token"
+	ParamIssuerUrl       = "idp-issuer-url"
+	ParamRedirectUrl     = "redirect-url"
+	ParamAuthMethod      = "auth-method"
+	ParamExtraScopes     = "auth-request-extra-scopes"
+	ParamAuthRealm       = "auth-realm"
+	ParamListenAddress   = "listen-address"
+
 	ExtraScopesSeparator = ","
+	AuthProviderName     = "oidc"
 
 	DefaultKubeConfigUserName = "runai-oidc"
 	DefaultListenAddress      = "127.0.0.1:8000"
@@ -38,7 +39,6 @@ type Tokens struct {
 
 type BrowserAuthOptions struct {
 	ListenAddress string
-	ExtraParams   map[string]string
 }
 
 // These are the minimal required fields to use kubectl's oidc auth plugin
@@ -70,72 +70,72 @@ func (config *AuthProviderConfig) RemoveTokens() {
 func (config AuthProviderConfig) ToKubeAuthProviderConfig() (authProviderConfig clientapi.AuthProviderConfig) {
 	authProviderConfig.Config = make(map[string]string)
 	authProviderConfig.Name = AuthProviderName
-	authProviderConfig.Config[ClientId] = config.ClientId
-	authProviderConfig.Config[ClientSecret] = config.ClientSecret
-	authProviderConfig.Config[IdToken] = config.IdToken
-	authProviderConfig.Config[RefreshToken] = config.RefreshToken
+	authProviderConfig.Config[ParamClientId] = config.ClientId
+	authProviderConfig.Config[ParamClientSecret] = config.ClientSecret
+	authProviderConfig.Config[ParamIdToken] = config.IdToken
+	authProviderConfig.Config[ParamRefreshToken] = config.RefreshToken
 	if config.AuthMethod != DefaultAuthMethod && config.AuthMethod != "" {
-		authProviderConfig.Config[AuthMethod] = config.AuthMethod
+		authProviderConfig.Config[ParamAuthMethod] = config.AuthMethod
 	}
 	if config.AuthRealm != "" {
-		authProviderConfig.Config[AuthRealm] = config.AuthRealm
+		authProviderConfig.Config[ParamAuthRealm] = config.AuthRealm
 	}
 	if config.IssuerUrl != DefaultIssuerUrl && config.IssuerUrl != "" {
-		authProviderConfig.Config[IssuerUrl] = config.IssuerUrl
+		authProviderConfig.Config[ParamIssuerUrl] = config.IssuerUrl
 	}
 	if config.RedirectUrl != DefaultRedirectUrl && config.RedirectUrl != "" {
-		authProviderConfig.Config[RedirectUrl] = config.RedirectUrl
+		authProviderConfig.Config[ParamRedirectUrl] = config.RedirectUrl
 	}
 	if config.ListenAddress != DefaultListenAddress && config.ListenAddress != "" {
-		authProviderConfig.Config[ListenAddress] = config.ListenAddress
+		authProviderConfig.Config[ParamListenAddress] = config.ListenAddress
 	}
 	if len(config.ExtraScopes) > 0 {
-		authProviderConfig.Config[ExtraScopes] = strings.Join(config.ExtraScopes, ExtraScopesSeparator)
+		authProviderConfig.Config[ParamExtraScopes] = strings.Join(config.ExtraScopes, ExtraScopesSeparator)
 	}
 	return
 }
 
 // In
 func ProviderConfig(authConfig *clientapi.AuthProviderConfig) (config AuthProviderConfig, err error) {
-	if clientId, exists := authConfig.Config[ClientId]; exists {
+	if clientId, exists := authConfig.Config[ParamClientId]; exists {
 		config.ClientId = clientId
 	} else {
-		return config, fmt.Errorf("missing field in Auth Provider Config: %s", ClientId)
+		return config, fmt.Errorf("missing field in Auth Provider Config: %s", ParamClientId)
 	}
 
-	if clientSecret, exists := authConfig.Config[ClientSecret]; exists {
+	if clientSecret, exists := authConfig.Config[ParamClientSecret]; exists {
 		config.ClientSecret = clientSecret
 	} else {
-		return config, fmt.Errorf("missing field in Auth Provider Config: %s", ClientSecret)
+		return config, fmt.Errorf("missing field in Auth Provider Config: %s", ParamClientSecret)
 	}
 
-	if issuerUrl, exists := authConfig.Config[IssuerUrl]; exists {
+	if issuerUrl, exists := authConfig.Config[ParamIssuerUrl]; exists {
 		config.IssuerUrl = issuerUrl
 	} else {
 		return config, fmt.Errorf("missing field in Auth Provider Config: %s", issuerUrl)
 	}
 
-	if authMethod, exists := authConfig.Config[AuthMethod]; exists {
+	if authMethod, exists := authConfig.Config[ParamAuthMethod]; exists {
 		config.AuthMethod = authMethod
 	}
 
-	if authRealm, exists := authConfig.Config[AuthRealm]; exists {
+	if authRealm, exists := authConfig.Config[ParamAuthRealm]; exists {
 		config.AuthRealm = authRealm
 	}
 
-	if idToken, exists := authConfig.Config[IdToken]; exists {
+	if idToken, exists := authConfig.Config[ParamIdToken]; exists {
 		config.IdToken = idToken
 	}
 
-	if refreshToken, exists := authConfig.Config[RefreshToken]; exists {
+	if refreshToken, exists := authConfig.Config[ParamRefreshToken]; exists {
 		config.RefreshToken = refreshToken
 	}
 
-	if redirectUrl, exists := authConfig.Config[RedirectUrl]; exists {
+	if redirectUrl, exists := authConfig.Config[ParamRedirectUrl]; exists {
 		config.RedirectUrl = redirectUrl
 	}
 
-	if extraScopes, exists := authConfig.Config[ExtraScopes]; exists {
+	if extraScopes, exists := authConfig.Config[ParamExtraScopes]; exists {
 		config.ExtraScopes = strings.Split(extraScopes, ExtraScopesSeparator)
 	}
 

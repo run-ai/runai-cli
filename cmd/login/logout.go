@@ -28,8 +28,8 @@ func NewLogoutCommand() *cobra.Command {
 				return fmt.Errorf("No auth configuration found in kubeconfig for user '%s' \n", paramKubeConfigUser)
 			}
 			if userAuth.AuthProvider != nil && len(userAuth.AuthProvider.Config) > 0 {
-				delete(userAuth.AuthProvider.Config, config.IdToken)
-				delete(userAuth.AuthProvider.Config, config.RefreshToken)
+				delete(userAuth.AuthProvider.Config, config.ParamIdToken)
+				delete(userAuth.AuthProvider.Config, config.ParamRefreshToken)
 			} else {
 				return fmt.Errorf("No auth configuration found in kubeconfig for user '%s' \n", paramKubeConfigUser)
 			}

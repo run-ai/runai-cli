@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
+	"strings"
 )
 
 const (
@@ -31,6 +32,7 @@ var (
 	paramClientSecret   string
 	paramIssuerUrl      string
 	paramRedirectUrl    string
+	paramExtraScopes    string
 )
 
 func NewLoginCommand() *cobra.Command {
@@ -65,11 +67,7 @@ func NewLoginCommand() *cobra.Command {
 			var tokens *Tokens
 			switch authProviderConfig.AuthMethod {
 			case AuthMethodBrowser:
-				options := BrowserAuthOptions{
-					ListenAddress: paramListenAddress,
-					ExtraParams:   make(map[string]string), // TODO [by dan]: pass from flag
-				}
-				tokens, err = authenticator.BrowserAuth(options)
+				tokens, err = authenticator.BrowserAuth(paramListenAddress)
 			case AuthMethodRemoteBrowser:
 				tokens, err = authenticator.RemoteBrowserAuth()
 			case AuthMethodPassword:
@@ -86,18 +84,22 @@ func NewLoginCommand() *cobra.Command {
 		},
 	}
 
-	// TODO [by dan]: need to make sure default values don't override existing values in kubeconfig
-
 	command.Flags().BoolVar(&paramForce, "force", false, "Force re-authentication even if a valid config was found")
-	command.Flags().StringVar(&paramKubeConfigUser, "kube-config-user", DefaultKubeConfigUserName, "The user defined in the kubeconfig file to operate on, by default a user called runai-oidc is used")
-	command.Flags().StringVar(&paramAuthMethod, "authentication-method", DefaultAuthMethod, "The method to use for initial authentication. can be one of [browser,remote-browser,password,local-password]")
-	command.Flags().StringVar(&paramListenAddress, "listen-address", DefaultListenAddress, "[browser only] Address to bind to the local server that accepts redirected auth responses.")
-	command.Flags().StringVar(&paramAuthRealm, "auth-realm", "", "[password only] Governs which realm will be used when authenticating the user with the IDP")
 
-	command.Flags().StringVar(&paramClientId, "client-id", "", "OIDC Client ID")
-	command.Flags().StringVar(&paramClientSecret, "client-secret", "", "OIDC Client Secret")
-	command.Flags().StringVar(&paramIssuerUrl, "issuer-url", DefaultIssuerUrl, "OIDC Issuer URL")
-	command.Flags().StringVar(&paramRedirectUrl, "redirect-url", DefaultRedirectUrl, "Auth Response Redirect URL")
+	// Required
+	command.Flags().StringVar(&paramClientId, ParamClientId, "", "OIDC Client ID")
+	command.Flags().StringVar(&paramClientSecret, ParamClientSecret, "", "OIDC Client Secret")
+
+	// Required, but has defaults
+	command.Flags().StringVar(&paramIssuerUrl, ParamIssuerUrl, DefaultIssuerUrl, "OIDC Issuer URL")
+	command.Flags().StringVar(&paramRedirectUrl, ParamRedirectUrl, DefaultRedirectUrl, "Auth Response Redirect URL")
+	command.Flags().StringVar(&paramAuthMethod, ParamAuthMethod, DefaultAuthMethod, "The method to use for initial authentication. can be one of [browser,remote-browser,password,local-password]")
+	command.Flags().StringVar(&paramKubeConfigUser, "kube-config-user", DefaultKubeConfigUserName, "The user defined in the kubeconfig file to operate on, by default a user called runai-oidc is used")
+	command.Flags().StringVar(&paramListenAddress, ParamListenAddress, DefaultListenAddress, "[browser only] Address to bind to the local server that accepts redirected auth responses.")
+
+	// Optional
+	command.Flags().StringVar(&paramAuthRealm, ParamAuthRealm, "", "[password only] Governs which realm will be used when authenticating the user with the IDP")
+	command.Flags().StringVar(&paramExtraScopes, ParamExtraScopes, "", "Extra scopes to request with the ID token.")
 
 	return command
 }
@@ -112,8 +114,7 @@ func shouldDoAuth(kubeConfig *clientapi.Config) bool {
 		return true
 	}
 
-	// TODO [by dan]: look at oauth2.Token struct which does this already
-	if userAuth.AuthProvider != nil && len(userAuth.AuthProvider.Config) > 0 && jwt.IsTokenValid(userAuth.AuthProvider.Config[IdToken]) {
+	if userAuth.AuthProvider != nil && len(userAuth.AuthProvider.Config) > 0 && jwt.IsTokenValid(userAuth.AuthProvider.Config[ParamIdToken]) {
 		return false
 	}
 	return true
@@ -171,9 +172,6 @@ func assignParamsIfNeeded(config *AuthProviderConfig) {
 	if config.AuthMethod == DefaultAuthMethod || config.AuthMethod == "" {
 		config.AuthMethod = paramAuthMethod
 	}
-	if config.AuthRealm == "" {
-		config.AuthRealm = paramAuthRealm
-	}
 	if config.ListenAddress == DefaultListenAddress || config.ListenAddress == "" {
 		config.ListenAddress = paramListenAddress
 	}
@@ -182,6 +180,12 @@ func assignParamsIfNeeded(config *AuthProviderConfig) {
 	}
 	if config.RedirectUrl == DefaultRedirectUrl || config.RedirectUrl == "" {
 		config.RedirectUrl = paramRedirectUrl
+	}
+	if config.AuthRealm == "" {
+		config.AuthRealm = paramAuthRealm
+	}
+	if paramExtraScopes != "" {
+		config.ExtraScopes = strings.Split(paramExtraScopes, ExtraScopesSeparator)
 	}
 }
 
