@@ -23,8 +23,6 @@ const (
 
 	DefaultKubeConfigUserName = "runai-oidc"
 	DefaultListenAddress      = "127.0.0.1:8000"
-	DefaultIssuerUrl          = "https://runai-prod.auth0.com/"
-	DefaultRedirectUrl        = "https://app.run.ai/auth"
 	DefaultAuthMethod         = "browser"
 )
 
@@ -70,21 +68,18 @@ func (config *AuthProviderConfig) RemoveTokens() {
 func (config AuthProviderConfig) ToKubeAuthProviderConfig() (authProviderConfig clientapi.AuthProviderConfig) {
 	authProviderConfig.Config = make(map[string]string)
 	authProviderConfig.Name = AuthProviderName
+	authProviderConfig.Config[ParamIssuerUrl] = config.IssuerUrl
+	authProviderConfig.Config[ParamRedirectUrl] = config.RedirectUrl
 	authProviderConfig.Config[ParamClientId] = config.ClientId
 	authProviderConfig.Config[ParamClientSecret] = config.ClientSecret
 	authProviderConfig.Config[ParamIdToken] = config.IdToken
 	authProviderConfig.Config[ParamRefreshToken] = config.RefreshToken
+
 	if config.AuthMethod != DefaultAuthMethod && config.AuthMethod != "" {
 		authProviderConfig.Config[ParamAuthMethod] = config.AuthMethod
 	}
 	if config.AuthRealm != "" {
 		authProviderConfig.Config[ParamAuthRealm] = config.AuthRealm
-	}
-	if config.IssuerUrl != DefaultIssuerUrl && config.IssuerUrl != "" {
-		authProviderConfig.Config[ParamIssuerUrl] = config.IssuerUrl
-	}
-	if config.RedirectUrl != DefaultRedirectUrl && config.RedirectUrl != "" {
-		authProviderConfig.Config[ParamRedirectUrl] = config.RedirectUrl
 	}
 	if config.ListenAddress != DefaultListenAddress && config.ListenAddress != "" {
 		authProviderConfig.Config[ParamListenAddress] = config.ListenAddress
