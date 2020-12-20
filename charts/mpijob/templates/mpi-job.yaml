@@ -66,17 +66,6 @@ spec:
 {{ toYaml .Values.supplementalGroups | indent 14}}
             {{- end }}
           schedulerName: runai-scheduler
-          {{- if or .Values.createHomeDir .Values.gitSync.sync }}
-          volumes:
-            {{- if .Values.createHomeDir }}
-            - name: user-data
-              emptyDir: {}
-            {{- end }}
-            {{- if .Values.gitSync.sync }}
-            - name: code-sync
-              emptyDir: {}
-            {{- end }}
-          {{- end }}
           {{- if .Values.gitSync.sync }}
           initContainers:
             - name: git-sync
@@ -110,17 +99,6 @@ spec:
               stdin: {{ .Values.stdin }}
               tty: {{ .Values.tty }}
               name: mpi
-              {{- if or .Values.createHomeDir .Values.gitSync.sync }}
-              volumeMounts:
-                {{- if .Values.createHomeDir }}
-                - mountPath: /home/runai-home
-                  name: user-data
-                {{- end }}
-                {{- if .Values.gitSync.sync }}
-                - mountPath: {{ .Values.gitSync.directory }}
-                  name: code-sync
-                {{- end }}
-              {{- end }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}
               imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -186,17 +164,6 @@ spec:
             run.ai/type: {{ .Values.node_type }}
           {{- end}}
           schedulerName: runai-scheduler
-          {{- if or .Values.createHomeDir .Values.gitSync.sync }}
-          volumes:
-            {{- if .Values.createHomeDir }}
-            - name: user-data
-              emptyDir: {}
-            {{- end }}
-            {{- if .Values.gitSync.sync }}
-            - name: code-sync
-              emptyDir: {}
-            {{- end }}
-          {{- end }}
           {{- include "runai-common.job.volumes" . | indent 10 }}
           securityContext:
             {{- if .Values.runAsUser }}
@@ -241,17 +208,6 @@ spec:
             - image: "{{ .Values.image }}"
               stdin: {{ .Values.stdin }}
               tty: {{ .Values.tty }}
-              {{- if or .Values.createHomeDir .Values.gitSync.sync }}
-              volumeMounts:
-                {{- if .Values.createHomeDir }}
-                - mountPath: /home/runai-home
-                  name: user-data
-                {{- end }}
-                {{- if .Values.gitSync.sync }}
-                - mountPath: {{ .Values.gitSync.directory }}
-                  name: code-sync
-                {{- end }}
-              {{- end }}
               {{- include "runai-common.job.volume.mounts" . | indent 14 }}
               securityContext:
                 allowPrivilegeEscalation: {{ not .Values.preventPrivilegeEscalation }}

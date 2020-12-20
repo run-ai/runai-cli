@@ -87,17 +87,6 @@ spec:
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
-      {{- if or .Values.createHomeDir .Values.gitSync.sync }}
-      volumes:
-        {{- if  .Values.createHomeDir }}
-        - name: user-data
-          emptyDir: {}
-        {{- end }}
-        {{- if .Values.gitSync.sync }}
-        - name: code-sync
-          emptyDir: {}
-        {{- end }}
-      {{- end }}
       securityContext:
         {{- if .Values.runAsUser }}
         runAsUser: {{ .Values.runAsUser }}
@@ -139,17 +128,6 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Release.Name }}
-          {{- if or .Values.createHomeDir .Values.gitSync.sync }}
-          volumeMounts:
-            {{- if .Values.createHomeDir }}
-            - mountPath: /home/runai-home
-              name: user-data
-            {{- end }}
-            {{- if .Values.gitSync.sync }}
-            - mountPath: {{ .Values.gitSync.directory }}
-              name: code-sync
-            {{- end }}
-          {{- end }}
           command:
           {{ range $index, $command := .Values.command }}
           - {{ quote $command }}
