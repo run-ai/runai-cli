@@ -53,8 +53,9 @@ const (
 )
 
 var (
-	dryRun       bool
-	templateName string
+	dryRun                  bool
+	templateName            string
+	gitSyncConnectionString string
 )
 
 // The common parts of the submitAthd
@@ -102,6 +103,7 @@ type submitArgs struct {
 	Attach                     *bool             `yaml:"attach,omitempty"`
 	NamePrefix                 string            `yaml:"namePrefix,omitempty"`
 	BackoffLimit               *int              `yaml:"backoffLimit,omitempty"`
+	GitSync                    *GitSync          `yaml:"gitSync,omitempty"`
 	generateSuffix             bool
 }
 
@@ -148,6 +150,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
+	flagSet.StringVar(&gitSyncConnectionString, "git-sync", "", "sync string as explained in the documentation")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.RunAsCurrentUser), "run-as-user", "", "Run in the context of the current CLI user rather than the root user.")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
@@ -186,7 +189,6 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, kubeClient *client.Client, clientset kubernetes.Interface) error {
 	util.SetLogLevel(global.LogLevel)
-
 	assignUser(submitArgs)
 	name, generateSuffix, err := getJobNameWithSuffixGenerationFlag(cmd, args, submitArgs)
 	if err != nil {
@@ -280,6 +282,10 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	if err = handleImagePullPolicy(submitArgs); err != nil {
+		return err
+	}
+
+	if err = submitArgs.GitSync.HandleGitSync(); err != nil {
 		return err
 	}
 	return nil

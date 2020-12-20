@@ -83,6 +83,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			runaijobClient := runaiclientset.NewForConfigOrDie(kubeClient.GetRestConfig())
 
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
+			submitArgs.GitSync = GitSyncFromConnectionString(gitSyncConnectionString)
 
 			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {

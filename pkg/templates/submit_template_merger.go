@@ -46,6 +46,9 @@ func mergeSubmitTemplates(base, patch SubmitTemplate) SubmitTemplate {
 				mergedField = append(baseFieldInterface.([]string), patchValue.Field(i).Interface().([]string)...)
 			}
 			baseField.Set(reflect.ValueOf(mergedField))
+		case *GitSyncTemplate:
+			mergedField := mergeGitSyncTemplate(baseFieldInterface.(*GitSyncTemplate), patchValue.Field(i).Interface().(*GitSyncTemplate))
+			baseField.Set(reflect.ValueOf(mergedField))
 		default:
 
 		}
@@ -65,6 +68,39 @@ func mergeTemplateFields(base, patch *TemplateField) *TemplateField {
 	if patch.Required != nil {
 		base.Required = patch.Required
 	}
+	return base
+}
+
+func mergeGitSyncTemplate(base, patch *GitSyncTemplate) *GitSyncTemplate {
+	if patch == nil {
+		return base
+	}
+	if base == nil {
+		return base
+	}
+
+	if patch.Repository != nil {
+		base.Repository = patch.Repository
+	}
+	if patch.Branch != nil {
+		base.Branch = patch.Branch
+	}
+	if patch.Revision != nil {
+		base.Revision = patch.Revision
+	}
+	if patch.Username != nil {
+		base.Username = patch.Username
+	}
+	if patch.Password != nil {
+		base.Password = patch.Password
+	}
+	if patch.Image != nil {
+		base.Image = patch.Image
+	}
+	if patch.Directory != nil {
+		base.Directory = patch.Directory
+	}
+
 	return base
 }
 

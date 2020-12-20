@@ -9,7 +9,7 @@
 {{- $combinedVolume = append $combinedVolume $volume }}
 {{- end}}
 
-{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm .Values.createHomeDir }}
+{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm .Values.createHomeDir .Values.gitSync.sync }}
 volumeMounts:
   {{- range $index, $volume := $combinedVolume -}}
   {{ $parts := split ":" $volume }}
@@ -26,6 +26,10 @@ volumeMounts:
   {{- if .Values.createHomeDir }}
   - mountPath: /home/runai-home
     name: user-data
+  {{- end }}
+  {{- if .Values.gitSync.sync }}
+  - mountPath: {{ .Values.gitSync.directory }}
+    name: code-sync
   {{- end }}
   {{- if .Values.persistentVolumes }}
   {{- range $index, $pvcParam := .Values.persistentVolumes }}
@@ -63,7 +67,7 @@ volumeMounts:
   {{- $combinedVolume = append $combinedVolume $volume }}
   {{- end}}
 
-{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm .Values.createHomeDir }}
+{{- if or .Values.persistentVolumes (gt (len $combinedVolume) 0) .Values.shm .Values.createHomeDir .Values.gitSync.sync }}
 volumes:
   {{- range $index, $volume := $combinedVolume -}}
   {{ $parts := split ":" $volume }}
@@ -78,6 +82,10 @@ volumes:
   {{- end }}
   {{- if .Values.createHomeDir }}
   - name: user-data
+    emptyDir: {}
+  {{- end }}
+  {{- if .Values.gitSync.sync }}
+  - name: code-sync
     emptyDir: {}
   {{- end }}
   {{- range $index, $pvcParam := .Values.persistentVolumes }}

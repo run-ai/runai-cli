@@ -54,8 +54,26 @@ func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.
 	submitArgs.PreventPrivilegeEscalation = applyTemplateFieldForBool(submitArgs.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation, "prevent-privilege-escalation")
 	submitArgs.RunAsCurrentUser = applyTemplateFieldForBool(submitArgs.RunAsCurrentUser, template.RunAsCurrentUser, "run-as-user")
 	submitArgs.Command = applyTemplateFieldForBool(submitArgs.Command, template.IsCommand, "command")
+	mergeGitSync(&submitArgs, template.GitSync)
 	mergeCommandAndArgs(&submitArgs, template, extraArgs)
 	return submitArgs
+}
+
+func mergeGitSync(submitArgs *submitArgs, templateGitSync *templates.GitSyncTemplate) {
+	if templateGitSync == nil {
+		return
+	}
+	if submitArgs.GitSync == nil {
+		submitArgs.GitSync = NewGitSync()
+	}
+
+	submitArgs.GitSync.Repository = applyTemplateFieldForString(submitArgs.GitSync.Repository, templateGitSync.Repository, "git-sync.repository")
+	submitArgs.GitSync.Branch = applyTemplateFieldForString(submitArgs.GitSync.Branch, templateGitSync.Branch, "git-sync.branch")
+	submitArgs.GitSync.Revision = applyTemplateFieldForString(submitArgs.GitSync.Revision, templateGitSync.Revision, "git-sync.revision")
+	submitArgs.GitSync.Username = applyTemplateFieldForString(submitArgs.GitSync.Username, templateGitSync.Username, "git-sync.username")
+	submitArgs.GitSync.Password = applyTemplateFieldForString(submitArgs.GitSync.Password, templateGitSync.Password, "git-sync.password")
+	submitArgs.GitSync.Image = applyTemplateFieldForString(submitArgs.GitSync.Image, templateGitSync.Image, "git-sync.image")
+	submitArgs.GitSync.Directory = applyTemplateFieldForString(submitArgs.GitSync.Directory, templateGitSync.Directory, "git-sync.target")
 }
 
 func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitRunaiJobArgs {
