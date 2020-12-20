@@ -206,6 +206,16 @@ func getAllocatedRequestedGPUs(trainingAnnotations map[string]string) (float64, 
 	return 0, false
 }
 
+func getAllocatedGpusMemory(trainingAnnotations map[string]string) uint64 {
+	if len(trainingAnnotations[util.WorkloadCurrentAllocatedGPUsMemory]) > 0 {
+		currentAllocated, err := strconv.ParseUint(trainingAnnotations[util.WorkloadCurrentAllocatedGPUsMemory], 10, 64)
+		if err == nil {
+			return currentAllocated
+		}
+	}
+	return 0
+}
+
 func getTotalAllocatedGPUs(trainingAnnotations map[string]string) (float64, bool) {
 	if len(trainingAnnotations[util.WorkloadTotalRequestedGPUs]) > 0 {
 		totalAllocatedGPUs, err := strconv.ParseFloat(trainingAnnotations[util.WorkloadTotalRequestedGPUs], 64)
@@ -214,6 +224,16 @@ func getTotalAllocatedGPUs(trainingAnnotations map[string]string) (float64, bool
 		}
 	}
 	return 0, false
+}
+
+func getTotalRequestedGPUsMemory(trainingAnnotations map[string]string) uint64 {
+	if len(trainingAnnotations[util.WorkloadTotalRequestedGPUsMemory]) > 0 {
+		totalRequestedGpusMemory, err := strconv.ParseUint(trainingAnnotations[util.WorkloadTotalRequestedGPUsMemory], 10, 64)
+		if err == nil {
+			return totalRequestedGpusMemory
+		}
+	}
+	return 0
 }
 
 func IsKnownTrainingType(trainingType string) bool {

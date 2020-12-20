@@ -9,6 +9,7 @@ metadata:
   annotations:
     image: "{{ .Values.image }}"
     totalGPUs: "{{ .Values.totalGpus }}"
+    totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
     {{- if .Values.user }}
     user: {{ .Values.user | quote}}
     {{- end }}
@@ -44,9 +45,7 @@ spec:
             project: {{ .Values.project }}
           annotations:
             totalGPUs: "{{ .Values.totalGpus }}"
-            {{- if .Values.user }}
-            user: {{ .Values.user | quote}}
-            {{- end }}
+            totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
         spec:
           {{- if .Values.node_type }}
           nodeSelector:
@@ -82,7 +81,7 @@ spec:
           initContainers:
             - name: git-sync
               image: {{ .Values.gitSync.image }}
-              env: 
+              env:
                 - name: GIT_SYNC_REPO
                   value: {{ .Values.gitSync.repository }}
                 {{- if .Values.gitSync.byRevision }}
@@ -102,7 +101,7 @@ spec:
                 - name: GIT_SYNC_PASSWORD
                   value: {{ .Values.gitSync.password }}
                 {{- end }}
-              volumeMounts: 
+              volumeMounts:
                 - name: code-sync
                   mountPath: /code
           {{- end }}
@@ -176,8 +175,8 @@ spec:
             {{- if .Values.gpuFraction }}
             gpu-fraction: "{{ .Values.gpuFraction }}"
             {{- end }}
-            {{- if .Values.user }}
-            user: {{ .Values.user | quote}}
+            {{- if .Values.gpuMemory }}
+            gpu-memory: "{{ .Values.gpuMemory }}"
             {{- end }}
           labels:
             project: {{ .Values.project }}
@@ -214,7 +213,7 @@ spec:
           initContainers:
             - name: git-sync
               image: {{ .Values.gitSync.image }}
-              env: 
+              env:
                 - name: GIT_SYNC_REPO
                   value: {{ .Values.gitSync.repository }}
                 {{- if .Values.gitSync.byRevision }}
@@ -234,7 +233,7 @@ spec:
                 - name: GIT_SYNC_PASSWORD
                   value: {{ .Values.gitSync.password }}
                 {{- end }}
-              volumeMounts: 
+              volumeMounts:
                 - name: code-sync
                   mountPath: /code
           {{- end }}

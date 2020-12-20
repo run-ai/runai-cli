@@ -33,6 +33,10 @@ metadata:
     {{ $key }}: {{ $val | quote }}
     {{- end }}
   {{- end}}
+  {{- if .Values.user }}
+  annotations:
+    user: {{ .Values.user | quote}}
+  {{- end }}
 spec:
   {{- if .Values.interactive }}
   serviceName: {{ .Release.Name }}
@@ -60,6 +64,9 @@ spec:
       annotations:
         {{- if .Values.gpuFraction }}
         gpu-fraction: "{{ .Values.gpuFraction }}"
+        {{- end }}
+        {{- if .Values.gpuMemory }}
+        gpu-memory: "{{ .Values.gpuMemory }}"
         {{- end }}
         {{- if .Values.elastic }}
         elastic: {{ .Values.elastic | quote }}
@@ -106,7 +113,7 @@ spec:
       initContainers:
         - name: git-sync
           image: {{ .Values.gitSync.image }}
-          env: 
+          env:
             - name: GIT_SYNC_REPO
               value: {{ .Values.gitSync.repository }}
             {{- if .Values.gitSync.byRevision }}
@@ -126,7 +133,7 @@ spec:
             - name: GIT_SYNC_PASSWORD
               value: {{ .Values.gitSync.password }}
             {{- end }}
-          volumeMounts: 
+          volumeMounts:
             - name: code-sync
               mountPath: /code
       {{- end }}

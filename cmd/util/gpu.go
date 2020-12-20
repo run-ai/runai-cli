@@ -15,6 +15,7 @@
 package util
 
 import (
+	"fmt"
 	"strconv"
 
 	v1 "k8s.io/api/core/v1"
@@ -23,15 +24,20 @@ import (
 const (
 	RunaiGPUIndex    = "runai-gpu"
 	RunaiGPUFraction = "gpu-fraction"
+	RunaiGPUMemory   = "gpu-memory"
 	// an annotation on each node
-	RunaiAllocatableGpus            = "runai-allocatable-gpus"
-	NVIDIAGPUResourceName           = "nvidia.com/gpu"
-	ALIYUNGPUResourceName           = "aliyun.com/gpu-mem"
-	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
-	PodGroupRequestedGPUs           = "runai-podgroup-requested-gpus"
-	WorkloadCurrentAllocatedGPUs    = "runai-current-allocated-gpus"
-	WorkloadCurrentRequestedGPUs    = "runai-current-requested-gpus"
-	WorkloadTotalRequestedGPUs      = "runai-total-requested-gpus"
+	RunaiAllocatableGpus               = "runai-allocatable-gpus"
+	NVIDIAGPUResourceName              = "nvidia.com/gpu"
+	ALIYUNGPUResourceName              = "aliyun.com/gpu-mem"
+	DeprecatedNVIDIAGPUResourceName    = "alpha.kubernetes.io/nvidia-gpu"
+	PodGroupRequestedGPUs              = "runai-podgroup-requested-gpus"
+	PodGroupRequestedGPUsMemory        = "runai-podgroup-requested-gpus-memory"
+	WorkloadCurrentAllocatedGPUs       = "runai-current-allocated-gpus"
+	WorkloadCurrentAllocatedGPUsMemory = "runai-current-allocated-gpus-memory"
+	WorkloadCurrentRequestedGPUs       = "runai-current-requested-gpus"
+	WorkloadCurrentRequestedGPUsMemory = "runai-current-requested-gpus-memory"
+	WorkloadTotalRequestedGPUs         = "runai-total-requested-gpus"
+	WorkloadTotalRequestedGPUsMemory   = "runai-total-requested-gpus-memory"
 )
 
 // The way to get total GPU Count of Node: nvidia.com/gpu
@@ -100,6 +106,26 @@ func GetRequestedGPUsPerPodGroup(trainingAnnotations map[string]string) (float64
 		}
 	}
 	return 0, false
+}
+
+func GetRequestedGPUsMemoryPerPodGroup(trainingAnnotations map[string]string) uint64 {
+	if len(trainingAnnotations[PodGroupRequestedGPUsMemory]) > 0 {
+		requestedGPUs, err := strconv.ParseUint(trainingAnnotations[PodGroupRequestedGPUsMemory], 10, 64)
+		if err == nil {
+			return requestedGPUs
+		}
+	}
+	return 0
+}
+
+func GetRequestedGPUString(trainingAnnotations map[string]string) string {
+	if len(trainingAnnotations[PodGroupRequestedGPUs]) > 0 {
+		requestedGPUs, err := strconv.ParseFloat(trainingAnnotations[PodGroupRequestedGPUs], 64)
+		if err == nil {
+			return fmt.Sprintf("%v", requestedGPUs)
+		}
+	}
+	return fmt.Sprintf("%v", 0)
 }
 
 func getGPUFractionUsedByPod(pod v1.Pod) float64 {

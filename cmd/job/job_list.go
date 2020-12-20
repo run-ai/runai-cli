@@ -46,7 +46,7 @@ func ListCommand() *cobra.Command {
 		Use:     "jobs",
 		Aliases: []string{"job"},
 		Short:   "List all jobs.",
-		PreRun: commandUtil.RoleAssertion(auth.AssertViewerRole),
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			RunJobList(cmd, args, allNamespaces)
 		},
@@ -148,7 +148,7 @@ func displayTrainingJobList(jobInfoList []trainer.TrainingJob, invalidJobs []str
 		if currentAllocatedGPUs == 0 && trainer.IsFinishedStatus(status) {
 			currentAllocatedGPUsAsString = "-"
 		}
-		allocatedFromRequestedGPUs := fmt.Sprintf("%s (%g)", currentAllocatedGPUsAsString, jobInfo.RequestedGPU())
+		allocatedFromRequestedGPUs := fmt.Sprintf("%s (%v)", currentAllocatedGPUsAsString, jobInfo.RequestedGPUString())
 		runningOfActivePods := fmt.Sprintf("%d (%d)", int(jobInfo.RunningPods()), int(jobInfo.PendingPods()))
 
 		ui.Line(w, jobInfo.Name(),
