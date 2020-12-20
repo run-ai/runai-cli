@@ -26,7 +26,9 @@ type GitSync struct {
 }
 
 func NewGitSync() *GitSync {
+	notSync := false
 	return &GitSync{
+		Sync:       &notSync,
 		Image:      "",
 		ByRevision: false,
 		Branch:     "",

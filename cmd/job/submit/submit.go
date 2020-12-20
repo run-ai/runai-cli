@@ -285,6 +285,9 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return err
 	}
 
+	if submitArgs.GitSync == nil {
+		submitArgs.GitSync = NewGitSync()
+	}
 	if err = submitArgs.GitSync.HandleGitSync(); err != nil {
 		return err
 	}
