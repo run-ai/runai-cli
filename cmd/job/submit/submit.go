@@ -150,7 +150,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.StdIn, "stdin", "", "Keep stdin open on the container(s) in the pod, even if nothing is attached.")
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.Attach, "attach", "", `If true, wait for the Pod to start running, and then attach to the Pod as if 'runai attach ...' were called. Attach makes tty and stdin true by default. Default false`)
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
-	flagSet.StringVar(&gitSyncConnectionString, "git-sync", "", "sync string as explained in the documentation")
+	flagSet.StringVar(&gitSyncConnectionString, "git-sync", "", "sync string in the template of: source=REPO,branch=BRANCH_NAME,rev=REVISION,username=USER,password=PASSWORD,target=TARGET_DIRECTORY_TO_CLONE")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.RunAsCurrentUser), "run-as-user", "", "Run in the context of the current CLI user rather than the root user.")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
