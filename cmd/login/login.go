@@ -38,7 +38,7 @@ var (
 func NewLoginCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:          "login",
-		Short:        "Authenticates your client with the run:ai Backend",
+		Short:        "Authenticates your client with the Run:AI Backend",
 		SilenceUsage: true,
 		Args: func(c *cobra.Command, args []string) error {
 			if err := cobra.NoArgs(c, args); err != nil {
