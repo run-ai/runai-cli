@@ -51,7 +51,7 @@ func NewLoginCommand() *cobra.Command {
 
 			if !shouldDoAuth(userAuth) {
 				// Can still override this with --force
-				log.Info("Current configuration seems valid, no need to login again.")
+				log.Info("You already logged in. You can use --force flag to re-authenticate")
 				return nil
 			}
 			authProviderConfig, err := getAuthProviderConfig(kubeConfig)
@@ -83,9 +83,9 @@ func NewLoginCommand() *cobra.Command {
 	}
 
 	command.Flags().BoolVar(&paramForce, "force", false, "Force re-authentication even if a valid config was found")
-	command.Flags().StringVar(&paramAuthMethod, ParamAuthMethod, DefaultAuthMethod, "The method to use for initial authentication. can be one of [browser,remote-browser,password,local-password]")
+	command.Flags().StringVar(&paramAuthMethod, ParamAuthMethod, "", "The method to use for initial authentication. can be one of [browser,remote-browser,password,local-password]")
 	command.Flags().StringVar(&paramKubeConfigUser, "kube-config-user", DefaultKubeConfigUserName, "The user defined in the kubeconfig file to operate on, by default a user called runai-oidc is used")
-	command.Flags().StringVar(&paramListenAddress, ParamListenAddress, DefaultListenAddress, "[browser only] Address to bind to the local server that accepts redirected auth responses.")
+	command.Flags().StringVar(&paramListenAddress, ParamListenAddress, "", "[browser only] Address to bind to the local server that accepts redirected auth responses.")
 
 	return command
 }
@@ -136,17 +136,19 @@ func getAuthProviderConfig(kubeConfig *clientapi.Config) (authProviderConfig Aut
 
 // param vars hold defaults so this actually setting user overrides and/or defaults where needed.
 func assignAndValidateParams(config *AuthProviderConfig) error {
-	if config.AuthMethod == DefaultAuthMethod || config.AuthMethod == "" {
+	if paramAuthMethod != "" {
 		config.AuthMethod = paramAuthMethod
+	} else if config.AuthMethod == "" {
+		config.AuthMethod = DefaultAuthMethod
 	}
-	if config.ListenAddress == DefaultListenAddress || config.ListenAddress == "" {
+	if paramListenAddress != "" {
 		config.ListenAddress = paramListenAddress
+	} else if config.ListenAddress == "" {
+		config.ListenAddress = DefaultListenAddress
 	}
-	if config.IssuerUrl == "" {
-		return fmt.Errorf("issuer URL must be defined")
-	}
-	if config.RedirectUrl == "" {
-		return fmt.Errorf("redirect URL must be defined")
+	fmt.Println(config.AuthMethod)
+	if config.IssuerUrl == "" || config.RedirectUrl == "" {
+		return fmt.Errorf("Your kubeconfig is broken. Contact your administrator to validate the configuration. issuer-url: %v, redirect-url: %v", config.IssuerUrl, config.RedirectUrl)
 	}
 	return nil
 }
