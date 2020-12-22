@@ -5,7 +5,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-const minGpuMemory = 100
+const (
+	minGpuMemory = 100
+	GpuMbFactor  = 1000000
+)
 
 func handleRequestedGPUs(submitArgs *submitArgs) error {
 	if submitArgs.GPU == nil && submitArgs.GPUMemory == "" {
@@ -18,7 +21,7 @@ func handleRequestedGPUs(submitArgs *submitArgs) error {
 			return err
 		}
 
-		memoryInMb := memoryQuantity.Value() / (1024 * 1024) //From bytes to mb
+		memoryInMb := memoryQuantity.Value() / GpuMbFactor //From bytes to mb
 		if memoryInMb < minGpuMemory {
 			return fmt.Errorf("gpu memory must be greater than 100Mb")
 		}

@@ -249,8 +249,8 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 
 func (mj *MPIJob) RequestedGPUString() string {
 	if memory := mj.RequestedGPUMemory(); memory != 0 {
-		gpuMemoryInBytes := int64(memory) * 1024 * 1024
-		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		gpuMemoryInBytes := int64(memory) * GpuMbFactor
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
 		return fmt.Sprintf("%v", quantity)
 	}
 	return fmt.Sprintf("%v", mj.RequestedGPU())

@@ -14,7 +14,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const userFieldName = "user"
+const (
+	userFieldName = "user"
+	GpuMbFactor   = 1000000
+)
 
 type RunaiJob struct {
 	*cmdTypes.BasicJobInfo
@@ -261,8 +264,8 @@ func (rj *RunaiJob) RequestedGPUMemory() uint64 {
 
 func (rj *RunaiJob) RequestedGPUString() string {
 	if memory := rj.RequestedGPUMemory(); memory != 0 {
-		gpuMemoryInBytes := int64(memory) * 1024 * 1024
-		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		gpuMemoryInBytes := int64(memory) * GpuMbFactor
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
 		return fmt.Sprintf("%v", quantity)
 	}
 	return fmt.Sprintf("%v", rj.RequestedGPU())
