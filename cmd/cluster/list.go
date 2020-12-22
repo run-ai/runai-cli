@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/auth"
 	"os"
 	"text/tabwriter"
 
@@ -51,7 +50,6 @@ func listCommandDEPRECATED() *cobra.Command {
 		Use:        "list",
 		Short:      fmt.Sprint("List all avaliable clusters."),
 		Run:        commandUtil.WrapRunCommand(runListCommand),
-		PreRun: 	commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Deprecated: "Please use: 'runai list cluster' instead",
 	}
 
@@ -64,7 +62,6 @@ func ListCommand() *cobra.Command {
 		Use:     "clusters",
 		Aliases: []string{"cluster"},
 		Short:   "List all available clusters",
-		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 
