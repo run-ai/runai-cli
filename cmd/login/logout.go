@@ -23,9 +23,9 @@ func NewLogoutCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to parse kubeconfig: %v", err)
 			}
-			userAuth, ok := kubeConfig.AuthInfos[paramKubeConfigUser]
-			if !ok {
-				return fmt.Errorf("No auth configuration found in kubeconfig for user '%s' \n", paramKubeConfigUser)
+			userAuth, err := getUserAuth(kubeConfig)
+			if err != nil {
+				return err
 			}
 			if userAuth.AuthProvider != nil && len(userAuth.AuthProvider.Config) > 0 {
 				delete(userAuth.AuthProvider.Config, config.ParamIdToken)
