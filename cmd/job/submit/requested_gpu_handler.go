@@ -7,7 +7,7 @@ import (
 
 const (
 	minGpuMemory = 100
-	GpuMbFactor  = 1000000
+	GpuMbFactor  = 1000000 // 1024 * 1024
 )
 
 func handleRequestedGPUs(submitArgs *submitArgs) error {
@@ -21,12 +21,13 @@ func handleRequestedGPUs(submitArgs *submitArgs) error {
 			return err
 		}
 
-		memoryInMb := memoryQuantity.Value() / GpuMbFactor //From bytes to mb
-		if memoryInMb < minGpuMemory {
+		memoryInMib := memoryQuantity.Value() / GpuMbFactor //From bytes to mib
+		fmt.Println(memoryInMib)
+		if memoryInMib < minGpuMemory {
 			return fmt.Errorf("gpu memory must be greater than 100Mb")
 		}
 
-		submitArgs.GPUMemory = fmt.Sprintf("%d", memoryInMb)
+		submitArgs.GPUMemory = fmt.Sprintf("%d", memoryInMib)
 		return nil
 	}
 

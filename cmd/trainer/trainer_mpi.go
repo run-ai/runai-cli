@@ -334,8 +334,8 @@ func (mj *MPIJob) Succeeded() int32 {
 
 func (mj *MPIJob) TotalRequestedGPUsString() string {
 	if memory := mj.TotalRequestedGPUsMemory(); memory != 0 {
-		gpuMemoryInBytes := int64(memory) * 1024 * 1024
-		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+		gpuMemoryInBytes := int64(memory) * GpuMbFactor
+		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
 		return fmt.Sprintf("%v", quantity)
 	}
 	return fmt.Sprintf("%v", mj.TotalRequestedGPUs())
@@ -382,8 +382,8 @@ func (mj *MPIJob) CurrentAllocatedGPUs() float64 {
 
 func (mj *MPIJob) CurrentAllocatedGPUsMemory() string {
 	allocatedGpuMemoryInMb := getAllocatedGpusMemory(mj.mpijob.Annotations)
-	gpuMemoryInBytes := int64(allocatedGpuMemoryInMb) * 1024 * 1024
-	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.BinarySI)
+	gpuMemoryInBytes := int64(allocatedGpuMemoryInMb) * GpuMbFactor
+	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
 	return fmt.Sprintf("%v", quantity)
 }
 
