@@ -30,8 +30,9 @@ import (
 type HELM_VERSION string
 
 const (
-	HELM_3 HELM_VERSION = "helm-3"
-	HELM_2 HELM_VERSION = "helm-2"
+	HELM_3              HELM_VERSION = "helm-3"
+	HELM_2              HELM_VERSION = "helm-2"
+	versionCaptureRegex              = "(?:.*\\n)*(v(\\d+)\\.\\d*.\\d*).*"
 )
 
 var (
@@ -42,7 +43,6 @@ func init() {
 }
 
 func getHelmVersion() (HELM_VERSION, error) {
-
 	binary, err := exec.LookPath(helmCmd[0])
 	if err != nil {
 		return "", err
@@ -53,18 +53,22 @@ func getHelmVersion() (HELM_VERSION, error) {
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
 	out, err := cmd.CombinedOutput()
 
-	re, err := regexp.Compile("v(.)")
+	output := string(out)
+	return getHelmVersionFromOutput(output)
+}
+
+func getHelmVersionFromOutput(output string) (HELM_VERSION, error) {
+	re, err := regexp.Compile(versionCaptureRegex)
 	if err != nil {
 		return "", err
 	}
 
-	output := string(out)
 	res := re.FindStringSubmatch(output)
-	if len(res) < 2 {
+	if len(res) < 3 {
 		return "", fmt.Errorf("Could not find helm command version")
 	}
 
-	majorVersion := res[1]
+	majorVersion := res[2]
 	if majorVersion == "3" {
 		return HELM_3, nil
 	} else if majorVersion == "2" {
