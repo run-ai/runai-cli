@@ -14,7 +14,7 @@ func NewLoginCommand() *cobra.Command {
 		Use:   "login",
 		Short: "Login to runai",
 		Run: func(cmd *cobra.Command, args []string) {
-			_, err := authentication.Authenticate(params)
+			err := authentication.Authenticate(params)
 			if err != nil {
 				cmd.HelpFunc()(cmd, args)
 				log.Error(err)
@@ -25,6 +25,7 @@ func NewLoginCommand() *cobra.Command {
 	command.Flags().StringVar(&params.ClientId, "client-id", "", "Client id to connect")
 	command.Flags().StringVar(&params.IssuerURL, "issuer-url", "", "issuer url")
 	command.Flags().StringVar(&params.ListenAddress, "redirect-server", "", "listen address")
+	command.Flags().StringVar(&params.User, "user", "", "user to log in")
 
 	return command
 }

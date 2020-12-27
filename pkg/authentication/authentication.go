@@ -13,18 +13,32 @@ const (
 	refreshTokenScope = "offline_access"
 )
 
-func Authenticate(params *types.AuthenticationParams) (*oauth2.Token, error) {
+func Authenticate(params *types.AuthenticationParams) error {
 	ctx := context.Background()
-	kubeconfigParams, err := kubeconfig.GetCurrentUserAuthenticationParams()
-	if err != nil {
-		return nil, err
+	var kubeConfigParams *types.AuthenticationParams
+	var err error
+	if params.User == "" {
+		kubeConfigParams, err = kubeconfig.GetCurrentUserAuthenticationParams()
+	} else {
+		kubeConfigParams, err = kubeconfig.GetUserAuthenticationParams(params.User)
 	}
-	params = params.MergeAuthenticationParams(kubeconfigParams)
+	if err != nil {
+		return err
+	}
+	params = params.MergeAuthenticationParams(kubeConfigParams)
 	params, err = params.ValidateAndSetDefaultAuthenticationParams()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return runAuthenticationByFlow(ctx, params)
+	token, err := runAuthenticationByFlow(ctx, params)
+	if err != nil {
+		return err
+	}
+
+	if params.User == "" {
+		return kubeconfig.SetTokenToCurrentUser(params.AuthenticationFlow, token)
+	}
+	return kubeconfig.SetTokenToUser(params.User, params.AuthenticationFlow, token)
 }
 
 func runAuthenticationByFlow(ctx context.Context, params *types.AuthenticationParams) (*oauth2.Token, error) {

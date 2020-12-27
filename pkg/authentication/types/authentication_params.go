@@ -14,6 +14,7 @@ type AuthenticationParams struct {
 	ListenAddress string
 
 	AuthenticationFlow string
+	User               string
 }
 
 func (a *AuthenticationParams) GetRedirectUrl() string {

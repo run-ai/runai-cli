@@ -2,9 +2,10 @@ package authentication
 
 import (
 	"context"
-	"fmt"
 	"github.com/coreos/go-oidc"
 	"github.com/int128/oauth2cli"
+	"github.com/pkg/browser"
+	"github.com/run-ai/runai-cli/pkg/authentication/pages"
 	"github.com/run-ai/runai-cli/pkg/authentication/pkce"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	"golang.org/x/oauth2"
@@ -22,8 +23,7 @@ func authenticateCodePkceBrowser(ctx context.Context, authParams *types.Authenti
 	if err != nil {
 		return nil, err
 	}
-	token, err := oauth2cli.GetToken(ctx, *oauth2cliConfig)
-	return token, nil
+	return oauth2cli.GetToken(ctx, *oauth2cliConfig)
 }
 
 func getOauth2cliGetTokenConfig(oauth2Config *oauth2.Config, localServerReadyChan chan string, authParams *types.AuthenticationParams) (*oauth2cli.Config, error) {
@@ -46,6 +46,7 @@ func getOauth2cliGetTokenConfig(oauth2Config *oauth2.Config, localServerReadyCha
 		LocalServerReadyChan:   localServerReadyChan,
 		AuthCodeOptions:        authCodeOptions,
 		TokenRequestOptions:    tokenRequestOptions,
+		LocalServerSuccessHTML: pages.LoginPageHtml,
 	}, nil
 }
 
@@ -64,5 +65,5 @@ func getOauth2Config(ctx context.Context, authParams *types.AuthenticationParams
 
 func waitForLocalServer(readyChan chan string) {
 	url := <-readyChan
-	fmt.Printf("You can go to %v \n", url)
+	browser.OpenURL(url)
 }

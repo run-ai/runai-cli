@@ -18,6 +18,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/cluster"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/login"
+	"github.com/run-ai/runai-cli/cmd/logout"
 	"github.com/run-ai/runai-cli/cmd/resource"
 
 	raCmd "github.com/run-ai/runai-cli/cmd"
@@ -77,6 +78,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(project.NewProjectCommand())
 	command.AddCommand(cluster.NewClusterCommand())
 	command.AddCommand(login.NewLoginCommand())
+	command.AddCommand(logout.NewLogoutCommand())
 
 	return command
 }

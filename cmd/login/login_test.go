@@ -8,6 +8,8 @@ import (
 )
 
 func TestLogin(t *testing.T) {
-	token, _ := authentication.Authenticate(&types.AuthenticationParams{})
-	fmt.Println(token)
+	err := authentication.Authenticate(&types.AuthenticationParams{})
+	if err != nil {
+		fmt.Println(err)
+	}
 }
