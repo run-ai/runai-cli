@@ -12,7 +12,7 @@ func NewLoginCommand() *cobra.Command {
 	params := &types.AuthenticationParams{}
 	var command = &cobra.Command{
 		Use:   "login",
-		Short: "Login to runai",
+		Short: "Authenticates your client with the Run:AI Backend",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := authentication.Authenticate(params)
 			if err != nil {
@@ -20,6 +20,7 @@ func NewLoginCommand() *cobra.Command {
 				log.Error(err)
 				os.Exit(1)
 			}
+			log.Info("Logged in successfully")
 		},
 	}
 	command.Flags().StringVar(&params.ClientId, "client-id", "", "Client id to connect")

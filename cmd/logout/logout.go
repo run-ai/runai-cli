@@ -19,6 +19,7 @@ func NewLogoutCommand() *cobra.Command {
 				log.Error(err)
 				os.Exit(1)
 			}
+			log.Info("Logged out successfully")
 		},
 	}
 	command.Flags().StringVar(&user, "user", "", "user to log out")

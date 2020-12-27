@@ -6,6 +6,9 @@ const LoginPageHtml = `
 <head>
 	<meta charset="UTF-8">
 	<title>Login</title>
+	<script>
+		window.close()
+	</script>
 	<style>
 		body {
 			background-color: #122737;
@@ -45,6 +48,9 @@ const LogoutPageHtml = `
 <head>
 	<meta charset="UTF-8">
 	<title>Logout</title>
+	<script>
+		window.close()
+	</script>
 	<style>
 		body {
 			background-color: #122737;
