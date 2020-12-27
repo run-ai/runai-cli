@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
 
@@ -25,16 +26,18 @@ func Authenticate(params *types.AuthenticationParams) error {
 	if err != nil {
 		return err
 	}
+	log.Debugf("Read user kubeConfig authentication params: %v", kubeConfigParams)
 	params = params.MergeAuthenticationParams(kubeConfigParams)
 	params, err = params.ValidateAndSetDefaultAuthenticationParams()
 	if err != nil {
 		return err
 	}
+	log.Debugf("Final authentication params: %v", params)
 	token, err := runAuthenticationByFlow(ctx, params)
 	if err != nil {
 		return err
 	}
-
+	log.Debug("Authentication process done successfully")
 	if params.User == "" {
 		return kubeconfig.SetTokenToCurrentUser(params.AuthenticationFlow, token)
 	}

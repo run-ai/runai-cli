@@ -70,6 +70,9 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 	if !exists {
 		return nil, fmt.Errorf("user %v does not exists in kubeconfig", user)
 	}
+	if kubeConfigUser.AuthProvider == nil {
+		return &types.AuthenticationParams{}, nil
+	}
 
 	clientId, exists := kubeConfigUser.AuthProvider.Config[clientIdFieldName]
 	if !exists {
