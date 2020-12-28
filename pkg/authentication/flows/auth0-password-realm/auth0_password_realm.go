@@ -47,6 +47,7 @@ func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *authenticat
 		return nil, err
 	}
 
+	log.Debug("Sending request to authentication")
 	req, err := http.NewRequest("POST", provider.Endpoint().TokenURL, strings.NewReader(requestParams.Encode()))
 	if err != nil {
 		return nil, err
