@@ -113,7 +113,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 	configFileName = configFile.Name()
 	log.Debugf("Save the config file %s", configFileName)
 
-	// 2. save app types to config file
+	// 2. save app authentication-params to config file
 	lines := strings.Split(output, "\n")
 	log.Debugf("dry run result: %v", lines)
 

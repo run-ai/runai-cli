@@ -351,7 +351,7 @@ innerLoop:
 
 		jobInfo.Namespace = horovodJob.Namespace
 		jobInfos = append(jobInfos, jobInfo)
-		// jobInfos = append(jobInfos, types.TrainingJobInfo{Name: horovodJob.})
+		// jobInfos = append(jobInfos, authentication-params.TrainingJobInfo{Name: horovodJob.})
 	}
 	log.Debugf("jobInfos %v", jobInfos)
 

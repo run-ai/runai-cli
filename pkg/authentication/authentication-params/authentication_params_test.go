@@ -1,4 +1,4 @@
-package types
+package authentication_params
 
 import (
 	"gotest.tools/assert"

@@ -1,4 +1,4 @@
-package types
+package authentication_params
 
 import "fmt"
 
@@ -6,7 +6,7 @@ const (
 	CodePkceBrowser           = "browser"
 	Auth0PasswordRealm        = "cli"
 	defaultRedirectServer     = "localhost:3000"
-	defaultAuthenticationFlow = Auth0PasswordRealm
+	defaultAuthenticationFlow = CodePkceBrowser
 )
 
 type AuthenticationParams struct {
