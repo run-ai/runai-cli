@@ -63,7 +63,7 @@ func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *authenticat
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		log.Debugf("invalid response: %s, %s, %s", res.StatusCode, res.Status, string(body))
+		log.Debugf("invalid response: %v, %v, %v", res.StatusCode, res.Status, string(body))
 		return nil, fmt.Errorf("invalid username or password")
 	}
 	contentType, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type"))
