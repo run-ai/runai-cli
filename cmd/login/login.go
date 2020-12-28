@@ -25,9 +25,13 @@ func NewLoginCommand() *cobra.Command {
 		},
 	}
 	command.Flags().StringVar(&params.ClientId, "client-id", "", "Client id to connect")
-	command.Flags().StringVar(&params.IssuerURL, "issuer-url", "", "issuer url")
+	command.Flags().StringVar(&params.IssuerURL, "idp-issuer-url", "", "issuer url")
 	command.Flags().StringVar(&params.ListenAddress, "redirect-server", "", "listen address")
 	command.Flags().StringVar(&params.User, "user", "", "user to log in")
+	command.Flags().MarkHidden("client-id")
+	command.Flags().MarkHidden("idp-issuer-url")
+	command.Flags().MarkHidden("redirect-server")
+	command.Flags().MarkHidden("user")
 
 	return command
 }

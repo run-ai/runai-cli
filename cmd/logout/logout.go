@@ -24,6 +24,7 @@ func NewLogoutCommand() *cobra.Command {
 		},
 	}
 	command.Flags().StringVar(&user, "user", "", "user to log out")
+	command.Flags().MarkHidden("user")
 
 	return command
 }

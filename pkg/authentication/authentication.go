@@ -12,6 +12,7 @@ import (
 const (
 	openIdScope       = "openid"
 	refreshTokenScope = "offline_access"
+	emailScope        = "email"
 )
 
 func Authenticate(params *types.AuthenticationParams) error {

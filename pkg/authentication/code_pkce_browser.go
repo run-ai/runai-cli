@@ -62,7 +62,7 @@ func getOauth2Config(ctx context.Context, authParams *types.AuthenticationParams
 	return &oauth2.Config{
 		ClientID:    authParams.ClientId,
 		Endpoint:    provider.Endpoint(),
-		Scopes:      []string{openIdScope, refreshTokenScope},
+		Scopes:      []string{emailScope, openIdScope, refreshTokenScope},
 		RedirectURL: authParams.ListenAddress,
 	}, nil
 }
