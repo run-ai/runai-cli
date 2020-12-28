@@ -3,16 +3,12 @@ package authentication
 import (
 	"context"
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/authentication/flows/auth0-password-realm"
+	"github.com/run-ai/runai-cli/pkg/authentication/flows/code_pkce_browser"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-)
-
-const (
-	openIdScope       = "openid"
-	refreshTokenScope = "offline_access"
-	emailScope        = "email"
 )
 
 func Authenticate(params *types.AuthenticationParams) error {
@@ -48,7 +44,9 @@ func Authenticate(params *types.AuthenticationParams) error {
 func runAuthenticationByFlow(ctx context.Context, params *types.AuthenticationParams) (*oauth2.Token, error) {
 	switch params.AuthenticationFlow {
 	case types.CodePkceBrowser:
-		return authenticateCodePkceBrowser(ctx, params)
+		return code_pkce_browser.AuthenticateCodePkceBrowser(ctx, params)
+	case types.Auth0PasswordRealm:
+		return auth0_password_realm.AuthenticateAuth0PasswordRealm(ctx, params)
 	}
 	return nil, fmt.Errorf("unidentified authentication methd %v", params.AuthenticationFlow)
 }

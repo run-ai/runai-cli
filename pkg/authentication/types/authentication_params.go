@@ -4,14 +4,16 @@ import "fmt"
 
 const (
 	CodePkceBrowser           = "browser"
+	Auth0PasswordRealm        = "cli"
 	defaultRedirectServer     = "localhost:3000"
-	defaultAuthenticationFlow = CodePkceBrowser
+	defaultAuthenticationFlow = Auth0PasswordRealm
 )
 
 type AuthenticationParams struct {
 	ClientId      string
 	IssuerURL     string
 	ListenAddress string
+	Auth0Realm    string
 
 	AuthenticationFlow string
 	User               string
@@ -34,6 +36,9 @@ func (a *AuthenticationParams) MergeAuthenticationParams(patch *AuthenticationPa
 	if a.AuthenticationFlow == "" {
 		a.AuthenticationFlow = patch.AuthenticationFlow
 	}
+	if a.Auth0Realm == "" {
+		a.Auth0Realm = patch.Auth0Realm
+	}
 	return a
 }
 
@@ -46,6 +51,9 @@ func (a *AuthenticationParams) ValidateAndSetDefaultAuthenticationParams() (*Aut
 	}
 	if a.ClientId == "" || a.IssuerURL == "" {
 		return nil, fmt.Errorf("both client-id and idp-issuer-URL must be set")
+	}
+	if a.AuthenticationFlow == Auth0PasswordRealm && a.Auth0Realm == "" {
+		return nil, fmt.Errorf("must provide auth0-realm when using CLI authentication")
 	}
 	return a, nil
 }

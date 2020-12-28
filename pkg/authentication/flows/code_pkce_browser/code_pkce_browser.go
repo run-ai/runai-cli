@@ -1,10 +1,11 @@
-package authentication
+package code_pkce_browser
 
 import (
 	"context"
 	"github.com/coreos/go-oidc"
 	"github.com/int128/oauth2cli"
 	"github.com/pkg/browser"
+	"github.com/run-ai/runai-cli/pkg/authentication/flows"
 	"github.com/run-ai/runai-cli/pkg/authentication/pages"
 	"github.com/run-ai/runai-cli/pkg/authentication/pkce"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
@@ -12,7 +13,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func authenticateCodePkceBrowser(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Token, error) {
+func AuthenticateCodePkceBrowser(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Token, error) {
 	log.Debug("Authentication process start with authorization code flow, with PKCE, browser mode")
 	localServerReadyChan := make(chan string, 1)
 	go waitForLocalServer(localServerReadyChan)
@@ -62,7 +63,7 @@ func getOauth2Config(ctx context.Context, authParams *types.AuthenticationParams
 	return &oauth2.Config{
 		ClientID:    authParams.ClientId,
 		Endpoint:    provider.Endpoint(),
-		Scopes:      []string{emailScope, openIdScope, refreshTokenScope},
+		Scopes:      flows.Scopes,
 		RedirectURL: authParams.ListenAddress,
 	}, nil
 }

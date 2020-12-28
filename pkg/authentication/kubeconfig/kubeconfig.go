@@ -9,12 +9,13 @@ import (
 )
 
 const (
+	IdTokenRawTokenName         = "id_token"
 	clientIdFieldName           = "client-id"
 	issuerUrlFieldName          = "idp-issuer-url"
 	idTokenFieldName            = "id-token"
 	refreshTokenFieldName       = "refresh-token"
-	idTokenRawTokenName         = "id_token"
 	authenticationFlowFieldName = "auth-flow"
+	auth0RealmFieldName         = "auth0-realm"
 )
 
 func GetCurrentUserAuthenticationParams() (*types.AuthenticationParams, error) {
@@ -74,19 +75,16 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 		return &types.AuthenticationParams{}, nil
 	}
 
-	clientId, exists := kubeConfigUser.AuthProvider.Config[clientIdFieldName]
-	if !exists {
-		return nil, fmt.Errorf("%v field must be supllied in the kubeConfig file", clientIdFieldName)
-	}
-	issuerUrl, exists := kubeConfigUser.AuthProvider.Config[issuerUrlFieldName]
-	if !exists {
-		return nil, fmt.Errorf("%v field must be supllied in the kubeConfig file", issuerUrlFieldName)
-	}
+	clientId := kubeConfigUser.AuthProvider.Config[clientIdFieldName]
+	issuerUrl := kubeConfigUser.AuthProvider.Config[issuerUrlFieldName]
 	authenticationFlow := kubeConfigUser.AuthProvider.Config[authenticationFlowFieldName]
+	auth0Realm := kubeConfigUser.AuthProvider.Config[auth0RealmFieldName]
+
 	return &types.AuthenticationParams{
 		ClientId:           clientId,
 		IssuerURL:          issuerUrl,
 		AuthenticationFlow: authenticationFlow,
+		Auth0Realm:         auth0Realm,
 	}, nil
 }
 
@@ -95,7 +93,7 @@ func setTokenToUser(user, authenticationFlow string, token *oauth2.Token, kubeCo
 	if !exists {
 		return fmt.Errorf("user %v does not exists in kubeconfig", user)
 	}
-	if idToken := token.Extra(idTokenRawTokenName); idToken != nil {
+	if idToken := token.Extra(IdTokenRawTokenName); idToken != nil {
 		kubeConfigUser.AuthProvider.Config[idTokenFieldName] = idToken.(string)
 	}
 	kubeConfigUser.AuthProvider.Config[refreshTokenFieldName] = token.RefreshToken

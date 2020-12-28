@@ -17,7 +17,6 @@ func NewLoginCommand() *cobra.Command {
 			log.Debugf("starting authentication [cli args: %v, authentication params cli: %v]", args, params)
 			err := authentication.Authenticate(params)
 			if err != nil {
-				cmd.HelpFunc()(cmd, args)
 				log.Error(err)
 				os.Exit(1)
 			}
