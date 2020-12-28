@@ -45,7 +45,7 @@ func (a *AuthenticationParams) ValidateAndSetDefaultAuthenticationParams() (*Aut
 		a.AuthenticationFlow = defaultAuthenticationFlow
 	}
 	if a.ClientId == "" || a.IssuerURL == "" {
-		return nil, fmt.Errorf("both Client-id and Issuer-URL must be set")
+		return nil, fmt.Errorf("both client-id and idp-issuer-URL must be set")
 	}
 	return a, nil
 }

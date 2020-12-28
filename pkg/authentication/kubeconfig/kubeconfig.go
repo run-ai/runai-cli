@@ -10,7 +10,7 @@ import (
 
 const (
 	clientIdFieldName           = "client-id"
-	issuerUrlFieldName          = "issuer-url"
+	issuerUrlFieldName          = "idp-issuer-url"
 	idTokenFieldName            = "id-token"
 	refreshTokenFieldName       = "refresh-token"
 	idTokenRawTokenName         = "id_token"
