@@ -69,6 +69,6 @@ func getOauth2Config(ctx context.Context, authParams *types.AuthenticationParams
 
 func waitForLocalServer(readyChan chan string) {
 	url := <-readyChan
-	log.Debug("Opening browser to URL: %v", url)
+	log.Debugf("Opening browser to URL: %v", url)
 	browser.OpenURL(url)
 }
