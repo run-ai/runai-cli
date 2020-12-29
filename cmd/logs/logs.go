@@ -17,7 +17,7 @@ package logs
 import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/trainer"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"path"
@@ -34,9 +34,9 @@ import (
 func NewLogsCommand() *cobra.Command {
 	var outerArgs = &podlogs.OuterRequestArgs{}
 	var command = &cobra.Command{
-		Use:    "logs JOB_NAME",
-		Short:  "Print the logs of a job.",
-		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole), // Viewing logs of a job is explicitly allowed to executors only
+		Use:   "logs JOB_NAME",
+		Short: "Print the logs of a job.",
+		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole), // Viewing logs of a job is explicitly allowed to executors only
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

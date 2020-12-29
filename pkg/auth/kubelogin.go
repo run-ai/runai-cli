@@ -10,7 +10,7 @@ import (
 	"sort"
 )
 
-const cacheLocationSuffix = "/.kube/cache/oidc-login"
+const CacheLocationSuffix = "/.kube/cache/oidc-login"
 
 func GetKubeLoginErrorIfNeeded(err error) error {
 	if isAuthError(err) {
@@ -54,7 +54,7 @@ func getNewestTokenFile() (tokenFilePath string, err error) {
 	var homeDir string
 	var tokenFiles []os.FileInfo
 	if homeDir, err = os.UserHomeDir(); err == nil {
-		kubeloginCacheDir := homeDir + cacheLocationSuffix
+		kubeloginCacheDir := homeDir + CacheLocationSuffix
 		if tokenFiles, err = ioutil.ReadDir(kubeloginCacheDir); err == nil && len(tokenFiles) > 0 {
 			sort.Sort(ByModTime(tokenFiles))
 			tokenFilePath = kubeloginCacheDir + "/" + tokenFiles[0].Name()

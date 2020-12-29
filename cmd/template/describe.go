@@ -2,7 +2,7 @@ package template
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	"os"
 
 	"github.com/run-ai/runai-cli/pkg/client"
@@ -13,9 +13,9 @@ import (
 
 func getCommandDEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
-		Use:    "get TEMPLATE_NAME",
-		Short:  "Get information about one of the templates in the cluster.",
-		PreRun: commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		Use:   "get TEMPLATE_NAME",
+		Short: "Get information about one of the templates in the cluster.",
+		PreRun: commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:    commandUtil.WrapRunCommand(describeTemplate),
 	}
 
@@ -28,7 +28,7 @@ func DescribeCommand() *cobra.Command {
 		Aliases: []string{"templates"},
 		Args:    cobra.RangeArgs(1, 1),
 		Short:   "Describe information about one of the templates in the cluster.",
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(describeTemplate),
 	}
 

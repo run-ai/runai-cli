@@ -3,7 +3,7 @@ package project
 import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/constants"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
@@ -63,11 +63,11 @@ type Queue struct {
 
 type Project struct {
 	Spec struct {
-		DeservedGpus                float64  `mapstructure:"deservedGpus,omitempty"`
-		InteractiveJobTimeLimitSecs int      `mapstructure:"interactiveJobTimeLimitSecs,omitempty"`
-		Department                  string   `json:"department,omitempty" protobuf:"bytes,1,opt,name=department"`
-		NodeAffinityInteractive     []string `json:"nodeAffinityInteractive,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityInteractive"`
-		NodeAffinityTrain           []string `json:"nodeAffinityTrain,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityTrain"`
+		DeservedGpus                 float64  `mapstructure:"deservedGpus,omitempty"`
+		InteractiveJobTimeLimitSecs  int      `mapstructure:"interactiveJobTimeLimitSecs,omitempty"`
+		Department                   string   `json:"department,omitempty" protobuf:"bytes,1,opt,name=department"`
+		NodeAffinityInteractive     []string  `json:"nodeAffinityInteractive,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityInteractive"`
+		NodeAffinityTrain           []string  `json:"nodeAffinityTrain,omitempty" protobuf:"bytes,1,opt,name=nodeAffinityTrain"`
 	} `mapstructure:"spec,omitempty"`
 	Metadata struct {
 		Name string `mapstructure:"name,omitempty"`
@@ -132,7 +132,7 @@ func listProjects(dynamicClient dynamic.Interface, projects map[string]*ProjectI
 
 // listQueues Provides backwards compatibility for clusters that didn't upgrade to using Projects.
 // This is the exact same code that was here before I changed the list command logic.
-func listQueues(dynamicClient dynamic.Interface, kubeClient *client.Client, projects map[string]*ProjectInfo) error {
+func listQueues(dynamicClient dynamic.Interface, 	kubeClient *client.Client, projects map[string]*ProjectInfo) error {
 	clientset := kubeClient.GetClientset()
 	namespaceList, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
@@ -223,7 +223,7 @@ func listCommandDEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
 		Use:        "list",
 		Short:      fmt.Sprint("List all available projects."),
-		PreRun:     commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		PreRun: 	commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:        commandUtil.WrapRunCommand(runListCommand),
 		Deprecated: "Please use: 'runai list project' instead",
 	}
@@ -237,7 +237,7 @@ func ListCommand() *cobra.Command {
 		Use:     "projects",
 		Aliases: []string{"project"},
 		Short:   "List all available projects",
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 

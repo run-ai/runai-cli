@@ -2,7 +2,7 @@ package node
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"io"
 	"os"
@@ -49,7 +49,7 @@ func DescribeCommand() *cobra.Command {
 		Aliases: []string{"nodes"},
 		Short:   "Display detailed information about nodes in the cluster.",
 		Example: describeNodeExample,
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			nodeInfos, err := getNodeInfos(false)
 

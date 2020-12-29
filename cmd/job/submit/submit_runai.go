@@ -2,7 +2,7 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"math"
 	"os"
@@ -63,7 +63,7 @@ func NewRunaiJobCommand() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Submit a new job.",
 		Example:               submitExamples,
-		PreRun:                commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
+		PreRun:                commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			chartsFolder, err := util.GetChartsFolder()
 			if err != nil {

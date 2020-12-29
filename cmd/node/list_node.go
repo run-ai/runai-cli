@@ -2,7 +2,7 @@ package node
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/auth"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"text/tabwriter"
@@ -44,7 +44,7 @@ func ListCommand() *cobra.Command {
 		Aliases: []string{"node"},
 		Short:   "List all nodes.",
 		Example: listNodeExample,
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
 			nodeInfos, err := getNodeInfos(false)
