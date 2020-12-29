@@ -2,7 +2,7 @@ package project
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/auth"
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 
 	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
@@ -41,7 +41,7 @@ func ConfigureCommand() *cobra.Command {
 		Use:     "project [PROJECT]",
 		Aliases: []string{"projects"},
 		Short:   "Configure a default project.",
-		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
+		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(runConfigProjectCommand),
 		Args:    cobra.RangeArgs(1, 1),
 	}
@@ -54,7 +54,7 @@ func setCommandDEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
 		Use:        "set [PROJECT]",
 		Short:      fmt.Sprint("Set a default project all available projects."),
-		PreRun: 	commandUtil.RoleAssertion(auth.AssertViewerRole),
+		PreRun:     commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run:        commandUtil.WrapRunCommand(runConfigProjectCommand),
 		Args:       cobra.RangeArgs(1, 1),
 		Deprecated: "Please use: 'runai config project' instead",

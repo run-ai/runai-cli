@@ -6,7 +6,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/node"
 	"github.com/run-ai/runai-cli/cmd/project"
 	"github.com/run-ai/runai-cli/cmd/template"
-	"github.com/run-ai/runai-cli/pkg/auth"
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
 )
@@ -40,7 +40,7 @@ func NewListCommand() *cobra.Command {
 		Use:     "list",
 		Short:   "Display resource list. By default displays the job list.",
 		Example: listExample,
-		PreRun:  commandUtil.RoleAssertion(auth.AssertViewerRole),
+		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			job.RunJobList(cmd, args, allNamespaces)
 		},

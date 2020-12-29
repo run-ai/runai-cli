@@ -64,7 +64,7 @@ func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *types.Authe
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		log.Debugf("invalid response: %v, %v, %v", res.StatusCode, res.Status, string(body))
-		return nil, fmt.Errorf("invalid username or password")
+		return nil, fmt.Errorf("Invalid username or password")
 	}
 	contentType, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type"))
 	return getTokenFromROPCAuthResponse(contentType, body)
