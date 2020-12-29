@@ -18,6 +18,28 @@ const (
 	auth0RealmFieldName         = "auth0-realm"
 )
 
+func GetCurrentUserIdToken() (string, error) {
+	kubeConfig, err := readKubeConfig()
+	if err != nil {
+		return "", err
+	}
+
+	currentContext, exists := kubeConfig.Contexts[kubeConfig.CurrentContext]
+	if !exists {
+		return "", getInvalidKubeConfigError("current context does not exists")
+	}
+	currentUser, exists := kubeConfig.AuthInfos[currentContext.AuthInfo]
+	if !exists {
+		return "", getInvalidKubeConfigError("current context user does not exits")
+	}
+	idToken, exists := currentUser.AuthProvider.Config[idTokenFieldName]
+	if !exists || idToken == "" {
+		return "", getInvalidKubeConfigError(fmt.Sprintf("%v field does not exits", idTokenFieldName))
+	}
+
+	return currentUser.AuthProvider.Config[idTokenFieldName], nil
+}
+
 func GetCurrentContextDefaultNamespace() (string, error) {
 	kubeConfig, err := readKubeConfig()
 	if err != nil {
@@ -133,4 +155,8 @@ func readKubeConfig() (*api.Config, error) {
 func writeKubeConfig(config *api.Config) error {
 	configAccess := clientcmd.DefaultClientConfig.ConfigAccess()
 	return clientcmd.ModifyConfig(configAccess, *config, true)
+}
+
+func getInvalidKubeConfigError(reason string) error {
+	return fmt.Errorf("Invalid kubeConfig, %v", reason)
 }

@@ -5,11 +5,25 @@ import (
 	"fmt"
 	"github.com/run-ai/runai-cli/pkg/authentication/flows/auth0-password-realm"
 	"github.com/run-ai/runai-cli/pkg/authentication/flows/code_pkce_browser"
+	"github.com/run-ai/runai-cli/pkg/authentication/jwt"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
+
+func GetCurrentAuthenticateUser() (string, error) {
+	idToken, err := kubeconfig.GetCurrentUserIdToken()
+	if err != nil {
+		return "", err
+	}
+
+	token, err := jwt.Decode(idToken)
+	if err != nil {
+		return "", err
+	}
+	return token.Email, nil
+}
 
 func Authenticate(params *types.AuthenticationParams) error {
 	ctx := context.Background()

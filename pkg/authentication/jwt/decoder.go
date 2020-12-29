@@ -5,22 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 )
 
 // Can be potentially expanded to deserialize any field from the token.
 type Token struct {
-	Subject   string `json:"sub,omitempty"`
-	Email	  string `json:"email,omitempty"`
-}
-
-func DecodeTokenFile(tokenPath string) (token Token, err error) {
-	rawBytes, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return token, err
-	}
-	return Decode(string(rawBytes))
+	Subject string `json:"sub,omitempty"`
+	Email   string `json:"email,omitempty"`
 }
 
 // Decode does not verify signatures!! it is used for viewing purposes only

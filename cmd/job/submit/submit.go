@@ -16,7 +16,7 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/auth"
+	"github.com/run-ai/runai-cli/pkg/authentication"
 	"os/user"
 	"strconv"
 	"syscall"
@@ -295,13 +295,10 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 }
 
 func assignUser(submitArgs *submitArgs) {
-	// If its not zero then it was passed as flag by the user
 	if submitArgs.User == "" {
-		if kubeLoginUser, err := auth.GetEmailForCurrentKubeloginToken(); err == nil && kubeLoginUser != "" {
-			// Try to get user from kubelogin cached token
-			submitArgs.User = kubeLoginUser
+		if authenticatedUser, err := authentication.GetCurrentAuthenticateUser(); err == nil && authenticatedUser != "" {
+			submitArgs.User = authenticatedUser
 		} else if osUser, err := user.Current(); err == nil {
-			// Fallback to OS user
 			submitArgs.User = osUser.Username
 		}
 	}
