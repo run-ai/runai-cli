@@ -15,7 +15,7 @@ const (
 	idTokenFieldName            = "id-token"
 	refreshTokenFieldName       = "refresh-token"
 	authenticationFlowFieldName = "auth-flow"
-	auth0RealmFieldName         = "auth0-realm"
+	auth0RealmFieldName         = "realm"
 )
 
 func GetCurrentUserIdToken() (string, error) {
