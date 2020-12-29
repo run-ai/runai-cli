@@ -9,10 +9,9 @@ import (
 	"strings"
 )
 
-// Can be potentially expanded to deserialize any field from the token.
 type Token struct {
-	Subject   string `json:"sub,omitempty"`
-	Email	  string `json:"email,omitempty"`
+	Subject string `json:"sub,omitempty"`
+	Email   string `json:"email,omitempty"`
 }
 
 func DecodeTokenFile(tokenPath string) (token Token, err error) {
@@ -20,12 +19,11 @@ func DecodeTokenFile(tokenPath string) (token Token, err error) {
 	if err != nil {
 		return token, err
 	}
-	return Decode(string(rawBytes))
+	return decode(string(rawBytes))
 }
 
-// Decode does not verify signatures!! it is used for viewing purposes only
-func Decode(rawToken string) (token Token, err error) {
-	payload, err := DecodePayloadAsRawJSON(rawToken)
+func decode(rawToken string) (token Token, err error) {
+	payload, err := decodePayloadAsRawJSON(rawToken)
 	if err != nil {
 		return token, err
 	}
@@ -35,8 +33,7 @@ func Decode(rawToken string) (token Token, err error) {
 	return token, nil
 }
 
-// DecodePayloadAsRawJSON extracts the payload and returns the raw JSON.
-func DecodePayloadAsRawJSON(s string) ([]byte, error) {
+func decodePayloadAsRawJSON(s string) ([]byte, error) {
 	parts := strings.SplitN(s, ".", 3)
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("wants %d segments but got %d segments", 3, len(parts))
