@@ -1,5 +1,6 @@
 package flags
 
-var (
-	ProjectFlag            = "project"
+const (
+	ProjectFlag                 = "project"
+	RunaiNamespaceProjectPrefix = "runai-"
 )

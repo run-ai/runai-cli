@@ -18,6 +18,14 @@ const (
 	auth0RealmFieldName         = "auth0-realm"
 )
 
+func GetCurrentContextDefaultNamespace() (string, error) {
+	kubeConfig, err := readKubeConfig()
+	if err != nil {
+		return "", err
+	}
+	return kubeConfig.Contexts[kubeConfig.CurrentContext].Namespace, nil
+}
+
 func GetCurrentUserAuthenticationParams() (*authentication_params.AuthenticationParams, error) {
 	kubeConfig, err := readKubeConfig()
 	if err != nil {
