@@ -291,7 +291,7 @@ innerLoop:
 
 		jobInfo.Namespace = standaloneJob.Namespace
 		jobInfos = append(jobInfos, jobInfo)
-		// jobInfos = append(jobInfos, authentication-params.TrainingJobInfo{Name: standaloneJob.})
+		// jobInfos = append(jobInfos, types.TrainingJobInfo{Name: standaloneJob.})
 	}
 	log.Debugf("jobInfos %v", jobInfos)
 

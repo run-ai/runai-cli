@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/browser"
-	"github.com/run-ai/runai-cli/pkg/authentication/authentication-params"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/run-ai/runai-cli/pkg/authentication/pages"
+	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"net/http"
@@ -25,7 +25,7 @@ func Logout(user string) error {
 	}
 	log.Debug("Tokens deleted")
 
-	var params *authentication_params.AuthenticationParams
+	var params *types.AuthenticationParams
 	if user == "" {
 		params, err = kubeconfig.GetCurrentUserAuthenticationParams()
 	} else {
@@ -42,14 +42,14 @@ func Logout(user string) error {
 	log.Debugf("Final authentication params: %v", params)
 
 	switch params.AuthenticationFlow {
-	case authentication_params.CodePkceBrowser:
+	case types.CodePkceBrowser:
 		err = logoutUserSSOCookie(params)
 	}
 	log.Debug("Logout process done successfully")
 	return err
 }
 
-func logoutUserSSOCookie(params *authentication_params.AuthenticationParams) error {
+func logoutUserSSOCookie(params *types.AuthenticationParams) error {
 	log.Debug("Clear browser cache cookies")
 	var eg errgroup.Group
 	eg.Go(func() error { return serverLogoutWeb(params.ListenAddress) })

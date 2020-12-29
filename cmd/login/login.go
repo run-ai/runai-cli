@@ -2,14 +2,14 @@ package login
 
 import (
 	"github.com/run-ai/runai-cli/pkg/authentication"
-	"github.com/run-ai/runai-cli/pkg/authentication/authentication-params"
+	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
 )
 
 func NewLoginCommand() *cobra.Command {
-	params := &authentication_params.AuthenticationParams{}
+	params := &types.AuthenticationParams{}
 	var command = &cobra.Command{
 		Use:   "login",
 		Short: "Log in to Run:AI",

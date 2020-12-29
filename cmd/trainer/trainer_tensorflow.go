@@ -515,7 +515,7 @@ func (tt *TensorFlowJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err erro
 
 		jobInfo.Namespace = tfjob.Namespace
 		jobInfos = append(jobInfos, jobInfo)
-		// jobInfos = append(jobInfos, authentication-params.TrainingJobInfo{Name: tfjob.})
+		// jobInfos = append(jobInfos, types.TrainingJobInfo{Name: tfjob.})
 	}
 	log.Debugf("jobInfos %v", jobInfos)
 

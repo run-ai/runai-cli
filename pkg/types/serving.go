@@ -8,7 +8,7 @@ import (
 
 type ServingType string
 
-// three serving authentication-params.
+// three serving types.
 const (
 	// tensorflow
 	ServingTF ServingType = "TENSORFLOW"

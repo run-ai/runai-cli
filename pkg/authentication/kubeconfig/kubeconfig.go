@@ -2,7 +2,7 @@ package kubeconfig
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/authentication-params"
+	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	"golang.org/x/oauth2"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -26,7 +26,7 @@ func GetCurrentContextDefaultNamespace() (string, error) {
 	return kubeConfig.Contexts[kubeConfig.CurrentContext].Namespace, nil
 }
 
-func GetCurrentUserAuthenticationParams() (*authentication_params.AuthenticationParams, error) {
+func GetCurrentUserAuthenticationParams() (*types.AuthenticationParams, error) {
 	kubeConfig, err := readKubeConfig()
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func GetCurrentUserAuthenticationParams() (*authentication_params.Authentication
 	return getUserAuthenticationParams(kubeConfig.Contexts[kubeConfig.CurrentContext].AuthInfo, kubeConfig)
 }
 
-func GetUserAuthenticationParams(user string) (*authentication_params.AuthenticationParams, error) {
+func GetUserAuthenticationParams(user string) (*types.AuthenticationParams, error) {
 	kubeConfig, err := readKubeConfig()
 	if err != nil {
 		return nil, err
@@ -74,13 +74,13 @@ func DeleteTokenToUser(user string) error {
 	return deleteTokenToUser(user, kubeConfig)
 }
 
-func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*authentication_params.AuthenticationParams, error) {
+func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.AuthenticationParams, error) {
 	kubeConfigUser, exists := kubeConfig.AuthInfos[user]
 	if !exists {
 		return nil, fmt.Errorf("user %v does not exists in kubeconfig", user)
 	}
 	if kubeConfigUser.AuthProvider == nil {
-		return &authentication_params.AuthenticationParams{}, nil
+		return &types.AuthenticationParams{}, nil
 	}
 
 	clientId := kubeConfigUser.AuthProvider.Config[clientIdFieldName]
@@ -88,7 +88,7 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*authenti
 	authenticationFlow := kubeConfigUser.AuthProvider.Config[authenticationFlowFieldName]
 	auth0Realm := kubeConfigUser.AuthProvider.Config[auth0RealmFieldName]
 
-	return &authentication_params.AuthenticationParams{
+	return &types.AuthenticationParams{
 		ClientId:           clientId,
 		IssuerURL:          issuerUrl,
 		AuthenticationFlow: authenticationFlow,

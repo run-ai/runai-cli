@@ -5,15 +5,15 @@ import (
 	"github.com/coreos/go-oidc"
 	"github.com/int128/oauth2cli"
 	"github.com/pkg/browser"
-	"github.com/run-ai/runai-cli/pkg/authentication/authentication-params"
 	"github.com/run-ai/runai-cli/pkg/authentication/flows"
 	"github.com/run-ai/runai-cli/pkg/authentication/pages"
 	"github.com/run-ai/runai-cli/pkg/authentication/pkce"
+	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
 
-func AuthenticateCodePkceBrowser(ctx context.Context, authParams *authentication_params.AuthenticationParams) (*oauth2.Token, error) {
+func AuthenticateCodePkceBrowser(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Token, error) {
 	log.Debug("Authentication process start with authorization code flow, with PKCE, browser mode")
 	localServerReadyChan := make(chan string, 1)
 	go waitForLocalServer(localServerReadyChan)
@@ -31,7 +31,7 @@ func AuthenticateCodePkceBrowser(ctx context.Context, authParams *authentication
 	return oauth2cli.GetToken(ctx, *oauth2cliConfig)
 }
 
-func getOauth2cliGetTokenConfig(oauth2Config *oauth2.Config, localServerReadyChan chan string, authParams *authentication_params.AuthenticationParams) (*oauth2cli.Config, error) {
+func getOauth2cliGetTokenConfig(oauth2Config *oauth2.Config, localServerReadyChan chan string, authParams *types.AuthenticationParams) (*oauth2cli.Config, error) {
 	pkceParams, err := pkce.New()
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func getOauth2cliGetTokenConfig(oauth2Config *oauth2.Config, localServerReadyCha
 	}, nil
 }
 
-func getOauth2Config(ctx context.Context, authParams *authentication_params.AuthenticationParams) (*oauth2.Config, error) {
+func getOauth2Config(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Config, error) {
 	provider, err := oidc.NewProvider(ctx, authParams.IssuerURL)
 	if err != nil {
 		return nil, err

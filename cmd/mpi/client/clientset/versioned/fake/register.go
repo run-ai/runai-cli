@@ -38,7 +38,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	runaijobv1.AddToScheme,
 }
 
-// AddToScheme adds all authentication-params of this clientset into the given scheme. This allows composition
+// AddToScheme adds all types of this clientset into the given scheme. This allows composition
 // of clientsets, like in:
 //
 //   import (
@@ -50,7 +50,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 //   kclientset, _ := kubernetes.NewForConfig(c)
 //   _ = aggregatorclientsetscheme.AddToScheme(clientsetscheme.Scheme)
 //
-// After this, RawExtensions in Kubernetes authentication-params will serialize kube-aggregator authentication-params
+// After this, RawExtensions in Kubernetes types will serialize kube-aggregator types
 // correctly.
 var AddToScheme = localSchemeBuilder.AddToScheme
 

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/go-oidc"
-	"github.com/run-ai/runai-cli/pkg/authentication/authentication-params"
 	"github.com/run-ai/runai-cli/pkg/authentication/flows"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
+	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"io"
@@ -28,7 +28,7 @@ type auth0Tokens struct {
 	IdToken      string `json:"id_token,omitempty"`
 }
 
-func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *authentication_params.AuthenticationParams) (*oauth2.Token, error) {
+func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Token, error) {
 	user, password, err := getRawCredentials()
 	if err != nil {
 		return nil, err

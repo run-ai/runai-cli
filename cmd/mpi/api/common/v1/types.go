@@ -101,7 +101,7 @@ type JobCondition struct {
 }
 
 // +k8s:openapi-gen=true
-// JobConditionType defines all kinds of authentication-params of JobStatus.
+// JobConditionType defines all kinds of types of JobStatus.
 type JobConditionType string
 
 const (
