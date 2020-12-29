@@ -11,7 +11,7 @@ func NewLogoutCommand() *cobra.Command {
 	var user string
 	var command = &cobra.Command{
 		Use:   "logout",
-		Short: "Logout from runai",
+		Short: "Logout your client from Run:AI backend",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Debugf("Logout user. cli args: %v, cli user param: %v", args, user)
 			err := logout.Logout(user)
