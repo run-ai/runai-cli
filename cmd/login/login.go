@@ -12,7 +12,7 @@ func NewLoginCommand() *cobra.Command {
 	params := &authentication_params.AuthenticationParams{}
 	var command = &cobra.Command{
 		Use:   "login",
-		Short: "Authenticates your client with the Run:AI Backend",
+		Short: "Log in to Run:AI",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Debugf("starting authentication [cli args: %v, authentication params cli: %v]", args, params)
 			err := authentication.Authenticate(params)

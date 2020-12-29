@@ -47,7 +47,7 @@ func assertPermission(request authv1.SelfSubjectAccessReviewSpec) (err error) {
 
 func getAuthorizationErrorIfNeeded(inputErr error) error {
 	if isNoValidTokenExists(inputErr) {
-		return fmt.Errorf("please authenticate with 'runai login' command first")
+		return fmt.Errorf("User not authenticated, run the ‘runai login’ command.")
 	} else if errors.IsForbidden(inputErr) || errors.IsUnauthorized(inputErr) {
 		return getUnauthorizedError()
 	}
@@ -59,5 +59,5 @@ func isNoValidTokenExists(inputErr error) bool {
 }
 
 func getUnauthorizedError() error {
-	return fmt.Errorf("you are not authorized to perform this action: Access denied")
+	return fmt.Errorf("Access denied. You are not authorized to perform this action.")
 }
