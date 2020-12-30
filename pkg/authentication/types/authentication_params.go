@@ -5,7 +5,7 @@ import "fmt"
 const (
 	CodePkceBrowser           = "browser"
 	Auth0PasswordRealm        = "cli"
-	defaultRedirectServer     = "localhost:3000"
+	defaultRedirectServer     = "localhost:8000"
 	defaultAuthenticationFlow = CodePkceBrowser
 )
 
