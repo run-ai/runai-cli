@@ -27,19 +27,7 @@ func GetCurrentAuthenticateUser() (string, error) {
 
 func Authenticate(params *types.AuthenticationParams) error {
 	ctx := context.Background()
-	var kubeConfigParams *types.AuthenticationParams
-	var err error
-	if params.User == "" {
-		kubeConfigParams, err = kubeconfig.GetCurrentUserAuthenticationParams()
-	} else {
-		kubeConfigParams, err = kubeconfig.GetUserAuthenticationParams(params.User)
-	}
-	if err != nil {
-		return err
-	}
-	log.Debugf("Read user kubeConfig authentication params: %v", kubeConfigParams)
-	params = params.MergeAuthenticationParams(kubeConfigParams)
-	params, err = params.ValidateAndSetDefaultAuthenticationParams()
+	params, err := GetFinalAuthenticationParams(params)
 	if err != nil {
 		return err
 	}
@@ -53,6 +41,22 @@ func Authenticate(params *types.AuthenticationParams) error {
 		return kubeconfig.SetTokenToCurrentUser(params.AuthenticationFlow, token)
 	}
 	return kubeconfig.SetTokenToUser(params.User, params.AuthenticationFlow, token)
+}
+
+func GetFinalAuthenticationParams(cliParams *types.AuthenticationParams) (*types.AuthenticationParams, error) {
+	var kubeConfigParams *types.AuthenticationParams
+	var err error
+	if cliParams.User == "" {
+		kubeConfigParams, err = kubeconfig.GetCurrentUserAuthenticationParams()
+	} else {
+		kubeConfigParams, err = kubeconfig.GetUserAuthenticationParams(cliParams.User)
+	}
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("Read user kubeConfig authentication params: %v", kubeConfigParams)
+	cliParams = cliParams.MergeAuthenticationParams(kubeConfigParams)
+	return cliParams.ValidateAndSetDefaultAuthenticationParams()
 }
 
 func runAuthenticationByFlow(ctx context.Context, params *types.AuthenticationParams) (*oauth2.Token, error) {

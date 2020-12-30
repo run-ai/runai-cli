@@ -32,6 +32,9 @@ func GetCurrentUserIdToken() (string, error) {
 	if !exists {
 		return "", getInvalidKubeConfigError("current context user does not exits")
 	}
+	if currentUser.AuthProvider == nil || currentUser.AuthProvider.Config == nil {
+		return "", getInvalidKubeConfigError("authProvider.config does not exists")
+	}
 	idToken, exists := currentUser.AuthProvider.Config[idTokenFieldName]
 	if !exists || idToken == "" {
 		return "", getInvalidKubeConfigError(fmt.Sprintf("%v field does not exits", idTokenFieldName))
@@ -100,6 +103,9 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 	kubeConfigUser, exists := kubeConfig.AuthInfos[user]
 	if !exists {
 		return nil, fmt.Errorf("user %v does not exists in kubeconfig", user)
+	}
+	if len(kubeConfigUser.ClientCertificateData) != 0 {
+		return nil, fmt.Errorf("you currently connected with certificate. Login aborted")
 	}
 	if kubeConfigUser.AuthProvider == nil {
 		return &types.AuthenticationParams{}, nil

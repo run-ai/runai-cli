@@ -10,7 +10,6 @@ import (
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -42,11 +41,11 @@ func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *types.Authe
 		"scope":      {strings.Join(flows.Scopes, " ")},
 		"client_id":  {authParams.ClientId},
 	}
+
 	provider, err := oidc.NewProvider(ctx, authParams.IssuerURL)
 	if err != nil {
 		return nil, err
 	}
-
 	log.Debug("Sending request to authentication")
 	req, err := http.NewRequest("POST", provider.Endpoint().TokenURL, strings.NewReader(requestParams.Encode()))
 	if err != nil {
@@ -58,7 +57,8 @@ func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *types.Authe
 		return nil, err
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(io.LimitReader(res.Body, 1<<20))
+
+	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
 	}
@@ -80,7 +80,6 @@ func getTokenFromROPCAuthResponse(contentType string, responseBody []byte) (*oau
 		}
 		token = (&oauth2.Token{
 			TokenType:    formParams.Get("token_type"),
-			AccessToken:  formParams.Get("access_token"),
 			RefreshToken: formParams.Get("refresh_token"),
 		}).WithExtra(formParams)
 		return token, nil

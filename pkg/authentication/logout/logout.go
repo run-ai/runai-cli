@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/browser"
+	"github.com/run-ai/runai-cli/pkg/authentication"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/run-ai/runai-cli/pkg/authentication/pages"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
@@ -25,17 +26,8 @@ func Logout(user string) error {
 	}
 	log.Debug("Tokens deleted")
 
-	var params *types.AuthenticationParams
-	if user == "" {
-		params, err = kubeconfig.GetCurrentUserAuthenticationParams()
-	} else {
-		params, err = kubeconfig.GetUserAuthenticationParams(user)
-	}
-	if err != nil {
-		return err
-	}
-	log.Debugf("Read authentication params from kubeConfig: %v", params)
-	params, err = params.ValidateAndSetDefaultAuthenticationParams()
+	var emptyParams types.AuthenticationParams
+	params, err := authentication.GetFinalAuthenticationParams(&emptyParams)
 	if err != nil {
 		return err
 	}
