@@ -2,7 +2,7 @@ package attach
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/auth"
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"time"
@@ -35,9 +35,9 @@ func NewAttachCommand() *cobra.Command {
 	options := AttachOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "attach JOB_NAME",
-		Short: "Attach standard input, output, and error streams to a running job session.",
-		PreRun: commandUtil.NamespacedRoleAssertion(auth.AssertExecutorRole),
+		Use:    "attach JOB_NAME",
+		Short:  "Attach standard input, output, and error streams to a running job session.",
+		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

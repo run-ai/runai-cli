@@ -11,6 +11,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func GetNamespaceToUseFromProjectFlagOffline(cmd *cobra.Command) string {
+	flagValue := getFlagValue(cmd, ProjectFlag)
+	if flagValue == "" {
+		return ""
+	}
+	return fmt.Sprintf("%v%v", RunaiNamespaceProjectPrefix, flagValue)
+}
+
 // This function will print an error even if -b flag was used
 func GetNamespaceToUseFromProjectFlagAndPrintError(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
 	return getNamespaceToUseFromProjectFlag(cmd, kubeClient, true)
