@@ -17,6 +17,7 @@ package submit
 import (
 	"fmt"
 	"github.com/run-ai/runai-cli/pkg/authentication"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"os/user"
 	"strconv"
 	"syscall"
@@ -282,6 +283,11 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	if err = handleImagePullPolicy(submitArgs); err != nil {
+		return err
+	}
+
+	_, err = resource.ParseQuantity(submitArgs.Memory)
+	if err != nil {
 		return err
 	}
 
