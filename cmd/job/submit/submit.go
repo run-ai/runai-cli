@@ -286,9 +286,11 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		return err
 	}
 
-	_, err = resource.ParseQuantity(submitArgs.Memory)
-	if err != nil {
-		return err
+	if submitArgs.Memory != "" {
+		_, err = resource.ParseQuantity(submitArgs.Memory)
+		if err != nil {
+			return err
+		}
 	}
 
 	if submitArgs.GitSync == nil {
