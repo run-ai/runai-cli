@@ -143,6 +143,9 @@ func deleteTokenToUser(user string, kubeConfig *api.Config) error {
 	if !exists {
 		return fmt.Errorf("user %v does not exists in kubeconfig", user)
 	}
+	if kubeConfigUser.AuthProvider == nil {
+		return fmt.Errorf("User does not authenticated")
+	}
 	if _, exists := kubeConfigUser.AuthProvider.Config[idTokenFieldName]; exists {
 		delete(kubeConfigUser.AuthProvider.Config, idTokenFieldName)
 	}
