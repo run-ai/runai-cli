@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/browser"
+	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/authentication"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/run-ai/runai-cli/pkg/authentication/pages"
@@ -47,7 +48,7 @@ func logoutUserSSOCookie(params *types.AuthenticationParams) error {
 	eg.Go(func() error { return serverLogoutWeb(params.ListenAddress) })
 	eg.Go(func() error {
 		redirectUrl := fmt.Sprintf("%vlogout", params.GetRedirectUrl())
-		logoutUrl := fmt.Sprintf("%vv2/logout?returnTo=%v&client_id=%v", params.IssuerURL, url.QueryEscape(redirectUrl), params.ClientId)
+		logoutUrl := getSSOLogoutUrl(util.IsBoolPTrue(params.IsAirgapped), params.IssuerURL, redirectUrl, params.ClientId)
 		log.Debugf("Open browser url: %v", logoutUrl)
 		return browser.OpenURL(logoutUrl)
 	})
@@ -65,4 +66,11 @@ func serverLogoutWeb(server string) error {
 	log.Debug("Open server to redirect after browser logout")
 	_ = s.ListenAndServe()
 	return nil
+}
+
+func getSSOLogoutUrl(isAirgapped bool, issuerURL, redirectUrl, clientId string) string {
+	if isAirgapped {
+		return fmt.Sprintf("%v/protocol/openid-connect/logout?redirect_uri=%v", issuerURL, redirectUrl)
+	}
+	return fmt.Sprintf("%vv2/logout?returnTo=%v&client_id=%v", issuerURL, url.QueryEscape(redirectUrl), clientId)
 }

@@ -6,10 +6,12 @@ import (
 	"golang.org/x/oauth2"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"strconv"
 )
 
 const (
 	IdTokenRawTokenName         = "id_token"
+	airgappedFieldName          = "airgapped"
 	clientIdFieldName           = "client-id"
 	issuerUrlFieldName          = "idp-issuer-url"
 	idTokenFieldName            = "id-token"
@@ -115,12 +117,18 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 	issuerUrl := kubeConfigUser.AuthProvider.Config[issuerUrlFieldName]
 	authenticationFlow := kubeConfigUser.AuthProvider.Config[authenticationFlowFieldName]
 	auth0Realm := kubeConfigUser.AuthProvider.Config[auth0RealmFieldName]
+	airgapped := kubeConfigUser.AuthProvider.Config[airgappedFieldName]
+	airgappedFlag, err := strconv.ParseBool(airgapped)
+	if err != nil {
+		airgappedFlag = false
+	}
 
 	return &types.AuthenticationParams{
 		ClientId:           clientId,
 		IssuerURL:          issuerUrl,
 		AuthenticationFlow: authenticationFlow,
 		Auth0Realm:         auth0Realm,
+		IsAirgapped:        &airgappedFlag,
 	}, nil
 }
 
