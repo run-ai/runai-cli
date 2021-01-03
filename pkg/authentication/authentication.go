@@ -3,8 +3,10 @@ package authentication
 import (
 	"context"
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/flows/auth0-password-realm"
-	"github.com/run-ai/runai-cli/pkg/authentication/flows/code_pkce_browser"
+	"github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/authentication/flows/code-pkce-browser"
+	auth0_password_realm2 "github.com/run-ai/runai-cli/pkg/authentication/flows/password/auth0-password-realm"
+	keycloak_password "github.com/run-ai/runai-cli/pkg/authentication/flows/password/keycloak-password"
 	"github.com/run-ai/runai-cli/pkg/authentication/jwt"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
@@ -64,7 +66,10 @@ func runAuthenticationByFlow(ctx context.Context, params *types.AuthenticationPa
 	case types.CodePkceBrowser:
 		return code_pkce_browser.AuthenticateCodePkceBrowser(ctx, params)
 	case types.Auth0PasswordRealm:
-		return auth0_password_realm.AuthenticateAuth0PasswordRealm(ctx, params)
+		if util.IsBoolPTrue(params.IsAirgapped) {
+			return keycloak_password.AuthenticateKeycloakPassword(ctx, params)
+		}
+		return auth0_password_realm2.AuthenticateAuth0PasswordRealm(ctx, params)
 	}
 	return nil, fmt.Errorf("unidentified authentication methd %v", params.AuthenticationFlow)
 }

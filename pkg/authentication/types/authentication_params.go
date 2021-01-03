@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/run-ai/runai-cli/cmd/util"
+)
 
 const (
 	CodePkceBrowser           = "browser"
@@ -61,7 +64,7 @@ func (a *AuthenticationParams) ValidateAndSetDefaultAuthenticationParams() (*Aut
 	if a.ClientId == "" || a.IssuerURL == "" {
 		return nil, fmt.Errorf("both client-id and idp-issuer-URL must be set")
 	}
-	if a.AuthenticationFlow == Auth0PasswordRealm && a.Auth0Realm == "" {
+	if a.AuthenticationFlow == Auth0PasswordRealm && a.Auth0Realm == "" && !util.IsBoolPTrue(a.IsAirgapped) {
 		return nil, fmt.Errorf("must provide auth0-realm when using CLI authentication")
 	}
 	return a, nil
