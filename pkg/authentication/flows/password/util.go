@@ -41,11 +41,11 @@ func GetTokenFromResponse(contentType string, responseBody []byte) (*oauth2.Toke
 			return nil, err
 		}
 
-		return ConvertServerTokensToOauth2Token(&auth0Tokens), nil
+		return convertServerTokensToOauth2Token(&auth0Tokens), nil
 	}
 }
 
-func ConvertServerTokensToOauth2Token(auth0Tokens *ServerTokens) *oauth2.Token {
+func convertServerTokensToOauth2Token(auth0Tokens *ServerTokens) *oauth2.Token {
 	oauth2Token := &oauth2.Token{
 		RefreshToken: auth0Tokens.RefreshToken,
 	}
