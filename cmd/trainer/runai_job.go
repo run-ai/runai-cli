@@ -2,7 +2,6 @@ package trainer
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"strconv"
 	"time"
 
@@ -264,9 +263,7 @@ func (rj *RunaiJob) RequestedGPUMemory() uint64 {
 
 func (rj *RunaiJob) RequestedGPUString() string {
 	if memory := rj.RequestedGPUMemory(); memory != 0 {
-		gpuMemoryInBytes := int64(memory) * GpuMbFactor
-		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
-		return fmt.Sprintf("%v", quantity)
+		return GetGpuMemoryStringFromMemoryCount(int64(memory))
 	}
 	return fmt.Sprintf("%v", rj.RequestedGPU())
 }
@@ -405,6 +402,18 @@ func (rj *RunaiJob) CurrentRequestedGPUs() float64 {
 	return rj.RequestedGPU()
 }
 
+func (rj *RunaiJob) CurrentRequestedGPUsMemory() int64 {
+	totalRequestedGpusMemory, _ := getCurrentRequestedGPUsMemory(rj.jobMetadata.Annotations)
+	return totalRequestedGpusMemory
+}
+
+func (rj *RunaiJob) CurrentRequestedGpusString() string {
+	if memory := rj.CurrentRequestedGPUsMemory(); memory != 0 {
+		return GetGpuMemoryStringFromMemoryCount(memory)
+	}
+	return fmt.Sprintf("%v", rj.CurrentRequestedGPUs())
+}
+
 func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
 	totalRequestedGPUs, ok := getAllocatedRequestedGPUs(rj.jobMetadata.Annotations)
 	if ok {
@@ -424,9 +433,7 @@ func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
 
 func (rj *RunaiJob) CurrentAllocatedGPUsMemory() string {
 	allocatedGpuMemoryInMb := getAllocatedGpusMemory(rj.jobMetadata.Annotations)
-	gpuMemoryInBytes := int64(allocatedGpuMemoryInMb) * GpuMbFactor
-	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
-	return fmt.Sprintf("%v", quantity)
+	return GetGpuMemoryStringFromMemoryCount(int64(allocatedGpuMemoryInMb))
 }
 
 func (rj *RunaiJob) WorkloadType() string {
@@ -435,9 +442,7 @@ func (rj *RunaiJob) WorkloadType() string {
 
 func (rj *RunaiJob) TotalRequestedGPUsString() string {
 	if memory := rj.TotalRequestedGPUsMemory(); memory != 0 {
-		gpuMemoryInBytes := int64(memory) * GpuMbFactor
-		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
-		return fmt.Sprintf("%v", quantity)
+		return GetGpuMemoryStringFromMemoryCount(int64(memory))
 	}
 	return fmt.Sprintf("%v", rj.TotalRequestedGPUs())
 }

@@ -16,7 +16,6 @@ package trainer
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"sort"
 	"strconv"
 	"strings"
@@ -249,9 +248,7 @@ func (mj *MPIJob) AllocatedGPU() float64 {
 
 func (mj *MPIJob) RequestedGPUString() string {
 	if memory := mj.RequestedGPUMemory(); memory != 0 {
-		gpuMemoryInBytes := int64(memory) * GpuMbFactor
-		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
-		return fmt.Sprintf("%v", quantity)
+		return GetGpuMemoryStringFromMemoryCount(int64(memory))
 	}
 	return fmt.Sprintf("%v", mj.RequestedGPU())
 }
@@ -334,9 +331,7 @@ func (mj *MPIJob) Succeeded() int32 {
 
 func (mj *MPIJob) TotalRequestedGPUsString() string {
 	if memory := mj.TotalRequestedGPUsMemory(); memory != 0 {
-		gpuMemoryInBytes := int64(memory) * GpuMbFactor
-		quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
-		return fmt.Sprintf("%v", quantity)
+		return GetGpuMemoryStringFromMemoryCount(int64(memory))
 	}
 	return fmt.Sprintf("%v", mj.TotalRequestedGPUs())
 }
@@ -370,6 +365,18 @@ func (mj *MPIJob) CurrentRequestedGPUs() float64 {
 	return mj.RequestedGPU()
 }
 
+func (mj *MPIJob) CurrentRequestedGPUsMemory() int64 {
+	totalRequestedGpusMemory, _ := getCurrentRequestedGPUsMemory(mj.mpijob.Annotations)
+	return totalRequestedGpusMemory
+}
+
+func (mj *MPIJob) CurrentRequestedGpusString() string {
+	if memory := mj.CurrentRequestedGPUsMemory(); memory != 0 {
+		return GetGpuMemoryStringFromMemoryCount(memory)
+	}
+	return fmt.Sprintf("%v", mj.CurrentRequestedGPUs())
+}
+
 func (mj *MPIJob) CurrentAllocatedGPUs() float64 {
 	totalRequestedGPUs, ok := getAllocatedRequestedGPUs(mj.mpijob.Annotations)
 	if ok {
@@ -382,9 +389,7 @@ func (mj *MPIJob) CurrentAllocatedGPUs() float64 {
 
 func (mj *MPIJob) CurrentAllocatedGPUsMemory() string {
 	allocatedGpuMemoryInMb := getAllocatedGpusMemory(mj.mpijob.Annotations)
-	gpuMemoryInBytes := int64(allocatedGpuMemoryInMb) * GpuMbFactor
-	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
-	return fmt.Sprintf("%v", quantity)
+	return GetGpuMemoryStringFromMemoryCount(int64(allocatedGpuMemoryInMb))
 }
 
 func (mj *MPIJob) Namespace() string {
