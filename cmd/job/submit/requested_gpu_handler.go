@@ -22,7 +22,6 @@ func handleRequestedGPUs(submitArgs *submitArgs) error {
 		}
 
 		memoryInMib := memoryQuantity.Value() / GpuMbFactor //From bytes to mib
-		fmt.Println(memoryInMib)
 		if memoryInMib < minGpuMemory {
 			return fmt.Errorf("gpu memory must be greater than 100Mb")
 		}

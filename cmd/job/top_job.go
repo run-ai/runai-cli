@@ -93,8 +93,9 @@ func TopCommand() *cobra.Command {
 func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
-		totalAllocatedGPUs float64
-		totalRequestedGPUs float64
+		totalAllocatedGPUs       float64
+		totalRequestedGPUs       float64
+		totalRequestedGPUsMemory int64
 	)
 
 	labelField := []string{"NAME", "PROJECT", "GPU(Current Requests)", "GPU(Current Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
@@ -102,16 +103,18 @@ func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 	ui.Line(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
-
+		jobInfo.CurrentRequestedGPUs()
 		hostIP := jobInfo.HostIPOfChief()
 		requestedGPU := jobInfo.CurrentRequestedGPUs()
 		allocatedGPU := jobInfo.CurrentAllocatedGPUs()
+		requestedGPUsMemory := jobInfo.CurrentRequestedGPUsMemory()
 		// status, hostIP := jobInfo.getStatus()
 		totalAllocatedGPUs += allocatedGPU
 		totalRequestedGPUs += requestedGPU
+		totalRequestedGPUsMemory += requestedGPUsMemory
 		ui.Line(w, jobInfo.Name(),
 			jobInfo.Project(),
-			strconv.FormatFloat(jobInfo.CurrentRequestedGPUs(), 'f', -1, 64),
+			jobInfo.CurrentRequestedGpusString(),
 			strconv.FormatFloat(jobInfo.CurrentAllocatedGPUs(), 'f', -1, 64),
 			jobInfo.GetStatus(),
 			jobInfo.Trainer(),
@@ -127,10 +130,8 @@ func topTrainingJob(jobInfoList []trainer.TrainingJob) {
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Total Requested GPUs: ")
 	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32))
+	fmt.Fprintf(w, "Total Requested GPUs Memory: ")
+	fmt.Fprintf(w, "%s \t\n", trainer.GetGpuMemoryStringFromMemoryCount(totalRequestedGPUsMemory))
 
 	_ = w.Flush()
-}
-
-func fromByteToMiB(value float64) float64 {
-	return value / 1048576
 }
