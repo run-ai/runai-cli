@@ -108,7 +108,7 @@ func PodTemplateJobFromRunaiJob(runaiJob runaijobv1.RunaiJob) *PodTemplateJob {
 	}
 
 	completions := int32(1)
-	if runaiJob.Spec.Parallelism != nil {
+	if runaiJob.Spec.Completions != nil {
 		completions = *runaiJob.Spec.Completions
 	}
 
