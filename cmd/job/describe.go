@@ -235,9 +235,6 @@ func printEvents(clientset kubernetes.Interface, w io.Writer, namespace string, 
 // Get real job status
 // WHen has pods being pending, tfJob still show in Running state, it should be Pending
 func GetJobRealStatus(job trainer.TrainingJob) string {
-	if job.Parallelism() == 0 {
-		return "SUSPENDED"
-	}
 	hasPendingPod := false
 	jobStatus := job.GetStatus()
 	if jobStatus == "RUNNING" {
