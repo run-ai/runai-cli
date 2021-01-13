@@ -166,7 +166,14 @@ func deleteTokenToUser(user string, kubeConfig *api.Config) error {
 
 func readKubeConfig() (*api.Config, error) {
 	configAccess := clientcmd.DefaultClientConfig.ConfigAccess()
-	return configAccess.GetStartingConfig()
+	kubeConfig, err := configAccess.GetStartingConfig()
+	if err != nil {
+		return nil, err
+	}
+	if kubeConfig.Kind == "" {
+		return nil, fmt.Errorf("Could not find KubeConfig file")
+	}
+	return kubeConfig, nil
 }
 
 func writeKubeConfig(config *api.Config) error {

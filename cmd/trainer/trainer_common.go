@@ -8,6 +8,7 @@ import (
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -196,6 +197,16 @@ func getCurrentRequestedGPUs(trainingAnnotations map[string]string) (float64, bo
 	return 0, false
 }
 
+func getCurrentRequestedGPUsMemory(trainingAnnotations map[string]string) (int64, bool) {
+	if len(trainingAnnotations[util.WorkloadCurrentRequestedGPUsMemory]) > 0 {
+		totalAllocatedGPUs, err := strconv.ParseInt(trainingAnnotations[util.WorkloadCurrentRequestedGPUsMemory], 10, 64)
+		if err == nil {
+			return totalAllocatedGPUs, true
+		}
+	}
+	return 0, false
+}
+
 func getAllocatedRequestedGPUs(trainingAnnotations map[string]string) (float64, bool) {
 	if len(trainingAnnotations[util.WorkloadCurrentAllocatedGPUs]) > 0 {
 		currentAllocated, err := strconv.ParseFloat(trainingAnnotations[util.WorkloadCurrentAllocatedGPUs], 64)
@@ -369,4 +380,10 @@ func GetTrainingTypes(name, namespace string, clientset kubernetes.Interface) (c
 	}
 
 	return cms, nil
+}
+
+func GetGpuMemoryStringFromMemoryCount(memory int64) string {
+	gpuMemoryInBytes := memory * GpuMbFactor
+	quantity := resource.NewQuantity(gpuMemoryInBytes, resource.DecimalSI)
+	return fmt.Sprintf("%v", quantity)
 }
