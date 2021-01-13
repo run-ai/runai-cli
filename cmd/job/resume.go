@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package job
 
 import (
 	"fmt"
@@ -26,11 +26,10 @@ import (
 	"os"
 )
 
-// NewDeleteCommand
-func NewDeleteCommand() *cobra.Command {
+func ResumeCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:    "delete JOB_NAME",
-		Short:  "Delete a job and its associated pods.",
+		Use:    "resume JOB_NAME",
+		Short:  "Resume a suspended job.",
 		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -53,7 +52,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = workflow.DeleteJob(jobName, namespaceInfo, kubeClient.GetClientset())
+				err = workflow.ResumeJob(jobName, namespaceInfo, kubeClient)
 				if err != nil {
 					log.Error(err)
 				}

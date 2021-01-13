@@ -25,12 +25,65 @@ const (
 	BaseNameLabelSelectorName  = "base-name"
 	baseIndexLabelSelectorName = "base-name-index"
 	configMapGenerationRetries = 5
+	parallelismAnnotation = "runai-parallelism"
 )
 
 type JobFiles struct {
 	valueFileName   string
 	template        string
 	appInfoFileName string
+}
+
+func SuspendJob(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client) error {
+	runaijobClient := runaiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
+
+	job, e := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{})
+
+	if e != nil {
+		log.Warningf("Failed to suspend job %s. Does the job exist?", jobName)
+		return e
+	}
+
+	if job.Spec.Parallelism != nil {
+		if *job.Spec.Parallelism == 0 {
+			log.Warningf("Job %s is already suspended.", jobName)
+			return nil
+		}
+		// Save current parallelism value to retrieve it when resuming the job
+		job.Annotations[parallelismAnnotation] = fmt.Sprint(*job.Spec.Parallelism)
+	}
+
+	zero := int32(0)
+	job.Spec.Parallelism = &zero
+	_, err := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Update(job, metav1.UpdateOptions{})
+
+	return err
+}
+
+func ResumeJob(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client) error {
+	runaijobClient := runaiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
+
+	job, e := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{})
+	if e != nil {
+		log.Warningf("Failed to resume job %s. Does the job exist?", jobName)
+		return e
+	}
+
+	if job.Spec.Parallelism == nil || *job.Spec.Parallelism > 0 {
+		log.Warningf("Job %s is not in suspended state. Ignoring.", jobName)
+	}
+
+	newParallelism := int64(1)
+	if pAnnotation, exists := job.Annotations[parallelismAnnotation]; exists {
+		newParallelism, _ = strconv.ParseInt(pAnnotation, 10, 32)
+	}
+
+	newParallelismInt32 := int32(newParallelism)
+	job.Spec.Parallelism = &newParallelismInt32
+
+	_, err := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Update(job, metav1.UpdateOptions{})
+
+	return err
 }
 
 /**

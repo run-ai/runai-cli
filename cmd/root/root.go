@@ -17,6 +17,7 @@ package root
 import (
 	"github.com/run-ai/runai-cli/cmd/cluster"
 	"github.com/run-ai/runai-cli/cmd/flags"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/login"
 	"github.com/run-ai/runai-cli/cmd/logout"
 	"github.com/run-ai/runai-cli/cmd/resource"
@@ -25,7 +26,6 @@ import (
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/exec"
 	"github.com/run-ai/runai-cli/cmd/global"
-	deleteJob "github.com/run-ai/runai-cli/cmd/job/delete"
 	submitJob "github.com/run-ai/runai-cli/cmd/job/submit"
 	"github.com/run-ai/runai-cli/cmd/logs"
 	"github.com/run-ai/runai-cli/cmd/project"
@@ -64,7 +64,9 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(submitJob.NewRunaiSubmitMPIJobCommand())
 	command.AddCommand(resource.NewListCommand())
 	command.AddCommand(logs.NewLogsCommand())
-	command.AddCommand(deleteJob.NewDeleteCommand())
+	command.AddCommand(job.NewDeleteCommand())
+	command.AddCommand(job.SuspendCommand())
+	command.AddCommand(job.ResumeCommand())
 	command.AddCommand(resource.GetCommand())
 	command.AddCommand(resource.NewTopCommand())
 	command.AddCommand(resource.NewDescribeCommand())
