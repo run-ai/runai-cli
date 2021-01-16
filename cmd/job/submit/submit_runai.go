@@ -108,6 +108,11 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
+			if raUtil.IsBoolPTrue(submitArgs.Interactive) {
+				interactiveCompletions := 1
+				submitArgs.Completions = &interactiveCompletions
+			}
+
 			if len(submitArgs.Image) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				fmt.Print("\n-i, --image must be set\n\n")
