@@ -1,18 +1,8 @@
 {{- include "runai-common.pvc" . }}
 
 ---
-
-{{- if .Values.interactive }}
-apiVersion: apps/v1
-kind: "StatefulSet"
-{{- else if .Values.isRunaiJob }}
 apiVersion: run.ai/v1
 kind: "RunaiJob"
-{{- else }}
-apiVersion: batch/v1
-kind: "Job"
-{{- end }}
-
 {{- $combinedVolume := list }}
 {{- range $volume := (.Values.volume | default list) }}
 {{- $combinedVolume = append $combinedVolume $volume }}
@@ -27,7 +17,10 @@ metadata:
   {{- include "runai-common.charts.label-addition" . | indent 4 }}
     {{- if and .Values.interactive .Values.isPreemptible }}
     priorityClassName: "interactive-preemptible"
-    {{- end}}
+    {{- else if .Values.interactive }}
+    priorityClassName: "build"
+    {{- end }}
+
   {{- if .Values.labels }}
     {{- range $key, $val := .Values.labels }}
     {{ $key }}: {{ $val | quote }}
@@ -38,13 +31,6 @@ metadata:
     user: {{ .Values.user | quote}}
   {{- end }}
 spec:
-  {{- if .Values.interactive }}
-  serviceName: {{ .Release.Name }}
-  replicas: 1
-  selector:
-    matchLabels:
-      release: {{ .Release.Name }}
-  {{- else }}
     {{- if or .Values.ttlSecondsAfterFinished (eq (quote .Values.ttlSecondsAfterFinished) (quote 0))}}
   ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
     {{- end }}
@@ -58,7 +44,6 @@ spec:
     {{- if not (kindIs "invalid" .Values.backoffLimit) }}
   backoffLimit: {{ .Values.backoffLimit }}
     {{- end }}
-  {{- end }}
   template:
     metadata:
       annotations:
@@ -82,9 +67,7 @@ spec:
         run.ai/type: {{ .Values.node_type }}
       {{- end}}
       schedulerName: runai-scheduler
-      {{- if eq .Values.interactive false}}
       restartPolicy: Never
-      {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
       securityContext:

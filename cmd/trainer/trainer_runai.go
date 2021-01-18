@@ -21,6 +21,10 @@ const (
 	RunaiTrainType                  = "Train"
 	RunaiInteractiveType            = "Interactive"
 	runaiPreemptibleInteractiveType = "Interactive-Preemptible"
+
+	priorityClassNameLabel              = "priorityClassName"
+	priorityClassInteractivePreemptible = "interactive-preemptible"
+	priorityClassInteractive            = "build"
 )
 
 type RunaiTrainer struct {
@@ -475,13 +479,20 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 }
 
 func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
-	if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
-		if job.Labels["priorityClassName"] == "interactive-preemptible" {
-			return runaiPreemptibleInteractiveType
-		}
+	switch job.Labels[priorityClassNameLabel] {
+	case priorityClassInteractivePreemptible:
+		return runaiPreemptibleInteractiveType
+	case priorityClassInteractive:
 		return RunaiInteractiveType
+	default:
+		if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
+			if job.Labels[priorityClassNameLabel] == priorityClassInteractivePreemptible {
+				return runaiPreemptibleInteractiveType
+			}
+			return RunaiInteractiveType
+		}
+		return RunaiTrainType
 	}
-	return RunaiTrainType
 }
 
 // Prefer address type by this order: external dns, external ip, internal dns, internal ip

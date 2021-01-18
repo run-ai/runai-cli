@@ -299,6 +299,12 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if err = submitArgs.GitSync.HandleGitSync(); err != nil {
 		return err
 	}
+
+	if raUtil.IsBoolPTrue(submitArgs.Interactive) {
+		noBackoffLimit := 0
+		submitArgs.BackoffLimit = &noBackoffLimit
+	}
+
 	return nil
 }
 
