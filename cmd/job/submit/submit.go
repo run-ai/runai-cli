@@ -105,6 +105,7 @@ type submitArgs struct {
 	NamePrefix                 string            `yaml:"namePrefix,omitempty"`
 	BackoffLimit               *int              `yaml:"backoffLimit,omitempty"`
 	GitSync                    *GitSync          `yaml:"gitSync,omitempty"`
+	Queue                      string            `yaml:"queue,omitempty"`
 	generateSuffix             bool
 }
 
@@ -174,9 +175,11 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.HostNetwork), "host-network", "", "Use the host's network stack inside the container.")
 
 	flagSet = fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
+	flagSet.StringVarP(&(submitArgs.Queue), "queue", "", "queue", "which queue put the job it")
 	flags.AddIntNullableFlag(flagSet, &(submitArgs.BackoffLimit), "backoff-limit", "The number of times the job will be retried before failing. Default 6.")
 	flags.AddIntNullableFlag(flagSet, &(submitArgs.BackoffLimit), "backoffLimit", "The number of times the job will be retried before failing. Default 6.")
 	flagSet.MarkDeprecated("backoffLimit", "use backoff-limit instead")
+	flagSet.MarkHidden("queue")
 
 	flagSet = fbg.GetOrAddFlagSet(AccessControlFlagGroup)
 	flags.AddBoolNullableFlag(flagSet, &submitArgs.CreateHomeDir, "create-home-dir", "", "Create a temporary home directory. Default is true when the --run-as-user flag is set, and false if not.")

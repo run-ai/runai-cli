@@ -42,6 +42,9 @@ spec:
       template:
         metadata:
           labels:
+            {{- if .Value.queue }}
+            queue: "{{ .Values.queue }}"
+            {{ - end }}
             project: {{ .Values.project }}
           annotations:
             totalGPUs: "{{ .Values.totalGpus }}"
@@ -157,6 +160,9 @@ spec:
             gpu-memory: "{{ .Values.gpuMemory }}"
             {{- end }}
           labels:
+            {{- if .Value.queue }}
+            queue: "{{ .Values.queue }}"
+            {{- end }}
             project: {{ .Values.project }}
         spec:
           {{- if .Values.node_type }}

@@ -60,7 +60,9 @@ spec:
         user: {{ .Values.user | quote}}
         {{- end }}
       labels:
+        {{- if .Value.queue }}
         queue: "{{ .Values.queue }}"
+        {{- end }}
         {{- include "runai-common.charts.label-addition" . | indent 8}}
     spec:
       {{- if .Values.node_type }}
