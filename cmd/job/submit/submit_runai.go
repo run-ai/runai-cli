@@ -278,6 +278,7 @@ type submitRunaiJobArgs struct {
 	GPUFractionFixed string `yaml:"gpuFractionFixed,omitempty"`
 	ServiceType      string `yaml:"serviceType,omitempty"`
 	Elastic          *bool  `yaml:"elastic,omitempty"`
+	Queue            string `yaml:"queue,omitempty"`
 	TTL              *int   `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Completions      *int   `yaml:"completions,omitempty"`
 	Parallelism      *int   `yaml:"parallelism,omitempty"`
@@ -327,6 +328,7 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 	fs := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	fs.StringVarP(&(sa.ServiceType), "service-type", "s", "", "External access type to interactive jobs. Options are: portforward, loadbalancer, nodeport, ingress.")
+	fs.StringVarP(&(sa.Queue), "queue", "", "queue", "which queue")
 	flags.AddBoolNullableFlag(fs, &(sa.IsJupyter), "jupyter", "", "Run a Jupyter notebook using a default image and notebook configuration.")
 	flags.AddBoolNullableFlag(fs, &(sa.Elastic), "elastic", "", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(fs, &(sa.IsPreemptible), "preemptible", "", "Interactive preemptible jobs can be scheduled above guaranteed quota but may be reclaimed at any time.")
