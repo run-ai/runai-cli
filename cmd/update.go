@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/mholt/archiver"
+	arenaVersion "github.com/run-ai/runai-cli/pkg/version"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -52,11 +53,23 @@ func NewUpdateCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			version, err := arenaVersion.GetVersion()
+			if err != nil {
+				log.Error("Unable to get current cli version")
+				return
+			}
+			var currentVersion = version.Version
+
 			var matchingAsset Asset
 			// Find matching asset for current OS and ARCH
 			for _, asset := range latestRelease.Assets {
 				if strings.Contains(asset.Name, osName) && strings.Contains(asset.Name, arch) {
-					log.Infof("Found matching asset %s", asset.Name)
+					if !strings.Contains(asset.Name, currentVersion) || currentVersion == "DEVELOPMENT" {
+						log.Infof("Found matching asset %s", asset.Name)
+					} else {
+						log.Infof("You already have the latest version %s", currentVersion)
+						os.Exit(0)
+					}
 					matchingAsset = asset
 					break
 				}
