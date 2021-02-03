@@ -59,17 +59,15 @@ func NewUpdateCommand() *cobra.Command {
 				return
 			}
 			var currentVersion = version.Version
-
 			var matchingAsset Asset
 			// Find matching asset for current OS and ARCH
 			for _, asset := range latestRelease.Assets {
 				if strings.Contains(asset.Name, osName) && strings.Contains(asset.Name, arch) {
-					if !strings.Contains(asset.Name, currentVersion) || currentVersion == "DEVELOPMENT" {
-						log.Infof("Found matching asset %s", asset.Name)
-					} else {
+					if strings.Contains(asset.Name, currentVersion) {
 						log.Infof("You already have the latest version %s", currentVersion)
 						os.Exit(0)
 					}
+					log.Infof("Found matching asset %s", asset.Name)
 					matchingAsset = asset
 					break
 				}
