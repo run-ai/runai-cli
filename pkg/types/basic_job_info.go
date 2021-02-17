@@ -14,7 +14,7 @@ const (
 	ResourceTypeJob         = ResourceType("Job")
 	ResourceTypeRunaiJob    = ResourceType("RunaiJob")
 	ResourceTypeStatefulSet = ResourceType("StatefulSet")
-	ResourceTypeReplicaset  = ResourceType("ReplicaSet")
+	ResourceTypeDeployment  = ResourceType("Deployment")
 )
 
 func PodResources(pods []v1.Pod) []Resource {

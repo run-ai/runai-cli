@@ -1,8 +1,9 @@
 package trainer
 
 import (
-	"k8s.io/client-go/kubernetes"
 	"testing"
+
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/run-ai/runai-cli/cmd/constants"
 	fakeclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/fake"
@@ -192,7 +193,7 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeReplicaset) {
+	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeDeployment) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }

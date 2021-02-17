@@ -16,12 +16,13 @@ package job
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
-	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 
 	"github.com/run-ai/runai-cli/pkg/workflow"
 	v1 "k8s.io/api/core/v1"
@@ -95,6 +96,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 	jobsMap := make(map[string]bool)
 	for _, job := range jobs {
 		jobsMap[job.Name()] = true
+		fmt.Printf("job: %v", job.Name())
 	}
 
 	configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(metav1.ListOptions{})
