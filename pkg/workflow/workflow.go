@@ -105,6 +105,8 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 	case string(types.ResourceTypeRunaiJob):
 		runaiClient := runaiClient.NewForConfigOrDie(client.GetRestConfig())
 		err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
+	default:
+		log.Warningf("Unexpected type for job, type: %v\n", jobToDelete.WorkloadType())
 	}
 	if err != nil {
 		log.Debugf("Failed to remove job %v, it may be removed manually and not by using Run:AI CLI.\n", jobName)
