@@ -23,6 +23,11 @@ var (
 )
 
 var runaiPodTemplate = v1.PodTemplateSpec{
+	ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{
+			"app": "job-name",
+		},
+	},
 	Spec: v1.PodSpec{
 		SchedulerName: constants.SchedulerName,
 	},
@@ -39,23 +44,27 @@ func getClientWithObject(objects []runtime.Object) (kubeclient.Client, *fakeclie
 	return *NewClientForTesting(client), fakeclientset.NewSimpleClientset()
 }
 
-func getRunaiReplicaSet() *appsv1.ReplicaSet {
+func getRunaiDeployment() *appsv1.Deployment {
 	jobName := "job-name"
 	jobUUID := "id1"
 
-	labelSelector := make(map[string]string)
+	labelSelector := map[string]string{
+		"app": "job-name",
+	}
+	replicas := int32(1)
 
-	return &appsv1.ReplicaSet{
+	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: NAMESPACE,
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
 		},
-		Spec: appsv1.ReplicaSetSpec{
+		Spec: appsv1.DeploymentSpec{
 			Template: runaiPodTemplate,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labelSelector,
 			},
+			Replicas: &replicas,
 		},
 	}
 }
@@ -183,7 +192,7 @@ func TestStatefulSetInclusionInResourcesGetCommand(t *testing.T) {
 }
 
 func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
-	job := getRunaiReplicaSet()
+	job := getRunaiDeployment()
 
 	objects := []runtime.Object{job}
 	kubeClient, runaiclient := getClientWithObject(objects)
@@ -199,7 +208,7 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 }
 
 func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
-	job := getRunaiReplicaSet()
+	job := getRunaiDeployment()
 
 	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
