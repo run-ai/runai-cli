@@ -2,11 +2,12 @@ package command
 
 import (
 	"fmt"
+	"os"
+
 	log "github.com/golang/glog"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type CommandWrapper struct {

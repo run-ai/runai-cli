@@ -2,11 +2,12 @@ package kubeconfig
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	"golang.org/x/oauth2"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"strconv"
 )
 
 const (
@@ -170,7 +171,7 @@ func readKubeConfig() (*api.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	if kubeConfig.Kind == "" {
+	if len(kubeConfig.Clusters) == 0 {
 		return nil, fmt.Errorf("Could not find KubeConfig file")
 	}
 	return kubeConfig, nil

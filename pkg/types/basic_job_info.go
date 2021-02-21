@@ -10,11 +10,12 @@ type Resource struct {
 type ResourceType string
 
 const (
-	ResourceTypePod         = ResourceType("Pod")
-	ResourceTypeJob         = ResourceType("Job")
-	ResourceTypeRunaiJob    = ResourceType("RunaiJob")
-	ResourceTypeStatefulSet = ResourceType("StatefulSet")
-	ResourceTypeDeployment  = ResourceType("Deployment")
+	ResourceTypePod         ResourceType = "Pod"
+	ResourceTypeJob         ResourceType = "Job"
+	ResourceTypeRunaiJob    ResourceType = "RunaiJob"
+	ResourceTypeStatefulSet ResourceType = "StatefulSet"
+	ResourceTypeDeployment  ResourceType = "Deployment"
+	MpiWorkloadType         ResourceType = "MPIJob"
 )
 
 func PodResources(pods []v1.Pod) []Resource {

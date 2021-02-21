@@ -22,8 +22,8 @@ import (
 const (
 	RunaiTrainType                  = "Train"
 	RunaiInteractiveType            = "Interactive"
-	runaiPreemptibleInteractiveType = "Interactive-Preemptible"
-	runaiInferenceType              = "Inference"
+	RunaiPreemptibleInteractiveType = "Interactive-Preemptible"
+	RunaiInferenceType              = "Inference"
 
 	priorityClassNameLabel              = "priorityClassName"
 	priorityClassInteractivePreemptible = "interactive-preemptible"
@@ -512,12 +512,12 @@ func getPodTopOwner(pod v1.Pod, controller string, replicasetByUid map[types.UID
 func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
 	switch job.Labels[priorityClassNameLabel] {
 	case priorityClassInteractivePreemptible:
-		return runaiPreemptibleInteractiveType
+		return RunaiPreemptibleInteractiveType
 	case priorityClassInteractive:
 		return RunaiInteractiveType
 	default:
 		if job.Type == cmdTypes.ResourceTypeDeployment {
-			return runaiInferenceType
+			return RunaiInferenceType
 		}
 		if job.Type == cmdTypes.ResourceTypeStatefulSet {
 			return RunaiInteractiveType

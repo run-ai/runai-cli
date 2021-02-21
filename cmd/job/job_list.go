@@ -96,7 +96,6 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 	jobsMap := make(map[string]bool)
 	for _, job := range jobs {
 		jobsMap[job.Name()] = true
-		fmt.Printf("job: %v", job.Name())
 	}
 
 	configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(metav1.ListOptions{})
