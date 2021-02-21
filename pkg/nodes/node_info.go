@@ -203,7 +203,7 @@ func GetAllNodeInfos(client kubernetes.Interface, shouldQueryMetrics bool) ([]No
 			promData, promErr = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
 		}
 		if promErr != nil {
-			warning = fmt.Sprintf("Missing some data. \nreason: Can't access to the prometheus server, \ncause error: %s", promErr)
+			warning = fmt.Sprintf("Some metrics will not show, please contact customer support and attach the following error: %s", promErr)
 		}
 	}
 
