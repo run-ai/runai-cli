@@ -89,7 +89,7 @@ func NewExecCommand() *cobra.Command {
 
 // todo move to util
 // GetPodFromCmd extract and searche for namespace, job and podName
-func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string) (pod *v1.Pod, err error) {
+func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string, timeout time.Duration) (pod *v1.Pod, err error) {
 
 	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
@@ -106,22 +106,45 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		return
 	}
 
-	if len(podName) == 0 {
-		pod = job.ChiefPod()
-	} else {
-		pods := job.AllPods()
-		for _, p := range pods {
-			if podName == p.Name {
-				pod = &p
-				break
-			}
-		}
+	pod, err = WaitForPodCreation(podName, job, timeout)
+	if err != nil {
+		return
 	}
 
 	if pod == nil {
 		err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
 	}
 
+	return
+}
+
+
+func WaitForPodCreation(podName string, job trainer.TrainingJob, timeout time.Duration) (pod *v1.Pod, err error) {
+	shouldStopAt := time.Now().Add(timeout)
+
+	for true {
+		if len(podName) == 0 {
+			pod = job.ChiefPod()
+		} else {
+			pods := job.AllPods()
+			for _, p := range pods {
+				if podName == p.Name {
+					pod = &p
+					break
+				}
+			}
+		}
+
+		if pod != nil {
+			return pod, nil
+		}
+
+		if shouldStopAt.Before(time.Now()) {
+			return nil, fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
+		}
+
+		time.Sleep(time.Second)
+	}
 	return
 }
 
@@ -132,7 +155,7 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		return
 	}
 
-	pod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+	pod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName, timeout)
 
 	if err != nil {
 		return
