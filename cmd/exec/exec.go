@@ -106,7 +106,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		return
 	}
 
-	pod, err = raUtil.WaitForPodCreation(podName, job, timeout)
+	pod, err = WaitForPodCreation(podName, job, timeout)
 	if err != nil {
 		return
 	}
@@ -115,6 +115,36 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		err = fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
 	}
 
+	return
+}
+
+
+func WaitForPodCreation(podName string, job trainer.TrainingJob, timeout time.Duration) (pod *v1.Pod, err error) {
+	shouldStopAt := time.Now().Add(timeout)
+
+	for true {
+		if len(podName) == 0 {
+			pod = job.ChiefPod()
+		} else {
+			pods := job.AllPods()
+			for _, p := range pods {
+				if podName == p.Name {
+					pod = &p
+					break
+				}
+			}
+		}
+
+		if pod != nil {
+			return pod, nil
+		}
+
+		if shouldStopAt.Before(time.Now()) {
+			return nil, fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
+		}
+
+		time.Sleep(time.Second)
+	}
 	return
 }
 

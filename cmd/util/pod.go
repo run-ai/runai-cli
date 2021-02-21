@@ -2,8 +2,6 @@ package util
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/cmd/trainer"
-
 	// "os"
 	"time"
 
@@ -52,35 +50,6 @@ func WaitForPod(podName, podNamespace, waitingMsg string, timeout time.Duration,
 
 		time.Sleep(time.Second)
 	}
-}
-
-func WaitForPodCreation(podName string, job trainer.TrainingJob, timeout time.Duration) (pod *v1.Pod, err error) {
-	shouldStopAt := time.Now().Add(timeout)
-
-	for true {
-		if len(podName) == 0 {
-			pod = job.ChiefPod()
-		} else {
-			pods := job.AllPods()
-			for _, p := range pods {
-				if podName == p.Name {
-					pod = &p
-					break
-				}
-			}
-		}
-
-		if pod != nil {
-			return pod, nil
-		}
-
-		if shouldStopAt.Before(time.Now()) {
-			return nil, fmt.Errorf("Failed to find pod: '%s' of job: '%s'", podName, job.Name())
-		}
-
-		time.Sleep(time.Second)
-	}
-	return
 }
 
 // PodRunning check if the pod is running and ready
