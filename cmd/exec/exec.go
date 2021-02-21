@@ -89,7 +89,7 @@ func NewExecCommand() *cobra.Command {
 
 // todo move to util
 // GetPodFromCmd extract and searche for namespace, job and podName
-func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string) (pod *v1.Pod, err error) {
+func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string, timeout time.Duration) (pod *v1.Pod, err error) {
 
 	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
@@ -106,16 +106,9 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		return
 	}
 
-	if len(podName) == 0 {
-		pod = job.ChiefPod()
-	} else {
-		pods := job.AllPods()
-		for _, p := range pods {
-			if podName == p.Name {
-				pod = &p
-				break
-			}
-		}
+	pod, err = raUtil.WaitForPodCreation(podName, job, timeout)
+	if err != nil {
+		return
 	}
 
 	if pod == nil {
@@ -132,7 +125,7 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 		return
 	}
 
-	pod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName)
+	pod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName, timeout)
 
 	if err != nil {
 		return

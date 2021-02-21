@@ -67,7 +67,7 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string,
 		return
 	}
 
-	foundPod, err := exec.GetPodFromCmd(cmd, kubeClient, jobName, podName)
+	foundPod, err := exec.GetPodFromCmd(cmd, kubeClient, jobName, podName, timeout)
 
 	if err != nil {
 		return
