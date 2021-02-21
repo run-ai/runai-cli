@@ -2,10 +2,12 @@ package trainer
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/run-ai/runai-cli/cmd/constants"
 	clientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	"github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/scheme"
-	"strings"
+	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
@@ -20,7 +22,8 @@ import (
 const (
 	RunaiTrainType                  = "Train"
 	RunaiInteractiveType            = "Interactive"
-	runaiPreemptibleInteractiveType = "Interactive-Preemptible"
+	RunaiPreemptibleInteractiveType = "Interactive-Preemptible"
+	RunaiInferenceType              = "Inference"
 
 	priorityClassNameLabel              = "priorityClassName"
 	priorityClassInteractivePreemptible = "interactive-preemptible"
@@ -74,7 +77,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
-	runaiReplicaSetsList, err := rt.client.AppsV1().ReplicaSets(ns).List(metav1.ListOptions{
+	runaiDeploymentList, err := rt.client.AppsV1().Deployments(ns).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -82,8 +85,8 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
 	}
 
-	if len(runaiReplicaSetsList.Items) > 0 {
-		for _, item := range runaiReplicaSetsList.Items {
+	if len(runaiDeploymentList.Items) > 0 {
+		for _, item := range runaiDeploymentList.Items {
 			if item.Spec.Template.Spec.SchedulerName == constants.SchedulerName {
 				return true
 			}
@@ -150,7 +153,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-	runaiReplicaSetsList, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{
+	runaiDeploymentsList, err := rt.client.AppsV1().Deployments(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -158,8 +161,8 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		log.Debugf("failed to search job %s in namespace %s due to %v", name, namespace, err)
 	}
 
-	if len(runaiReplicaSetsList.Items) > 0 {
-		podSpecJob := cmdTypes.PodTemplateJobFromReplicaSet(runaiReplicaSetsList.Items[0])
+	if len(runaiDeploymentsList.Items) > 0 {
+		podSpecJob := cmdTypes.PodTemplateJobFromDeployment(runaiDeploymentsList.Items[0])
 		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
 		if err != nil {
 			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
@@ -346,49 +349,9 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	runaiJobs := []TrainingJob{}
 
-	// Get all pods running with runai scheduler
-	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", constants.SchedulerName),
-	})
-
+	jobPodMap, err := rt.getPodJobMap(namespace)
 	if err != nil {
 		return nil, err
-	}
-
-	jobPodMap := make(map[types.UID]*RunaiJobInfo)
-
-	// Group the pods by their controller
-	for _, pod := range runaiPods.Items {
-		if IsMPIPod(pod) {
-			continue
-		}
-		controller := ""
-		var uid types.UID = ""
-
-		for _, owner := range pod.OwnerReferences {
-			if owner.Controller != nil && *owner.Controller {
-				controller = owner.Name
-				uid = owner.UID
-			}
-		}
-
-		if jobPodMap[uid] == nil {
-			jobPodMap[uid] = &RunaiJobInfo{
-				name:      controller,
-				namespace: pod.Namespace,
-				pods:      []v1.Pod{},
-				// Mark all jobs as deleted unless we find them at the next stage
-				deleted:      true,
-				podSpec:      pod.Spec,
-				podMetadata:  pod.ObjectMeta,
-				createdByCLI: pod.Labels["app"] == "runaijob",
-			}
-		}
-
-		// If controller exists for pod than add it to the map
-		if controller != "" {
-			jobPodMap[uid].pods = append(jobPodMap[uid].pods, pod)
-		}
 	}
 
 	// Get all different job stypes to one general job type with pod spec
@@ -407,10 +370,10 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	replicasetJobs, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{})
+	deploymentJobs, err := rt.client.AppsV1().Deployments(namespace).List(metav1.ListOptions{})
 
-	for _, replicaSet := range replicasetJobs.Items {
-		podTemplateJob := cmdTypes.PodTemplateJobFromReplicaSet(replicaSet)
+	for _, deployment := range deploymentJobs.Items {
+		podTemplateJob := cmdTypes.PodTemplateJobFromDeployment(deployment)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
@@ -478,17 +441,85 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	return runaiJobs, nil
 }
 
+func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobInfo, error) {
+	// Get all pods running with runai scheduler
+	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", constants.SchedulerName),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	jobPodMap := make(map[types.UID]*RunaiJobInfo)
+	deploymentSets, err := rt.client.AppsV1().Deployments(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	deploymenttByUid := make(map[types.UID]*appsv1.Deployment)
+	for _, rs := range deploymentSets.Items {
+		deploymenttByUid[rs.UID] = &rs
+	}
+
+	// Group the pods by their controller
+	for _, pod := range runaiPods.Items {
+		if IsMPIPod(pod) {
+			continue
+		}
+		controller := ""
+		var uid types.UID = ""
+
+		controller, uid = getPodTopOwner(pod, controller, deploymenttByUid, uid)
+
+		if jobPodMap[uid] == nil {
+			jobPodMap[uid] = &RunaiJobInfo{
+				name:      controller,
+				namespace: pod.Namespace,
+				pods:      []v1.Pod{},
+				// Mark all jobs as deleted unless we find them at the next stage
+				deleted:      true,
+				podSpec:      pod.Spec,
+				podMetadata:  pod.ObjectMeta,
+				createdByCLI: pod.Labels["app"] == "runaijob",
+			}
+		}
+
+		// If controller exists for pod than add it to the map
+		if controller != "" {
+			jobPodMap[uid].pods = append(jobPodMap[uid].pods, pod)
+		}
+	}
+	return jobPodMap, nil
+}
+
+func getPodTopOwner(pod v1.Pod, controller string, replicasetByUid map[types.UID]*appsv1.Deployment, uid types.UID) (string, types.UID) {
+	for _, owner := range pod.OwnerReferences {
+		if owner.Controller != nil && *owner.Controller {
+			if owner.Kind == "ReplicaSet" {
+				if _, found := replicasetByUid[owner.UID]; found {
+					controller = replicasetByUid[owner.UID].OwnerReferences[0].Name
+					uid = replicasetByUid[owner.UID].OwnerReferences[0].UID
+					return controller, uid
+				}
+			}
+		}
+		controller = owner.Name
+		uid = owner.UID
+	}
+	return controller, uid
+}
+
 func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
 	switch job.Labels[priorityClassNameLabel] {
 	case priorityClassInteractivePreemptible:
-		return runaiPreemptibleInteractiveType
+		return RunaiPreemptibleInteractiveType
 	case priorityClassInteractive:
 		return RunaiInteractiveType
 	default:
-		if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
-			if job.Labels[priorityClassNameLabel] == priorityClassInteractivePreemptible {
-				return runaiPreemptibleInteractiveType
-			}
+		if job.Type == cmdTypes.ResourceTypeDeployment {
+			return RunaiInferenceType
+		}
+		if job.Type == cmdTypes.ResourceTypeStatefulSet {
 			return RunaiInteractiveType
 		}
 		return RunaiTrainType

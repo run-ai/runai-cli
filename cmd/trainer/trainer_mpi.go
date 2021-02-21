@@ -42,7 +42,6 @@ var (
 )
 
 const MpiTrainerType = "mpijob"
-const MpiWorkloadType = "MPIJob"
 
 // MPI Job Information
 type MPIJob struct {
@@ -311,7 +310,7 @@ func (mj *MPIJob) PendingPods() int32 {
 }
 
 func (mj *MPIJob) WorkloadType() string {
-	return MpiWorkloadType
+	return string(types.MpiWorkloadType)
 }
 
 func (mj *MPIJob) Completions() int32 {

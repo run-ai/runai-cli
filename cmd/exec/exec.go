@@ -106,7 +106,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		err = fmt.Errorf("The job: '%s' is not found", jobName)
 		return
 	}
-
+  
 	pod, err = WaitForPodCreation(podName, jobName, namespace, job, timeout, kubeClient)
 	if err != nil {
 		return
