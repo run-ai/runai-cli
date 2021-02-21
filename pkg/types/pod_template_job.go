@@ -77,14 +77,14 @@ func PodTemplateJobFromStatefulSet(statefulSet appsv1.StatefulSet) *PodTemplateJ
 	}
 }
 
-func PodTemplateJobFromReplicaSet(replicaSet appsv1.ReplicaSet) *PodTemplateJob {
+func PodTemplateJobFromDeployment(deployment appsv1.Deployment) *PodTemplateJob {
 	return &PodTemplateJob{
-		ObjectMeta:  replicaSet.ObjectMeta,
-		Type:        ResourceTypeReplicaset,
-		Template:    replicaSet.Spec.Template,
-		Selector:    replicaSet.Spec.Selector,
-		Parallelism: 1,
-		Completions: 1,
+		ObjectMeta:  deployment.ObjectMeta,
+		Type:        ResourceTypeDeployment,
+		Template:    deployment.Spec.Template,
+		Selector:    deployment.Spec.Selector,
+		Parallelism: *deployment.Spec.Replicas,
+		Completions: 0,
 		Failed:      0,
 		Succeeded:   0,
 	}
