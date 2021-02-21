@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/types"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"strings"
@@ -105,8 +106,8 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 		err = fmt.Errorf("The job: '%s' is not found", jobName)
 		return
 	}
-
-	pod, err = WaitForPodCreation(podName, job, timeout)
+  
+	pod, err = WaitForPodCreation(podName, jobName, namespace, job, timeout, kubeClient)
 	if err != nil {
 		return
 	}
@@ -119,7 +120,7 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 }
 
 
-func WaitForPodCreation(podName string, job trainer.TrainingJob, timeout time.Duration) (pod *v1.Pod, err error) {
+func WaitForPodCreation(podName, jobName string, namespace types.NamespaceInfo, job trainer.TrainingJob, timeout time.Duration, kubeClient *client.Client) (pod *v1.Pod, err error) {
 	shouldStopAt := time.Now().Add(timeout)
 
 	for true {
@@ -144,6 +145,10 @@ func WaitForPodCreation(podName string, job trainer.TrainingJob, timeout time.Du
 		}
 
 		time.Sleep(time.Second)
+		job, err = trainer.SearchTrainingJob(kubeClient, jobName, "", namespace)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return
 }
