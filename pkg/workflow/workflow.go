@@ -83,7 +83,7 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 }
 
 func deletedJobMessage(jobName string) {
-	fmt.Printf("Successfully deleted job: %s", jobName)
+	fmt.Printf("Successfully deleted job: %s\n", jobName)
 }
 
 func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
