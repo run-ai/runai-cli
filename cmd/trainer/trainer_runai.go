@@ -452,13 +452,13 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 	}
 
 	jobPodMap := make(map[types.UID]*RunaiJobInfo)
-	deploymentSets, err := rt.client.AppsV1().Deployments(namespace).List(metav1.ListOptions{})
+	replicaSets, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	deploymenttByUid := make(map[types.UID]*appsv1.Deployment)
-	for _, rs := range deploymentSets.Items {
-		deploymenttByUid[rs.UID] = &rs
+	replicaSetsMap := make(map[types.UID]*appsv1.ReplicaSet)
+	for _, rs := range replicaSets.Items {
+		replicaSetsMap[rs.UID] = &rs
 	}
 
 	// Group the pods by their controller
@@ -469,8 +469,7 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 		controller := ""
 		var uid types.UID = ""
 
-		controller, uid = getPodTopOwner(pod, controller, deploymenttByUid, uid)
-
+		controller, uid = getPodTopOwner(pod, controller, replicaSetsMap, uid)
 		if jobPodMap[uid] == nil {
 			jobPodMap[uid] = &RunaiJobInfo{
 				name:      controller,
@@ -492,7 +491,7 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 	return jobPodMap, nil
 }
 
-func getPodTopOwner(pod v1.Pod, controller string, replicasetByUid map[types.UID]*appsv1.Deployment, uid types.UID) (string, types.UID) {
+func getPodTopOwner(pod v1.Pod, controller string, replicasetByUid map[types.UID]*appsv1.ReplicaSet, uid types.UID) (string, types.UID) {
 	for _, owner := range pod.OwnerReferences {
 		if owner.Controller != nil && *owner.Controller {
 			if owner.Kind == "ReplicaSet" {
