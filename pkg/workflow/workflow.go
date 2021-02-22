@@ -62,13 +62,13 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 	if err != nil {
 		log.Debugf("Failed to SaveAppConfigMapToFile due to %v\n", err)
 		return deleteJobResourcesWithoutConfigMap(jobName, namespaceInfo, clientset)
-	} else {
-		result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
-		log.Debugf("%s", result)
-		if err != nil {
-			log.Debugf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.\n")
-			return deleteJobResourcesWithoutConfigMap(jobName, namespaceInfo, clientset)
-		}
+	}
+
+	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	log.Debugf("%s", result)
+	if err != nil {
+		log.Debugf("Failed to remove some of the job's resources, they might have been removed manually and not by using Run:AI CLI.\n")
+		return deleteJobResourcesWithoutConfigMap(jobName, namespaceInfo, clientset)
 	}
 
 	err = clientset.CoreV1().ConfigMaps(namespaceInfo.Namespace).Delete(configMapName, &metav1.DeleteOptions{})
@@ -77,8 +77,13 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 		log.Debugf("Please run `kubectl delete -n %s cm %s\n`", namespace, configMapName)
 		return err
 	}
+	deletedJobMessage(jobName)
 
 	return nil
+}
+
+func deletedJobMessage(jobName string) {
+	fmt.Printf("Successfully deleted job: %s", jobName)
 }
 
 func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
@@ -114,6 +119,9 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 	if jobToDelete.Trainer() == trainer.RunaiInteractiveType {
 		deleteAdditionalInteractiveJobResources(jobName, namespaceInfo.Namespace, clientset)
 	}
+	if err != nil {
+		deletedJobMessage(jobName)
+	}
 
 	return nil
 }
@@ -125,7 +133,7 @@ func deleteAdditionalInteractiveJobResources(jobName, namespace string, clientse
 	}
 	err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(jobName, &metav1.DeleteOptions{})
 	if err != nil {
-		log.Warnf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName)
+		log.Debugf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName)
 	}
 }
 
