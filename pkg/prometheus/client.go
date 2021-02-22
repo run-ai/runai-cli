@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -70,8 +71,7 @@ func BuildPrometheusClient(c kubernetes.Interface) (*Client, error) {
 }
 
 func (ps *Client) GetPrometheusService() (service *v1.Service, err error) {
-
-	list, err := ps.client.CoreV1().Services(namespace).List(metav1.ListOptions{
+	list, err := ps.client.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", promLabel),
 	})
 
@@ -92,7 +92,7 @@ func (ps *Client) Query(query string) (*MetricData, error) {
 	})
 
 	log.Debugf("Query prometheus for by %s in ns %s", query, ps.service.Namespace)
-	rawMetric, err := queryResponse.DoRaw()
+	rawMetric, err := queryResponse.DoRaw(context.TODO())
 	if err != nil {
 		log.Debugf("Query prometheus failed due to err %v", err)
 		log.Debugf("Query prometheus failed due to result %s", string(rawMetric))

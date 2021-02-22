@@ -15,6 +15,7 @@
 package submit
 
 import (
+	"context"
 	"fmt"
 	"github.com/run-ai/runai-cli/pkg/authentication"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -336,7 +337,7 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 		configMapName = "runai-cli-index"
 	)
 
-	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(configMapName, metav1.GetOptions{})
+	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(context.TODO(), configMapName, metav1.GetOptions{})
 
 	// If configmap does not exists than cannot get a job index for the job
 	if err != nil {
@@ -352,7 +353,7 @@ func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	newIndex := fmt.Sprintf("%d", lastIndex+1)
 	configMap.Data[indexKey] = newIndex
 
-	_, err = clientset.CoreV1().ConfigMaps(runaiNamespace).Update(configMap)
+	_, err = clientset.CoreV1().ConfigMaps(runaiNamespace).Update(context.TODO(), configMap, metav1.UpdateOptions{})
 
 	// Might be someone already updated this configmap. Try the process again.
 	if err != nil {

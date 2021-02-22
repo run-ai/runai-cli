@@ -15,6 +15,7 @@
 package job
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -98,7 +99,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 		jobsMap[job.Name()] = true
 	}
 
-	configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(metav1.ListOptions{})
+	configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		log.Errorf("Failed due to %v", err)
 		os.Exit(1)

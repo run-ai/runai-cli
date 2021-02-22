@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
@@ -103,7 +104,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 }
 
 func listProjects(dynamicClient dynamic.Interface, projects map[string]*ProjectInfo, defaultNamespace string) error {
-	projectList, err := dynamicClient.Resource(projectResource).List(metav1.ListOptions{})
+	projectList, err := dynamicClient.Resource(projectResource).List(context.TODO(), metav1.ListOptions{})
 	if errors.IsNotFound(err) {
 		log.Debug(err)
 		// Cluster doesn't know about the 'Project' resource - fallback to listing queues.
@@ -134,7 +135,7 @@ func listProjects(dynamicClient dynamic.Interface, projects map[string]*ProjectI
 // This is the exact same code that was here before I changed the list command logic.
 func listQueues(dynamicClient dynamic.Interface, kubeClient *client.Client, projects map[string]*ProjectInfo) error {
 	clientset := kubeClient.GetClientset()
-	namespaceList, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -152,7 +153,7 @@ func listQueues(dynamicClient dynamic.Interface, kubeClient *client.Client, proj
 		}
 	}
 
-	queueList, err := dynamicClient.Resource(queueResource).List(metav1.ListOptions{})
+	queueList, err := dynamicClient.Resource(queueResource).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

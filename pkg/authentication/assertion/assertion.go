@@ -1,10 +1,12 @@
 package assertion
 
 import (
+	"context"
 	"fmt"
 	"github.com/run-ai/runai-cli/pkg/client"
 	authv1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 )
 
@@ -36,7 +38,7 @@ func assertPermission(request authv1.SelfSubjectAccessReviewSpec) (err error) {
 	if err != nil {
 		return err
 	}
-	permissionResponse, err := kubeClient.GetClientset().AuthorizationV1().SelfSubjectAccessReviews().Create(&authv1.SelfSubjectAccessReview{Spec: request})
+	permissionResponse, err := kubeClient.GetClientset().AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authv1.SelfSubjectAccessReview{Spec: request}, v1.CreateOptions{})
 	if err != nil {
 		err = getAuthorizationErrorIfNeeded(err)
 	} else if !permissionResponse.Status.Allowed {

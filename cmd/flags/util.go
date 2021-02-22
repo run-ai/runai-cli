@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"context"
 	"fmt"
 
 	constants "github.com/run-ai/runai-cli/cmd/constants"
@@ -72,7 +73,7 @@ func getNamespaceInfoToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client
 }
 
 func getProjectRelatedToNamespace(namespaceName string, kubeClient *client.Client) (string, error) {
-	namespace, err := kubeClient.GetClientset().CoreV1().Namespaces().Get(namespaceName, metav1.GetOptions{})
+	namespace, err := kubeClient.GetClientset().CoreV1().Namespaces().Get(context.TODO(), namespaceName, metav1.GetOptions{})
 
 	if err != nil {
 		return "", err

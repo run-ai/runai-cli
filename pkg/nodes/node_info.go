@@ -1,6 +1,7 @@
 package nodes
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -190,7 +191,7 @@ func GetAllNodeInfos(client kubernetes.Interface, shouldQueryMetrics bool) ([]No
 		return nil, "", err
 	}
 
-	nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodeList, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
 		return nodeInfoList, warning, err

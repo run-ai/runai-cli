@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"context"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -32,7 +33,7 @@ func NewTemplates(clientset kubernetes.Interface) Templates {
 }
 
 func (cg *Templates) ListTemplates() ([]Template, error) {
-	configsList, err := cg.clientset.CoreV1().ConfigMaps(runaiNamespace).List(metav1.ListOptions{
+	configsList, err := cg.clientset.CoreV1().ConfigMaps(runaiNamespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=true", runaiConfigLabel),
 	})
 
