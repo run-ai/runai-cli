@@ -52,7 +52,7 @@ func getServerConfigMapNameByJob(jobName string, namespaceInfo types.NamespaceIn
 
 func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kubernetes.Interface) error {
 	namespace := namespaceInfo.Namespace
-	configMapName, err := getServerConfigMapNameByJob(jobName+"2", namespaceInfo, clientset)
+	configMapName, err := getServerConfigMapNameByJob(jobName, namespaceInfo, clientset)
 	if err != nil {
 		log.Debugf("Failed to find configmap for, error: %v\n", err)
 		return deleteJobResourcesWithoutConfigMap(jobName, namespaceInfo, clientset)
@@ -73,8 +73,8 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 
 	err = clientset.CoreV1().ConfigMaps(namespaceInfo.Namespace).Delete(configMapName, &metav1.DeleteOptions{})
 	if err != nil {
-		log.Warningf("Delete configmap %s failed due to %v. Please clean it manually\n", configMapName, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s\n`", namespace, configMapName)
+		log.Debugf("Delete configmap %s failed due to %v. Please clean it manually\n", configMapName, err)
+		log.Debugf("Please run `kubectl delete -n %s cm %s\n`", namespace, configMapName)
 		return err
 	}
 
@@ -95,7 +95,6 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 	case string(types.MpiWorkloadType):
 		mpiKubeClient := mpiClient.NewForConfigOrDie(client.GetRestConfig())
 		err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
-
 	case string(types.ResourceTypeDeployment):
 		err = clientset.AppsV1().Deployments(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
 	case string(types.ResourceTypeJob):
@@ -122,11 +121,11 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 func deleteAdditionalInteractiveJobResources(jobName, namespace string, clientset kubernetes.Interface) {
 	err := clientset.CoreV1().Services(namespace).Delete(jobName, &metav1.DeleteOptions{})
 	if err != nil {
-		log.Warnf(fmt.Sprintf("Failed to remove service %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+		log.Debugf("Failed to remove service %v, it may be removed manually and not by using Run:AI CLI.", jobName)
 	}
 	err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(jobName, &metav1.DeleteOptions{})
 	if err != nil {
-		log.Warnf(fmt.Sprintf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName))
+		log.Warnf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName)
 	}
 }
 
