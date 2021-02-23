@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	util "github.com/run-ai/runai-cli/pkg/util"
+	"github.com/run-ai/runai-cli/pkg/util"
 
 	"github.com/run-ai/runai-cli/pkg/types"
 	log "github.com/sirupsen/logrus"
@@ -374,34 +374,6 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 		return fileName, fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 	return fileName, err
-}
-
-func WaitForReadyStatefulSet(name string, namespace string) error {
-	binary, err := exec.LookPath(kubectlCmd[0])
-	if err != nil {
-		return err
-	}
-
-	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
-
-	log.Infof("Waiting for job to start")
-	args := []string{"-c", fmt.Sprintf("while [ $(%s get statefulset %s -n %s -o custom-columns=READY:.status.readyReplicas --no-headers ) != \"1\" ]; do echo \"Waiting for job to start\" && sleep 5; done", binary, name, namespace)}
-	cmd := exec.Command("bash", args...)
-	cmd.Env = env
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	err = cmd.Run()
-
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Job started")
-	return nil
 }
 
 func Exec(podName string, namespace string, command string, commandArgs []string, interactive bool, TTY bool) error {

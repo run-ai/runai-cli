@@ -2,13 +2,13 @@ package attach
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
-	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"time"
 
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
+
 	"github.com/run-ai/runai-cli/cmd/exec"
-	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
@@ -66,34 +66,20 @@ func Attach(cmd *cobra.Command, jobName string, stdin, tty bool, podName string,
 	if err != nil {
 		return
 	}
-
-	foundPod, err := exec.GetPodFromCmd(cmd, kubeClient, jobName, podName, timeout)
-
+	pod, err := exec.WaitForPodToStartRunning(cmd, kubeClient, jobName, podName, timeout)
 	if err != nil {
-		return
+		return err
 	}
-
-	podToExec, err := raUtil.WaitForPod(
-		foundPod.Name,
-		foundPod.Namespace,
-		raUtil.NotReadyPodWaitingMsg,
-		timeout,
-		raUtil.NotReadyPodTimeoutMsg,
-		raUtil.PodRunning,
-	)
-
-	if err != nil {
-		return
-	} else if podToExec == nil {
+	if pod == nil {
 		return fmt.Errorf("Not found any matching pod")
 	}
 
 	if podName == "" {
 		// notify the user which pod name he will to attach
-		fmt.Println("Connecting to pod", podToExec.Name)
+		fmt.Println("Connecting to pod", pod.Name)
 	}
 
-	return attachByKubectlLib(podToExec, stdin, tty)
+	return attachByKubectlLib(pod, stdin, tty)
 }
 
 // attachByKubeCtlBin attach to a running job name

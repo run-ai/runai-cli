@@ -2,13 +2,14 @@ package exec
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/types"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/pkg/client"
@@ -119,6 +120,27 @@ func GetPodFromCmd(cmd *cobra.Command, kubeClient *client.Client, jobName, podNa
 	return
 }
 
+func WaitForPodToStartRunning(cmd *cobra.Command, kubeClient *client.Client, jobName, podName string, timeout time.Duration) (*v1.Pod, error) {
+	foundPod, err := GetPodFromCmd(cmd, kubeClient, jobName, podName, timeout)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = raUtil.WaitForPod(
+		foundPod.Name,
+		foundPod.Namespace,
+		raUtil.NotReadyPodWaitingMsg,
+		timeout,
+		raUtil.NotReadyPodTimeoutMsg,
+		raUtil.PodRunning,
+	)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("Job started")
+	return foundPod, nil
+}
 
 func WaitForPodCreation(podName, jobName string, namespace types.NamespaceInfo, job trainer.TrainingJob, timeout time.Duration, kubeClient *client.Client) (pod *v1.Pod, err error) {
 	shouldStopAt := time.Now().Add(timeout)

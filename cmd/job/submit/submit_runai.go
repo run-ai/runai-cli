@@ -2,14 +2,16 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
-	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"math"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/run-ai/runai-cli/cmd/exec"
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 
 	"github.com/run-ai/runai-cli/pkg/templates"
 
@@ -127,7 +129,15 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			printJobInfoIfNeeded(submitArgs)
 			if raUtil.IsBoolPTrue(submitArgs.IsJupyter) || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
-				err = kubectl.WaitForReadyStatefulSet(submitArgs.Name, submitArgs.Namespace)
+				kubeClient, err := client.GetClient()
+				if err != nil {
+					return
+				}
+
+				_, err = exec.WaitForPodToStartRunning(cmd, kubeClient, submitArgs.Name, "", time.Minute)
+				if err != nil {
+					return
+				}
 
 				if err != nil {
 					fmt.Println(err)
