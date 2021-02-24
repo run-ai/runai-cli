@@ -185,6 +185,9 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (output string,
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
 	out, err := cmd.CombinedOutput()
+	if len(out) == 0 {
+		return "", fmt.Errorf("nothing was deleted")
+	}
 	log.Debugf("%s", string(out))
 
 	if err != nil {
