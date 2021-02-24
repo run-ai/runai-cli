@@ -385,6 +385,10 @@ func mergeOldCommandAndArgsWithNew(argsLenAtDash int, positionalArgs, oldCommand
 		return argsAfterDash, isCommand
 	}
 
+	if len(oldCommand) == 0 && len(oldArgs) == 0 {
+		return []string{}, isCommand
+	}
+
 	isAnyCommand := false
 	if len(oldCommand) != 0 {
 		isAnyCommand = true
