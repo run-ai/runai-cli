@@ -219,7 +219,7 @@ func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kuberne
 	if templateName != "" {
 		userTemplate, err := templatesHandler.GetTemplate(templateName)
 		if err != nil {
-			return fmt.Errorf("could not find runai template %s. Please run '%s template list'", templateName, config.CLIName)
+			return err
 		}
 
 		if adminTemplate != nil {
