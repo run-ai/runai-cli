@@ -46,7 +46,7 @@ func GetCurrentUserIdToken() (string, error) {
 	return currentUser.AuthProvider.Config[idTokenFieldName], nil
 }
 
-func GetOpenshiftOcToken() (string, error) {
+func GetOpenshiftToken() (string, error) {
 	kubeConfig, err := readKubeConfig()
 	if err != nil {
 		return "", err

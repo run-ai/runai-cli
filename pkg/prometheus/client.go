@@ -75,7 +75,7 @@ type (
 	}
 )
 
-func BuildPrometheusClient(c client.Client) (*Client, error) {
+func BuildPrometheusClient(c *client.Client) (*Client, error) {
 	ps := &Client{
 		client: c.GetClientset(),
 		dynamicClient: c.GetDynamicClient(),
@@ -132,7 +132,7 @@ func (ps *Client) getThanosRouteService() (*ThanosRouteService, error) {
 
 	thanosUrl := fmt.Sprintf("%s://%s/", thanosSchema, thanosRouteSpecHost.(string))
 
-	userOcToken, err := kubeconfig.GetOpenshiftOcToken()
+	userOcToken, err := kubeconfig.GetOpenshiftToken()
 	if err != nil {
 		return nil, err
 	}

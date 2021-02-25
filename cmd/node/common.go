@@ -26,7 +26,7 @@ func getNodeInfos(shouldQueryMetrics bool) (*[]nodes.NodeInfo, error) {
 		return nil, err
 	}
 
-	nodeInfos, warning, err := nodes.GetAllNodeInfos(*kubeClient, shouldQueryMetrics)
+	nodeInfos, warning, err := nodes.GetAllNodeInfos(kubeClient, shouldQueryMetrics)
 	if err != nil {
 		return nil, err
 	} else if len(warning) > 0 {

@@ -181,7 +181,7 @@ func hasError(errors ...error) error {
 	return nil
 }
 
-func GetAllNodeInfos(client client.Client, shouldQueryMetrics bool) ([]NodeInfo, string, error) {
+func GetAllNodeInfos(client *client.Client, shouldQueryMetrics bool) ([]NodeInfo, string, error) {
 	var warning string
 	nodeInfoList := []NodeInfo{}
 	allActivePods, err := trainer.AcquireAllActivePods(client.GetClientset())
@@ -221,7 +221,7 @@ func GetAllNodeInfos(client client.Client, shouldQueryMetrics bool) ([]NodeInfo,
 	return nodeInfoList, warning, err
 }
 
-func queryMetrics(client client.Client) (*prom.MetricResultsByItems, error){
+func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error){
 	var promData prom.MetricResultsByItems
 	promClient, promErr := prom.BuildPrometheusClient(client)
 	if promErr != nil {
