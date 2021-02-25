@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/config"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,11 +69,11 @@ func (cg *Templates) GetTemplate(name string) (*Template, error) {
 
 	for _, config := range configs {
 		if config.Name == name {
-			return &config, err
+			return &config, nil
 		}
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("could not find runai template %s. Please run '%s template list'", name, config.CLIName)
 }
 
 func (cg *Templates) GetDefaultTemplate() (*Template, error) {
