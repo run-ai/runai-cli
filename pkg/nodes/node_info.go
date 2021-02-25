@@ -2,15 +2,14 @@ package nodes
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"strings"
 
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/helpers"
 	"github.com/run-ai/runai-cli/pkg/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-
 	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/run-ai/runai-cli/cmd/util"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
@@ -182,15 +181,15 @@ func hasError(errors ...error) error {
 	return nil
 }
 
-func GetAllNodeInfos(client kubernetes.Interface, shouldQueryMetrics bool) ([]NodeInfo, string, error) {
+func GetAllNodeInfos(client client.Client, shouldQueryMetrics bool) ([]NodeInfo, string, error) {
 	var warning string
 	nodeInfoList := []NodeInfo{}
-	allActivePods, err := trainer.AcquireAllActivePods(client)
+	allActivePods, err := trainer.AcquireAllActivePods(client.GetClientset())
 	if err != nil {
 		return nil, "", err
 	}
 
-	nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodeList, err := client.GetClientset().CoreV1().Nodes().List(metav1.ListOptions{})
 
 	if err != nil {
 		return nodeInfoList, warning, err
@@ -198,12 +197,11 @@ func GetAllNodeInfos(client kubernetes.Interface, shouldQueryMetrics bool) ([]No
 
 	var promData prom.MetricResultsByItems
 	if shouldQueryMetrics {
-		promClient, promErr := prom.BuildPrometheusClient(client)
-		if promErr == nil {
-			promData, promErr = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
-		}
-		if promErr != nil {
-			warning = fmt.Sprintf("Some metrics will not show, please contact customer support and attach the following error: %s", promErr)
+		data, err := queryMetrics(client)
+		if err != nil {
+			warning = fmt.Sprintf("Some metrics will not show, please contact customer support and attach the following error: %s", err)
+		} else {
+			promData = *data
 		}
 	}
 
@@ -221,6 +219,20 @@ func GetAllNodeInfos(client kubernetes.Interface, shouldQueryMetrics bool) ([]No
 	}
 
 	return nodeInfoList, warning, err
+}
+
+func queryMetrics(client client.Client) (*prom.MetricResultsByItems, error){
+	var promData prom.MetricResultsByItems
+	promClient, promErr := prom.BuildPrometheusClient(client)
+	if promErr != nil {
+		return nil, promErr
+	}
+
+	promData, promErr = promClient.GroupMultiQueriesToItems(nodePQs, promethesNodeLabelID)
+	if promErr != nil {
+		return nil, promErr
+	}
+	return &promData, nil
 }
 
 func getPodsOnSpecificNode(node v1.Node, allActivePods []v1.Pod) []v1.Pod {

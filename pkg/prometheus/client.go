@@ -1,8 +1,16 @@
 package prometheus
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"io/ioutil"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -14,7 +22,10 @@ import (
 
 const (
 	prometheusSchema                    = "http"
+	thanosSchema = "https"
 	namespace                           = "runai"
+	openshiftMonitoringNamespace = "openshift-monitoring"
+	thanosRouteName = "thanos-querier"
 	promLabel                           = "prometheus-operator-prometheus"
 	SuccessStatus    MetricStatusResult = "success"
 )
@@ -51,26 +62,46 @@ type (
 	MetricValue interface{}
 
 	Client struct {
-		client  kubernetes.Interface
-		service v1.Service
+		client            kubernetes.Interface
+		dynamicClient dynamic.Interface
+		isOpenshift       bool
+		prometheusService v1.Service
+		thanosRouteService *ThanosRouteService
+	}
+
+	ThanosRouteService struct {
+		url string
+		authorizationToken string
 	}
 )
 
-func BuildPrometheusClient(c kubernetes.Interface) (*Client, error) {
+func BuildPrometheusClient(c client.Client) (*Client, error) {
 	ps := &Client{
-		client: c,
+		client: c.GetClientset(),
+		dynamicClient: c.GetDynamicClient(),
 	}
-	service, err := ps.GetPrometheusService()
+	service, err := ps.getPrometheusService()
 	if err != nil {
 		return nil, err
 	}
-	ps.service = *service
+	if service != nil {
+		ps.prometheusService = *service
+		return ps, nil
+	}
 
-	return ps, nil
+	thanos, err := ps.getThanosRouteService()
+	if err != nil {
+		return nil, err
+	}
+	if thanos != nil {
+		ps.isOpenshift = true
+		ps.thanosRouteService = thanos
+		return ps, nil
+	}
+	return nil, nil
 }
 
-func (ps *Client) GetPrometheusService() (service *v1.Service, err error) {
-
+func (ps *Client) getPrometheusService() (service *v1.Service, err error) {
 	list, err := ps.client.CoreV1().Services(namespace).List(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", promLabel),
 	})
@@ -82,22 +113,84 @@ func (ps *Client) GetPrometheusService() (service *v1.Service, err error) {
 		return
 	}
 
-	return nil, fmt.Errorf("no available services of promethues")
+	return nil, nil
 }
 
-func (ps *Client) Query(query string) (*MetricData, error) {
-	queryResponse := ps.client.CoreV1().Services(ps.service.Namespace).ProxyGet(prometheusSchema, ps.service.Name, "9090", "api/v1/query", map[string]string{
+func (ps *Client) getThanosRouteService() (*ThanosRouteService, error) {
+	openshiftRouteSchema := schema.GroupVersionResource{
+		Group: "route.openshift.io",
+		Version: "v1",
+		Resource: "routes",
+	}
+
+	thanosRoute, err := ps.dynamicClient.Resource(openshiftRouteSchema).Namespace(openshiftMonitoringNamespace).Get(thanosRouteName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	thanosRouteSpec := thanosRoute.Object["spec"].(map[string]interface{})
+	thanosRouteSpecHost := thanosRouteSpec["host"]
+
+	thanosUrl := fmt.Sprintf("%s://%s/", thanosSchema, thanosRouteSpecHost.(string))
+
+	userOcToken, err := kubeconfig.GetOpenshiftOcToken()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ThanosRouteService{url: thanosUrl, authorizationToken: fmt.Sprintf("bearer %s", userOcToken)}, nil
+}
+
+func (ps *Client) queryPrometheus(query string) (*MetricData, error) {
+	queryResponse := ps.client.CoreV1().Services(ps.prometheusService.Namespace).ProxyGet(prometheusSchema, ps.prometheusService.Name, "9090", "api/v1/query", map[string]string{
 		"query": query,
 		"time":  strconv.FormatInt(time.Now().Unix(), 10),
 	})
 
-	log.Debugf("Query prometheus for by %s in ns %s", query, ps.service.Namespace)
-	rawMetric, err := queryResponse.DoRaw()
+	log.Debugf("Query prometheus for by %s in ns %s", query, ps.prometheusService.Namespace)
+	rawMetrics, err := queryResponse.DoRaw()
 	if err != nil {
 		log.Debugf("Query prometheus failed due to err %v", err)
-		log.Debugf("Query prometheus failed due to result %s", string(rawMetric))
+		log.Debugf("Query prometheus failed due to result %s", string(rawMetrics))
 		return nil, err
 	}
+	return handleQueryResponse(rawMetrics, query)
+}
+
+func (ps *Client) queryThanos(query string) (*MetricData, error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	client := http.Client{}
+
+	requestUrl := fmt.Sprintf("%s%s", ps.thanosRouteService.url, "api/v1/query")
+	request, err := http.NewRequest("GET", requestUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := url.Values{}
+	q.Add("query", query)
+	q.Add("time", strconv.FormatInt(time.Now().Unix(), 10))
+	request.URL.RawQuery = q.Encode()
+
+	request.Header.Set("Authorization", ps.thanosRouteService.authorizationToken)
+
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debugf("Query thanos for by %s in ns %s", query, ps.prometheusService.Namespace)
+
+	rawMetrics, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Debugf("Query thanos failed due to err %v", err)
+		log.Debugf("Query thanos failed due to result %s", string(rawMetrics))
+		return nil, err
+	}
+	return handleQueryResponse(rawMetrics, query)
+}
+
+func handleQueryResponse(rawMetric []byte, query string) (*MetricData, error) {
+	var err error
 	metricResponse := &Metric{}
 	err = json.Unmarshal(rawMetric, metricResponse)
 	log.Debugf("Prometheus metric:%v", metricResponse)
@@ -108,7 +201,7 @@ func (ps *Client) Query(query string) (*MetricData, error) {
 		return nil, fmt.Errorf("failed to query prometheus, status: %s", metricResponse.Status)
 	}
 	if len(metricResponse.Data.Result) == 0 {
-		log.Debugf("The metric is not exist in prometheus for query  %s", query)
+		log.Debugf("The metric is not exist in prometheus for query %s", query)
 	}
 	return &metricResponse.Data, nil
 }
@@ -150,7 +243,13 @@ func (ps *Client) queryAndGetResponse(queryMap QueryNameToQuery) (map[string]Met
 	var prometheusResultChanel = make(chan queryResult)
 	for queryName, query := range queryMap {
 		go (func(query, name string) {
-			metric, err := ps.Query(query)
+			var err error
+			var metric *MetricData
+			if ps.isOpenshift {
+				metric, err = ps.queryThanos(query)
+			} else {
+				metric, err = ps.queryPrometheus(query)
+			}
 			prometheusResultChanel <- queryResult{name, metric, err}
 		})(query, queryName)
 	}

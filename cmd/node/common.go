@@ -25,8 +25,8 @@ func getNodeInfos(shouldQueryMetrics bool) (*[]nodes.NodeInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	clientset := kubeClient.GetClientset()
-	nodeInfos, warning, err := nodes.GetAllNodeInfos(clientset, shouldQueryMetrics)
+
+	nodeInfos, warning, err := nodes.GetAllNodeInfos(*kubeClient, shouldQueryMetrics)
 	if err != nil {
 		return nil, err
 	} else if len(warning) > 0 {
