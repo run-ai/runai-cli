@@ -46,6 +46,28 @@ func GetCurrentUserIdToken() (string, error) {
 	return currentUser.AuthProvider.Config[idTokenFieldName], nil
 }
 
+func GetOpenshiftToken() (string, error) {
+	kubeConfig, err := readKubeConfig()
+	if err != nil {
+		return "", err
+	}
+
+	currentContext, exists := kubeConfig.Contexts[kubeConfig.CurrentContext]
+	if !exists {
+		return "", getInvalidKubeConfigError("current context does not exists")
+	}
+	currentUser, exists := kubeConfig.AuthInfos[currentContext.AuthInfo]
+	if !exists {
+		return "", getInvalidKubeConfigError("current context user does not exits")
+	}
+	token := currentUser.Token
+	if token == "" {
+		return "", getInvalidKubeConfigError("token field does not exits")
+	}
+
+	return token, nil
+}
+
 func GetCurrentContextDefaultNamespace() (string, error) {
 	kubeConfig, err := readKubeConfig()
 	if err != nil {
