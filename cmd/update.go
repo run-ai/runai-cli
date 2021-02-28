@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/mholt/archiver"
-	arenaVersion "github.com/run-ai/runai-cli/pkg/version"
+	runaiVersion "github.com/run-ai/runai-cli/pkg/version"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -53,9 +53,9 @@ func NewUpdateCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			version, err := arenaVersion.GetVersion()
+			version, err := runaiVersion.GetVersion()
 			if err != nil {
-				log.Error("Unable to get current cli version")
+				log.Errorf("Unable to get current CLI version %s", err)
 				return
 			}
 			var currentVersion = version.Version
