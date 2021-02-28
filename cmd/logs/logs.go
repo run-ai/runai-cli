@@ -16,12 +16,13 @@ package logs
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/cmd/trainer"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
-	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"path"
 	"time"
+
+	"github.com/run-ai/runai-cli/cmd/trainer"
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/pkg/client"
@@ -75,7 +76,7 @@ func NewLogsCommand() *cobra.Command {
 			outerArgs.RetryTimeout = time.Millisecond
 			names := []string{}
 			for _, pod := range job.AllPods() {
-				names = append(names, path.Base(pod.ObjectMeta.SelfLink))
+				names = append(names, path.Base(pod.ObjectMeta.Name))
 			}
 			chiefPod := job.ChiefPod()
 			if len(names) > 1 && outerArgs.PodName == "" {
