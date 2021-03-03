@@ -69,6 +69,35 @@ func getRunaiDeployment() *appsv1.Deployment {
 	}
 }
 
+func getRunaiReplicaSetOwnedBy(owner metav1.OwnerReference) *appsv1.ReplicaSet {
+	jobName := "job-name"
+	jobUUID := "id1"
+
+	labelSelector := map[string]string{
+		"app": "job-name",
+	}
+	replicas := int32(1)
+
+	return &appsv1.ReplicaSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: NAMESPACE,
+			Name:      jobName,
+			UID:       types.UID(jobUUID),
+			OwnerReferences: []metav1.OwnerReference{
+				owner,
+			},
+			Labels: labelSelector,
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Template: runaiPodTemplate,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labelSelector,
+			},
+			Replicas: &replicas,
+		},
+	}
+}
+
 func getRunaiStatefulSet() *appsv1.StatefulSet {
 	jobName := "job-name"
 	jobUUID := "id1"
@@ -192,32 +221,40 @@ func TestStatefulSetInclusionInResourcesGetCommand(t *testing.T) {
 }
 
 func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
-	job := getRunaiDeployment()
+	deployment := getRunaiDeployment()
 
-	objects := []runtime.Object{job}
+	objects := []runtime.Object{deployment}
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJob(deployment.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeDeployment) {
+	if !testResourceIncluded(resources, deployment.Name, cmdTypes.ResourceTypeDeployment) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
 
-func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
-	job := getRunaiDeployment()
+func TestIncludeMultiplePodsInDeployment(t *testing.T) {
+	deployment := getRunaiDeployment()
+	controller := true
+	owner := metav1.OwnerReference{
+		UID:        deployment.UID,
+		Controller: &controller,
+		Kind:       deployment.Kind,
+		Name:       deployment.Name,
+	}
+	replicaSet := getRunaiReplicaSetOwnedBy(owner)
 
-	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
-	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
+	pod1 := createPodOwnedBy("pod1", replicaSet.Spec.Selector.MatchLabels, string(replicaSet.UID), string(cmdTypes.ResourceTypeJob), replicaSet.Name)
+	pod2 := createPodOwnedBy("pod2", replicaSet.Spec.Selector.MatchLabels, string(replicaSet.UID), string(cmdTypes.ResourceTypeJob), replicaSet.Name)
 
-	objects := []runtime.Object{job, pod1, pod2}
+	objects := []runtime.Object{deployment, replicaSet, pod1, pod2}
 	kubeClient, runaiclient := getClientWithObject(objects)
 	trainer := RunaiTrainer{runaijobClient: runaiclient, client: kubeClient.GetClientset()}
 
-	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJob(deployment.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
