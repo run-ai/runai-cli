@@ -207,29 +207,7 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 		return nil, nil
 	}
 
-	labels := []string{}
-	for key, value := range podSpecJob.Selector.MatchLabels {
-		labels = append(labels, fmt.Sprintf("%s=%s", key, value))
-	}
-
-	podList, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		},
-		LabelSelector: strings.Join(labels, ","),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	filteredPods := []v1.Pod{}
-	for _, pod := range podList.Items {
-		if pod.OwnerReferences != nil && pod.OwnerReferences[0].UID == podSpecJob.UID {
-			filteredPods = append(filteredPods, pod)
-		}
-	}
+	filteredPods := rt.getPodsOfJob(podSpecJob)
 
 	lastCreatedPod := getLastCreatedPod(filteredPods)
 	ownerResource := cmdTypes.Resource{
@@ -245,6 +223,47 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 		return nil, err
 	}
 	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runaijob", serviceUrls, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
+}
+
+func (rt *RunaiTrainer) getPodsOfJob(podSpecJob cmdTypes.PodTemplateJob) []v1.Pod {
+	var labels []string
+	for key, value := range podSpecJob.Selector.MatchLabels {
+		labels = append(labels, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	podList, err := rt.client.CoreV1().Pods(podSpecJob.Namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		},
+		LabelSelector: strings.Join(labels, ","),
+	})
+
+	if err != nil {
+		return nil
+	}
+	ownerUID := podSpecJob.UID
+	if podSpecJob.Type == cmdTypes.ResourceTypeDeployment {
+		rsList, err := rt.client.AppsV1().ReplicaSets(podSpecJob.Namespace).List(metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ListOptions",
+				APIVersion: "v1",
+			},
+			LabelSelector: strings.Join(labels, ","),
+		})
+		if err != nil || len(rsList.Items) == 0 {
+			return nil
+		}
+		ownerUID = rsList.Items[0].UID
+	}
+
+	var filteredPods []v1.Pod
+	for _, pod := range podList.Items {
+		if pod.OwnerReferences != nil && pod.OwnerReferences[0].UID == ownerUID {
+			filteredPods = append(filteredPods, pod)
+		}
+	}
+	return filteredPods
 }
 
 func (rt *RunaiTrainer) getServiceUrlsByLastCreatedPod(lastCreatedPod *v1.Pod, namespace string) ([]string, error) {
