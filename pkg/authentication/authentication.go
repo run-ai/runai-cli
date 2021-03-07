@@ -27,6 +27,19 @@ func GetCurrentAuthenticateUser() (string, error) {
 	return token.Email, nil
 }
 
+func GetCurrentAuthenticateUserSubject() (string, string, error) {
+	idToken, err := kubeconfig.GetCurrentUserIdToken()
+	if err != nil {
+		return "", "", err
+	}
+
+	token, err := jwt.Decode(idToken)
+	if err != nil {
+		return "", "", err
+	}
+	return token.Subject, token.Email, nil
+}
+
 func Authenticate(params *types.AuthenticationParams) error {
 	ctx := context.Background()
 	params, err := GetFinalAuthenticationParams(params)
