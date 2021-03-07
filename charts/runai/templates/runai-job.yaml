@@ -1,8 +1,17 @@
 {{- include "runai-common.pvc" . }}
 
 ---
+{{- if .Values.isRunaiJob }}
 apiVersion: run.ai/v1
 kind: "RunaiJob"
+{{- else if .Values.inference }}
+apiVersion: apps/v1
+kind: "Deployment"
+{{- else }}
+apiVersion: batch/v1
+kind: "Job"
+{{- end }}
+
 {{- $combinedVolume := list }}
 {{- range $volume := (.Values.volume | default list) }}
 {{- $combinedVolume = append $combinedVolume $volume }}
@@ -44,6 +53,14 @@ spec:
     {{- if not (kindIs "invalid" .Values.backoffLimit) }}
   backoffLimit: {{ .Values.backoffLimit }}
     {{- end }}
+  {{- if .Values.inference }}
+  selector:
+    matchLabels:
+      release: {{ .Release.Name }}
+  {{- if .Values.replicas }}
+  replicas: {{ .Values.replicas }}
+  {{- end }}
+  {{- end }}
   template:
     metadata:
       annotations:
@@ -59,6 +76,9 @@ spec:
         {{- if .Values.user }}
         user: {{ .Values.user | quote}}
         {{- end }}
+        {{- if .Values.isMps }}
+        mps: {{ .Values.isMps | quote}}
+        {{- end }}
       labels:
         {{- include "runai-common.charts.label-addition" . | indent 8}}
     spec:
@@ -67,7 +87,9 @@ spec:
         run.ai/type: {{ .Values.node_type }}
       {{- end}}
       schedulerName: runai-scheduler
+      {{- if not .Values.inference }}
       restartPolicy: Never
+      {{- end }}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
       securityContext:
