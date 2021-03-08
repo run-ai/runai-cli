@@ -1,4 +1,4 @@
-{{- if and .Values.interactive .Values.serviceType }}
+{{- if and .Values.serviceType }}
 
 {{- $combinedPorts := list }}
 {{- range $port := (.Values.ports | default list) }}

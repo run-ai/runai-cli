@@ -294,8 +294,13 @@ type submitRunaiJobArgs struct {
 	IsJupyter        *bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
-	IsOldJob         *bool
 	TtlAfterFinished *time.Duration
+
+	// Hidden flags
+	IsOldJob  *bool
+	Inference *bool `yaml:"inference,omitempty"`
+	IsMPS     *bool `yaml:"isMps,omitempty"`
+	Replicas  *int  `yaml:"replicas,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -343,8 +348,16 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "Number of successful pods required for this job to be completed. Used with HPO.")
 	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "Number of pods to run in parallel at any given time.  Used with HPO.")
 	flags.AddDurationNullableFlagP(fs, &(sa.TtlAfterFinished), "ttl-after-finish", "", "The duration, after which a finished job is automatically deleted (e.g. 5s, 2m, 3h).")
+
+	// Hidden flags
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
+	flags.AddBoolNullableFlag(fs, &(sa.Inference), "inference", "", "Mark this Job as inference.")
+	flags.AddBoolNullableFlag(fs, &(sa.IsMPS), "mps", "", "Enable MPS")
+	flags.AddIntNullableFlag(fs, &(sa.Replicas), "replicas", "Number of replicas for Inference jobs")
 	fs.MarkHidden("old-job")
+	fs.MarkHidden("inference")
+	fs.MarkHidden("mps")
+	fs.MarkHidden("replicas")
 
 	fs = fbg.GetOrAddFlagSet(NetworkFlagGroup)
 	fs.StringArrayVar(&(sa.Ports), "port", []string{}, "Expose ports from the Job container.")
@@ -356,7 +369,6 @@ func submitRunaiJob(submitArgs *submitRunaiJobArgs, clientset kubernetes.Interfa
 	if err != nil {
 		return err
 	}
-
 	handleRunaiJobCRD(submitArgs, runaiclientset)
 	submitArgs.Name, err = workflow.SubmitJob(submitArgs.Name, submitArgs.Namespace, submitArgs.generateSuffix, submitArgs, runaiChart, clientset, dryRun)
 	if err != nil {
@@ -374,6 +386,10 @@ func submitRunaiJob(submitArgs *submitRunaiJobArgs, clientset kubernetes.Interfa
 func handleRunaiJobCRD(submitArgs *submitRunaiJobArgs, runaiclientset runaiclientset.Clientset) {
 	isRunaiJob := true
 	submitArgs.IsRunaiJob = &isRunaiJob
+	if submitArgs.Inference != nil && *submitArgs.Inference {
+		*submitArgs.IsRunaiJob = false
+		return
+	}
 	if submitArgs.IsOldJob != nil && *submitArgs.IsOldJob {
 		*submitArgs.IsRunaiJob = false
 		return

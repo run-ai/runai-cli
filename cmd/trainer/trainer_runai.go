@@ -475,20 +475,18 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 	if err != nil {
 		return nil, err
 	}
-	replicaSetsMap := make(map[types.UID]*appsv1.ReplicaSet)
+	replicaSetsMap := make(map[types.UID]appsv1.ReplicaSet)
 	for _, rs := range replicaSets.Items {
-		replicaSetsMap[rs.UID] = &rs
+		replicaSetsMap[rs.UID] = rs
 	}
 
 	// Group the pods by their controller
 	for _, pod := range runaiPods.Items {
-		if IsMPIPod(pod) {
+		if IsMPIPod(pod) || pod.Spec.SchedulerName != constants.SchedulerName {
 			continue
 		}
-		controller := ""
-		var uid types.UID = ""
 
-		controller, uid = getPodTopOwner(pod, controller, replicaSetsMap, uid)
+		controller, uid := getPodTopOwner(pod, replicaSetsMap)
 		if jobPodMap[uid] == nil {
 			jobPodMap[uid] = &RunaiJobInfo{
 				name:      controller,
@@ -510,7 +508,9 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 	return jobPodMap, nil
 }
 
-func getPodTopOwner(pod v1.Pod, controller string, replicasetByUid map[types.UID]*appsv1.ReplicaSet, uid types.UID) (string, types.UID) {
+func getPodTopOwner(pod v1.Pod, replicasetByUid map[types.UID]appsv1.ReplicaSet) (string, types.UID) {
+	var controller string
+	var uid types.UID
 	for _, owner := range pod.OwnerReferences {
 		if owner.Controller != nil && *owner.Controller {
 			if owner.Kind == "ReplicaSet" {
