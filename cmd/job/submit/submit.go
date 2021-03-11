@@ -322,14 +322,14 @@ func assignUser(submitArgs *submitArgs) {
 func getJobIndex(clientset kubernetes.Interface) (string, error) {
 	for i := 0; i < getResourceMaxRetries; i++ {
 		index, shouldTryAgain, err := tryGetJobIndexOnce(clientset)
-		log.Debugf("Could not get job index in the: %s time", i)
+		log.Debugf("Could not get job index in the: %d time", i)
 
 		if index != "" || !shouldTryAgain {
 			return index, err
 		}
 	}
 
-	return "", fmt.Errorf("Could not get runai job index")
+	return "", fmt.Errorf("could not get runai job index")
 }
 
 func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
