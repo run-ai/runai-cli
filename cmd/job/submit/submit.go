@@ -41,6 +41,7 @@ const (
 	dashArg        = "--"
 	commandFlag    = "command"
 	oldCommandFlag = "old-command"
+	getResourceMaxRetries = 5
 
 	// flag group names
 	AliasesAndShortcutsFlagGroup flags.FlagGroupName = "Aliases/Shortcuts"
@@ -319,15 +320,16 @@ func assignUser(submitArgs *submitArgs) {
 }
 
 func getJobIndex(clientset kubernetes.Interface) (string, error) {
-	for true {
+	for i := 0; i < getResourceMaxRetries; i++ {
 		index, shouldTryAgain, err := tryGetJobIndexOnce(clientset)
+		log.Debugf("Could not get job index in the: %s time", i)
 
 		if index != "" || !shouldTryAgain {
 			return index, err
 		}
 	}
 
-	return "", nil
+	return "", fmt.Errorf("Could not get runai job index")
 }
 
 func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
