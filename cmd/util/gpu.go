@@ -26,7 +26,7 @@ const (
 	RunaiGPUFraction = "gpu-fraction"
 	RunaiGPUMemory   = "gpu-memory"
 	// an annotation on each node
-	RunaiAllocatableGpus               = "runai-allocatable-gpus"
+	AllocatableGpus                    = "nvidia.com/gpu.count"
 	NVIDIAGPUResourceName              = "nvidia.com/gpu"
 	ALIYUNGPUResourceName              = "aliyun.com/gpu-mem"
 	DeprecatedNVIDIAGPUResourceName    = "alpha.kubernetes.io/nvidia-gpu"
@@ -53,7 +53,7 @@ func TotalGpuInNode(node v1.Node) int64 {
 
 // The way to get allocatble GPU Count of Node
 func AllocatableGpuInNodeIncludingFractions(node v1.Node) int64 {
-	val, ok := node.Annotations[RunaiAllocatableGpus]
+	val, ok := node.Annotations[AllocatableGpus]
 
 	if ok {
 		gpus, err := strconv.ParseInt(val, 10, 64)
