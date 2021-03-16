@@ -53,7 +53,7 @@ func TotalGpuInNode(node v1.Node) int64 {
 
 // The way to get allocatble GPU Count of Node
 func AllocatableGpuInNodeIncludingFractions(node v1.Node) int64 {
-	val, ok := node.Annotations[AllocatableGpus]
+	val, ok := node.Labels[AllocatableGpus]
 
 	if ok {
 		gpus, err := strconv.ParseInt(val, 10, 64)
