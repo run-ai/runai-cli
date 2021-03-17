@@ -30,7 +30,6 @@ const (
 	GpuUsedByPod      = "gpuUsedByPod"
 	UsedGpuMemoryPQ   = "usedGpuMemory"
 	TotalGpuMemoryPQ  = "totalGpuMemory"
-	GpuTypePQ		  = "gpuType"
 )
 
 var (
@@ -46,7 +45,6 @@ var (
 		TotalGpuMemoryPQ:  `(sum(runai_node_gpu_total_memory * 1024 * 1024) by (node, gpu))`,
 		GpuIdleTimePQ:     `(sum(time()-runai_node_gpu_last_not_idle_time) by (node, gpu))`,
 		GpuUsedByPod:      `sum(runai_gpus_is_running_with_pod2 * 100) by (node, gpu)`,
-		GpuTypePQ:		   `sum by (gpu_model, node) ((label_replace(DCGM_GPU_MODEL,"pod_ip", "$1", "instance", "(.*):(.*)")) * on(pod_ip) group_left(node) kube_pod_info{created_by_name=~"runai-dcgm-exporter"})`,
 	}
 )
 
@@ -86,6 +84,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	nodeResStatus.Allocated = podResStatus.Requested
 	nodeResStatus.Allocated.GPUs = podResStatus.Allocated.GPUs // needed to count fractions as well
 	nodeResStatus.Limited = podResStatus.Limited
+	nodeResStatus.GpuType = ni.Node.Labels["nvidia.com/gpu.product"]
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Capacity, ni.Node.Status.Capacity)
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )
@@ -112,7 +111,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 			prom.SetFloatFromFirstMetric(&nodeResStatus.Usage.Memory, ni.PrometheusData, UsedCpusMemoryPQ),
 			prom.SetFloatFromFirstMetric(&nodeResStatus.Usage.GPUMemory, ni.PrometheusData, UsedGpusMemoryPQ),
 			// setFloatPromData(&nodeResStatus.Usage.Storage, p, UsedStoragePQ)
-			prom.SetLabel(&nodeResStatus.GpuType, "gpu_model",ni.PrometheusData, GpuTypePQ),
+
 			// set total
 			prom.SetFloatFromFirstMetric(&nodeResStatus.Capacity.GPUMemory, ni.PrometheusData, TotalGpusMemoryPQ),
 			setGpusFromPromDataAndPods(&nodeResStatus.NodeGPUs, ni.PrometheusData, ni.Pods),
