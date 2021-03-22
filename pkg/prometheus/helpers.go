@@ -3,7 +3,6 @@ package prometheus
 import (
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 
