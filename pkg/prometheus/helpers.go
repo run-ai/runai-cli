@@ -21,29 +21,6 @@ func SetFloatFromFirstMetric(num *float64, m MetricResultsByQueryName, key strin
 	return nil
 }
 
-func SetLabel(str *string, label string ,m MetricResultsByQueryName, key string) error {
-	metrics, found := m[key]
-	if !found || len(*metrics) == 0 {
-		return nil
-	}
-
-	values := []string{}
-	for _, metric := range *metrics {
-		val, found := metric.Metric[label]
-		if !found || len(val) == 0 {
-			continue
-		}
-		for _, v := range values {
-			if v == val {
-				continue
-			}
-		}
-		values = append(values, val)
-	}
-	*str = strings.Join(values, ", ")
-	return nil
-}
-
 
 func GroupMetrics(groupBy string, metricsByQueryName MetricResultsByQueryName, queryNames ...string) (map[string]map[string]float64, error) {
 	result := map[string]map[string]float64{}
