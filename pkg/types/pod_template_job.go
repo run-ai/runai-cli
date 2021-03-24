@@ -42,7 +42,7 @@ func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 	}
 
 	completions := int32(1)
-	if job.Spec.Parallelism != nil {
+	if job.Spec.Completions != nil {
 		completions = *job.Spec.Completions
 	}
 	return &PodTemplateJob{
