@@ -93,6 +93,7 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 	}
 	jobToDelete, err := trainer.SearchTrainingJob(client, jobName, "", namespaceInfo)
 	if err != nil {
+		deleteAdditionalJobResources(jobName, namespaceInfo.Namespace, clientset)
 		return cmdUtil.GetJobDoesNotExistsInNamespaceError(jobName, namespaceInfo)
 	}
 
@@ -116,9 +117,7 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 		log.Debugf("Failed to remove job %v, it may be removed manually and not by using Run:AI CLI.\n", jobName)
 	}
 
-	if jobToDelete.Trainer() == trainer.RunaiInteractiveType {
-		deleteAdditionalInteractiveJobResources(jobName, namespaceInfo.Namespace, clientset)
-	}
+	deleteAdditionalJobResources(jobName, namespaceInfo.Namespace, clientset)
 	if err != nil {
 		deletedJobMessage(jobName)
 	}
@@ -126,7 +125,7 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 	return nil
 }
 
-func deleteAdditionalInteractiveJobResources(jobName, namespace string, clientset kubernetes.Interface) {
+func deleteAdditionalJobResources(jobName, namespace string, clientset kubernetes.Interface) {
 	err := clientset.CoreV1().Services(namespace).Delete(jobName, &metav1.DeleteOptions{})
 	if err != nil {
 		log.Debugf("Failed to remove service %v, it may be removed manually and not by using Run:AI CLI.", jobName)
@@ -134,6 +133,10 @@ func deleteAdditionalInteractiveJobResources(jobName, namespace string, clientse
 	err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(jobName, &metav1.DeleteOptions{})
 	if err != nil {
 		log.Debugf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName)
+	}
+	err = clientset.CoreV1().ConfigMaps(namespace).Delete(jobName, &metav1.DeleteOptions{})
+	if err != nil {
+		log.Debugf("Failed to remove configmap %s failed due to %v. Please clean it manually\n", jobName, err)
 	}
 }
 
