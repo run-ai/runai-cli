@@ -84,6 +84,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	nodeResStatus.Allocated = podResStatus.Requested
 	nodeResStatus.Allocated.GPUs = podResStatus.Allocated.GPUs // needed to count fractions as well
 	nodeResStatus.Limited = podResStatus.Limited
+	nodeResStatus.GpuType = ni.Node.Labels["nvidia.com/gpu.product"]
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Capacity, ni.Node.Status.Capacity)
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )

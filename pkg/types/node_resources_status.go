@@ -7,6 +7,7 @@ type NodeResourcesStatus struct {
 	Allocated                      ResourceList
 	GPUsInUse                      int
 	NumberOfFractionalAllocatedGpu int
+	GpuType						   string
 	Requested                      ResourceList
 	Usage                          ResourceList
 	NodeGPUs                       []GPU
