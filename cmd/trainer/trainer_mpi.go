@@ -96,7 +96,10 @@ func (mj *MPIJob) GetPodGroupName() string {
 }
 
 func (mj *MPIJob) Image() string {
-	return mj.mpijob.Annotations["image"]
+	if len(mj.chiefjob.Spec.Template.Spec.Containers) == 0 {
+		return "N/A"
+	}
+	return mj.chiefjob.Spec.Template.Spec.Containers[0].Image
 }
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
