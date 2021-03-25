@@ -32,6 +32,7 @@ var (
 		"CPUs.Allocated",
 		"Mem.Allocatable",
 		"Mem.Allocated",
+		"GPUs.Type",
 		"GPUs.Allocatable",
 		"GPUs.Free",
 	})

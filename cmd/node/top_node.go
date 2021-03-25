@@ -43,7 +43,6 @@ var (
 	})
 
 	tableTopNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
-		"GPUs.Type",
 		"Mem.UsageAndUtilization",
 	})
 
