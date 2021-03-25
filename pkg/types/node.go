@@ -16,7 +16,7 @@ type NodeCPUResource struct {
 }
 
 type NodeGPUResource struct {
-	Type        string  `title:"TYPE" def:"-"`
+	GpuType     string  `title:"TYPE" def:"-"`
 	Capacity    int     `title:"CAPACITY" def:"0"`
 	Allocatable float64 `title:"ALLOCATABLE" def:"0"`
 	Allocated   float64 `title:"ALLOCATED"`

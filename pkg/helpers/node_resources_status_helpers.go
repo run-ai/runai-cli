@@ -39,7 +39,7 @@ func (c *NodeResourcesStatusConvertor) ToGpus() *types.NodeGPUResource {
 		Usage:       nrs.Usage.GPUs / 100 * float64(capacity),
 		Utilization: nrs.Usage.GPUs,
 		InUse:       nrs.GPUsInUse,
-		Type: 		 nrs.GpuType,
+		GpuType:     nrs.GpuType,
 		Free:        int(nrs.Capacity.GPUs) - nrs.GPUsInUse,
 	}
 
