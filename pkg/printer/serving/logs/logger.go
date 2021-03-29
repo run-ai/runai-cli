@@ -1,8 +1,6 @@
 package logs
 
 import (
-	"path"
-
 	servejob "github.com/run-ai/runai-cli/pkg/jobs/serving"
 	"github.com/run-ai/runai-cli/pkg/podlogs"
 	podlogger "github.com/run-ai/runai-cli/pkg/printer/base/logs"
@@ -15,7 +13,7 @@ type ServingPodLogPrinter struct {
 func NewServingPodLogPrinter(job servejob.Serving, logArgs *podlogs.OuterRequestArgs) (*ServingPodLogPrinter, error) {
 	var names []string
 	for _, pod := range job.AllPods() {
-		names = append(names, path.Base(pod.ObjectMeta.SelfLink))
+		names = append(names, pod.ObjectMeta.Name)
 	}
 
 	podLogPrinter, err := podlogger.NewPodLogPrinter(names, logArgs)
