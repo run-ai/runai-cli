@@ -95,7 +95,6 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			err = submitArgs.setCommonRun(cmd, args, kubeClient, clientset)
 			if err != nil {
-				cmd.HelpFunc()(cmd, args)
 				fmt.Println(err)
 				os.Exit(1)
 			}
@@ -116,7 +115,6 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			if len(submitArgs.Image) == 0 {
-				cmd.HelpFunc()(cmd, args)
 				fmt.Print("\n-i, --image must be set\n\n")
 				os.Exit(1)
 			}

@@ -16,11 +16,12 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
-	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
 	"path"
 	"strconv"
+
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -87,7 +88,6 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 			}
 
 			if len(submitArgs.Image) == 0 {
-				cmd.HelpFunc()(cmd, args)
 				fmt.Print("\n-i, --image must be set\n\n")
 				os.Exit(1)
 			}

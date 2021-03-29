@@ -3,7 +3,6 @@ package printer
 import (
 	"encoding/json"
 	"fmt"
-	"path"
 	"time"
 
 	"github.com/run-ai/runai-cli/pkg/jobs/serving"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/run-ai/runai-cli/pkg/util"
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 // define the  serving job printer
@@ -54,7 +53,7 @@ func NewServingJobPrinter(job servejob.Serving) ServingJobPrinter {
 		status, totalContainers, restarts, readyCount := servejob.DefinePodPhaseStatus(pod)
 		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
 		simplePod := SimplePod{
-			PodName:      path.Base(pod.ObjectMeta.SelfLink),
+			PodName:      pod.ObjectMeta.Name,
 			Age:          age,
 			Status:       status,
 			HostIP:       hostIP,
