@@ -214,6 +214,7 @@ func submitConfigMap(name, namespace string, generateSuffix bool, clientset kube
 	}
 
 	if !generateSuffix {
+		log.Debugf("Failed to create job name: <%v>, error: <%v>", name, err)
 		return nil, fmt.Errorf("the job %s already exists, please delete it first (use 'runai delete %s')", name, name)
 	}
 
@@ -248,8 +249,10 @@ func createEmptyConfigMap(name, baseName, namespace string, index int, clientset
 	}
 	acceptedConfigMap, err := clientset.CoreV1().ConfigMaps(namespace).Create(&configMap)
 	if err != nil {
+		log.Debugf("Failed to create configmap name: <%v>, error: <%v>", name, err)
 		return nil, err
 	}
+	log.Debugf("Create configmap name: <%v>", name)
 	return acceptedConfigMap, nil
 }
 
