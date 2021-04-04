@@ -70,6 +70,7 @@ spec:
         {{- if .Values.gpuMemory }}
         gpu-memory: "{{ .Values.gpuMemory }}"
         {{- end }}
+        runai-cli-command: {{ .Values.runaiCliCommand | quote }}
         {{- if .Values.elastic }}
         elastic: {{ .Values.elastic | quote }}
         {{- end }}

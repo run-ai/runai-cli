@@ -198,6 +198,8 @@ func NewRunaiJobCommand() *cobra.Command {
 	fbg := flags.NewFlagsByGroups(command)
 
 	submitArgs.addCommonFlags(fbg)
+	submitArgs.addRunaiCliCommand()
+
 	submitArgs.addFlags(fbg)
 
 	fbg.UpdateFlagsByGroupsToCmd()

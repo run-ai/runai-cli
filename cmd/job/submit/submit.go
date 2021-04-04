@@ -16,11 +16,14 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication"
-	"k8s.io/apimachinery/pkg/api/resource"
+	"os"
 	"os/user"
 	"strconv"
+	"strings"
 	"syscall"
+
+	"github.com/run-ai/runai-cli/pkg/authentication"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/global"
@@ -80,6 +83,7 @@ type submitArgs struct {
 	Memory              string   `yaml:"memory,omitempty"`
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
+	RunaiCliCommand		string   `yaml:"runaiCliCommand,omitempty"`
 
 	ImagePullPolicy            string   `yaml:"imagePullPolicy"`
 	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`
@@ -121,6 +125,10 @@ func (s submitArgs) check() error {
 	}
 
 	return nil
+}
+
+func(submitArgs *submitArgs) addRunaiCliCommand() {
+	submitArgs.RunaiCliCommand = strings.Join( os.Args , " ")
 }
 
 func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
