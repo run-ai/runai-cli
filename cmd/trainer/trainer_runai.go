@@ -108,11 +108,22 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
+	pod, err := rt.client.CoreV1().Pods(ns).Get(name, metav1.GetOptions{})
+
+	if err != nil {
+		log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
+	}
+
+	if pod != nil && len(pod.OwnerReferences) == 0 {
+		if pod.Spec.SchedulerName == constants.SchedulerName {
+			return true
+		}
+	}
+
 	return false
 }
 
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
-
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
@@ -172,6 +183,25 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 			return result, nil
 		}
 	}
+
+	pod, err := rt.client.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+
+	if err != nil {
+		log.Debugf("failed to search pod %s in namespace %s due to %v", name, namespace, err)
+	}
+
+	if pod != nil && len(pod.OwnerReferences) == 0 {
+		podSpecJob := cmdTypes.PodTemplateJobFromPod(*pod)
+		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
+		if err != nil {
+			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
+		}
+
+		if result != nil {
+			return result, nil
+		}
+	}
+
 
 	runaiJobs, err := rt.runaijobClient.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
