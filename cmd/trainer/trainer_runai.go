@@ -293,6 +293,14 @@ func (rt *RunaiTrainer) getPodsOfJob(podSpecJob cmdTypes.PodTemplateJob) []v1.Po
 			filteredPods = append(filteredPods, pod)
 		}
 	}
+
+	if len(filteredPods) == 0 {
+		pod, err := rt.client.CoreV1().Pods(podSpecJob.Namespace).Get(podSpecJob.Name, metav1.GetOptions{})
+		if err != nil || pod == nil || len(pod.OwnerReferences) != 0 {
+			return []v1.Pod{}
+		}
+		return []v1.Pod{*pod}
+	}
 	return filteredPods
 }
 

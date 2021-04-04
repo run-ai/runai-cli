@@ -93,7 +93,7 @@ func PodTemplateJobFromDeployment(deployment appsv1.Deployment) *PodTemplateJob 
 func PodTemplateJobFromPod(pod v1.Pod) *PodTemplateJob {
 	return &PodTemplateJob{
 		ObjectMeta:  pod.ObjectMeta,
-		Type:        ResourceTypeDeployment,
+		Type:        ResourceTypePod,
 		Template:    v1.PodTemplateSpec{
 			ObjectMeta: pod.ObjectMeta,
 			Spec: pod.Spec,
