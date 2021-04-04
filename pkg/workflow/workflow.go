@@ -110,6 +110,8 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 	case string(types.ResourceTypeRunaiJob):
 		runaiClient := runaiClient.NewForConfigOrDie(client.GetRestConfig())
 		err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
+	case string(types.ResourceTypePod):
+		err = clientset.CoreV1().Pods(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
 	default:
 		log.Warningf("Unexpected type for job, type: %v\n", jobToDelete.WorkloadType())
 	}
