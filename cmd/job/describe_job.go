@@ -202,6 +202,7 @@ func printJobSummary(w io.Writer, job trainer.TrainingJob) {
 	fmt.Fprintf(w, "IS DISTRIBUTED WORKLOAD: %s\n", strconv.FormatBool(job.WorkloadType() == "MPIJob"))
 	fmt.Fprintf(w, "CREATED BY CLI: %s\n", strconv.FormatBool(job.CreatedByCLI()))
 	fmt.Fprintf(w, "SERVICE URL(S): %s\n", strings.Join(job.ServiceURLs(), ", "))
+	fmt.Fprintf(w, "COMMAND LINE: %s\n", getCommandLine(job))
 	fmt.Fprintln(w, "")
 
 }
@@ -330,6 +331,7 @@ func BuildJobInfo(job trainer.TrainingJob, clientset kubernetes.Interface) *type
 		Priority:  getPriorityClass(job),
 		ChiefName: job.ChiefPod().Name,
 		Instances: instances,
+		CommandLine: getCommandLine(job),
 	}
 }
 
@@ -343,4 +345,11 @@ func getPriorityClass(job trainer.TrainingJob) string {
 	}
 
 	return pc
+}
+
+func getCommandLine(job trainer.TrainingJob) ( commandLine string ) {
+	if job.ChiefPod() != nil {
+		commandLine = job.ChiefPod().Annotations["runai-cli-command"]
+	}
+	return
 }
