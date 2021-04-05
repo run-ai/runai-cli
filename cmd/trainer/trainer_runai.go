@@ -108,11 +108,22 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
+	pod, err := rt.client.CoreV1().Pods(ns).Get(name, metav1.GetOptions{})
+
+	if err != nil {
+		log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
+	}
+
+	if pod != nil && len(pod.OwnerReferences) == 0 {
+		if pod.Spec.SchedulerName == constants.SchedulerName {
+			return true
+		}
+	}
+
 	return false
 }
 
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
-
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
@@ -172,6 +183,25 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 			return result, nil
 		}
 	}
+
+	pod, err := rt.client.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+
+	if err != nil {
+		log.Debugf("failed to search pod %s in namespace %s due to %v", name, namespace, err)
+	}
+
+	if pod != nil && len(pod.OwnerReferences) == 0 {
+		podSpecJob := cmdTypes.PodTemplateJobFromPod(*pod)
+		result, err := rt.getRunaiTrainingJob(*podSpecJob, namespace)
+		if err != nil {
+			log.Debugf("failed to get job %s in namespace %s due to %v", name, namespace, err)
+		}
+
+		if result != nil {
+			return result, nil
+		}
+	}
+
 
 	runaiJobs, err := rt.runaijobClient.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
@@ -262,6 +292,14 @@ func (rt *RunaiTrainer) getPodsOfJob(podSpecJob cmdTypes.PodTemplateJob) []v1.Po
 		if pod.OwnerReferences != nil && pod.OwnerReferences[0].UID == ownerUID {
 			filteredPods = append(filteredPods, pod)
 		}
+	}
+
+	if len(filteredPods) == 0 {
+		pod, err := rt.client.CoreV1().Pods(podSpecJob.Namespace).Get(podSpecJob.Name, metav1.GetOptions{})
+		if err != nil || pod == nil || len(pod.OwnerReferences) != 0 {
+			return []v1.Pod{}
+		}
+		return []v1.Pod{*pod}
 	}
 	return filteredPods
 }
@@ -373,6 +411,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		return nil, err
 	}
 
+
 	// Get all different job stypes to one general job type with pod spec
 	jobsForListCommand := []*cmdTypes.PodTemplateJob{}
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
@@ -403,6 +442,13 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		podTemplateJob := cmdTypes.PodTemplateJobFromRunaiJob(runaijob)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
+
+	orpahnedPods, err := rt.getPodsWithoutOwner(namespace)
+	for _, pod := range orpahnedPods {
+		podTemplate := cmdTypes.PodTemplateJobFromPod(pod)
+		jobsForListCommand = append(jobsForListCommand, podTemplate)
+	}
+
 
 	for _, job := range jobsForListCommand {
 		if !rt.isRunaiPodObject(job.ObjectMeta, job.Template) {
@@ -508,9 +554,29 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 	return jobPodMap, nil
 }
 
+func (rt *RunaiTrainer) getPodsWithoutOwner(namespace string) ([]v1.Pod, error) {
+	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", constants.SchedulerName),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var podsWithoutOwner []v1.Pod
+	for _, runaiPod := range runaiPods.Items {
+		if len(runaiPod.OwnerReferences) == 0 {
+			podsWithoutOwner = append(podsWithoutOwner, runaiPod)
+		}
+	}
+	return podsWithoutOwner, nil
+}
+
 func getPodTopOwner(pod v1.Pod, replicasetByUid map[types.UID]appsv1.ReplicaSet) (string, types.UID) {
 	var controller string
 	var uid types.UID
+	if len(pod.OwnerReferences) == 0 {
+		return pod.Name, pod.UID
+	}
 	for _, owner := range pod.OwnerReferences {
 		if owner.Controller != nil && *owner.Controller {
 			if owner.Kind == "ReplicaSet" {
