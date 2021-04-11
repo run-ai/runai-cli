@@ -193,7 +193,7 @@ func Exec(cmd *cobra.Command, jobName string, command, fileNames []string, timeo
 	if err != nil {
 		return
 	} else if !isRunning {
-		err = fmt.Errorf("Unable to run command in pod that is not running")
+		err = fmt.Errorf("Unable to run command in a pod that is not running")
 		return
 	}
 
