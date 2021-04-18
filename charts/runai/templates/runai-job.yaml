@@ -36,7 +36,7 @@ metadata:
     {{- end }}
   {{- end}}
   annotations:
-    runai-cli-command: {{ .Values.runaiCliCommand | quote }}
+    runai-cli-command: {{ .Values.cliCommand | quote }}
     {{- if .Values.user }}
     user: {{ .Values.user | quote}}
     {{- end }}
@@ -71,7 +71,7 @@ spec:
         {{- if .Values.gpuMemory }}
         gpu-memory: "{{ .Values.gpuMemory }}"
         {{- end }}
-        runai-cli-command: {{ .Values.runaiCliCommand | quote }}
+        runai-cli-command: {{ .Values.cliCommand | quote }}
         {{- if .Values.elastic }}
         elastic: {{ .Values.elastic | quote }}
         {{- end }}

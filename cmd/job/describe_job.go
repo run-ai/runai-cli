@@ -351,5 +351,8 @@ func getCommandLine(job trainer.TrainingJob) ( commandLine string ) {
 	if job.ChiefPod() != nil {
 		commandLine = job.ChiefPod().Annotations["runai-cli-command"]
 	}
+	if len(commandLine) == 0  {
+		commandLine = "N/A"
+	}
 	return
 }

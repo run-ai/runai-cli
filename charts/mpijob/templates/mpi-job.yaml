@@ -10,7 +10,7 @@ metadata:
     image: "{{ .Values.image }}"
     totalGPUs: "{{ .Values.totalGpus }}"
     totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
-    runai-cli-command: {{ .Values.runaiCliCommand | quote }}
+    runai-cli-command: {{ .Values.cliCommand | quote }}
     {{- if .Values.user }}
     user: {{ .Values.user | quote}}
     {{- end }}
@@ -47,7 +47,7 @@ spec:
           annotations:
             totalGPUs: "{{ .Values.totalGpus }}"
             totalGPUsMemory: "{{ .Values.totalGpusMemory }}"
-            runai-cli-command: {{ .Values.runaiCliCommand | quote }}
+            runai-cli-command: {{ .Values.cliCommand | quote }}
         spec:
           {{- if .Values.node_type }}
           nodeSelector:
@@ -158,7 +158,7 @@ spec:
             {{- if .Values.gpuMemory }}
             gpu-memory: "{{ .Values.gpuMemory }}"
             {{- end }}
-            runai-cli-command: {{ .Values.runaiCliCommand | quote }}
+            runai-cli-command: {{ .Values.cliCommand | quote }}
           labels:
             project: {{ .Values.project }}
         spec:

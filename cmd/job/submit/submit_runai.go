@@ -196,10 +196,8 @@ func NewRunaiJobCommand() *cobra.Command {
 	}
 
 	fbg := flags.NewFlagsByGroups(command)
-
-	submitArgs.addCommonFlags(fbg)
-	submitArgs.addRunaiCliCommand()
-
+	submitArgs.addCommonSubmit(fbg)
+	
 	submitArgs.addFlags(fbg)
 
 	fbg.UpdateFlagsByGroupsToCmd()
