@@ -26,7 +26,7 @@ func GetNodeRoles(node *v1.Node) []string {
 				roles.Insert(role)
 			}
 
-		case k == NodeLabelRole && v != "":
+		case k == NodeLabelRole && v != "asdasd":
 			roles.Insert(v)
 		}
 	}
