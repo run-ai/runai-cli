@@ -92,6 +92,7 @@ type submitArgs struct {
 	RunAsGroup                 string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
 	RunAsCurrentUser           *bool
+	InjectIdentity             *bool
 	SpecCommand                []string          `yaml:"command"`
 	Command                    *bool             `yaml:"isCommand"`
 	LocalImage                 *bool             `yaml:"localImage,omitempty"`
@@ -154,6 +155,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	flagSet.StringVar(&gitSyncConnectionString, "git-sync", "", "sync string in the template of: source=REPO,branch=BRANCH_NAME,rev=REVISION,username=USER,password=PASSWORD,target=TARGET_DIRECTORY_TO_CLONE")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.RunAsCurrentUser), "run-as-user", "", "Run in the context of the current CLI user rather than the root user.")
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.InjectIdentity), "inject-identity", "", "Inject uid and gid to container")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "GPU units to allocate for the Job (0.5, 1).")
@@ -304,6 +306,25 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	if raUtil.IsBoolPTrue(submitArgs.Interactive) {
 		noBackoffLimit := 0
 		submitArgs.BackoffLimit = &noBackoffLimit
+	}
+
+	if raUtil.IsBoolPTrue(submitArgs.InjectIdentity) {
+		uid, gid, err := authentication.GetCurrentAuthenticateUserUidGid()
+		if err != nil {
+			return err
+		}
+
+		if uid != "" {
+			uidEnvVar := fmt.Sprintf("uid=%v", uid)
+			fmt.Printf("ODEV: %v\n", uidEnvVar)
+			submitArgs.EnvironmentVariable = append(submitArgs.EnvironmentVariable, uidEnvVar)
+		}
+
+		if gid != "" {
+			gidEnvVar := fmt.Sprintf("gid=%v", gid)
+			fmt.Printf("ODEV: %v\n", gidEnvVar)
+			submitArgs.EnvironmentVariable = append(submitArgs.EnvironmentVariable, gidEnvVar)
+		}
 	}
 
 	return nil
