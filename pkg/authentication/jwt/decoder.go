@@ -12,6 +12,8 @@ import (
 type Token struct {
 	Subject string `json:"sub,omitempty"`
 	Email   string `json:"email,omitempty"`
+	Uid     string `json:"uid,omitempty"`
+	Gid     string `json:"gid,omitempty"`
 }
 
 // Decode does not verify signatures!! it is used for viewing purposes only
