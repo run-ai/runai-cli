@@ -16,6 +16,7 @@ package root
 
 import (
 	"github.com/run-ai/runai-cli/cmd/cluster"
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/login"
 	"github.com/run-ai/runai-cli/cmd/logout"
@@ -30,7 +31,6 @@ import (
 	"github.com/run-ai/runai-cli/cmd/logs"
 	"github.com/run-ai/runai-cli/cmd/project"
 	"github.com/run-ai/runai-cli/cmd/template"
-
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/util"
 	"github.com/spf13/cobra"
@@ -43,6 +43,7 @@ import (
 
 // NewCommand returns a new instance of an Arena command
 func NewCommand() *cobra.Command {
+
 	var command = &cobra.Command{
 		Use:   config.CLIName,
 		Short: "runai is a command line interface to a RunAI cluster",
@@ -55,10 +56,11 @@ func NewCommand() *cobra.Command {
 		},
 	}
 
-	addKubectlFlagsToCmd(command)
-
-	// enable logging
-	command.PersistentFlags().StringVar(&global.LogLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
+	//
+	//   add global flags to the command
+	//
+	addKubectlFlagsToCmd(command)     	// project flag
+	addDebugLevelFlagsToCmd(command)	// log level flag
 
 	command.AddCommand(submitJob.NewRunaiJobCommand())
 	command.AddCommand(submitJob.NewRunaiSubmitMPIJobCommand())
@@ -80,12 +82,21 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(login.NewLoginCommand())
 	command.AddCommand(logout.NewLogoutCommand())
 	command.AddCommand(login.NewWhoamiCommand())
+	command.AddCommand(completion.NewCompletionCmd())
 
 	return command
 }
 
 func addKubectlFlagsToCmd(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP(flags.ProjectFlag, "p", "", "Specify the project to which the command applies. By default, commands apply to the default project. To change the default project use ‘runai config project <project name>’.")
+	cmd.RegisterFlagCompletionFunc(flags.ProjectFlag, project.GenProjectNamesForFlag)
+}
+
+func addDebugLevelFlagsToCmd(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVar(&global.LogLevel, flags.LogLevelFlag, "info", "Set the logging level. One of: debug|info|warn|error")
+	cmd.RegisterFlagCompletionFunc(flags.LogLevelFlag, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"debug", "info", "warn", "error"}, cobra.ShellCompDirectiveDefault
+	})
 }
 
 func createNamespace(client *kubernetes.Clientset, namespace string) error {

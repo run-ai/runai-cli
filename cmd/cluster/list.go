@@ -2,10 +2,13 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"os"
 	"text/tabwriter"
 
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
+	"github.com/run-ai/runai-cli/cmd/constants"
+
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -29,7 +32,8 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 	for name, context := range config.Contexts {
 		namespace := context.Namespace
 		project := ""
-		if len(namespace) > 6 && namespace[0:6] == "runai-" {
+		lenNsPrefix := len(constants.RUNAI_NS_PROJECT_PREFIX)
+		if len(namespace) > lenNsPrefix && namespace[0:lenNsPrefix] == constants.RUNAI_NS_PROJECT_PREFIX {
 			project = namespace[6:len(namespace)]
 		}
 
@@ -62,6 +66,7 @@ func ListCommand() *cobra.Command {
 		Use:     "clusters",
 		Aliases: []string{"cluster"},
 		Short:   "List all available clusters",
+		ValidArgsFunction: completion.NoArgs,
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 

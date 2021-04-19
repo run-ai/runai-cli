@@ -2,9 +2,8 @@ package project
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
-
 	"github.com/run-ai/runai-cli/cmd/util"
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
@@ -38,12 +37,13 @@ func runConfigProjectCommand(cmd *cobra.Command, args []string) error {
 func ConfigureCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:     "project [PROJECT]",
-		Aliases: []string{"projects"},
-		Short:   "Configure a default project.",
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
-		Run:     commandUtil.WrapRunCommand(runConfigProjectCommand),
-		Args:    cobra.RangeArgs(1, 1),
+		Use:               "project [PROJECT]",
+		Aliases:           []string{"projects"},
+		Short:             "Configure a default project.",
+		ValidArgsFunction: GenProjectNamesForArg,
+		PreRun:            commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		Run:               commandUtil.WrapRunCommand(runConfigProjectCommand),
+		Args:              cobra.RangeArgs(1, 1),
 	}
 
 	return command

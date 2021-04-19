@@ -2,6 +2,7 @@ package constants
 
 const (
 	RUNAI_QUEUE_LABEL = "runai/queue"
+	RUNAI_NS_PROJECT_PREFIX = "runai-"
 )
 
 // Same statuses appear in the scheduler - update both if needed

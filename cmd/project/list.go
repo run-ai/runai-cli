@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	log "github.com/sirupsen/logrus"
@@ -75,31 +76,41 @@ type Project struct {
 }
 
 func runListCommand(cmd *cobra.Command, args []string) error {
-	kubeClient, err := client.GetClient()
+
+	projects, err := PrepareListOfProjects();
 	if err != nil {
 		return err
-	}
-
-	projects := make(map[string]*ProjectInfo)
-
-	dynamicClient, err := dynamic.NewForConfig(kubeClient.GetRestConfig())
-	if err != nil {
-		return err
-	}
-
-	if err := listProjects(dynamicClient, projects, kubeClient.GetDefaultNamespace()); err != nil {
-		return err
-	} else if len(projects) < 1 {
-		// If list projects didn't populate anything in the map fallback to listing queues
-		if err = listQueues(dynamicClient, kubeClient, projects); err != nil {
-			return err
-		}
 	}
 
 	// Sort the projects, so they will always appear in the same order
 	projectsArray := getSortedProjects(projects)
 	printProjects(projectsArray)
 	return nil
+}
+
+func PrepareListOfProjects() (map[string]*ProjectInfo, error) {
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	projects := make(map[string]*ProjectInfo)
+
+	dynamicClient, err := dynamic.NewForConfig(kubeClient.GetRestConfig())
+	if err != nil {
+		return nil, err
+	}
+
+	if err := listProjects(dynamicClient, projects, kubeClient.GetDefaultNamespace()); err != nil {
+		return nil, err
+	} else if len(projects) < 1 {
+		// If list projects didn't populate anything in the map fallback to listing queues
+		if err = listQueues(dynamicClient, kubeClient, projects); err != nil {
+			return nil ,err
+		}
+	}
+
+	return projects, nil
 }
 
 func listProjects(dynamicClient dynamic.Interface, projects map[string]*ProjectInfo, defaultNamespace string) error {
@@ -237,6 +248,7 @@ func ListCommand() *cobra.Command {
 		Use:     "projects",
 		Aliases: []string{"project"},
 		Short:   "List all available projects",
+		ValidArgsFunction: completion.NoArgs,
 		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
