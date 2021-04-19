@@ -155,7 +155,6 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet.StringVar(&(submitArgs.WorkingDir), "working-dir", "", "Set the container's working directory.")
 	flagSet.StringVar(&gitSyncConnectionString, "git-sync", "", "sync string in the template of: source=REPO,branch=BRANCH_NAME,rev=REVISION,username=USER,password=PASSWORD,target=TARGET_DIRECTORY_TO_CLONE")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.RunAsCurrentUser), "run-as-user", "", "Run in the context of the current CLI user rather than the root user.")
-	flags.AddBoolNullableFlag(flagSet, &(submitArgs.InjectIdentity), "inject-identity", "", "Inject uid and gid to container")
 
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "GPU units to allocate for the Job (0.5, 1).")
@@ -226,25 +225,26 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	submitArgs.Namespace = namespaceInfo.Namespace
 	submitArgs.Project = namespaceInfo.ProjectName
 	if clusterConfig.EnforceRunAsUser || raUtil.IsBoolPTrue(submitArgs.RunAsCurrentUser) {
-		currentUser, err := user.Current()
+		apliedSuccessfully, err := submitArgs.applyRunAsAuthenticatedUser()
 		if err != nil {
-			return fmt.Errorf("Could not retrieve the current user: %s", err.Error())
+			return err
 		}
 
-		groups, err := syscall.Getgroups()
-		if err != nil {
-			return fmt.Errorf("Could not retrieve list of groups for user: %s", err.Error())
+		if !apliedSuccessfully {
+			currentUser, err := user.Current()
+			if err != nil {
+				return fmt.Errorf("Could not retrieve the current user: %s", err.Error())
+			}
 
+			groups, err := syscall.Getgroups()
+			if err != nil {
+				return fmt.Errorf("Could not retrieve list of groups for user: %s", err.Error())
+
+			}
+			submitArgs.SupplementalGroups = groups
+			submitArgs.RunAsUser = currentUser.Uid
+			submitArgs.RunAsGroup = currentUser.Gid
 		}
-		submitArgs.SupplementalGroups = groups
-		submitArgs.RunAsUser = currentUser.Uid
-		submitArgs.RunAsGroup = currentUser.Gid
-		// Set the default of CreateHomeDir as true if run-as-user is true
-		// todo: not set as true until testing it
-		// if submitArgs.CreateHomeDir == nil {
-		// 	t := true
-		// 	submitArgs.CreateHomeDir = &t
-		// }
 	}
 
 	if clusterConfig.EnforcePreventPrivilegeEscalation {
@@ -308,26 +308,32 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 		submitArgs.BackoffLimit = &noBackoffLimit
 	}
 
-	if raUtil.IsBoolPTrue(submitArgs.InjectIdentity) {
-		uid, gid, err := authentication.GetCurrentAuthenticateUserUidGid()
-		if err != nil {
-			return err
-		}
+	return nil
+}
 
-		if uid != "" {
-			uidEnvVar := fmt.Sprintf("uid=%v", uid)
-			submitArgs.EnvironmentVariable = append(submitArgs.EnvironmentVariable, uidEnvVar)
-			submitArgs.RunAsUser = uid
-		}
-
-		if gid != "" {
-			gidEnvVar := fmt.Sprintf("gid=%v", gid)
-			submitArgs.EnvironmentVariable = append(submitArgs.EnvironmentVariable, gidEnvVar)
-			submitArgs.RunAsGroup = gid
-		}
+func (sa *submitArgs) applyRunAsAuthenticatedUser() (bool, error) {
+	uid, gid, err := authentication.GetCurrentAuthenticateUserUidGid()
+	if err != nil {
+		return true, err
 	}
 
-	return nil
+	if uid == "" && gid == "" {
+		return false, nil
+	}
+
+	if uid != "" {
+		uidEnvVar := fmt.Sprintf("UID=%v", uid)
+		sa.EnvironmentVariable = append(sa.EnvironmentVariable, uidEnvVar)
+		sa.RunAsUser = uid
+	}
+
+	if gid != "" {
+		gidEnvVar := fmt.Sprintf("GID=%v", gid)
+		sa.EnvironmentVariable = append(sa.EnvironmentVariable, gidEnvVar)
+		sa.RunAsGroup = gid
+	}
+
+	return true, nil
 }
 
 func assignUser(submitArgs *submitArgs) {
