@@ -322,13 +322,13 @@ func (sa *submitArgs) applyRunAsAuthenticatedUser() (bool, error) {
 	}
 
 	if uid != "" {
-		uidEnvVar := fmt.Sprintf("UID=%v", uid)
+		uidEnvVar := fmt.Sprintf("LDAP_UID=%v", uid)
 		sa.EnvironmentVariable = append(sa.EnvironmentVariable, uidEnvVar)
 		sa.RunAsUser = uid
 	}
 
 	if gid != "" {
-		gidEnvVar := fmt.Sprintf("GID=%v", gid)
+		gidEnvVar := fmt.Sprintf("LDAP_GID=%v", gid)
 		sa.EnvironmentVariable = append(sa.EnvironmentVariable, gidEnvVar)
 		sa.RunAsGroup = gid
 	}
