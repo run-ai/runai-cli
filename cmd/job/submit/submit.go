@@ -316,14 +316,14 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 
 		if uid != "" {
 			uidEnvVar := fmt.Sprintf("uid=%v", uid)
-			fmt.Printf("ODEV: %v\n", uidEnvVar)
 			submitArgs.EnvironmentVariable = append(submitArgs.EnvironmentVariable, uidEnvVar)
+			submitArgs.RunAsUser = uid
 		}
 
 		if gid != "" {
 			gidEnvVar := fmt.Sprintf("gid=%v", gid)
-			fmt.Printf("ODEV: %v\n", gidEnvVar)
 			submitArgs.EnvironmentVariable = append(submitArgs.EnvironmentVariable, gidEnvVar)
+			submitArgs.RunAsGroup = gid
 		}
 	}
 
