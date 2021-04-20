@@ -1,8 +1,19 @@
 package project
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/spf13/cobra"
+)
+
+const COMPLETION_PROJ_FILE_SUFFIX = "proj"
 
 func GenProjectNamesForFlag(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+
+	result := completion.ReadFromCache(COMPLETION_PROJ_FILE_SUFFIX)
+	if result != nil {
+		return result, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	projects, err := PrepareListOfProjects();
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -12,6 +23,8 @@ func GenProjectNamesForFlag(cmd *cobra.Command, args []string, toComplete string
 	for projectName, _ := range projects {
 		projectNames = append(projectNames, projectName)
 	}
+
+	completion.WriteToCache(COMPLETION_PROJ_FILE_SUFFIX, projectNames)
 
 	return projectNames, cobra.ShellCompDirectiveNoFileComp
 }

@@ -22,11 +22,6 @@ func GenJobNames(cmd *cobra.Command, args []string, toComplete string) ([]string
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	result := completion.ReadFromCache(COMPLETION_JOBS_FILE_SUFFIX)
-	if result != nil {
-		return result, cobra.ShellCompDirectiveNoFileComp
-	}
-
 	kubeClient, err := client.GetClient()
 	if err != nil {
 		log.Errorf("Failed due to %v", err)
@@ -37,6 +32,13 @@ func GenJobNames(cmd *cobra.Command, args []string, toComplete string) ([]string
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
+	}
+
+	cachePath := COMPLETION_JOBS_FILE_SUFFIX + "." + namespaceInfo.ProjectName
+
+	result := completion.ReadFromCache(cachePath)
+	if result != nil {
+		return result, cobra.ShellCompDirectiveNoFileComp
 	}
 
 	jobs, invalidJobs, err := PrepareTrainerJobList(kubeClient, namespaceInfo)
@@ -55,7 +57,7 @@ func GenJobNames(cmd *cobra.Command, args []string, toComplete string) ([]string
 		result = append(result, invalidJob)
 	}
 
-	completion.WriteToCache(COMPLETION_JOBS_FILE_SUFFIX, result)
+	completion.WriteToCache(cachePath, result)
 
 	return result, cobra.ShellCompDirectiveNoFileComp
 }
