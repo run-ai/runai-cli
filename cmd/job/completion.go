@@ -3,6 +3,7 @@ package job
 import (
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/cmd/flags"
+	"github.com/run-ai/runai-cli/cmd/project"
 	"github.com/run-ai/runai-cli/cmd/template"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/spf13/cobra"
@@ -136,4 +137,6 @@ func AddSubmitFlagsCompletion(command *cobra.Command) {
 	command.RegisterFlagCompletionFunc("template", template.GenTemplateNames)
 	command.RegisterFlagCompletionFunc("image-pull-policy", completion.ImagePolicyValues)
 	command.RegisterFlagCompletionFunc("service-type", completion.ServiceTypeValues)
+
+	command.RegisterFlagCompletionFunc(flags.ProjectFlag, project.GenProjectNamesForFlag)
 }
