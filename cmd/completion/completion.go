@@ -64,8 +64,7 @@ Zsh:
         return
     else
         zstyle ':completion:*:runai:*' format ""
-    fi
-`)
+    fi`)
 					}
 					fmt.Println(line)
 				}
