@@ -92,6 +92,7 @@ type submitArgs struct {
 	RunAsGroup                 string   `yaml:"runAsGroup,omitempty"`
 	SupplementalGroups         []int    `yaml:"supplementalGroups,omitempty"`
 	RunAsCurrentUser           *bool
+	InjectIdentity             *bool
 	SpecCommand                []string          `yaml:"command"`
 	Command                    *bool             `yaml:"isCommand"`
 	LocalImage                 *bool             `yaml:"localImage,omitempty"`
@@ -224,25 +225,26 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	submitArgs.Namespace = namespaceInfo.Namespace
 	submitArgs.Project = namespaceInfo.ProjectName
 	if clusterConfig.EnforceRunAsUser || raUtil.IsBoolPTrue(submitArgs.RunAsCurrentUser) {
-		currentUser, err := user.Current()
+		apliedSuccessfully, err := submitArgs.applyRunAsAuthenticatedUser()
 		if err != nil {
-			return fmt.Errorf("Could not retrieve the current user: %s", err.Error())
+			return err
 		}
 
-		groups, err := syscall.Getgroups()
-		if err != nil {
-			return fmt.Errorf("Could not retrieve list of groups for user: %s", err.Error())
+		if !apliedSuccessfully {
+			currentUser, err := user.Current()
+			if err != nil {
+				return fmt.Errorf("Could not retrieve the current user: %s", err.Error())
+			}
 
+			groups, err := syscall.Getgroups()
+			if err != nil {
+				return fmt.Errorf("Could not retrieve list of groups for user: %s", err.Error())
+
+			}
+			submitArgs.SupplementalGroups = groups
+			submitArgs.RunAsUser = currentUser.Uid
+			submitArgs.RunAsGroup = currentUser.Gid
 		}
-		submitArgs.SupplementalGroups = groups
-		submitArgs.RunAsUser = currentUser.Uid
-		submitArgs.RunAsGroup = currentUser.Gid
-		// Set the default of CreateHomeDir as true if run-as-user is true
-		// todo: not set as true until testing it
-		// if submitArgs.CreateHomeDir == nil {
-		// 	t := true
-		// 	submitArgs.CreateHomeDir = &t
-		// }
 	}
 
 	if clusterConfig.EnforcePreventPrivilegeEscalation {
@@ -307,6 +309,31 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 	}
 
 	return nil
+}
+
+func (sa *submitArgs) applyRunAsAuthenticatedUser() (bool, error) {
+	uid, gid, err := authentication.GetCurrentAuthenticateUserUidGid()
+	if err != nil {
+		return true, err
+	}
+
+	if uid == "" && gid == "" {
+		return false, nil
+	}
+
+	if uid != "" {
+		uidEnvVar := fmt.Sprintf("LDAP_UID=%v", uid)
+		sa.EnvironmentVariable = append(sa.EnvironmentVariable, uidEnvVar)
+		sa.RunAsUser = uid
+	}
+
+	if gid != "" {
+		gidEnvVar := fmt.Sprintf("LDAP_GID=%v", gid)
+		sa.EnvironmentVariable = append(sa.EnvironmentVariable, gidEnvVar)
+		sa.RunAsGroup = gid
+	}
+
+	return true, nil
 }
 
 func assignUser(submitArgs *submitArgs) {
