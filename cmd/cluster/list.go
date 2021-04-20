@@ -34,7 +34,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		project := ""
 		lenNsPrefix := len(constants.RUNAI_NS_PROJECT_PREFIX)
 		if len(namespace) > lenNsPrefix && namespace[0:lenNsPrefix] == constants.RUNAI_NS_PROJECT_PREFIX {
-			project = namespace[6:len(namespace)]
+			project = namespace[lenNsPrefix:len(namespace)]
 		}
 
 		if name == currentContext {
