@@ -1,11 +1,10 @@
 package types
 
+import v1 "k8s.io/api/core/v1"
+
 type NodeStatus string
 
-const (
-	NodeReady    NodeStatus = "ready"
-	NodeNotReady NodeStatus = "notReady"
-)
+
 
 type NodeCPUResource struct {
 	Capacity    int     `title:"CAPACITY" def:"0"`
@@ -38,7 +37,7 @@ type NodeMemoryResource struct {
 
 type NodeGeneralInfo struct {
 	Name      string     `title:"NAME"`
-	Status    NodeStatus `title:"STATUS"`
+	Status    v1.NodeConditionType `title:"STATUS"`
 	IPAddress string     `title:"IP Address"`
 	Role      string     `title:"ROLE" def:"<none>"`
 }
