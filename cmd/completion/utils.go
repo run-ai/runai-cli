@@ -55,7 +55,7 @@ func AddFlagDescrpition(command *cobra.Command, name string, description string)
 	description = strings.ReplaceAll(description, " ", "\\ ")
 
 	command.RegisterFlagCompletionFunc(name, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return []string{"?" + name + "?", description}, cobra.ShellCompDirectiveNoFileComp
+		return []string{"\\ " + name, description}, cobra.ShellCompDirectiveNoFileComp
 	})
 }
 
