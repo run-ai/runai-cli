@@ -1,7 +1,9 @@
 package completion
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -39,9 +41,39 @@ Zsh:
 			case "bash":
 				cmd.Root().GenBashCompletion(os.Stdout)
 			case "zsh":
-				cmd.Root().GenZshCompletion(os.Stdout)
-				//   following line is needed, but GenZshCompetion does not print it
-				fmt.Print("compdef _runai runai")
+				//
+				//  we modify the zsh script slightly, so capture the default
+				//  script code to a string
+				//
+				var script bytes.Buffer
+				cmd.Root().GenZshCompletion(&script)
+
+				//
+				//  locate the placement of the modified code, and add the
+				//  necessary lines. print all the rest as is.
+				//
+				for _, line := range(strings.Split(script.String(), "\n")) {
+					if strings.Index(line, "compCount=0") >= 0 {
+						fmt.Println(`
+    #======================================================
+    # Special treatment for displaying flags description
+    #======================================================	
+    if [[ "$out" == *Expecting*input* ]] ; then
+        zstyle ':completion:*:runai:*' format $(echo $out | sed 's/\\//g')
+        _message
+        return
+    else
+        zstyle ':completion:*:runai:*' format ""
+    fi
+`)
+					}
+					fmt.Println(line)
+				}
+				//
+				//   following line is needed at the end of the script, but GenZshCompetion does not
+				//   print it, so add it to the output as well
+				//
+				fmt.Println("compdef _runai runai")
 			}
 		},
 	}
