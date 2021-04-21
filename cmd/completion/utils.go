@@ -40,11 +40,11 @@ func OutputFormatValues(cmd *cobra.Command, args []string, toComplete string) ([
 //   the standard behavior of kubectl and similar commands is not to display anything when user clicks
 //   TAB in such cases. I find it more helpful to display a help message which guides the user what.
 //   It will look something like this:
-//			?gpu?	Specify number of GPUs to allocate
-//   to achieve this, we'll create two "fictive" completion options: one being the name of the parameter, encluded
-//   with '?' mark, and the 2nd is the help text (single value will not work, completion system will add the help
-//   text to the command itself, which is not what we want).
-//   The reason for the '?' is to cause it to appear as the first option.
+//	    Expecting input:	Specify number of GPUs to allocate
+//   to achieve this, we'll create two "fictive" completion options: one being the text "Expecting input:" 
+//   preceeded by blank (to make it appear first), and the 2nd is the help text 
+//   Note that the zsh completion script is patched to avoid the completion system to add those fictive
+//   options to the command being typed. in bash it is not needed
 //
 func AddFlagDescrpition(command *cobra.Command, name string, description string) {
 
