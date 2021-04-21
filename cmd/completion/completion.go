@@ -20,7 +20,7 @@ const EXPECTED_PATCHES_ZSH = 2
 //
 //   this is the standard completion commands, similar to 'kubectl completion bash/zsh'
 //   which the user should source into the shell in order to get completion functionality working.
-//   see the README.txt file for further details.
+//   see the README.md file for further details.
 //   the output of this command mainly explain to the user how to load the compleiton definitions
 //   into his shell (slightly different b/w the various unix shells).
 //
