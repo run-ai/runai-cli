@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	"strings"
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"os"
 	"text/tabwriter"
@@ -30,11 +31,10 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 	fmt.Fprintf(w, "CLUSTER\tCURRENT PROJECT\n")
 
 	for name, context := range config.Contexts {
-		namespace := context.Namespace
 		project := ""
-		lenNsPrefix := len(constants.RUNAI_NS_PROJECT_PREFIX)
-		if len(namespace) > lenNsPrefix && namespace[0:lenNsPrefix] == constants.RUNAI_NS_PROJECT_PREFIX {
-			project = namespace[lenNsPrefix:len(namespace)]
+		if strings.HasPrefix(context.Namespace, constants.RunaiNsProjectPrefix) {
+			lenNsPrefix := len(constants.RunaiNsProjectPrefix)
+			project = context.Namespace[lenNsPrefix:len(context.Namespace)]
 		}
 
 		if name == currentContext {

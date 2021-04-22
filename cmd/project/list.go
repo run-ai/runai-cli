@@ -154,7 +154,7 @@ func listQueues(dynamicClient dynamic.Interface, kubeClient *client.Client, proj
 		if namespace.Labels == nil {
 			continue
 		}
-		runaiQueue := namespace.Labels[constants.RUNAI_QUEUE_LABEL]
+		runaiQueue := namespace.Labels[constants.RunaiQueueLabel]
 		if runaiQueue != "" {
 			projects[runaiQueue] = &ProjectInfo{
 				name:           runaiQueue,

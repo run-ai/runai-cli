@@ -16,7 +16,7 @@ func GetNamespaceToUseFromProjectFlagOffline(cmd *cobra.Command) string {
 	if flagValue == "" {
 		return ""
 	}
-	return fmt.Sprintf("%v%v", constants.RUNAI_NS_PROJECT_PREFIX, flagValue)
+	return fmt.Sprintf("%v%v", constants.RunaiNsProjectPrefix, flagValue)
 }
 
 // This function will print an error even if -b flag was used
@@ -86,7 +86,7 @@ func getProjectRelatedToNamespace(namespaceName string, kubeClient *client.Clien
 		return "", nil
 	}
 
-	return namespace.Labels[constants.RUNAI_QUEUE_LABEL], nil
+	return namespace.Labels[constants.RunaiQueueLabel], nil
 }
 
 func shouldPrintSetDefaultMessage(namespaceInfo types.NamespaceInfo, ignoreBackwardFlagOnError bool) bool {

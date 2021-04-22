@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -13,24 +14,29 @@ import (
 	"time"
 )
 
-const CACHING_TIME_SEC = 5
+const CachingTimeSec = 5
 
 //
 //   completion function for commands with no arguments
 //
-func NoArgs(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func NoArgs(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	return nil, cobra.ShellCompDirectiveNoFileComp
 }
 
-func ImagePolicyValues(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	return []string { "Always", "IfNotPresent", "Never" }, cobra.ShellCompDirectiveNoFileComp
+func ImagePolicyValues(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	options := []v1.PullPolicy { v1.PullAlways, v1.PullIfNotPresent, v1.PullNever }
+	result := make([]string, 0, len(options))
+	for _, option := range(options) {
+		result = append(result, string(option))
+	}
+	return result, cobra.ShellCompDirectiveNoFileComp
 }
 
-func ServiceTypeValues(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func ServiceTypeValues(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	return []string { "portforward", "localhost", "nodeport", "ingress" }, cobra.ShellCompDirectiveNoFileComp
 }
 
-func OutputFormatValues(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func OutputFormatValues(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	return []string { "json", "yaml", "wide" }, cobra.ShellCompDirectiveNoFileComp
 }
 
@@ -54,7 +60,7 @@ func AddFlagDescrpition(command *cobra.Command, name string, description string)
 	//
 	description = strings.ReplaceAll(description, " ", "\\ ")
 
-	command.RegisterFlagCompletionFunc(name, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	command.RegisterFlagCompletionFunc(name, func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{"\\ Expecting\\ input: ", description}, cobra.ShellCompDirectiveNoFileComp
 	})
 }
@@ -72,7 +78,7 @@ func ReadFromCache(suffix string) []string {
 	//    if cache exists and relevant - use it, otherwise return nil
 	//
 	cacheDuration, err := util.DurationSinceLastUpdate(cachePath)
-	if err != nil || cacheDuration >= (CACHING_TIME_SEC * time.Second) {
+	if err != nil || cacheDuration >= (CachingTimeSec* time.Second) {
 		log.Debugf("Cannot use cached value for %s", suffix)
 		return nil
 	}

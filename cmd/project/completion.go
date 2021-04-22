@@ -7,7 +7,7 @@ import (
 
 const COMPLETION_PROJ_FILE_SUFFIX = "proj"
 
-func GenProjectNamesForFlag(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func GenProjectNamesForFlag(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 
 	result := completion.ReadFromCache(COMPLETION_PROJ_FILE_SUFFIX)
 	if result != nil {

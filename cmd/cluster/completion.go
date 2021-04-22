@@ -5,7 +5,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func GenClusterNames(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func GenClusterNames(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 
 	if len(args) != 0 {
 		return nil, cobra.ShellCompDirectiveNoFileComp

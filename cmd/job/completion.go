@@ -17,7 +17,7 @@ const COMPLETION_PODS_FILE_SUFFIX = "pods_"
 //
 //   generate job names for commands which require job name as parameter
 //
-func GenJobNames(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func GenJobNames(cmd *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 
 	if len(args) != 0 {
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -67,7 +67,7 @@ func GenJobNames(cmd *cobra.Command, args []string, toComplete string) ([]string
 //   generate completion list of pod names for a given job.
 //   Assumption: in all the commands that has --pod parameter, the first argument is the job name
 //
-func GenPodNames(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func GenPodNames(cmd *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 
 	if len(args) == 0 {
 		return nil, cobra.ShellCompDirectiveError

@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GenTemplateNames(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func GenTemplateNames(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 
 	if len(args) != 0 {
 		return nil, cobra.ShellCompDirectiveNoFileComp
