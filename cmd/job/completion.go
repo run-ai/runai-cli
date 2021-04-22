@@ -11,8 +11,8 @@ import (
 	"os"
 )
 
-const COMPLETION_JOBS_FILE_SUFFIX = "jobs"
-const COMPLETION_PODS_FILE_SUFFIX = "pods_"
+const CompletionJobsFileSuffix = "jobs"
+const CompletionPodsFileSuffix = "pods_"
 
 //
 //   generate job names for commands which require job name as parameter
@@ -35,7 +35,7 @@ func GenJobNames(cmd *cobra.Command, args []string, _ string) ([]string, cobra.S
 		os.Exit(1)
 	}
 
-	cachePath := COMPLETION_JOBS_FILE_SUFFIX + "." + namespaceInfo.ProjectName
+	cachePath := CompletionJobsFileSuffix + "." + namespaceInfo.ProjectName
 
 	result := completion.ReadFromCache(cachePath)
 	if result != nil {
@@ -77,7 +77,7 @@ func GenPodNames(cmd *cobra.Command, args []string, _ string) ([]string, cobra.S
 	//    pods are cahced on a per job basis cause user can change job name while typing thr command
 	//    and in this case we need to re-load the informaiton of the new job
 	//
-	cachePath := COMPLETION_PODS_FILE_SUFFIX + args[0]
+	cachePath := CompletionPodsFileSuffix + args[0]
 	result := completion.ReadFromCache(cachePath)
 	if result != nil {
 		return result, cobra.ShellCompDirectiveNoFileComp

@@ -5,11 +5,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const COMPLETION_PROJ_FILE_SUFFIX = "proj"
+const CompletionProjFileSuffix = "proj"
 
 func GenProjectNamesForFlag(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 
-	result := completion.ReadFromCache(COMPLETION_PROJ_FILE_SUFFIX)
+	result := completion.ReadFromCache(CompletionProjFileSuffix)
 	if result != nil {
 		return result, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -24,7 +24,7 @@ func GenProjectNamesForFlag(_ *cobra.Command, _ []string, _ string) ([]string, c
 		projectNames = append(projectNames, projectName)
 	}
 
-	completion.WriteToCache(COMPLETION_PROJ_FILE_SUFFIX, projectNames)
+	completion.WriteToCache(CompletionProjFileSuffix, projectNames)
 
 	return projectNames, cobra.ShellCompDirectiveNoFileComp
 }
