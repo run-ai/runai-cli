@@ -29,13 +29,15 @@ import (
 
 // NewDeleteCommand
 func NewDeleteCommand() *cobra.Command {
+	var isAll bool
+
 	var command = &cobra.Command{
 		Use:    "delete JOB_NAME",
 		Short:  "Delete a job and its associated pods.",
 		ValidArgsFunction: job.GenJobNames,
 		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
+			if !isAll && len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
 			}
@@ -54,7 +56,17 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			for _, jobName := range args {
+			jobNamesToDelete := args
+
+			if isAll {
+				jobNamesToDelete, err = job.PrepareTrainerJobNameList(kubeClient, namespaceInfo)
+				if err != nil {
+					log.Error(err)
+					os.Exit(1)
+				}
+			}
+
+			for _, jobName := range jobNamesToDelete {
 				err = workflow.DeleteJob(jobName, namespaceInfo, kubeClient.GetClientset())
 				if err != nil {
 					log.Error(err)
@@ -62,6 +74,8 @@ func NewDeleteCommand() *cobra.Command {
 			}
 		},
 	}
+
+	command.Flags().BoolVarP(&isAll, "all", "A", false, "Delete all jobs")
 
 	return command
 }
