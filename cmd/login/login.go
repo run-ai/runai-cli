@@ -1,6 +1,7 @@
 package login
 
 import (
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/pkg/authentication"
 	"github.com/run-ai/runai-cli/pkg/authentication/types"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ func NewLoginCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "login",
 		Short: "Log in to Run:AI",
+		ValidArgsFunction: completion.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Debugf("starting authentication [cli args: %v, authentication params cli: %v]", args, params)
 			err := authentication.Authenticate(params)

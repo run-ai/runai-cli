@@ -48,6 +48,7 @@ func ConfigureCommand() *cobra.Command {
 		Use:     "cluster [cluster]",
 		Aliases: []string{"clusters"},
 		Short:   "Configure a default cluster",
+		ValidArgsFunction: GenClusterNames,
 		Run:     commandUtil.WrapRunCommand(runConfigCommand),
 		Args:    cobra.RangeArgs(1, 1),
 	}

@@ -3,6 +3,7 @@ package job
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"io"
@@ -68,6 +69,7 @@ func DescribeCommand() *cobra.Command {
 		Use:     "job JOB_NAME",
 		Aliases: []string{"jobs"},
 		Short:   "Display details of a job.",
+		ValidArgsFunction: GenJobNames,
 		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
@@ -76,35 +78,41 @@ func DescribeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			name := args[0]
-
-			kubeClient, err := client.GetClient()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			clientset := kubeClient.GetClientset()
-			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
-
+			job, clientSet, err := PrepareJobInfo(cmd, name)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			job, err := trainer.SearchTrainingJob(kubeClient, name, "", namespace)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			printTrainingJob(clientset, job, printArgs)
+			printTrainingJob(clientSet, job, printArgs)
 		},
 	}
 
 	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", true, "Show events relating to job lifecycle.")
+
 	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
+	command.RegisterFlagCompletionFunc("output", completion.OutputFormatValues)
 
 	command.Flags().MarkDeprecated("events", "default is true")
 	return command
+}
+
+func PrepareJobInfo(cmd *cobra.Command, name string) (trainer.TrainingJob, kubernetes.Interface, error) {
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	clientSet := kubeClient.GetClientset()
+
+	job, err := trainer.SearchTrainingJob(kubeClient, name, "", namespace)
+	return job, clientSet, err
 }
 
 func printTrainingJob(client kubernetes.Interface, job trainer.TrainingJob, printArgs PrintArgs) {

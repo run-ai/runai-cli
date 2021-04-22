@@ -16,6 +16,8 @@ package job
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/pkg/types"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -48,6 +50,7 @@ func ListCommand() *cobra.Command {
 		Aliases: []string{"job"},
 		Short:   "List all jobs.",
 		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		ValidArgsFunction: completion.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			RunJobList(cmd, args, allNamespaces)
 		},
@@ -59,19 +62,15 @@ func ListCommand() *cobra.Command {
 }
 
 func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
+
 	kubeClient, err := client.GetClient()
 	if err != nil {
+		log.Errorf("Failed due to %v", err)
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if err != nil {
-		log.Errorf("Failed due to %v", err)
-		os.Exit(1)
-	}
-
 	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
-
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -79,14 +78,26 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 
 	cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
 
+	jobs, invalidJobs, err := PrepareTrainerJobList(kubeClient, namespaceInfo)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	jobs = trainer.MakeTrainingJobOrderdByAge(jobs)
+
+	displayTrainingJobList(jobs, invalidJobs)
+
+}
+
+func PrepareTrainerJobList(kubeClient *client.Client, namespaceInfo types.NamespaceInfo) ([]trainer.TrainingJob, []string, error){
 	jobs := []trainer.TrainingJob{}
 	trainers := trainer.NewTrainers(kubeClient)
-	for _, trainer := range trainers {
-		if trainer.IsEnabled() {
-			trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
+	for _, curTrainer := range trainers {
+		if curTrainer.IsEnabled() {
+			trainingJobs, err := curTrainer.ListTrainingJobs(namespaceInfo.Namespace)
 			if err != nil {
-				log.Errorf("Failed due to %v", err)
-				os.Exit(1)
+				return nil, nil, err
 			}
 			jobs = append(jobs, trainingJobs...)
 		}
@@ -112,10 +123,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 		}
 	}
 
-	jobs = trainer.MakeTrainingJobOrderdByAge(jobs)
-
-	displayTrainingJobList(jobs, invalidJobs)
-
+	return jobs, invalidJobs, nil
 }
 
 func isJobCreationTimePass(configMap *v1.ConfigMap) bool {

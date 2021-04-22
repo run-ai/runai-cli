@@ -20,7 +20,7 @@ var (
 	})
 )
 
-func getNodeInfos(shouldQueryMetrics bool) (*[]nodes.NodeInfo, error) {
+func GetNodeInfos(shouldQueryMetrics bool) (*[]nodes.NodeInfo, error) {
 	kubeClient, err := client.GetClient()
 	if err != nil {
 		return nil, err

@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
 
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	arenaVersion "github.com/run-ai/runai-cli/pkg/version"
@@ -54,6 +55,7 @@ func NewVersionCmd() *cobra.Command {
 	versionCmd := cobra.Command{
 		Use:   "version",
 		Short: fmt.Sprintf("Print version information"),
+		ValidArgsFunction: completion.NoArgs,
 		Run:   commandUtil.WrapRunCommand(printVersion),
 	}
 	versionCmd.Flags().BoolVar(&short, "short", false, "print just the version number")

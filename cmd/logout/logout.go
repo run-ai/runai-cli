@@ -1,6 +1,7 @@
 package logout
 
 import (
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/pkg/authentication/logout"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ func NewLogoutCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "logout",
 		Short: "Log out from Run:AI",
+		ValidArgsFunction: completion.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Debugf("Logout user. cli args: %v, cli user param: %v", args, user)
 			err := logout.Logout(user)

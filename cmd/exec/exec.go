@@ -2,6 +2,7 @@ package exec
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"os"
 	"strings"
 	"time"
@@ -38,6 +39,7 @@ func NewBashCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:    "bash JOB_NAME",
 		Short:  "Get a bash session inside a running job.",
+		ValidArgsFunction: job.GenJobNames,
 		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -54,7 +56,7 @@ func NewBashCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai describe job <job-name>\" command")
+	job.AddPodNameFlag(command, &podName)
 
 	return command
 }
@@ -68,6 +70,7 @@ func NewExecCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:    "exec JOB_NAME COMMAND [ARG ...]",
 		Short:  "Execute a command inside a running job.",
+		ValidArgsFunction: job.GenJobNames,
 		Args:   cobra.MinimumNArgs(2),
 		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -82,7 +85,8 @@ func NewExecCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&podName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai describe job <job-name>\" command")
+	job.AddPodNameFlag(command, &podName)
+
 	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
 	command.Flags().BoolVarP(&TTY, "tty", "t", false, "Stdin is a TTY")
 

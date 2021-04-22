@@ -1,8 +1,9 @@
 package constants
 
-const (
-	RUNAI_QUEUE_LABEL = "runai/queue"
-)
+	const (
+		RunaiQueueLabel      = "runai/queue"
+		RunaiNsProjectPrefix = "runai-"
+	)
 
 // Same statuses appear in the scheduler - update both if needed
 var Status = struct {
