@@ -15,7 +15,7 @@ import (
 //   1) Adding a code to handle --flag with values
 //   2) Adding a 'compdef' line in the end
 //
-const EXPECTED_PATCHES_ZSH = 2
+const ExpectedPatchesZsh = 2
 
 //
 //   this is the standard completion commands, similar to 'kubectl completion bash/zsh'
@@ -109,8 +109,8 @@ func genZshCompletion(cmd *cobra.Command) (string, error) {
 	//   check that we patched the standard script correctly. We still return the result, the patching success
 	//   is checked during testing
 	//
-	if numPatches != EXPECTED_PATCHES_ZSH {
-		return result, errors.New("Expecting " + strconv.Itoa(EXPECTED_PATCHES_ZSH) + " patches to the script, performed " + strconv.Itoa(numPatches))
+	if numPatches != ExpectedPatchesZsh {
+		return result, errors.New("Expecting " + strconv.Itoa(ExpectedPatchesZsh) + " patches to the script, performed " + strconv.Itoa(numPatches))
 	} else {
 		return result, nil
 	}
