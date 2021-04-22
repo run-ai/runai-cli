@@ -24,12 +24,7 @@ func NoArgs(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDi
 }
 
 func ImagePolicyValues(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-	options := []v1.PullPolicy { v1.PullAlways, v1.PullIfNotPresent, v1.PullNever }
-	result := make([]string, 0, len(options))
-	for _, option := range(options) {
-		result = append(result, string(option))
-	}
-	return result, cobra.ShellCompDirectiveNoFileComp
+	return []string { string(v1.PullIfNotPresent), string(v1.PullNever), string(v1.PullAlways)}, cobra.ShellCompDirectiveNoFileComp
 }
 
 func ServiceTypeValues(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
