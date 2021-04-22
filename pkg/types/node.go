@@ -1,7 +1,5 @@
 package types
 
-import v1 "k8s.io/api/core/v1"
-
 type NodeStatus string
 
 
@@ -37,7 +35,7 @@ type NodeMemoryResource struct {
 
 type NodeGeneralInfo struct {
 	Name      string     `title:"NAME"`
-	Status    v1.NodeConditionType `title:"STATUS"`
+	Status    string 	 `title:"STATUS"`
 	IPAddress string     `title:"IP Address"`
 	Role      string     `title:"ROLE" def:"<none>"`
 }

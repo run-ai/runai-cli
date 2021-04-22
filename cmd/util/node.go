@@ -44,17 +44,33 @@ func GetNodeInternalAddress(node v1.Node) string {
 	return "unknown"
 }
 
-func GetNodeStatus(node v1.Node) v1.NodeConditionType {
+func GetNodeStatus(node v1.Node) string {
+	status := []string{}
+
 	for _, condition := range node.Status.Conditions {
 		if condition.Status == v1.ConditionTrue {
-			return condition.Type
+			status = append(status, string(condition.Type))
 		}
 	}
-	return v1.NodeConditionType(v1.ConditionUnknown)
+
+	if node.Spec.Unschedulable {
+		status = append(status, "Unschedulable")
+	}
+
+	if !IsNodeReady(node) {
+		status = append(status, "NotReady")
+	}
+
+	return strings.Join(status, ",")
 }
 
 func IsNodeReady(node v1.Node) bool {
-	return GetNodeStatus(node) == v1.NodeReady
+	for _, condition := range node.Status.Conditions {
+		if condition.Status == v1.ConditionTrue && condition.Type == v1.NodeReady {
+			return true
+		}
+	}
+	return false
 }
 
 
