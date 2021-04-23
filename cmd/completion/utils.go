@@ -14,9 +14,10 @@ import (
 	"time"
 )
 
-const CachingTimeSec = 5
-
-const DevShmPath = "/dev/shm"
+const (
+    CachingTimeSec = 5
+    DevShmPath = "/dev/shm"
+)
 
 //
 //   completion function for commands with no arguments
