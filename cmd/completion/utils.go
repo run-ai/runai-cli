@@ -144,10 +144,8 @@ func cacheFilePath(suffix string) string {
 	//   prefer shared memory over /tmp, if shared memory as filesystem exist
 	//
 	tempDir := os.TempDir()
-	if _, err := os.Stat(DevShmPath); os.IsExist(err) {
-		if isDirectory, _ := util.IsDirectory(DevShmPath); isDirectory {
-			tempDir = DevShmPath
-		}
+	if isDirectory, _ := util.IsDirectory(DevShmPath); isDirectory {
+		tempDir = DevShmPath
 	}
 
 	return filepath.Join(tempDir, userName + "." + suffix + ".json")
