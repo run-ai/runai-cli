@@ -808,6 +808,11 @@ func (m *MPIJob) GetPriorityClass() string {
 	return ""
 }
 
+// Get cli command
+func (mj *MPIJob) CliCommand() string {
+	return getCliCommand(mj.mpijob.ObjectMeta.Annotations)
+}
+
 func getPodsOfMPIJob(name string, namespace string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
 	pods = []v1.Pod{}
 	for _, item := range podList {

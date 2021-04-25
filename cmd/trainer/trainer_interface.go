@@ -99,6 +99,7 @@ type TrainingJob interface {
 	WorkloadType() string
 	TotalRequestedGPUsString() string
 	CurrentRequestedGpusString() string
+	CliCommand() string
 }
 
 type Trainer interface {
