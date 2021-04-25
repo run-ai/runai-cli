@@ -2,6 +2,8 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"math"
 	"os"
 	"path"
@@ -64,6 +66,7 @@ func NewRunaiJobCommand() *cobra.Command {
 		Use:                   "submit [flags] -- [COMMAND] [args...] [options]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Submit a new job.",
+		ValidArgsFunction: completion.NoArgs,
 		Example:               submitExamples,
 		PreRun:                commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -201,6 +204,8 @@ func NewRunaiJobCommand() *cobra.Command {
 	submitArgs.addFlags(fbg)
 
 	fbg.UpdateFlagsByGroupsToCmd()
+
+	job.AddSubmitFlagsCompletion(command)
 
 	return command
 }

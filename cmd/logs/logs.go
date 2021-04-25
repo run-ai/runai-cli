@@ -16,6 +16,8 @@ package logs
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"os"
 	"time"
 
@@ -36,6 +38,7 @@ func NewLogsCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:    "logs JOB_NAME",
 		Short:  "Print the logs of a job.",
+		ValidArgsFunction: job.GenJobNames,
 		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole), // Viewing logs of a job is explicitly allowed to executors only
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -97,12 +100,21 @@ func NewLogsCommand() *cobra.Command {
 	}
 
 	command.Flags().BoolVarP(&outerArgs.Follow, "follow", "f", false, "Stream the logs.")
+
 	command.Flags().DurationVar(&outerArgs.SinceSeconds, "since", 0, "Return logs newer than a relative duration, like 5s, 2m, or 3h. Note that only one flag \"since-time\" or \"since\" may be used.")
+	completion.AddFlagDescrpition(command, "since", "Specify relative duration, e.g 5s, 2m or 3h")
+
 	command.Flags().StringVar(&outerArgs.SinceTime, "since-time", "", "Return logs after a specific date (e.g. 2019-10-12T07:20:50.52Z). Note that only one flag \"since-time\" or \"since\" may be used.")
+	completion.AddFlagDescrpition(command, "since-time", "Specify date and time, e.g. 2019-10-12T07:20:50.52Z'")
+
 	command.Flags().IntVarP(&outerArgs.Tail, "tail", "t", -1, "Return a specific number of log lines.")
+	completion.AddFlagDescrpition(command, "tail", "Specify number of log lines")
+
 	command.Flags().BoolVar(&outerArgs.Timestamps, "timestamps", false, "Include timestamps on each line in the log output.")
 
 	// command.Flags().StringVar(&printer.pod, "instance", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().StringVar(&outerArgs.PodName, "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai describe <job-name>\" command")
+
+	job.AddPodNameFlag(command ,&outerArgs.PodName)
+
 	return command
 }

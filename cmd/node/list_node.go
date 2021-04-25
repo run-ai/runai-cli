@@ -44,11 +44,12 @@ func ListCommand() *cobra.Command {
 		Use:     "nodes [...NODE_NAME]",
 		Aliases: []string{"node"},
 		Short:   "List all nodes.",
+		ValidArgsFunction: GenNodeNames,
 		Example: listNodeExample,
 		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
-			nodeInfos, err := getNodeInfos(false)
+			nodeInfos, err := GetNodeInfos(false)
 
 			if err != nil {
 				fmt.Println(err)

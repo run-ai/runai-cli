@@ -2,6 +2,7 @@ package template
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"os"
@@ -48,6 +49,7 @@ func ListCommandDEPRECATED() *cobra.Command {
 	var command = &cobra.Command{
 		Use:    "list",
 		Short:  "Display information about templates.",
+		ValidArgsFunction: completion.NoArgs,
 		PreRun: commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			listAllTemplates()
@@ -59,20 +61,26 @@ func ListCommandDEPRECATED() *cobra.Command {
 }
 
 func listAllTemplates() {
-	kubeClient, err := client.GetClient()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	clientset := kubeClient.GetClientset()
 
-	templates := templates.NewTemplates(clientset)
-	configs, err := templates.ListTemplates()
-
+	configs, err := PrepareTemplateList()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	PrintTemplates(configs)
+}
+
+func PrepareTemplateList() ([]templates.Template, error) {
+
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset := kubeClient.GetClientset()
+
+	templates := templates.NewTemplates(clientset)
+	configs, err := templates.ListTemplates()
+	return configs, err
 }

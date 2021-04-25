@@ -28,6 +28,7 @@ func DescribeCommand() *cobra.Command {
 		Aliases: []string{"templates"},
 		Args:    cobra.RangeArgs(1, 1),
 		Short:   "Describe information about one of the templates in the cluster.",
+		ValidArgsFunction: GenTemplateNames,
 		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run:     commandUtil.WrapRunCommand(describeTemplate),
 	}
