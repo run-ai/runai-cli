@@ -90,7 +90,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 
 }
 
-func PrepareTrainerJobList(kubeClient *client.Client, namespaceInfo types.NamespaceInfo) ([]trainer.TrainingJob, []string, error){
+func PrepareTrainerJobList(kubeClient *client.Client, namespaceInfo types.NamespaceInfo) ([]trainer.TrainingJob, []string, error) {
 	jobs := []trainer.TrainingJob{}
 	trainers := trainer.NewTrainers(kubeClient)
 	for _, curTrainer := range trainers {
@@ -124,6 +124,24 @@ func PrepareTrainerJobList(kubeClient *client.Client, namespaceInfo types.Namesp
 	}
 
 	return jobs, invalidJobs, nil
+}
+
+func ListJobNamesByNamespace(kubeClient *client.Client, namespaceInfo types.NamespaceInfo) ([]string, error) {
+	jobs, invalidJobs, err := PrepareTrainerJobList(kubeClient, namespaceInfo)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	var activeJobs []string
+
+	for _, curJob := range jobs {
+		activeJobs = append(activeJobs, curJob.Name())
+	}
+
+	activeJobs = append(activeJobs, invalidJobs...)
+
+	return activeJobs, nil
 }
 
 func isJobCreationTimePass(configMap *v1.ConfigMap) bool {

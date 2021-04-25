@@ -173,5 +173,5 @@ Or:
 Add to .zshrc:
 
     autoload -U compinit; compinit -i
-    source <(runai compleiton zsh)
+    source <(runai completion zsh)
 

@@ -42,20 +42,10 @@ func GenJobNames(cmd *cobra.Command, args []string, _ string) ([]string, cobra.S
 		return result, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	jobs, invalidJobs, err := PrepareTrainerJobList(kubeClient, namespaceInfo)
+	result, err = ListJobNamesByNamespace(kubeClient, namespaceInfo)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
-	}
-
-	result = make([]string, 0, len(jobs))
-
-	for _, curJob := range(jobs) {
-		result = append(result, curJob.Name())
-	}
-
-	for _, invalidJob := range(invalidJobs) {
-		result = append(result, invalidJob)
 	}
 
 	completion.WriteToCache(cachePath, result)
@@ -128,7 +118,7 @@ func AddSubmitFlagsCompletion(command *cobra.Command) {
 	completion.AddFlagDescrpition(command, "node-type", "Specify node-type label for enforcing node type affinity")
 	completion.AddFlagDescrpition(command, "parallelism", "Specify number of pods to run in parallel at any given time")
 	completion.AddFlagDescrpition(command, "port", "Specify ports to expose from the job container")
-	completion.AddFlagDescrpition(command, "processes","Specify number of distributed training processes")
+	completion.AddFlagDescrpition(command, "processes", "Specify number of distributed training processes")
 	completion.AddFlagDescrpition(command, "pvc", "Specify mount parameters of a persistent volume")
 	completion.AddFlagDescrpition(command, "ttl-after-finish", "Specify the auto-deletion duration (e.g. 2s, 5m, 3h)")
 	completion.AddFlagDescrpition(command, "volume", "Specify volumes to mount, formatted as '<host_path>:<container_path>:<access_mode>'")
