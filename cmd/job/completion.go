@@ -42,7 +42,7 @@ func GenJobNames(cmd *cobra.Command, args []string, _ string) ([]string, cobra.S
 		return result, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	result, err = PrepareTrainerJobNameList(kubeClient, namespaceInfo)
+	result, err = ListJobNamesByNamespace(kubeClient, namespaceInfo)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)

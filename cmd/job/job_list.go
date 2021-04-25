@@ -126,22 +126,22 @@ func PrepareTrainerJobList(kubeClient *client.Client, namespaceInfo types.Namesp
 	return jobs, invalidJobs, nil
 }
 
-func PrepareTrainerJobNameList(kubeClient *client.Client, namespaceInfo types.NamespaceInfo) ([]string, error) {
+func ListJobNamesByNamespace(kubeClient *client.Client, namespaceInfo types.NamespaceInfo) ([]string, error) {
 	jobs, invalidJobs, err := PrepareTrainerJobList(kubeClient, namespaceInfo)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	result := make([]string, 0, len(jobs)+len(invalidJobs))
+	var activeJobs []string
 
 	for _, curJob := range jobs {
-		result = append(result, curJob.Name())
+		activeJobs = append(activeJobs, curJob.Name())
 	}
 
-	result = append(result, invalidJobs...)
+	activeJobs = append(activeJobs, invalidJobs...)
 
-	return result, nil
+	return activeJobs, nil
 }
 
 func isJobCreationTimePass(configMap *v1.ConfigMap) bool {

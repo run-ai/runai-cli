@@ -59,7 +59,7 @@ func NewDeleteCommand() *cobra.Command {
 			jobNamesToDelete := args
 
 			if isAll {
-				jobNamesToDelete, err = job.PrepareTrainerJobNameList(kubeClient, namespaceInfo)
+				jobNamesToDelete, err = job.ListJobNamesByNamespace(kubeClient, namespaceInfo)
 				if err != nil {
 					log.Error(err)
 					os.Exit(1)
