@@ -2,10 +2,7 @@ package types
 
 type NodeStatus string
 
-const (
-	NodeReady    NodeStatus = "ready"
-	NodeNotReady NodeStatus = "notReady"
-)
+
 
 type NodeCPUResource struct {
 	Capacity    int     `title:"CAPACITY" def:"0"`
@@ -38,7 +35,7 @@ type NodeMemoryResource struct {
 
 type NodeGeneralInfo struct {
 	Name      string     `title:"NAME"`
-	Status    NodeStatus `title:"STATUS"`
+	Status    string 	 `title:"STATUS"`
 	IPAddress string     `title:"IP Address"`
 	Role      string     `title:"ROLE" def:"<none>"`
 }

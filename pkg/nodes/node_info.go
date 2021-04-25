@@ -54,19 +54,14 @@ type NodeInfo struct {
 	PrometheusData prom.MetricResultsByQueryName
 }
 
-func (ni *NodeInfo) GetStatus() types.NodeStatus {
-	if !util.IsNodeReady(ni.Node) {
-		return types.NodeNotReady
-	}
-	return types.NodeReady
-}
+
 
 func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
 	return types.NodeGeneralInfo{
 		Name:      ni.Node.Name,
 		Role:      strings.Join(util.GetNodeRoles(&ni.Node), ","),
 		IPAddress: util.GetNodeInternalAddress(ni.Node),
-		Status:    ni.GetStatus(),
+		Status:    util.GetNodeStatus(ni.Node),
 	}
 }
 
