@@ -14,7 +14,10 @@ import (
 	"time"
 )
 
-const CachingTimeSec = 5
+const (
+    CachingTimeSec = 5
+    DevShmPath = "/dev/shm"
+)
 
 //
 //   completion function for commands with no arguments
@@ -141,9 +144,9 @@ func cacheFilePath(suffix string) string {
 	//
 	//   prefer shared memory over /tmp, if shared memory as filesystem exist
 	//
-	tempDir := "/dev/shm"
-	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		tempDir = os.TempDir()
+	tempDir := os.TempDir()
+	if isDirectory, _ := util.IsDirectory(DevShmPath); isDirectory {
+		tempDir = DevShmPath
 	}
 
 	return filepath.Join(tempDir, userName + "." + suffix + ".json")
