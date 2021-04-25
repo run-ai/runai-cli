@@ -35,6 +35,7 @@ var (
 
 	commonTopNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Info.Name",
+		"Info.Status",
 		"GPUs.Capacity",
 		"GPUs.Utilization",
 		"CPUs.Capacity",
