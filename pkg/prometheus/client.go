@@ -4,15 +4,16 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
-	"github.com/run-ai/runai-cli/pkg/client"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
+	"github.com/run-ai/runai-cli/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -21,13 +22,13 @@ import (
 )
 
 const (
-	prometheusSchema                    = "http"
-	thanosSchema = "https"
-	namespace                           = "monitoring"
-	openshiftMonitoringNamespace = "openshift-monitoring"
-	thanosRouteName = "thanos-querier"
-	promLabel                           = "kube-prometheus-stack-prometheus"
-	SuccessStatus    MetricStatusResult = "success"
+	prometheusSchema                                = "http"
+	thanosSchema                                    = "https"
+	namespace                                       = "monitoring"
+	openshiftMonitoringNamespace                    = "openshift-monitoring"
+	thanosRouteName                                 = "thanos-querier"
+	promLabel                                       = "kube-prometheus-stack-prometheus"
+	SuccessStatus                MetricStatusResult = "success"
 )
 
 type (
@@ -62,22 +63,22 @@ type (
 	MetricValue interface{}
 
 	Client struct {
-		client            kubernetes.Interface
-		dynamicClient dynamic.Interface
-		isOpenshift       bool
-		prometheusService v1.Service
+		client             kubernetes.Interface
+		dynamicClient      dynamic.Interface
+		isOpenshift        bool
+		prometheusService  v1.Service
 		thanosRouteService *ThanosRouteService
 	}
 
 	ThanosRouteService struct {
-		url string
+		url                string
 		authorizationToken string
 	}
 )
 
 func BuildPrometheusClient(c *client.Client) (*Client, error) {
 	ps := &Client{
-		client: c.GetClientset(),
+		client:        c.GetClientset(),
 		dynamicClient: c.GetDynamicClient(),
 	}
 	service, err := ps.getPrometheusService()
@@ -118,8 +119,8 @@ func (ps *Client) getPrometheusService() (service *v1.Service, err error) {
 
 func (ps *Client) getThanosRouteService() (*ThanosRouteService, error) {
 	openshiftRouteSchema := schema.GroupVersionResource{
-		Group: "route.openshift.io",
-		Version: "v1",
+		Group:    "route.openshift.io",
+		Version:  "v1",
 		Resource: "routes",
 	}
 
