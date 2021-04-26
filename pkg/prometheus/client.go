@@ -23,10 +23,10 @@ import (
 const (
 	prometheusSchema                    = "http"
 	thanosSchema = "https"
-	namespace                           = "runai"
+	namespace                           = "monitoring"
 	openshiftMonitoringNamespace = "openshift-monitoring"
 	thanosRouteName = "thanos-querier"
-	promLabel                           = "prometheus-operator-prometheus"
+	promLabel                           = "kube-prometheus-stack-prometheus"
 	SuccessStatus    MetricStatusResult = "success"
 )
 
