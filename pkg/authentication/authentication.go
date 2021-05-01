@@ -97,7 +97,7 @@ func runAuthenticationByFlow(ctx context.Context, params *types.AuthenticationPa
 		}
 		return password.AuthenticateAuth0PasswordRealm(ctx, params)
 	case types.CodePkceRemoteBrowser:
-		return code_pkce_remote_browser.AuthenticateCodePkceBrowser(ctx, params)
+		return code_pkce_remote_browser.AuthenticateCodePkceRemoteBrowser(ctx, params)
 	}
 	return nil, fmt.Errorf("unidentified authentication method %v", params.AuthenticationFlow)
 }
