@@ -3,7 +3,6 @@ package project
 import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/completion"
-	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,12 +24,6 @@ import (
 )
 
 var (
-	queueResource = schema.GroupVersionResource{
-		Group:    "scheduling.incubator.k8s.io",
-		Version:  "v1alpha1",
-		Resource: "queues",
-	}
-
 	projectResource = schema.GroupVersionResource{
 		Group:    "run.ai",
 		Version:  "v1",
@@ -103,13 +96,7 @@ func PrepareListOfProjects() (map[string]*ProjectInfo, error) {
 
 	if err := listProjects(dynamicClient, projects, kubeClient.GetDefaultNamespace()); err != nil {
 		return nil, err
-	} else if len(projects) < 1 {
-		// If list projects didn't populate anything in the map fallback to listing queues
-		if err = listQueues(dynamicClient, kubeClient, projects); err != nil {
-			return nil ,err
-		}
 	}
-
 	return projects, nil
 }
 
@@ -136,49 +123,6 @@ func listProjects(dynamicClient dynamic.Interface, projects map[string]*ProjectI
 			nodeAffinityInteractive:     strings.Join(project.Spec.NodeAffinityInteractive, ","),
 			nodeAffinityTraining:        strings.Join(project.Spec.NodeAffinityTrain, ","),
 			department:                  project.Spec.Department,
-		}
-	}
-	return nil
-}
-
-// listQueues Provides backwards compatibility for clusters that didn't upgrade to using Projects.
-// This is the exact same code that was here before I changed the list command logic.
-func listQueues(dynamicClient dynamic.Interface, kubeClient *client.Client, projects map[string]*ProjectInfo) error {
-	clientset := kubeClient.GetClientset()
-	namespaceList, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, namespace := range namespaceList.Items {
-		if namespace.Labels == nil {
-			continue
-		}
-		runaiQueue := namespace.Labels[constants.RunaiQueueLabel]
-		if runaiQueue != "" {
-			projects[runaiQueue] = &ProjectInfo{
-				name:           runaiQueue,
-				defaultProject: kubeClient.GetDefaultNamespace() == namespace.Name,
-			}
-		}
-	}
-
-	queueList, err := dynamicClient.Resource(queueResource).List(metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, queueItem := range queueList.Items {
-		var queue Queue
-		if err := mapstructure.Decode(queueItem.Object, &queue); err != nil {
-			return err
-		}
-		if project, found := projects[queue.Metadata.Name]; found {
-			project.deservedGPUs = fmt.Sprintf("%.2f", queue.Spec.DeservedGpus)
-			project.interactiveJobTimeLimitSecs = strconv.Itoa(queue.Spec.InteractiveJobTimeLimitSecs)
-			project.nodeAffinityInteractive = strings.Join(queue.Spec.NodeAffinityInteractiveTypes, ",")
-			project.nodeAffinityTraining = strings.Join(queue.Spec.NodeAffinityTrainTypes, ",")
-			project.department = queue.Spec.Department
 		}
 	}
 	return nil
