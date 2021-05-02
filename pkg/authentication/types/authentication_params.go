@@ -7,6 +7,7 @@ import (
 
 const (
 	CodePkceBrowser           = "browser"
+	CodePkceRemoteBrowser	  = "remote-browser"
 	Auth0PasswordRealm        = "cli"
 	defaultRedirectServer     = "localhost:8000"
 	defaultAirgappedFlag      = false

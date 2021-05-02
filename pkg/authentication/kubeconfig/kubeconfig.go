@@ -19,6 +19,7 @@ const (
 	refreshTokenFieldName       = "refresh-token"
 	authenticationFlowFieldName = "auth-flow"
 	auth0RealmFieldName         = "realm"
+	redirectUriFieldName        = "redirect-uri"
 )
 
 func GetCurrentUserIdToken() (string, error) {
@@ -141,6 +142,7 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 	authenticationFlow := kubeConfigUser.AuthProvider.Config[authenticationFlowFieldName]
 	auth0Realm := kubeConfigUser.AuthProvider.Config[auth0RealmFieldName]
 	airgapped := kubeConfigUser.AuthProvider.Config[airgappedFieldName]
+	redirectUri := kubeConfigUser.AuthProvider.Config[redirectUriFieldName]
 	airgappedFlag, err := strconv.ParseBool(airgapped)
 	if err != nil {
 		airgappedFlag = false
@@ -152,6 +154,7 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 		AuthenticationFlow: authenticationFlow,
 		Auth0Realm:         auth0Realm,
 		IsAirgapped:        &airgappedFlag,
+		ListenAddress:      redirectUri,
 	}, nil
 }
 

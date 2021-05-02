@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/authentication/flows/code-pkce-browser"
+	code_pkce_remote_browser "github.com/run-ai/runai-cli/pkg/authentication/flows/code-pkce-remote-browser"
 	"github.com/run-ai/runai-cli/pkg/authentication/flows/password"
 	"github.com/run-ai/runai-cli/pkg/authentication/jwt"
 	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
@@ -95,6 +96,8 @@ func runAuthenticationByFlow(ctx context.Context, params *types.AuthenticationPa
 			return password.AuthenticateKeycloakPassword(ctx, params)
 		}
 		return password.AuthenticateAuth0PasswordRealm(ctx, params)
+	case types.CodePkceRemoteBrowser:
+		return code_pkce_remote_browser.AuthenticateCodePkceRemoteBrowser(ctx, params)
 	}
 	return nil, fmt.Errorf("unidentified authentication method %v", params.AuthenticationFlow)
 }

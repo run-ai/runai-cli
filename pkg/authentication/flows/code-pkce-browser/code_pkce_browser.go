@@ -2,7 +2,6 @@ package code_pkce_browser
 
 import (
 	"context"
-	"github.com/coreos/go-oidc"
 	"github.com/int128/oauth2cli"
 	"github.com/pkg/browser"
 	"github.com/run-ai/runai-cli/pkg/authentication/flows"
@@ -18,7 +17,7 @@ func AuthenticateCodePkceBrowser(ctx context.Context, authParams *types.Authenti
 	localServerReadyChan := make(chan string, 1)
 	go waitForLocalServer(localServerReadyChan)
 
-	oauth2Config, err := getOauth2Config(ctx, authParams)
+	oauth2Config, err := flows.GetOauth2Config(ctx, authParams)
 	if err != nil {
 		return nil, err
 	}
@@ -52,19 +51,6 @@ func getOauth2cliGetTokenConfig(oauth2Config *oauth2.Config, localServerReadyCha
 		AuthCodeOptions:        authCodeOptions,
 		TokenRequestOptions:    tokenRequestOptions,
 		LocalServerSuccessHTML: pages.LoginPageHtml,
-	}, nil
-}
-
-func getOauth2Config(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Config, error) {
-	provider, err := oidc.NewProvider(ctx, authParams.IssuerURL)
-	if err != nil {
-		return nil, err
-	}
-	return &oauth2.Config{
-		ClientID:    authParams.ClientId,
-		Endpoint:    provider.Endpoint(),
-		Scopes:      flows.Scopes,
-		RedirectURL: authParams.ListenAddress,
 	}, nil
 }
 
