@@ -17,8 +17,8 @@ func AuthenticateCodePkceRemoteBrowser(ctx context.Context, authParams *types.Au
 		return nil, err
 	}
 	remoteAuthenticationUrl := oauth2Config.AuthCodeURL(rand.String(7), oauth2.AccessTypeOffline)
-	fmt.Printf("Please authenticate in the URL and receive code: %v\n", remoteAuthenticationUrl)
-	fmt.Printf("Code: ")
+	fmt.Printf("Go to the following link in your browser: \n\t%v\n", remoteAuthenticationUrl)
+	fmt.Printf("Enter verification code: ")
 	var code string
 	_, err = fmt.Scanln(&code)
 	if err != nil {
