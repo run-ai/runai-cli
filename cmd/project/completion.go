@@ -14,7 +14,7 @@ func GenProjectNamesForFlag(_ *cobra.Command, _ []string, _ string) ([]string, c
 		return result, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	projects, err := PrepareListOfProjects();
+	projects, err := PrepareListOfProjects(false);
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
