@@ -65,6 +65,7 @@ type submitArgs struct {
 	Image               string `yaml:"image"`
 	NameParameter       string
 	Project             string `yaml:"project,omitempty"`
+	Inference           *bool  `yaml:"inference,omitempty"`
 	Interactive         *bool  `yaml:"interactive,omitempty"`
 	User                string `yaml:"user,omitempty"`
 	Name                string
@@ -128,6 +129,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 
 	flagSet := fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
 	flagSet.StringVar(&submitArgs.NameParameter, "name", "", "Job name")
+	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Inference), "inference", "", "Mark this Job as inference.")
 	flags.AddBoolNullableFlag(flagSet, &(submitArgs.Interactive), "interactive", "", "Mark this Job as interactive.")
 	flagSet.StringVarP(&(templateName), "template", "", "", "Use a specific template to run this job (otherwise use the default template if exists).")
 	flagSet.StringVarP(&(submitArgs.Project), "project", "p", "", "Specifies a project. Set a default project using 'runai config project <project name>'.")

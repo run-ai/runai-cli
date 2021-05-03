@@ -301,7 +301,6 @@ type submitRunaiJobArgs struct {
 
 	// Hidden flags
 	IsOldJob  *bool
-	Inference *bool `yaml:"inference,omitempty"`
 	IsMPS     *bool `yaml:"isMps,omitempty"`
 	Replicas  *int  `yaml:"replicas,omitempty"`
 }
@@ -354,11 +353,9 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 
 	// Hidden flags
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
-	flags.AddBoolNullableFlag(fs, &(sa.Inference), "inference", "", "Mark this Job as inference.")
 	flags.AddBoolNullableFlag(fs, &(sa.IsMPS), "mps", "", "Enable MPS")
 	flags.AddIntNullableFlag(fs, &(sa.Replicas), "replicas", "Number of replicas for Inference jobs")
 	fs.MarkHidden("old-job")
-	fs.MarkHidden("inference")
 	fs.MarkHidden("mps")
 	fs.MarkHidden("replicas")
 
