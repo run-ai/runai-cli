@@ -1,4 +1,4 @@
-package rsclient
+package rsrch_client
 
 import (
     "context"
@@ -10,7 +10,7 @@ type ProjectListOptions struct {
     IncludeDeleted bool
 }
 
-// WAIT_FOR_OFER Should be taken from researchers-service module
+//   WAIT_FOR_OFER we intend to take this struct from researcher-ui repository, still working on it
 type Project struct {
     Name                        string       `json:"name"`
     IsDeleted                   bool         `json:"isDeleted"`
@@ -24,16 +24,16 @@ type Project struct {
 
 type ProjectListResponse []Project
 
-func (c *RsClient) ProjectList(ctx context.Context, options *ProjectListOptions) (*ProjectListResponse, error) {
+func (c *RsrchClient) ProjectList(ctx context.Context, options *ProjectListOptions) (*ProjectListResponse, error) {
 
     url := c.BaseURL + GetProjectsURL
     if options != nil {
         if options.IncludeDeleted {
-            url = url + "?includeDeleted=yes"
+            url = url + "?includeDeleted=true"
         }
     }
 
-    req, err := http.NewRequest("GET", fmt.Sprintf(url), nil)
+    req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(url), nil)
     if err != nil {
         return nil, err
     }

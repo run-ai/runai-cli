@@ -1,4 +1,4 @@
-package rsclient
+package rsrch_client
 
 import (
     "encoding/json"
@@ -12,7 +12,7 @@ import (
     "time"
 )
 
-type RsClient struct {
+type RsrchClient struct {
     BaseURL    string
     HTTPClient *http.Client
 }
@@ -24,7 +24,7 @@ type SuccessResponse struct {
 //
 //   Creates RS client for sending REST requests
 //
-func NewRsClient(restConfig *rest.Config) *RsClient {
+func NewRsrchClient(restConfig *rest.Config) *RsrchClient {
 
     //
     //   need to determine the URL to RS (researcher service)
@@ -34,9 +34,9 @@ func NewRsClient(restConfig *rest.Config) *RsClient {
     //
     //   for testing/debugging, allow the developer to specify RS URL
     //
-    devRsUrl := os.Getenv(devRsUrlEnvVar)
-    if devRsUrl != "" {
-        rsUrl, _ = url.Parse(devRsUrl)
+    devRsrchUrl := os.Getenv(devRsrchUrlEnvVar)
+    if devRsrchUrl != "" {
+        rsUrl, _ = url.Parse(devRsrchUrl)
     } else {
         //
         //   in production, take it from the kubernetes config, but change the port to
@@ -47,10 +47,10 @@ func NewRsClient(restConfig *rest.Config) *RsClient {
             klog.Fatal(err)
         }
         host, _, _ := net.SplitHostPort(mainUrl.Host)
-        rsUrl = &url.URL{Scheme: "http", Host: host + ":" + RsServicePort }
+        rsUrl = &url.URL{Scheme: "http", Host: host + ":" + rsServicePort}
     }
 
-    return &RsClient{
+    return &RsrchClient{
         BaseURL: rsUrl.String(),
         HTTPClient: &http.Client{
             Timeout: time.Minute,
@@ -67,7 +67,7 @@ func NewRsClient(restConfig *rest.Config) *RsClient {
 //       - Http Status Code (-1, if no error)
 //       - error
 //
-func (c *RsClient) sendRequest(req *http.Request, v interface{}) (int, error) {
+func (c *RsrchClient) sendRequest(req *http.Request, v interface{}) (int, error) {
 
     req.Header.Set(HeaderContentType, ContentTypeApplicationJson)
     req.Header.Set(HeaderAccept, ContentTypeApplicationJson)

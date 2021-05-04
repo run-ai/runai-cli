@@ -7,7 +7,7 @@ import (
     "github.com/run-ai/runai-cli/cmd/constants"
     "github.com/run-ai/runai-cli/pkg/authentication/assertion"
     "github.com/run-ai/runai-cli/pkg/client"
-    "github.com/run-ai/runai-cli/pkg/rsclient"
+    "github.com/run-ai/runai-cli/pkg/rsrch_client"
     restclient "k8s.io/client-go/rest"
     "os"
     "sort"
@@ -37,7 +37,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
         defaultProject = namespace[len(constants.RunaiNsProjectPrefix):]
     }
 
-    projects, err := PrepareListOfProjects(restConfig, includeDeleted)
+    projects, hiddenProjects, err := PrepareListOfProjects(restConfig, includeDeleted)
     if err != nil {
         return err
     }
@@ -47,30 +47,38 @@ func runListCommand(cmd *cobra.Command, args []string) error {
     //
 	projectsArray := getSortedProjects(projects)
 
-	printProjects(projectsArray, defaultProject)
+	printProjects(projectsArray, hiddenProjects, defaultProject)
 
 	return nil
 }
 
-func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (map[string]*rsclient.Project, error) {
+func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
+                    map[string]*rsrch_client.Project, int, error) {
 
-    rs := rsclient.NewRsClient(restConfig)
-    projList, err := rs.ProjectList(context.TODO(), &rsclient.ProjectListOptions{
-        IncludeDeleted: includeDeleted,
+    rs := rsrch_client.NewRsClient(restConfig)
+    projList, err := rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
+        IncludeDeleted: true,
     })
     if err != nil {
-        return nil, err
+        return nil, 0, err
     }
 
-	projects := make(map[string]*rsclient.Project)
+    hiddenProjects := 0
+
+	projects := make(map[string]*rsrch_client.Project)
 	for idx, project := range *projList {
+	    if project.IsDeleted && !includeDeleted {
+	        hiddenProjects += 1
+	        continue
+        }
 	    projects[project.Name] = &(*projList)[idx]
     }
-	return projects, nil
+
+	return projects, hiddenProjects, nil
 }
 
-func getSortedProjects(projects map[string]*rsclient.Project) []*rsclient.Project {
-	projectsArray := []*rsclient.Project{}
+func getSortedProjects(projects map[string]*rsrch_client.Project) []*rsrch_client.Project {
+	projectsArray := []*rsrch_client.Project{}
 	for _, project := range projects {
 		projectsArray = append(projectsArray, project)
 	}
@@ -82,7 +90,7 @@ func getSortedProjects(projects map[string]*rsclient.Project) []*rsclient.Projec
 	return projectsArray
 }
 
-func printProjects(infos []*rsclient.Project, defaultProject string) {
+func printProjects(infos []*rsrch_client.Project, hiddenProjects int, defaultProject string) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
@@ -115,6 +123,15 @@ func printProjects(infos []*rsclient.Project, defaultProject string) {
 		    strings.Join(info.TrainNodeAffinity, ";"))
 	}
 
+	if hiddenProjects != 0 {
+	    hiddenMsg := ""
+	    if hiddenProjects == 1 {
+            hiddenMsg = fmt.Sprintf("\nAdditionally, there is 1 deleted project. Use the --include-deleted flag to show it.\n")
+        } else {
+            hiddenMsg = fmt.Sprintf("\nAdditionally, there are %d deleted projects.\n\tUse the --include-deleted flag to show them.\n", hiddenProjects)
+        }
+	    w.Write([]byte(hiddenMsg))
+    }
 	_ = w.Flush()
 }
 
@@ -134,7 +151,7 @@ func listCommandDEPRECATED() *cobra.Command {
 func ListCommand() *cobra.Command {
 
 	var command = &cobra.Command{
-		Use:     "projects [--deleted]",
+		Use:     "projects [--include-deleted]",
 		Aliases: []string{"project"},
 		Short:   "List all available projects",
 		ValidArgsFunction: completion.NoArgs,
@@ -142,6 +159,6 @@ func ListCommand() *cobra.Command {
 		Run:     commandUtil.WrapRunCommand(runListCommand),
 	}
 
-	command.Flags().BoolVarP(&includeDeleted, "deleted", "", false, "Include deleted projects")
+	command.Flags().BoolVarP(&includeDeleted, "include-deleted", "d", false, "Include deleted projects")
 	return command
 }
