@@ -55,7 +55,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
                     map[string]*rsrch_client.Project, int, error) {
 
-    rs := rsrch_client.NewRsClient(restConfig)
+    rs := rsrch_client.NewRsrchClient(restConfig)
     projList, err := rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
         IncludeDeleted: true,
     })
