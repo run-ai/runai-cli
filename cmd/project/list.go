@@ -4,8 +4,11 @@ import (
     "context"
     "fmt"
     "github.com/run-ai/runai-cli/cmd/completion"
+    "github.com/run-ai/runai-cli/cmd/constants"
     "github.com/run-ai/runai-cli/pkg/authentication/assertion"
+    "github.com/run-ai/runai-cli/pkg/client"
     "github.com/run-ai/runai-cli/pkg/rsclient"
+    restclient "k8s.io/client-go/rest"
     "os"
     "sort"
     "strings"
@@ -21,20 +24,37 @@ var includeDeleted bool
 
 func runListCommand(cmd *cobra.Command, args []string) error {
 
-	projects, err := PrepareListOfProjects(includeDeleted)
-	if err != nil {
-		return err
-	}
+    //
+    //   obtain default project of this session
+    //
+    restConfig, namespace, err := client.GetRestConfig()
+    if err != nil {
+        return err
+    }
 
-	// Sort the projects, so they will always appear in the same order
+    defaultProject := ""
+    if len(namespace) > len(constants.RunaiNsProjectPrefix) {
+        defaultProject = namespace[len(constants.RunaiNsProjectPrefix):]
+    }
+
+    projects, err := PrepareListOfProjects(restConfig, includeDeleted)
+    if err != nil {
+        return err
+    }
+
+    //
+    //   Sort the projects, so they will always appear in the same order
+    //
 	projectsArray := getSortedProjects(projects)
-	printProjects(projectsArray)
+
+	printProjects(projectsArray, defaultProject)
+
 	return nil
 }
 
-func PrepareListOfProjects(includeDeleted bool) (map[string]*rsclient.Project, error) {
+func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (map[string]*rsclient.Project, error) {
 
-    rs := rsclient.NewRsClient()
+    rs := rsclient.NewRsClient(restConfig)
     projList, err := rs.ProjectList(context.TODO(), &rsclient.ProjectListOptions{
         IncludeDeleted: includeDeleted,
     })
@@ -62,7 +82,7 @@ func getSortedProjects(projects map[string]*rsclient.Project) []*rsclient.Projec
 	return projectsArray
 }
 
-func printProjects(infos []*rsclient.Project) {
+func printProjects(infos []*rsclient.Project, defaultProject string) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
@@ -80,15 +100,10 @@ func printProjects(infos []*rsclient.Project) {
 			interactiveJobTimeLimitFmt = t.String()
 		}
 
-        var name string
-		/*WAIT_FOR_OFER derivation of default project
-		if info.defaultProject {
-			name = fmt.Sprintf("%s (default)", info.name)
-		} else {
-			name = info.name
+        name := info.Name
+		if info.Name == defaultProject {
+			name = name + " (default)"
 		}
-		 */
-		name = info.Name
 
 		var departmentName = "deleted"
 		if !info.IsDeleted {
