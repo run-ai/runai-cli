@@ -41,7 +41,7 @@ func GetRestConfig() (*restclient.Config, string, error) {
 }
 
 func GetClient() (*Client, error) {
-	if client != nil {
+    if client != nil {
 		return client, nil
 	}
 
