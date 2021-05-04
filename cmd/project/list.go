@@ -45,11 +45,11 @@ func runListCommand(cmd *cobra.Command, args []string) error {
     //
     //   Sort the projects, so they will always appear in the same order
     //
-	projectsArray := getSortedProjects(projects)
+    projectsArray := getSortedProjects(projects)
 
-	printProjects(projectsArray, hiddenProjects, defaultProject)
+    printProjects(projectsArray, hiddenProjects, defaultProject)
 
-	return nil
+    return nil
 }
 
 func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
@@ -69,100 +69,100 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
     //
     hiddenProjects := 0
 
-	projects := make(map[string]*rsrch_client.Project)
-	for idx, project := range *projList {
-	    if project.IsDeleted && !includeDeleted {
-	        hiddenProjects += 1
-	        continue
+    projects := make(map[string]*rsrch_client.Project)
+    for idx, project := range *projList {
+        if project.IsDeleted && !includeDeleted {
+            hiddenProjects += 1
+            continue
         }
-	    projects[project.Name] = &(*projList)[idx]
+        projects[project.Name] = &(*projList)[idx]
     }
 
-	return projects, hiddenProjects, nil
+    return projects, hiddenProjects, nil
 }
 
 func getSortedProjects(projects map[string]*rsrch_client.Project) []*rsrch_client.Project {
-	projectsArray := []*rsrch_client.Project{}
-	for _, project := range projects {
-		projectsArray = append(projectsArray, project)
-	}
+    projectsArray := []*rsrch_client.Project{}
+    for _, project := range projects {
+        projectsArray = append(projectsArray, project)
+    }
 
-	sort.Slice(projectsArray, func(i, j int) bool {
-		return projectsArray[i].Name < projectsArray[j].Name
-	})
+    sort.Slice(projectsArray, func(i, j int) bool {
+        return projectsArray[i].Name < projectsArray[j].Name
+    })
 
-	return projectsArray
+    return projectsArray
 }
 
 func printProjects(infos []*rsrch_client.Project, hiddenProjects int, defaultProject string) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+    w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
+    ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
 
-	for _, info := range infos {
+    for _, info := range infos {
 
         deservedInfo := "-"
         if info.DeservedGpus != 0 {
             deservedInfo = fmt.Sprintf("%v", info.DeservedGpus)
         }
 
-		interactiveJobTimeLimitFmt := "-"
-		if info.InteractiveJobTimeLimitSecs != 0 {
-			t := time.Duration(info.InteractiveJobTimeLimitSecs * 1000 * 1000 * 1000)
-			interactiveJobTimeLimitFmt = t.String()
-		}
-
-        name := info.Name
-		if info.Name == defaultProject {
-			name = name + " (default)"
-		}
-
-		var departmentName = "deleted"
-		if !info.IsDeleted {
-		    departmentName = info.DepartmentName
+        interactiveJobTimeLimitFmt := "-"
+        if info.InteractiveJobTimeLimitSecs != 0 {
+            t := time.Duration(info.InteractiveJobTimeLimitSecs * 1000 * 1000 * 1000)
+            interactiveJobTimeLimitFmt = t.String()
         }
 
-		ui.Line(w, name, departmentName, deservedInfo, interactiveJobTimeLimitFmt,
-		    strings.Join(info.InteractiveNodeAffinity, ";"),
-		    strings.Join(info.TrainNodeAffinity, ";"))
-	}
+        name := info.Name
+        if info.Name == defaultProject {
+            name = name + " (default)"
+        }
 
-	if hiddenProjects != 0 {
-	    hiddenMsg := ""
-	    if hiddenProjects == 1 {
+        var departmentName = "deleted"
+        if !info.IsDeleted {
+            departmentName = info.DepartmentName
+        }
+
+        ui.Line(w, name, departmentName, deservedInfo, interactiveJobTimeLimitFmt,
+            strings.Join(info.InteractiveNodeAffinity, ";"),
+            strings.Join(info.TrainNodeAffinity, ";"))
+    }
+
+    if hiddenProjects != 0 {
+        hiddenMsg := ""
+        if hiddenProjects == 1 {
             hiddenMsg = fmt.Sprintf("\nAdditionally, there is 1 deleted project. Use the --include-deleted flag to show it.\n")
         } else {
             hiddenMsg = fmt.Sprintf("\nAdditionally, there are %d deleted projects.\n\tUse the --include-deleted flag to show them.\n", hiddenProjects)
         }
-	    w.Write([]byte(hiddenMsg))
+        w.Write([]byte(hiddenMsg))
     }
-	_ = w.Flush()
+    _ = w.Flush()
 }
 
 func listCommandDEPRECATED() *cobra.Command {
 
-	var command = &cobra.Command{
-		Use:        "list",
-		Short:      fmt.Sprint("List all available projects."),
-		PreRun:     commandUtil.RoleAssertion(assertion.AssertViewerRole),
-		Run:        commandUtil.WrapRunCommand(runListCommand),
-		Deprecated: "Please use: 'runai list project' instead",
-	}
+    var command = &cobra.Command{
+        Use:        "list",
+        Short:      fmt.Sprint("List all available projects."),
+        PreRun:     commandUtil.RoleAssertion(assertion.AssertViewerRole),
+        Run:        commandUtil.WrapRunCommand(runListCommand),
+        Deprecated: "Please use: 'runai list project' instead",
+    }
 
-	return command
+    return command
 }
 
 func ListCommand() *cobra.Command {
 
-	var command = &cobra.Command{
-		Use:     "projects [--include-deleted]",
-		Aliases: []string{"project"},
-		Short:   "List all available projects",
-		ValidArgsFunction: completion.NoArgs,
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
-		Run:     commandUtil.WrapRunCommand(runListCommand),
-	}
+    var command = &cobra.Command{
+        Use:     "projects [--include-deleted]",
+        Aliases: []string{"project"},
+        Short:   "List all available projects",
+        ValidArgsFunction: completion.NoArgs,
+        PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+        Run:     commandUtil.WrapRunCommand(runListCommand),
+    }
 
-	command.Flags().BoolVarP(&includeDeleted, "include-deleted", "d", false, "Include deleted projects")
-	return command
+    command.Flags().BoolVarP(&includeDeleted, "include-deleted", "d", false, "Include deleted projects")
+    return command
 }
