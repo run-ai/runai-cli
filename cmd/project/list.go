@@ -63,6 +63,10 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
         return nil, 0, err
     }
 
+    //
+    //   if --include-deleted flag is not provided, deleted projects are hidden from the output
+    //   in this case we want to add a textual message notifying the user about those hidden projects
+    //
     hiddenProjects := 0
 
 	projects := make(map[string]*rsrch_client.Project)
