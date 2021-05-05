@@ -114,7 +114,7 @@ func TensorboardURL(name, namespace string, clientset kubernetes.Interface) (url
 	port = portList[0].NodePort
 
 	// 2. Get address
-	nodeList, err := clientset.CoreV1().Nodes().List(context.TODO(), jmetav1.ListOptions{})
+	nodeList, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
