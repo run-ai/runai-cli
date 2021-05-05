@@ -112,15 +112,22 @@ func printProjects(infos []*rsrch_client.Project, hiddenProjects int, defaultPro
             interactiveJobTimeLimitFmt = t.String()
         }
 
-        name := info.Name
-        if info.Name == defaultProject {
-            name = name + " (default)"
-        }
+		isDefault := info.Name == defaultProject
+		isDeleted := info.IsDeleted
 
-        var departmentName = "deleted"
-        if !info.IsDeleted {
-            departmentName = info.DepartmentName
-        }
+		name := info.Name
+        if  isDefault && isDeleted {
+            name += " (default,deleted)"
+        } else if isDefault {
+			name += " (default)"
+		} else if isDeleted {
+			name += " (deleted)"
+		}
+
+		departmentName := "-"
+		if info.DepartmentName != "" {
+			departmentName = info.DepartmentName
+		}
 
         ui.Line(w, name, departmentName, deservedInfo, interactiveJobTimeLimitFmt,
             strings.Join(info.InteractiveNodeAffinity, ";"),
