@@ -114,7 +114,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 			if raUtil.IsBoolPTrue(submitArgs.Interactive) {
 				if raUtil.IsBoolPTrue(submitArgs.Inference) {
-					fmt.Print("\nThe flags --inference and --interactive cannot be used together\n\n")
+					fmt.Println("\nThe flags --inference and --interactive cannot be used together")
 					os.Exit(1)
 				}
 				interactiveCompletions := 1
