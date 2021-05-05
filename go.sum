@@ -650,6 +650,8 @@ github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFR
 github.com/rogpeppe/go-internal v1.3.2/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rogpeppe/go-internal v1.4.0/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351/go.mod h1:DCgfY80j8GYL7MLEfvcpSFvjD0L5yZq/aZUJmhZklyg=
+github.com/run-ai/researcher-service v0.1.8 h1:HZQx20TME/gICHjfrnFk2/WmkBzEBcHYgZa9tkJBMiY=
+github.com/run-ai/researcher-service v0.1.8/go.mod h1:wIcEV7RWhYnRYNJK4OqVDSM80tuKu4sD1MyP9MpGHWM=
 github.com/run-ai/researcher-service v0.1.9 h1:2AfuT682vNMT9vD0MR0KWJQrUP3+tquMcrCfAOyDw8I=
 github.com/run-ai/researcher-service v0.1.9/go.mod h1:wIcEV7RWhYnRYNJK4OqVDSM80tuKu4sD1MyP9MpGHWM=
 github.com/run-ai/researcher-service v0.1.10 h1:AHt2TKtU/WJuXAzF+uHLVEPnD2i907URPoD6fGynNAU=
