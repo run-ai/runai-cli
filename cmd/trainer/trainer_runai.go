@@ -1,6 +1,7 @@
 package trainer
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -47,7 +48,7 @@ func fieldSelectorByName(name string) string {
 }
 
 func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
-	runaiJobList, err := rt.client.BatchV1().Jobs(ns).List(metav1.ListOptions{
+	runaiJobList, err := rt.client.BatchV1().Jobs(ns).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -63,7 +64,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
-	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(ns).List(metav1.ListOptions{
+	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(ns).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -77,7 +78,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
-	runaiDeploymentList, err := rt.client.AppsV1().Deployments(ns).List(metav1.ListOptions{
+	runaiDeploymentList, err := rt.client.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -108,7 +109,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
-	pod, err := rt.client.CoreV1().Pods(ns).Get(name, metav1.GetOptions{})
+	pod, err := rt.client.CoreV1().Pods(ns).Get(context.TODO(), name, metav1.GetOptions{})
 
 	if err != nil {
 		log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
@@ -124,7 +125,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 }
 
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
-	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -144,7 +145,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-	runaiStatufulsetList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
+	runaiStatufulsetList, err := rt.client.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -164,7 +165,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-	runaiDeploymentsList, err := rt.client.AppsV1().Deployments(namespace).List(metav1.ListOptions{
+	runaiDeploymentsList, err := rt.client.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -184,7 +185,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-	pod, err := rt.client.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+	pod, err := rt.client.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 
 	if err != nil {
 		log.Debugf("failed to search pod %s in namespace %s due to %v", name, namespace, err)
@@ -261,7 +262,7 @@ func (rt *RunaiTrainer) getPodsOfJob(podSpecJob cmdTypes.PodTemplateJob) []v1.Po
 		labels = append(labels, fmt.Sprintf("%s=%s", key, value))
 	}
 
-	podList, err := rt.client.CoreV1().Pods(podSpecJob.Namespace).List(metav1.ListOptions{
+	podList, err := rt.client.CoreV1().Pods(podSpecJob.Namespace).List(context.TODO(), metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",
@@ -274,7 +275,7 @@ func (rt *RunaiTrainer) getPodsOfJob(podSpecJob cmdTypes.PodTemplateJob) []v1.Po
 	}
 	ownerUID := podSpecJob.UID
 	if podSpecJob.Type == cmdTypes.ResourceTypeDeployment {
-		rsList, err := rt.client.AppsV1().ReplicaSets(podSpecJob.Namespace).List(metav1.ListOptions{
+		rsList, err := rt.client.AppsV1().ReplicaSets(podSpecJob.Namespace).List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -295,7 +296,7 @@ func (rt *RunaiTrainer) getPodsOfJob(podSpecJob cmdTypes.PodTemplateJob) []v1.Po
 	}
 
 	if len(filteredPods) == 0 {
-		pod, err := rt.client.CoreV1().Pods(podSpecJob.Namespace).Get(podSpecJob.Name, metav1.GetOptions{})
+		pod, err := rt.client.CoreV1().Pods(podSpecJob.Namespace).Get(context.TODO(), podSpecJob.Name, metav1.GetOptions{})
 		if err != nil || pod == nil || len(pod.OwnerReferences) != 0 {
 			return []v1.Pod{}
 		}
@@ -414,21 +415,21 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	// Get all different job stypes to one general job type with pod spec
 	jobsForListCommand := []*cmdTypes.PodTemplateJob{}
-	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
+	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{})
 
 	for _, job := range runaiJobList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromJob(job)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{})
+	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromStatefulSet(statefulSet)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	deploymentJobs, err := rt.client.AppsV1().Deployments(namespace).List(metav1.ListOptions{})
+	deploymentJobs, err := rt.client.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 
 	for _, deployment := range deploymentJobs.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromDeployment(deployment)
@@ -508,7 +509,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobInfo, error) {
 	// Get all pods running with runai scheduler
-	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", constants.SchedulerName),
 	})
 
@@ -517,7 +518,7 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 	}
 
 	jobPodMap := make(map[types.UID]*RunaiJobInfo)
-	replicaSets, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{})
+	replicaSets, err := rt.client.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -555,7 +556,7 @@ func (rt *RunaiTrainer) getPodJobMap(namespace string) (map[types.UID]*RunaiJobI
 }
 
 func (rt *RunaiTrainer) getPodsWithoutOwner(namespace string) ([]v1.Pod, error) {
-	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", constants.SchedulerName),
 	})
 	if err != nil {
@@ -612,7 +613,7 @@ func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
 
 // Prefer address type by this order: external dns, external ip, internal dns, internal ip
 func (rt *RunaiTrainer) getNodeIp() (string, error) {
-	nodesList, err := rt.client.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodesList, err := rt.client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
 		return "", err
@@ -761,7 +762,7 @@ func getServiceOfPod(services []v1.Service, pod *v1.Pod) *v1.Service {
 }
 
 func (rt *RunaiTrainer) getServicesInNamespace(namespace string) ([]v1.Service, error) {
-	servicesList, err := rt.client.CoreV1().Services(namespace).List(metav1.ListOptions{})
+	servicesList, err := rt.client.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return []v1.Service{}, err
 	}
@@ -769,7 +770,7 @@ func (rt *RunaiTrainer) getServicesInNamespace(namespace string) ([]v1.Service, 
 }
 
 func (rt *RunaiTrainer) getIngressesForNamespace(namespace string) ([]extensionsv1.Ingress, error) {
-	ingresses, err := rt.client.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{})
+	ingresses, err := rt.client.ExtensionsV1beta1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
 		return []extensionsv1.Ingress{}, nil
@@ -809,7 +810,7 @@ func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Servic
 }
 
 func (rt *RunaiTrainer) getIngressService() (*v1.Service, error) {
-	servicesList, err := rt.client.CoreV1().Services("").List(metav1.ListOptions{
+	servicesList, err := rt.client.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=nginx-ingress",
 	})
 

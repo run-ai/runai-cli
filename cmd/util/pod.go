@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	// "os"
 	"time"
@@ -22,7 +23,7 @@ func GetPod(name, namespace string) (*v1.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
-	return client.GetClientset().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+	return client.GetClientset().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 // WaitForPod waiting to the pod

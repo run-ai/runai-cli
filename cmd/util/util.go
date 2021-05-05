@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/run-ai/runai-cli/pkg/client"
@@ -10,7 +11,7 @@ import (
 )
 
 func GetNamespaceFromProjectName(project string, kubeClient *client.Client) (string, error) {
-	namespaceList, err := kubeClient.GetClientset().CoreV1().Namespaces().List(metav1.ListOptions{
+	namespaceList, err := kubeClient.GetClientset().CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", RUNAI_QUEUE_LABEL, project),
 	})
 

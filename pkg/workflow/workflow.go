@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -42,7 +43,7 @@ func getServerConfigMapNameByJob(jobName string, namespaceInfo types.NamespaceIn
 	namespace := namespaceInfo.Namespace
 	maybeConfigMapNames := []string{jobName, fmt.Sprintf("%s-%s", jobName, "runai"), fmt.Sprintf("%s-%s", jobName, "mpijob")}
 	for _, maybeConfigMapName := range maybeConfigMapNames {
-		configMap, err := clientset.CoreV1().ConfigMaps(namespace).Get(maybeConfigMapName, metav1.GetOptions{})
+		configMap, err := clientset.CoreV1().ConfigMaps(namespace).Get(context.TODO(), maybeConfigMapName, metav1.GetOptions{})
 		if err == nil {
 			return configMap.Name, nil
 		}
@@ -71,7 +72,7 @@ func DeleteJob(jobName string, namespaceInfo types.NamespaceInfo, clientset kube
 		return deleteJobResourcesWithoutConfigMap(jobName, namespaceInfo, clientset)
 	}
 
-	err = clientset.CoreV1().ConfigMaps(namespaceInfo.Namespace).Delete(configMapName, &metav1.DeleteOptions{})
+	err = clientset.CoreV1().ConfigMaps(namespaceInfo.Namespace).Delete(context.TODO(), configMapName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Debugf("Delete configmap %s failed due to %v. Please clean it manually\n", configMapName, err)
 		log.Debugf("Please run `kubectl delete -n %s cm %s\n`", namespace, configMapName)
@@ -102,16 +103,16 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 		mpiKubeClient := mpiClient.NewForConfigOrDie(client.GetRestConfig())
 		err = mpiKubeClient.KubeflowV1alpha2().MPIJobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
 	case string(types.ResourceTypeDeployment):
-		err = clientset.AppsV1().Deployments(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
+		err = clientset.AppsV1().Deployments(namespaceInfo.Namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	case string(types.ResourceTypeJob):
-		err = clientset.BatchV1().Jobs(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
+		err = clientset.BatchV1().Jobs(namespaceInfo.Namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	case string(types.ResourceTypeStatefulSet):
-		err = clientset.AppsV1().StatefulSets(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
+		err = clientset.AppsV1().StatefulSets(namespaceInfo.Namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	case string(types.ResourceTypeRunaiJob):
 		runaiClient := runaiClient.NewForConfigOrDie(client.GetRestConfig())
 		err = runaiClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Delete(jobName, metav1.DeleteOptions{})
 	case string(types.ResourceTypePod):
-		err = clientset.CoreV1().Pods(namespaceInfo.Namespace).Delete(jobName, &metav1.DeleteOptions{})
+		err = clientset.CoreV1().Pods(namespaceInfo.Namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	default:
 		log.Warningf("Unexpected type for job, type: %v\n", jobToDelete.WorkloadType())
 	}
@@ -128,15 +129,15 @@ func deleteJobResourcesWithoutConfigMap(jobName string, namespaceInfo types.Name
 }
 
 func deleteAdditionalJobResources(jobName, namespace string, clientset kubernetes.Interface) {
-	err := clientset.CoreV1().Services(namespace).Delete(jobName, &metav1.DeleteOptions{})
+	err := clientset.CoreV1().Services(namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Debugf("Failed to remove service %v, it may be removed manually and not by using Run:AI CLI.", jobName)
 	}
-	err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(jobName, &metav1.DeleteOptions{})
+	err = clientset.ExtensionsV1beta1().Ingresses(namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Debugf("Failed to remove ingress %v, it may be removed manually and not by using Run:AI CLI.", jobName)
 	}
-	err = clientset.CoreV1().ConfigMaps(namespace).Delete(jobName, &metav1.DeleteOptions{})
+	err = clientset.CoreV1().ConfigMaps(namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Debugf("Failed to remove configmap %s failed due to %v. Please clean it manually\n", jobName, err)
 	}
@@ -222,7 +223,7 @@ func submitConfigMap(name, namespace string, generateSuffix bool, clientset kube
 
 	configMapLabelSelector := getConfigMapLabelSelector(name)
 	for i := 0; i < configMapGenerationRetries; i++ {
-		existingConfigMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: configMapLabelSelector})
+		existingConfigMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: configMapLabelSelector})
 		if err != nil {
 			return nil, err
 		}
@@ -249,7 +250,7 @@ func createEmptyConfigMap(name, baseName, namespace string, index int, clientset
 			Labels: labels,
 		},
 	}
-	acceptedConfigMap, err := clientset.CoreV1().ConfigMaps(namespace).Create(&configMap)
+	acceptedConfigMap, err := clientset.CoreV1().ConfigMaps(namespace).Create(context.TODO(), &configMap, metav1.CreateOptions{})
 	if err != nil {
 		log.Debugf("Failed to create configmap name: <%v>, error: <%v>", name, err)
 		return nil, err
@@ -274,7 +275,7 @@ func populateConfigMap(configMap *corev1.ConfigMap, chartName, chartVersion, val
 	data["app"] = string(appFileContent)
 
 	configMap.Data = data
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(configMap)
+	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(context.TODO(), configMap, metav1.UpdateOptions {})
 	return err
 }
 

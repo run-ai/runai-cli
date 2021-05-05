@@ -15,6 +15,7 @@
 package kubectl
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -34,7 +35,7 @@ const JOB_CONFIG_LABEL_VALUES = "arena"
 func ListAppConfigMaps(clientset *kubernetes.Clientset, namespace string, trainingTypes []string) (jobs []types.TrainingJobInfo, err error) {
 
 	jobs = []types.TrainingJobInfo{}
-	cmList, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", JOB_CONFIG_LABEL_KEY, JOB_CONFIG_LABEL_VALUES)})
+	cmList, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", JOB_CONFIG_LABEL_KEY, JOB_CONFIG_LABEL_VALUES)})
 	if err != nil {
 		return nil, err
 	}

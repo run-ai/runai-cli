@@ -15,6 +15,7 @@
 package job
 
 import (
+	"context"
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/pkg/types"
@@ -109,7 +110,7 @@ func PrepareTrainerJobList(kubeClient *client.Client, namespaceInfo types.Namesp
 		jobsMap[job.Name()] = true
 	}
 
-	configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(metav1.ListOptions{})
+	configMaps, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		log.Errorf("Failed due to %v", err)
 		os.Exit(1)

@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -103,7 +104,7 @@ func BuildPrometheusClient(c *client.Client) (*Client, error) {
 }
 
 func (ps *Client) getPrometheusService() (service *v1.Service, err error) {
-	list, err := ps.client.CoreV1().Services(namespace).List(metav1.ListOptions{
+	list, err := ps.client.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", promLabel),
 	})
 
@@ -124,7 +125,7 @@ func (ps *Client) getThanosRouteService() (*ThanosRouteService, error) {
 		Resource: "routes",
 	}
 
-	thanosRoute, err := ps.dynamicClient.Resource(openshiftRouteSchema).Namespace(openshiftMonitoringNamespace).Get(thanosRouteName, metav1.GetOptions{})
+	thanosRoute, err := ps.dynamicClient.Resource(openshiftRouteSchema).Namespace(openshiftMonitoringNamespace).Get(context.TODO(), thanosRouteName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +149,7 @@ func (ps *Client) queryPrometheus(query string) (*MetricData, error) {
 	})
 
 	log.Debugf("Query prometheus for by %s in ns %s", query, ps.prometheusService.Namespace)
-	rawMetrics, err := queryResponse.DoRaw()
+	rawMetrics, err := queryResponse.DoRaw(context.TODO())
 	if err != nil {
 		log.Debugf("Query prometheus failed due to err %v", err)
 		log.Debugf("Query prometheus failed due to result %s", string(rawMetrics))

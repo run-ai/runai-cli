@@ -17,6 +17,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	v1 "github.com/run-ai/runai-cli/cmd/mpi/api/v1"
@@ -69,7 +70,7 @@ func (c *mPIJobs) Get(name string, options metav1.GetOptions) (result *v1.MPIJob
 		Resource("mpijobs").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -86,7 +87,7 @@ func (c *mPIJobs) List(opts metav1.ListOptions) (result *v1.MPIJobList, err erro
 		Resource("mpijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -103,7 +104,7 @@ func (c *mPIJobs) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("mpijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.TODO())
 }
 
 // Create takes the representation of a mPIJob and creates it.  Returns the server's representation of the mPIJob, and an error, if there is any.
@@ -113,7 +114,7 @@ func (c *mPIJobs) Create(mPIJob *v1.MPIJob) (result *v1.MPIJob, err error) {
 		Namespace(c.ns).
 		Resource("mpijobs").
 		Body(mPIJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -126,7 +127,7 @@ func (c *mPIJobs) Update(mPIJob *v1.MPIJob) (result *v1.MPIJob, err error) {
 		Resource("mpijobs").
 		Name(mPIJob.Name).
 		Body(mPIJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -142,7 +143,7 @@ func (c *mPIJobs) UpdateStatus(mPIJob *v1.MPIJob) (result *v1.MPIJob, err error)
 		Name(mPIJob.Name).
 		SubResource("status").
 		Body(mPIJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -154,7 +155,7 @@ func (c *mPIJobs) Delete(name string, options *metav1.DeleteOptions) error {
 		Resource("mpijobs").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -170,7 +171,7 @@ func (c *mPIJobs) DeleteCollection(options *metav1.DeleteOptions, listOptions me
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -183,7 +184,7 @@ func (c *mPIJobs) Patch(name string, pt types.PatchType, data []byte, subresourc
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }

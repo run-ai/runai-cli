@@ -3,7 +3,8 @@ package project
 import (
     "context"
     "fmt"
-    "github.com/run-ai/runai-cli/cmd/completion"
+	rsrch_api "github.com/run-ai/researcher-service/server/pkg/runai/api"
+	"github.com/run-ai/runai-cli/cmd/completion"
     "github.com/run-ai/runai-cli/cmd/constants"
     "github.com/run-ai/runai-cli/pkg/authentication/assertion"
     "github.com/run-ai/runai-cli/pkg/client"
@@ -53,7 +54,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 }
 
 func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
-                    map[string]*rsrch_client.Project, int, error) {
+                    map[string]*rsrch_api.Project, int, error) {
 
     rs := rsrch_client.NewRsrchClient(restConfig)
     projList, err := rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
@@ -69,7 +70,7 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
     //
     hiddenProjects := 0
 
-    projects := make(map[string]*rsrch_client.Project)
+    projects := make(map[string]*rsrch_api.Project)
     for idx, project := range *projList {
         if project.IsDeleted && !includeDeleted {
             hiddenProjects += 1
@@ -81,8 +82,8 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
     return projects, hiddenProjects, nil
 }
 
-func getSortedProjects(projects map[string]*rsrch_client.Project) []*rsrch_client.Project {
-    projectsArray := []*rsrch_client.Project{}
+func getSortedProjects(projects map[string]*rsrch_api.Project) []*rsrch_api.Project {
+    projectsArray := []*rsrch_api.Project{}
     for _, project := range projects {
         projectsArray = append(projectsArray, project)
     }
@@ -94,7 +95,7 @@ func getSortedProjects(projects map[string]*rsrch_client.Project) []*rsrch_clien
     return projectsArray
 }
 
-func printProjects(infos []*rsrch_client.Project, hiddenProjects int, defaultProject string) {
+func printProjects(infos []*rsrch_api.Project, hiddenProjects int, defaultProject string) {
     w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
     ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")

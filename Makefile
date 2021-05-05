@@ -56,6 +56,7 @@ IMAGE_PREFIX=${IMAGE_NAMESPACE}/
 endif
 
 GENERAL_BUILD_OPTIONS=CGO_ENABLED=0 GO111MODULE=on
+GOPRIVATE="github.com/run-ai"              
 
 # Build the project
 .PHONY: default

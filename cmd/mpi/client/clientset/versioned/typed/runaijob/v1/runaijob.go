@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"time"
 
 	v1 "github.com/run-ai/runai-cli/cmd/mpi/api/runaijob/v1"
@@ -71,7 +72,7 @@ func (c *runaiJobs) Get(name string, options metav1.GetOptions) (result *v1.Runa
 		Resource("runaijobs").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -88,7 +89,7 @@ func (c *runaiJobs) List(opts metav1.ListOptions) (result *v1.RunaiJobList, err 
 		Resource("runaijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -105,7 +106,7 @@ func (c *runaiJobs) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("runaijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.TODO())
 }
 
 // Create takes the representation of a runaiJob and creates it.  Returns the server's representation of the runaiJob, and an error, if there is any.
@@ -116,7 +117,7 @@ func (c *runaiJobs) Create(runaiJob *v1.RunaiJob, opts metav1.CreateOptions) (re
 		Resource("runaijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(runaiJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -130,7 +131,7 @@ func (c *runaiJobs) Update(runaiJob *v1.RunaiJob, opts metav1.UpdateOptions) (re
 		Name(runaiJob.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(runaiJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -146,7 +147,7 @@ func (c *runaiJobs) UpdateStatus(runaiJob *v1.RunaiJob, opts metav1.UpdateOption
 		SubResource("status").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(runaiJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -158,7 +159,7 @@ func (c *runaiJobs) Delete(name string, opts metav1.DeleteOptions) error {
 		Resource("runaijobs").
 		Name(name).
 		Body(&opts).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -174,7 +175,7 @@ func (c *runaiJobs) DeleteCollection(opts metav1.DeleteOptions, listOpts metav1.
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(&opts).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -187,7 +188,7 @@ func (c *runaiJobs) Patch(name string, pt types.PatchType, data []byte, subresou
 		Name(name).
 		SubResource(subresources...).
 		Body(data).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
