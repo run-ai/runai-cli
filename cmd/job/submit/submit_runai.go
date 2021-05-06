@@ -297,6 +297,7 @@ type submitRunaiJobArgs struct {
 	IsJupyter        *bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
+	Inference        *bool  `yaml:"inference,omitempty"`
 	TtlAfterFinished *time.Duration
 
 	// Hidden flags
@@ -350,6 +351,9 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 	flags.AddIntNullableFlag(fs, &(sa.Completions), "completions", "Number of successful pods required for this job to be completed. Used with HPO.")
 	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "Number of pods to run in parallel at any given time.  Used with HPO.")
 	flags.AddDurationNullableFlagP(fs, &(sa.TtlAfterFinished), "ttl-after-finish", "", "The duration, after which a finished job is automatically deleted (e.g. 5s, 2m, 3h).")
+
+	fs = fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
+	flags.AddBoolNullableFlag(fs, &(sa.Inference), "inference", "", "Mark this Job as inference.")
 
 	// Hidden flags
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
