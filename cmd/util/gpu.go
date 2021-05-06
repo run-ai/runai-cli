@@ -32,7 +32,6 @@ const (
 	DeprecatedNVIDIAGPUResourceName    = "alpha.kubernetes.io/nvidia-gpu"
 	PodGroupRequestedGPUs              = "runai-podgroup-requested-gpus"
 	PodGroupRequestedGPUsMemory        = "runai-podgroup-requested-gpus-memory"
-	CliCommand        				   = "runai-cli-command"
 	WorkloadCurrentAllocatedGPUs       = "runai-current-allocated-gpus"
 	WorkloadCurrentAllocatedGPUsMemory = "runai-current-allocated-gpus-memory"
 	WorkloadCurrentRequestedGPUs       = "runai-current-requested-gpus"

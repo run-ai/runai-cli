@@ -348,13 +348,10 @@ func getPriorityClass(job trainer.TrainingJob) string {
 }
 
 func getCliCommand(job trainer.TrainingJob) string {
-	return stringWithDefault(job.CliCommand(), "N/A")
-}
-
-func stringWithDefault(str string, def string) string {
-	if len(str) > 0 {
-		return str
+	cmd := job.CliCommand()
+	if len(cmd) > 0 {
+		return cmd
 	} else {
-		return def
-	}
+		return "N/A"
+	}	
 }
