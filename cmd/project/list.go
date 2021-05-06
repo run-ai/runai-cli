@@ -66,8 +66,8 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 
     rs := rsrch_client.NewRsrchClient(restConfig)
     projList, err := rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
-		// even if deleted projects are filtered out, we still count the number
-    	// of deleted projects, thus needs the entire list
+        // even if deleted projects are filtered out, we still count the number
+        // of deleted projects, thus needs the entire list
         IncludeDeleted: true,
     })
     if err != nil {
@@ -123,22 +123,22 @@ func printProjects(infos []*rsrch_client.Project, hiddenProjects int, defaultPro
             interactiveJobTimeLimitFmt = t.String()
         }
 
-		isDefault := info.Name == defaultProject
-		isDeleted := info.IsDeleted
+        isDefault := info.Name == defaultProject
+        isDeleted := info.IsDeleted
 
-		name := info.Name
+        name := info.Name
         if  isDefault && isDeleted {
             name += " (default,deleted)"
         } else if isDefault {
-			name += " (default)"
-		} else if isDeleted {
-			name += " (deleted)"
-		}
+            name += " (default)"
+        } else if isDeleted {
+            name += " (deleted)"
+        }
 
-		departmentName := "-"
-		if info.DepartmentName != "" {
-			departmentName = info.DepartmentName
-		}
+        departmentName := "-"
+        if info.DepartmentName != "" {
+            departmentName = info.DepartmentName
+        }
 
         ui.Line(w, name, departmentName, deservedInfo, interactiveJobTimeLimitFmt,
             strings.Join(info.InteractiveNodeAffinity, ";"),
