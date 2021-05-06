@@ -52,11 +52,22 @@ func runListCommand(cmd *cobra.Command, args []string) error {
     return nil
 }
 
+//
+//  ask for the list of projects from the researcher service
+//  parametwers:
+//      restConfig - the kube config
+//      includeDeleted - indication if we want the result list to include deleted projects
+//  returns:
+//      list of projects
+//      number of hidden proejects (=deleted projects which are filtered out from the list)
+//
 func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
                     map[string]*rsrch_client.Project, int, error) {
 
     rs := rsrch_client.NewRsrchClient(restConfig)
     projList, err := rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
+		// even if deleted projects are filtered out, we still count the number
+    	// of deleted projects, thus needs the entire list
         IncludeDeleted: true,
     })
     if err != nil {
