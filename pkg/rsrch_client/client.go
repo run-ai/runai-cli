@@ -14,6 +14,7 @@ import (
 
 type RsrchClient struct {
     BaseURL    string
+    authToken  string
     HTTPClient *http.Client
 }
 
@@ -51,7 +52,8 @@ func NewRsrchClient(restConfig *rest.Config) *RsrchClient {
     }
 
     return &RsrchClient{
-        BaseURL: rsUrl.String(),
+        BaseURL:    rsUrl.String(),
+        authToken:  restConfig.AuthProvider.Config[KubeConfigIdToken],
         HTTPClient: &http.Client{
             Timeout: time.Minute,
         },
@@ -71,6 +73,9 @@ func (c *RsrchClient) sendRequest(req *http.Request, v interface{}) (int, error)
 
     req.Header.Set(HeaderContentType, ContentTypeApplicationJson)
     req.Header.Set(HeaderAccept, ContentTypeApplicationJson)
+    if c.authToken != "" {
+        req.Header.Set(HeaderAuth, AuthBearerPrefix + c.authToken)
+    }
 
     res, err := c.HTTPClient.Do(req)
     if err != nil {

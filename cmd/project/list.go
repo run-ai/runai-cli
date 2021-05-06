@@ -140,7 +140,7 @@ func printProjects(infos []*rsrch_api.Project, hiddenProjects int, defaultProjec
         if hiddenProjects == 1 {
             hiddenMsg = fmt.Sprintf("\nAdditionally, there is 1 deleted project. Use the --include-deleted flag to show it.\n")
         } else {
-            hiddenMsg = fmt.Sprintf("\nAdditionally, there are %d deleted projects.\n\tUse the --include-deleted flag to show them.\n", hiddenProjects)
+            hiddenMsg = fmt.Sprintf("\nAdditionally, there are %d deleted projects. Use the --include-deleted flag to show them.\n", hiddenProjects)
         }
         w.Write([]byte(hiddenMsg))
     }
