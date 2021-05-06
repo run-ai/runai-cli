@@ -78,6 +78,34 @@ func (this orderedTrainingJobByAge) Swap(i, j int) {
 	this[i], this[j] = this[j], this[i]
 }
 
+type orderedTrainingJobByName []TrainingJob
+
+func (job orderedTrainingJobByName) Len() int {
+	return len(job)
+}
+
+func (job orderedTrainingJobByName) Less(i, j int) bool {
+	return job[i].Name() < job[j].Name()
+}
+
+func (job orderedTrainingJobByName) Swap(i, j int) {
+	job[i], job[j] = job[j], job[i]
+}
+
+type orderedTrainingJobByProject []TrainingJob
+
+func (job orderedTrainingJobByProject) Len() int {
+	return len(job)
+}
+
+func (job orderedTrainingJobByProject) Less(i, j int) bool {
+	return job[i].Project() < job[j].Project()
+}
+
+func (job orderedTrainingJobByProject) Swap(i, j int) {
+	job[i], job[j] = job[j], job[i]
+}
+
 func MakeTrainingJobOrderdByAge(jobList []TrainingJob) []TrainingJob {
 	newJoblist := make(orderedTrainingJobByAge, 0, len(jobList))
 	for _, v := range jobList {
@@ -85,6 +113,24 @@ func MakeTrainingJobOrderdByAge(jobList []TrainingJob) []TrainingJob {
 	}
 	sort.Sort(newJoblist)
 	return []TrainingJob(newJoblist)
+}
+
+func MakeTrainingJobOrderdByName(jobList []TrainingJob) []TrainingJob {
+	var newJoblist orderedTrainingJobByName
+	for _, job := range jobList {
+		newJoblist = append(newJoblist, job)
+	}
+	sort.Sort(newJoblist)
+	return newJoblist
+}
+
+func MakeTrainingJobOrderdByProject(jobList []TrainingJob) []TrainingJob {
+	var newJoblist orderedTrainingJobByProject
+	for _, job := range jobList {
+		newJoblist = append(newJoblist, job)
+	}
+	sort.Sort(newJoblist)
+	return newJoblist
 }
 
 func MakeTrainingJobOrderdByGPUCount(jobList []TrainingJob) []TrainingJob {
