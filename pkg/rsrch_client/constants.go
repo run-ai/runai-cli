@@ -13,5 +13,11 @@ const (
 
     HeaderContentType = "Content-Type"
     HeaderAccept = "Accept"
+    HeaderAuth = "Authorization"
+
+    KubeConfigIdToken = "id-token"
+
+    AuthBearerPrefix = "Bearer "
+
     ContentTypeApplicationJson = "application/json; charset=utf-8"
 )
