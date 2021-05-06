@@ -23,6 +23,9 @@ type JobInfo struct {
 
 	// The priority of the training job
 	Priority string `json:"priority"`
+
+	// The command line that created the job
+	CommandLine string `json:"commandLine" yaml:"commandLine"`
 }
 
 // all the kinds of JobStatus

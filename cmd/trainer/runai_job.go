@@ -459,3 +459,7 @@ func (rj *RunaiJob) TotalRequestedGPUs() float64 {
 func (rj *RunaiJob) TotalRequestedGPUsMemory() uint64 {
 	return getTotalRequestedGPUsMemory(rj.jobMetadata.Annotations)
 }
+
+func (rj *RunaiJob) CliCommand() string {
+	return getCliCommand(rj.jobMetadata.Annotations)
+}

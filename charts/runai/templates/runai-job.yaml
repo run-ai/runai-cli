@@ -35,10 +35,11 @@ metadata:
     {{ $key }}: {{ $val | quote }}
     {{- end }}
   {{- end}}
-  {{- if .Values.user }}
   annotations:
+    runai-cli-command: {{ .Values.cliCommand | quote }}
+    {{- if .Values.user }}
     user: {{ .Values.user | quote}}
-  {{- end }}
+    {{- end }}
 spec:
     {{- if or .Values.ttlSecondsAfterFinished (eq (quote .Values.ttlSecondsAfterFinished) (quote 0))}}
   ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
