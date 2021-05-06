@@ -48,10 +48,11 @@ func DescribeCommand() *cobra.Command {
 		Use:     "node [...NODE_NAME]",
 		Aliases: []string{"nodes"},
 		Short:   "Display detailed information about nodes in the cluster.",
+		ValidArgsFunction: GenNodeNames,
 		Example: describeNodeExample,
 		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
-			nodeInfos, err := getNodeInfos(false)
+			nodeInfos, err := GetNodeInfos(false)
 
 			if err != nil {
 				fmt.Println(err)

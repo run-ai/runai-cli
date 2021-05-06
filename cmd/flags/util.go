@@ -16,7 +16,7 @@ func GetNamespaceToUseFromProjectFlagOffline(cmd *cobra.Command) string {
 	if flagValue == "" {
 		return ""
 	}
-	return fmt.Sprintf("%v%v", RunaiNamespaceProjectPrefix, flagValue)
+	return fmt.Sprintf("%v%v", constants.RunaiNsProjectPrefix, flagValue)
 }
 
 // This function will print an error even if -b flag was used
@@ -31,8 +31,8 @@ func GetNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Cli
 
 // Return the namespace to use on first argument. on second argument get
 func getNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Client, ignoreBackwardFlagOnError bool) (types.NamespaceInfo, error) {
-	namespaceInfo, err := getNamespaceInfoToUseFromProjectFlag(cmd, kubeClient)
 
+	namespaceInfo, err := GetNamespaceInfoToUse(cmd, kubeClient)
 	if err != nil {
 		return namespaceInfo, err
 	}
@@ -44,7 +44,11 @@ func getNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Cli
 	return namespaceInfo, nil
 }
 
-func getNamespaceInfoToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
+//    Get namespace from either
+//		- Project flag (-p/--project)
+//		- Default namespace as determined by runai config project command
+//
+func GetNamespaceInfoToUse(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
 
 	flagValue := getFlagValue(cmd, ProjectFlag)
 	if flagValue != "" {
@@ -82,7 +86,7 @@ func getProjectRelatedToNamespace(namespaceName string, kubeClient *client.Clien
 		return "", nil
 	}
 
-	return namespace.Labels[constants.RUNAI_QUEUE_LABEL], nil
+	return namespace.Labels[constants.RunaiQueueLabel], nil
 }
 
 func shouldPrintSetDefaultMessage(namespaceInfo types.NamespaceInfo, ignoreBackwardFlagOnError bool) bool {
@@ -96,7 +100,7 @@ func GetNamespaceToUseFromProjectFlagIncludingAll(cmd *cobra.Command, kubeClient
 			ProjectName: types.AllProjects,
 		}, nil
 	} else {
-		namespaceInfo, err := getNamespaceInfoToUseFromProjectFlag(cmd, kubeClient)
+		namespaceInfo, err := GetNamespaceInfoToUse(cmd, kubeClient)
 
 		if err != nil {
 			return namespaceInfo, err

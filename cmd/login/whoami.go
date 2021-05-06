@@ -2,6 +2,7 @@ package login
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/pkg/authentication"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -13,6 +14,7 @@ func NewWhoamiCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "whoami",
 		Short: "Current logged in user",
+		ValidArgsFunction: completion.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			subject, email, err := authentication.GetCurrentAuthenticateUserSubject()
 			if err != nil {

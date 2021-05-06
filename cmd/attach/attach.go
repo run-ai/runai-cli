@@ -2,6 +2,7 @@ package attach
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"os"
 	"time"
 
@@ -37,6 +38,7 @@ func NewAttachCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:    "attach JOB_NAME",
 		Short:  "Attach standard input, output, and error streams to a running job session.",
+		ValidArgsFunction: job.GenJobNames,
 		PreRun: commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -55,7 +57,8 @@ func NewAttachCommand() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&(options.NoStdIn), "no-stdin", "", false, "Not pass stdin to the container")
 	cmd.Flags().BoolVarP(&(options.NoTTY), "no-tty", "", false, "Not allocated a tty")
-	cmd.Flags().StringVar(&(options.PodName), "pod", "", "Specify a pod of a running job. To get a list of the pods of a specific job, run \"runai describe job <job-name>\" command")
+
+	job.AddPodNameFlag(cmd, &(options.PodName))
 
 	return cmd
 }

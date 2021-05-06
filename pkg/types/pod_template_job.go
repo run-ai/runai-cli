@@ -90,6 +90,22 @@ func PodTemplateJobFromDeployment(deployment appsv1.Deployment) *PodTemplateJob 
 	}
 }
 
+func PodTemplateJobFromPod(pod v1.Pod) *PodTemplateJob {
+	return &PodTemplateJob{
+		ObjectMeta:  pod.ObjectMeta,
+		Type:        ResourceTypePod,
+		Template:    v1.PodTemplateSpec{
+			ObjectMeta: pod.ObjectMeta,
+			Spec: pod.Spec,
+		},
+		Selector:    &metav1.LabelSelector{},
+		Parallelism: 0,
+		Completions: 0,
+		Failed:      0,
+		Succeeded:   0,
+	}
+}
+
 func PodTemplateJobFromRunaiJob(runaiJob runaijobv1.RunaiJob) *PodTemplateJob {
 	extraStatus := ""
 

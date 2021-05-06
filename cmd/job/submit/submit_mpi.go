@@ -16,6 +16,8 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"os"
 	"path"
 	"strconv"
@@ -54,6 +56,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 		Short:   "Submit a new MPI job.",
 		Aliases: []string{"mpi", "mj"},
 		Example: mpiExamples,
+		ValidArgsFunction: completion.NoArgs,
 		PreRun:  commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
@@ -105,7 +108,10 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 
 	fg := fbg.GetOrAddFlagSet(JobLifecycleFlagGroup)
 	flags.AddIntNullableFlag(fg, &(submitArgs.Processes), "processes", "Number of distributed training processes.")
+
 	fbg.UpdateFlagsByGroupsToCmd()
+
+	job.AddSubmitFlagsCompletion(command)
 
 	return command
 

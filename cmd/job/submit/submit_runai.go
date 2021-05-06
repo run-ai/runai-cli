@@ -2,6 +2,8 @@ package submit
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/cmd/job"
 	"math"
 	"os"
 	"path"
@@ -64,6 +66,7 @@ func NewRunaiJobCommand() *cobra.Command {
 		Use:                   "submit [flags] -- [COMMAND] [args...] [options]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Submit a new job.",
+		ValidArgsFunction: completion.NoArgs,
 		Example:               submitExamples,
 		PreRun:                commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -110,6 +113,10 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			if raUtil.IsBoolPTrue(submitArgs.Interactive) {
+				if raUtil.IsBoolPTrue(submitArgs.Inference) {
+					fmt.Println("\nThe flags --inference and --interactive cannot be used together")
+					os.Exit(1)
+				}
 				interactiveCompletions := 1
 				submitArgs.Completions = &interactiveCompletions
 			}
@@ -202,6 +209,8 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	fbg.UpdateFlagsByGroupsToCmd()
 
+	job.AddSubmitFlagsCompletion(command)
+
 	return command
 }
 
@@ -292,11 +301,11 @@ type submitRunaiJobArgs struct {
 	IsJupyter        *bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
+	Inference        *bool  `yaml:"inference,omitempty"`
 	TtlAfterFinished *time.Duration
 
 	// Hidden flags
 	IsOldJob  *bool
-	Inference *bool `yaml:"inference,omitempty"`
 	IsMPS     *bool `yaml:"isMps,omitempty"`
 	Replicas  *int  `yaml:"replicas,omitempty"`
 }
@@ -347,13 +356,14 @@ func (sa *submitRunaiJobArgs) addFlags(fbg flags.FlagsByGroups) {
 	flags.AddIntNullableFlag(fs, &(sa.Parallelism), "parallelism", "Number of pods to run in parallel at any given time.  Used with HPO.")
 	flags.AddDurationNullableFlagP(fs, &(sa.TtlAfterFinished), "ttl-after-finish", "", "The duration, after which a finished job is automatically deleted (e.g. 5s, 2m, 3h).")
 
+	fs = fbg.GetOrAddFlagSet(AliasesAndShortcutsFlagGroup)
+	flags.AddBoolNullableFlag(fs, &(sa.Inference), "inference", "", "Mark this Job as inference.")
+
 	// Hidden flags
 	flags.AddBoolNullableFlag(fs, &(sa.IsOldJob), "old-job", "", "submit a job of resource k8s job")
-	flags.AddBoolNullableFlag(fs, &(sa.Inference), "inference", "", "Mark this Job as inference.")
 	flags.AddBoolNullableFlag(fs, &(sa.IsMPS), "mps", "", "Enable MPS")
 	flags.AddIntNullableFlag(fs, &(sa.Replicas), "replicas", "Number of replicas for Inference jobs")
 	fs.MarkHidden("old-job")
-	fs.MarkHidden("inference")
 	fs.MarkHidden("mps")
 	fs.MarkHidden("replicas")
 

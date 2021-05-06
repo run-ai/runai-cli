@@ -35,6 +35,7 @@ var (
 
 	commonTopNodeFields = ui.EnsureStringPaths(types.NodeView{}, []string{
 		"Info.Name",
+		"Info.Status",
 		"GPUs.Capacity",
 		"GPUs.Utilization",
 		"CPUs.Capacity",
@@ -68,11 +69,12 @@ func TopCommand() *cobra.Command {
 		Use:     "nodes [...NODE_NAME]",
 		Aliases: []string{"node"},
 		Short:   "Display information about nodes in the cluster.",
+		ValidArgsFunction: GenNodeNames,
 		Args:    cobra.RangeArgs(0, 1),
 		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
-			nodeInfos, err := getNodeInfos(true)
+			nodeInfos, err := GetNodeInfos(true)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
