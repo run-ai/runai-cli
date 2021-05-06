@@ -83,7 +83,7 @@ type submitArgs struct {
 	Memory              string   `yaml:"memory,omitempty"`
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
-	cliCommand		     string  `yaml:"cliCommand,omitempty"`
+	CliCommand		     string  `yaml:"cliCommand,omitempty"`
 
 	ImagePullPolicy            string   `yaml:"imagePullPolicy"`
 	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`
@@ -133,7 +133,7 @@ func(submitArgs *submitArgs) addCommonSubmit(fbg flags.FlagsByGroups) {
 }
 
 func(submitArgs *submitArgs) addCliCommand() {
-	submitArgs.cliCommand = strings.Join( os.Args , " ")
+	submitArgs.CliCommand = strings.Join( os.Args , " ")
 }
 
 func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
