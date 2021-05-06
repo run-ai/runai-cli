@@ -53,11 +53,22 @@ func runListCommand(cmd *cobra.Command, args []string) error {
     return nil
 }
 
+//
+//  ask for the list of projects from the researcher service
+//  parametwers:
+//      restConfig - the kube config
+//      includeDeleted - indication if we want the result list to include deleted projects
+//  returns:
+//      list of projects
+//      number of hidden proejects (=deleted projects which are filtered out from the list)
+//
 func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
                     map[string]*rsrch_api.Project, int, error) {
 
     rs := rsrch_client.NewRsrchClient(restConfig)
     projList, err := rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
+        // even if deleted projects are filtered out, we still count the number
+        // of deleted projects, thus needs the entire list
         IncludeDeleted: true,
     })
     if err != nil {
@@ -73,10 +84,10 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
     projects := make(map[string]*rsrch_api.Project)
     for idx, project := range *projList {
         if project.IsDeleted && !includeDeleted {
-            hiddenProjects += 1
-            continue
+            hiddenProjects += 1    // don't include in the list, only count them
+        } else {
+            projects[project.Name] = &(*projList)[idx]   // include in the list
         }
-        projects[project.Name] = &(*projList)[idx]
     }
 
     return projects, hiddenProjects, nil
@@ -113,22 +124,22 @@ func printProjects(infos []*rsrch_api.Project, hiddenProjects int, defaultProjec
             interactiveJobTimeLimitFmt = t.String()
         }
 
-		isDefault := info.Name == defaultProject
-		isDeleted := info.IsDeleted
+        isDefault := info.Name == defaultProject
+        isDeleted := info.IsDeleted
 
-		name := info.Name
+        name := info.Name
         if  isDefault && isDeleted {
             name += " (default,deleted)"
         } else if isDefault {
-			name += " (default)"
-		} else if isDeleted {
-			name += " (deleted)"
-		}
+            name += " (default)"
+        } else if isDeleted {
+            name += " (deleted)"
+        }
 
-		departmentName := "-"
-		if info.DepartmentName != "" {
-			departmentName = info.DepartmentName
-		}
+        departmentName := "-"
+        if info.DepartmentName != "" {
+            departmentName = info.DepartmentName
+        }
 
         ui.Line(w, name, departmentName, deservedInfo, interactiveJobTimeLimitFmt,
             strings.Join(info.InteractiveNodeAffinity, ";"),
