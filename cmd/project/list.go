@@ -83,10 +83,10 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
     projects := make(map[string]*rsrch_client.Project)
     for idx, project := range *projList {
         if project.IsDeleted && !includeDeleted {
-            hiddenProjects += 1
-            continue
+            hiddenProjects += 1    // don't include in the list, only count them
+        } else {
+            projects[project.Name] = &(*projList)[idx]   // include in the list
         }
-        projects[project.Name] = &(*projList)[idx]
     }
 
     return projects, hiddenProjects, nil
