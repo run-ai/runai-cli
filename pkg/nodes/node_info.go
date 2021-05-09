@@ -2,8 +2,9 @@ package nodes
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/client"
 	"strings"
+
+	"github.com/run-ai/runai-cli/pkg/client"
 
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/helpers"
@@ -18,7 +19,6 @@ import (
 )
 
 const (
-
 	// prometheus query names
 	TotalGpusMemoryPQ = "totalGpusMemory"
 	UsedGpusMemoryPQ  = "usedGpusMemory"
@@ -48,14 +48,14 @@ var (
 	}
 )
 
+// NodeInfo contains information about a node in the runai cluster
 type NodeInfo struct {
 	Node           v1.Node
 	Pods           []v1.Pod
 	PrometheusData prom.MetricResultsByQueryName
 }
 
-
-
+// GetGeneralInfo returns
 func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
 	return types.NodeGeneralInfo{
 		Name:      ni.Node.Name,
@@ -217,7 +217,7 @@ func GetAllNodeInfos(client *client.Client, shouldQueryMetrics bool) ([]NodeInfo
 	return nodeInfoList, warning, err
 }
 
-func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error){
+func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error) {
 	var promData prom.MetricResultsByItems
 	promClient, promErr := prom.BuildPrometheusClient(client)
 	if promErr != nil {

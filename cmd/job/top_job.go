@@ -16,34 +16,37 @@ package job
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	"github.com/run-ai/runai-cli/pkg/jobs"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
-	"os"
 
 	cmdUtil "github.com/run-ai/runai-cli/cmd/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 
-	"strconv"
+	// "strconv"
 	"text/tabwriter"
 
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/ui"
-	"github.com/run-ai/runai-cli/pkg/util"
 )
 
+// TopCommand top command
 func TopCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
-		Use:     "jobs",
-		Aliases: []string{"job"},
-		Short:   "Display information about jobs in the cluster.",
+		Use:               "jobs",
+		Aliases:           []string{"job"},
+		Short:             "Display information about jobs in the cluster.",
 		ValidArgsFunction: completion.NoArgs,
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		PreRun:            commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
 			kubeClient, err := client.GetClient()
@@ -66,24 +69,15 @@ func TopCommand() *cobra.Command {
 
 			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
 
-			trainers := trainer.NewTrainers(kubeClient)
-			for _, trainer := range trainers {
-				trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
-				if err != nil {
-					log.Errorf("Failed due to %v", err)
-					os.Exit(1)
-				}
-
-				for _, job := range trainingJobs {
-					if job.GetStatus() != string(v1.PodSucceeded) {
-						jobs = append(jobs, job)
-					}
-				}
+			jobs, err = trainer.GetAllJobs(kubeClient, namespaceInfo, []string{string(v1.PodRunning)})
+			if err != nil {
+				log.Errorf("Failed due to %v", err)
+				os.Exit(1)
 			}
 
 			jobs = trainer.MakeTrainingJobOrderdByGPUCount(jobs)
 			// TODO(cheyang): Support different job describer, such as MPI job/tf job describer
-			topTrainingJob(jobs)
+			topTrainingJob(kubeClient, jobs)
 		},
 	}
 
@@ -92,48 +86,55 @@ func TopCommand() *cobra.Command {
 	return command
 }
 
-func topTrainingJob(jobInfoList []trainer.TrainingJob) {
+var usageFormatters = map[string]ui.FormatFunction{
+	"cpuusage": func(value, model interface{}) (string, error) {
+		resourceUsage, ok := value.(types.ResourceUsage)
+		if !ok {
+			return "", fmt.Errorf("[CPUUSAGE Format]:: expecting types.ResourceUsage")
+		}
+		percent, err := ui.PrecantageFormat(resourceUsage.Utilization, model)
+		if err != nil {
+			return "", fmt.Errorf("[CPUUSAGE Format]:: failed to format utilization to percents")
+		}
+		if resourceUsage.Usage == 0 {
+			return percent, nil
+		}
+		return fmt.Sprintf("%.0fm (%s)", resourceUsage.Usage*1000, percent), nil
+	},
+	"memoryusage": func(value, model interface{}) (string, error) {
+		resourceUsage, ok := value.(types.ResourceUsage)
+		if !ok {
+			return "", fmt.Errorf("[MEMORYUSAGE Format]:: expecting types.ResourceUsage")
+		}
+		percent, err := ui.PrecantageFormat(resourceUsage.Utilization, model)
+		if err != nil {
+			return "", fmt.Errorf("[MEMORYUSAGE Format]:: failed to format utilization to percents")
+		}
+		usage, err := ui.BytesFormat(resourceUsage.Usage, model)
+		if err != nil {
+			return "", fmt.Errorf("[MEMORYUSAGE Format]:: failed to format usage to bytes")
+		}
+		return fmt.Sprintf("%s (%s)", usage, percent), nil
+	},
+}
+
+func topTrainingJob(client *client.Client, jobInfoList []trainer.TrainingJob) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	var (
-		totalAllocatedGPUs       float64
-		totalRequestedGPUs       float64
-		totalRequestedGPUsMemory int64
-	)
 
-	labelField := []string{"NAME", "PROJECT", "GPU(Current Requests)", "GPU(Current Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
-
-	ui.Line(w, labelField...)
-
-	for _, jobInfo := range jobInfoList {
-		jobInfo.CurrentRequestedGPUs()
-		hostIP := jobInfo.HostIPOfChief()
-		requestedGPU := jobInfo.CurrentRequestedGPUs()
-		allocatedGPU := jobInfo.CurrentAllocatedGPUs()
-		requestedGPUsMemory := jobInfo.CurrentRequestedGPUsMemory()
-		// status, hostIP := jobInfo.getStatus()
-		totalAllocatedGPUs += allocatedGPU
-		totalRequestedGPUs += requestedGPU
-		totalRequestedGPUsMemory += requestedGPUsMemory
-		ui.Line(w, jobInfo.Name(),
-			jobInfo.Project(),
-			jobInfo.CurrentRequestedGpusString(),
-			strconv.FormatFloat(jobInfo.CurrentAllocatedGPUs(), 'f', -1, 64),
-			jobInfo.GetStatus(),
-			jobInfo.Trainer(),
-			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP,
-		)
+	rows, err := jobs.GetJobsMetrics(client, jobInfoList)
+	if err != nil {
+		log.Warnf("Error while reading jobs metrics: %v\n", err)
 	}
-
-	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Total Allocated GPUs: ")
-	fmt.Fprintf(w, "%v \t\n", strconv.FormatFloat(totalAllocatedGPUs, 'f', -1, 32))
-	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Total Requested GPUs: ")
-	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32))
-	fmt.Fprintf(w, "Total Requested GPUs Memory: ")
-	fmt.Fprintf(w, "%s \t\n", trainer.GetGpuMemoryStringFromMemoryCount(totalRequestedGPUsMemory))
+	err = ui.CreateTable(types.JobView{}, ui.TableOpt{
+		DisplayOpt: ui.DisplayOpt{
+			HideAllByDefault: false,
+			Hide:             []string{},
+		},
+		Formatts: usageFormatters,
+	}).Render(w, rows).Error()
+	if err != nil {
+		log.Errorf("Error while printing top jobs: %v", err)
+	}
 
 	_ = w.Flush()
 }

@@ -18,6 +18,8 @@ import (
 	"sort"
 
 	"github.com/run-ai/runai-cli/pkg/client"
+	"github.com/run-ai/runai-cli/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/ui"
 )
 
 const (
@@ -140,4 +142,25 @@ func MakeTrainingJobOrderdByGPUCount(jobList []TrainingJob) []TrainingJob {
 	}
 	sort.Sort(newJoblist)
 	return []TrainingJob(newJoblist)
+}
+
+// GetAllJobs and filter them by `namespaceInfo` and optionaly filters out pod `filterStatus`
+func GetAllJobs(kubeClient *client.Client, namespaceInfo types.NamespaceInfo, filterStatus []string) (jobs []TrainingJob, err error) {
+	trainers := NewTrainers(kubeClient)
+	for _, trainer := range trainers {
+		trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		if len(filterStatus) != 0 {
+			for _, job := range trainingJobs {
+				if filterStatus != nil && ui.Contains(filterStatus, job.GetStatus()) {
+					jobs = append(jobs, job)
+				}
+			}
+		} else {
+			jobs = append(jobs, trainingJobs...)
+		}
+	}
+	return jobs, nil
 }

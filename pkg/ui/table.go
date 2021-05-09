@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	groupId = 0
+	groupID = 0
 )
 
 type (
@@ -28,6 +28,7 @@ type (
 		err       error
 	}
 
+	// Table abstracts a table element
 	Table interface {
 		Render(w io.Writer, rows interface{}) Table
 		RenderHeader(w io.Writer) Table
@@ -35,18 +36,21 @@ type (
 		Error() error
 	}
 
+	// TableOpt is options for table elements
 	TableOpt struct {
 		DisplayOpt
 		// map format name into a function
 		Formatts FormattersByName
 	}
 
+	// Column data for a table
 	Column struct {
 		FieldMeta
 		GroupID string
 	}
 )
 
+// CreateTable creates a generic table for model type `model` with options `opt`
 func CreateTable(model interface{}, opt TableOpt) Table {
 	columns := []Column{}
 
@@ -197,7 +201,7 @@ func (td *tableData) RenderRows(w io.Writer, rows interface{}) Table {
 
 			// set default value if it is an empty
 			if len(val) == 0 {
-				val = c.Defult
+				val = c.Default
 			}
 
 			if i > 0 && previousGroup != c.GroupID {

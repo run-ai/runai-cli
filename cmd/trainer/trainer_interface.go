@@ -85,6 +85,7 @@ type TrainingJob interface {
 	ServiceURLs() []string
 
 	GetPodGroupName() string
+	GetPodGroupUUID() string
 
 	RunningPods() int32
 	PendingPods() int32

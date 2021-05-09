@@ -202,7 +202,7 @@ func handleQueryResponse(rawMetric []byte, query string) (*MetricData, error) {
 		return nil, fmt.Errorf("failed to query prometheus, status: %s", metricResponse.Status)
 	}
 	if len(metricResponse.Data.Result) == 0 {
-		log.Debugf("The metric is not exist in prometheus for query %s", query)
+		log.Debugf("The metric does not exist in prometheus for query %s", query)
 	}
 	return &metricResponse.Data, nil
 }
