@@ -14,7 +14,7 @@
 
 package v1
 
-const (
+  const (
 	// EnvKubeflowNamespace is ENV for kubeflow namespace specified by user.
 	EnvKubeflowNamespace = "KUBEFLOW_NAMESPACE"
 )
