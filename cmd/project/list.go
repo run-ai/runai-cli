@@ -54,8 +54,8 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 
 //
 //  ask for the list of projects from the researcher service
-//  parametwers:
-//      restConfig - the kube config
+//  parameters:
+//      restConfig - pointer to kubernetes config, used for creating RS client
 //      includeDeleted - indication if we want the result list to include deleted projects
 //  returns:
 //      list of projects
