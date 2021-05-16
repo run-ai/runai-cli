@@ -15,25 +15,6 @@ type JobGeneralInfo struct {
 	Node     string        `title:"NODE"`
 }
 
-// JobCPUUsage job cpu usage
-type JobCPUUsage struct {
-	Requested   float64 `title:"REQUESTED"`
-	Utilization float64 `title:"UTILIZATION" format:"%"`
-}
-
-// JobMemoryUsage job memory usage
-type JobMemoryUsage struct {
-	Allocated   int64   `title:"ALLOCATED" format:"memory"`
-	Used        int64   `title:"USED" format:"memory"`
-	Utilization float64 `title:"UTILIZATION" format:"%"`
-}
-
-// JobGPUUsage job gpu usage
-type JobGPUUsage struct {
-	Requested   float64 `title:"REQUESTED"`
-	Utilization float64 `title:"UTILIZATION" format:"%"`
-}
-
 // ResourceUsage resource usage
 type ResourceUsage struct {
 	Usage       float64 `title:"USAGE"`

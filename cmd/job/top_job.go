@@ -34,6 +34,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/client"
+	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/ui"
 )
@@ -67,7 +68,7 @@ func TopCommand() *cobra.Command {
 				jobs []trainer.TrainingJob
 			)
 
-			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
+			cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo, string(v1.PodRunning))
 
 			jobs, err = trainer.GetAllJobs(kubeClient, namespaceInfo, []string{string(v1.PodRunning)})
 			if err != nil {
@@ -121,14 +122,18 @@ var usageFormatters = map[string]ui.FormatFunction{
 func topTrainingJob(client *client.Client, jobInfoList []trainer.TrainingJob) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	rows, err := jobs.GetJobsMetrics(client, jobInfoList)
+	promClient, err := prom.BuildPrometheusClient(client)
+	if err != nil {
+		log.Errorf("Error while creating prometheus client: %v", err)
+	}
+	rows, err := jobs.GetJobsMetrics(promClient, jobInfoList)
 	if err != nil {
 		log.Warnf("Error while reading jobs metrics: %v\n", err)
 	}
 	err = ui.CreateTable(types.JobView{}, ui.TableOpt{
 		DisplayOpt: ui.DisplayOpt{
 			HideAllByDefault: false,
-			Hide:             []string{},
+			Hide:             []string{"Info.Status"},
 		},
 		Formatts: usageFormatters,
 	}).Render(w, rows).Error()

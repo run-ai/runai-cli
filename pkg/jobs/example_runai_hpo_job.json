@@ -1,0 +1,4685 @@
+{
+	"BasicJobInfo": {
+		"Name": "job-0",
+		"Resources": [
+			{
+				"Name": "job-0-0-0",
+				"Uid": "0031c99e-40ed-417a-8d82-5c035bcd4188",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-1-0",
+				"Uid": "74d5489d-b313-46b9-a2fb-6041432ac633",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-2-0",
+				"Uid": "39002e51-d804-44a1-a27b-b2fbdf56d60a",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-3-0",
+				"Uid": "46914b5e-eca3-4926-b9c4-2f63e1f0cced",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-4-0",
+				"Uid": "d7dea711-9c14-467d-a8d0-7a3ab73aa608",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-5-0",
+				"Uid": "5fc3b519-d9be-4c3f-87e9-a0064b200df3",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-6-0",
+				"Uid": "1f8fa590-27b0-4426-8d06-e11274e21ad7",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-7-0",
+				"Uid": "286e099d-12ae-45b7-ab50-854638d4f5e2",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0-8-0",
+				"Uid": "63c2a965-09ee-4f5f-9001-a93d1e79ef70",
+				"ResourceType": "Pod"
+			},
+			{
+				"Name": "job-0",
+				"Uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+				"ResourceType": "RunaiJob"
+			}
+		]
+	},
+	"TrainerType": "Train",
+	"ChiefPod": {
+		"metadata": {
+			"name": "job-0-8-0",
+			"generateName": "job-0-",
+			"namespace": "runai-team-a",
+			"uid": "63c2a965-09ee-4f5f-9001-a93d1e79ef70",
+			"resourceVersion": "1071258",
+			"creationTimestamp": "2021-05-12T11:24:54Z",
+			"labels": {
+				"app": "runaijob",
+				"chart": "runaijob-1.0.1",
+				"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+				"createdBy": "RunaiJob",
+				"heritage": "Helm",
+				"project": "team-a",
+				"release": "job-0",
+				"runai/pod-index": "8-0"
+			},
+			"annotations": {
+				"gpu-fraction": "0.5",
+				"pod-group-name": "pg-job-0-8-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+				"runai-calculated-status": "Pending",
+				"user": "erez"
+			},
+			"ownerReferences": [
+				{
+					"apiVersion": "run.ai/v1",
+					"kind": "RunaiJob",
+					"name": "job-0",
+					"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"controller": true,
+					"blockOwnerDeletion": true
+				}
+			],
+			"managedFields": [
+				{
+					"manager": "runaijob-controller",
+					"operation": "Update",
+					"apiVersion": "v1",
+					"time": "2021-05-12T11:24:54Z",
+					"fieldsType": "FieldsV1",
+					"fieldsV1": {
+						"f:metadata": {
+							"f:annotations": {
+								".": {},
+								"f:gpu-fraction": {},
+								"f:user": {}
+							},
+							"f:generateName": {},
+							"f:labels": {
+								".": {},
+								"f:app": {},
+								"f:chart": {},
+								"f:controller-uid": {},
+								"f:createdBy": {},
+								"f:heritage": {},
+								"f:project": {},
+								"f:release": {},
+								"f:runai/pod-index": {}
+							},
+							"f:ownerReferences": {
+								".": {},
+								"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+									".": {},
+									"f:apiVersion": {},
+									"f:blockOwnerDeletion": {},
+									"f:controller": {},
+									"f:kind": {},
+									"f:name": {},
+									"f:uid": {}
+								}
+							}
+						},
+						"f:spec": {
+							"f:containers": {
+								"k:{\"name\":\"job-0\"}": {
+									".": {},
+									"f:env": {
+										".": {},
+										"k:{\"name\":\"POD_INDEX\"}": {
+											".": {},
+											"f:name": {},
+											"f:value": {}
+										},
+										"k:{\"name\":\"POD_UUID\"}": {
+											".": {},
+											"f:name": {},
+											"f:valueFrom": {
+												".": {},
+												"f:fieldRef": {
+													".": {},
+													"f:apiVersion": {},
+													"f:fieldPath": {}
+												}
+											}
+										},
+										"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+											".": {},
+											"f:name": {},
+											"f:value": {}
+										},
+										"k:{\"name\":\"podUUID\"}": {
+											".": {},
+											"f:name": {},
+											"f:valueFrom": {
+												".": {},
+												"f:fieldRef": {
+													".": {},
+													"f:apiVersion": {},
+													"f:fieldPath": {}
+												}
+											}
+										},
+										"k:{\"name\":\"reporterGatewayURL\"}": {
+											".": {},
+											"f:name": {},
+											"f:value": {}
+										}
+									},
+									"f:image": {},
+									"f:imagePullPolicy": {},
+									"f:name": {},
+									"f:resources": {},
+									"f:securityContext": {
+										".": {},
+										"f:allowPrivilegeEscalation": {}
+									},
+									"f:terminationMessagePath": {},
+									"f:terminationMessagePolicy": {}
+								}
+							},
+							"f:dnsPolicy": {},
+							"f:enableServiceLinks": {},
+							"f:restartPolicy": {},
+							"f:schedulerName": {},
+							"f:securityContext": {},
+							"f:terminationGracePeriodSeconds": {}
+						}
+					}
+				},
+				{
+					"manager": "kube-batch",
+					"operation": "Update",
+					"apiVersion": "v1",
+					"time": "2021-05-12T11:24:57Z",
+					"fieldsType": "FieldsV1",
+					"fieldsV1": {
+						"f:metadata": {
+							"f:annotations": {
+								"f:pod-group-name": {},
+								"f:runai-calculated-status": {}
+							}
+						},
+						"f:status": {
+							"f:conditions": {
+								".": {},
+								"k:{\"type\":\"PodScheduled\"}": {
+									".": {},
+									"f:lastProbeTime": {},
+									"f:lastTransitionTime": {},
+									"f:message": {},
+									"f:reason": {},
+									"f:status": {},
+									"f:type": {}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		"spec": {
+			"volumes": [
+				{
+					"name": "default-token-vxtl2",
+					"secret": {
+						"secretName": "default-token-vxtl2",
+						"defaultMode": 420
+					}
+				},
+				{
+					"name": "runai-shared-directory",
+					"hostPath": {
+						"path": "/var/lib/runai/shared",
+						"type": "DirectoryOrCreate"
+					}
+				},
+				{
+					"name": "job-0-wpx2s9d-runai-fraction-gpu-volume",
+					"configMap": {
+						"name": "job-0-wpx2s9d-runai-fraction-gpu",
+						"defaultMode": 420
+					}
+				}
+			],
+			"containers": [
+				{
+					"name": "job-0",
+					"image": "gcr.io/run-ai-demo/quickstart",
+					"env": [
+						{
+							"name": "reporterGatewayURL",
+							"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+						},
+						{
+							"name": "REPORTER_GATEWAY_URL",
+							"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+						},
+						{
+							"name": "podUUID",
+							"valueFrom": {
+								"fieldRef": {
+									"apiVersion": "v1",
+									"fieldPath": "metadata.uid"
+								}
+							}
+						},
+						{
+							"name": "POD_UUID",
+							"valueFrom": {
+								"fieldRef": {
+									"apiVersion": "v1",
+									"fieldPath": "metadata.uid"
+								}
+							}
+						},
+						{
+							"name": "POD_INDEX",
+							"value": "8"
+						},
+						{
+							"name": "jobUUID",
+							"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+						},
+						{
+							"name": "JOB_UUID",
+							"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+						},
+						{
+							"name": "jobName",
+							"value": "job-0"
+						},
+						{
+							"name": "JOB_NAME",
+							"value": "job-0"
+						},
+						{
+							"name": "NVIDIA_VISIBLE_DEVICES",
+							"valueFrom": {
+								"configMapKeyRef": {
+									"name": "job-0-wpx2s9d-runai-fraction-gpu",
+									"key": "RUNAI-VISIBLE-DEVICES"
+								}
+							}
+						},
+						{
+							"name": "RUNAI_NUM_OF_GPUS",
+							"valueFrom": {
+								"configMapKeyRef": {
+									"name": "job-0-wpx2s9d-runai-fraction-gpu",
+									"key": "RUNAI_NUM_OF_GPUS"
+								}
+							}
+						}
+					],
+					"resources": {},
+					"volumeMounts": [
+						{
+							"name": "default-token-vxtl2",
+							"readOnly": true,
+							"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+						},
+						{
+							"name": "runai-shared-directory",
+							"readOnly": true,
+							"mountPath": "/runai/shared"
+						},
+						{
+							"name": "job-0-wpx2s9d-runai-fraction-gpu-volume",
+							"readOnly": true,
+							"mountPath": "/etc/ld.so.preload",
+							"subPath": "ld.so.preload-key"
+						},
+						{
+							"name": "job-0-wpx2s9d-runai-fraction-gpu-volume",
+							"readOnly": true,
+							"mountPath": "/etc/runai.d/memory",
+							"subPath": "config"
+						}
+					],
+					"terminationMessagePath": "/dev/termination-log",
+					"terminationMessagePolicy": "File",
+					"imagePullPolicy": "Always",
+					"securityContext": {
+						"allowPrivilegeEscalation": true
+					}
+				}
+			],
+			"restartPolicy": "Never",
+			"terminationGracePeriodSeconds": 30,
+			"dnsPolicy": "ClusterFirst",
+			"serviceAccountName": "default",
+			"serviceAccount": "default",
+			"securityContext": {},
+			"schedulerName": "runai-scheduler",
+			"tolerations": [
+				{
+					"key": "node.kubernetes.io/not-ready",
+					"operator": "Exists",
+					"effect": "NoExecute",
+					"tolerationSeconds": 300
+				},
+				{
+					"key": "node.kubernetes.io/unreachable",
+					"operator": "Exists",
+					"effect": "NoExecute",
+					"tolerationSeconds": 300
+				}
+			],
+			"priority": 0,
+			"enableServiceLinks": true,
+			"preemptionPolicy": "PreemptLowerPriority"
+		},
+		"status": {
+			"phase": "Pending",
+			"conditions": [
+				{
+					"type": "PodScheduled",
+					"status": "False",
+					"lastProbeTime": null,
+					"lastTransitionTime": "2021-05-12T11:24:56Z",
+					"reason": "Unschedulable",
+					"message": "all nodes are unavailable: ."
+				}
+			],
+			"qosClass": "BestEffort"
+		}
+	},
+	"CreationTimestamp": "2021-05-12T07:31:17Z",
+	"Interactive": false,
+	"CreatedByCLI": true,
+	"ServiceUrls": [],
+	"Deleted": false,
+	"PodSpec": {
+		"volumes": [
+			{
+				"name": "default-token-vxtl2",
+				"secret": {
+					"secretName": "default-token-vxtl2",
+					"defaultMode": 420
+				}
+			},
+			{
+				"name": "runai-shared-directory",
+				"hostPath": {
+					"path": "/var/lib/runai/shared",
+					"type": "DirectoryOrCreate"
+				}
+			},
+			{
+				"name": "job-0-9g7qs8s-runai-fraction-gpu-volume",
+				"configMap": {
+					"name": "job-0-9g7qs8s-runai-fraction-gpu",
+					"defaultMode": 420
+				}
+			}
+		],
+		"containers": [
+			{
+				"name": "job-0",
+				"image": "gcr.io/run-ai-demo/quickstart",
+				"env": [
+					{
+						"name": "reporterGatewayURL",
+						"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+					},
+					{
+						"name": "REPORTER_GATEWAY_URL",
+						"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+					},
+					{
+						"name": "podUUID",
+						"valueFrom": {
+							"fieldRef": {
+								"apiVersion": "v1",
+								"fieldPath": "metadata.uid"
+							}
+						}
+					},
+					{
+						"name": "POD_UUID",
+						"valueFrom": {
+							"fieldRef": {
+								"apiVersion": "v1",
+								"fieldPath": "metadata.uid"
+							}
+						}
+					},
+					{
+						"name": "POD_INDEX",
+						"value": "0"
+					},
+					{
+						"name": "jobUUID",
+						"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+					},
+					{
+						"name": "JOB_UUID",
+						"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+					},
+					{
+						"name": "jobName",
+						"value": "job-0"
+					},
+					{
+						"name": "JOB_NAME",
+						"value": "job-0"
+					},
+					{
+						"name": "NVIDIA_VISIBLE_DEVICES",
+						"valueFrom": {
+							"configMapKeyRef": {
+								"name": "job-0-9g7qs8s-runai-fraction-gpu",
+								"key": "RUNAI-VISIBLE-DEVICES"
+							}
+						}
+					},
+					{
+						"name": "RUNAI_NUM_OF_GPUS",
+						"valueFrom": {
+							"configMapKeyRef": {
+								"name": "job-0-9g7qs8s-runai-fraction-gpu",
+								"key": "RUNAI_NUM_OF_GPUS"
+							}
+						}
+					}
+				],
+				"resources": {},
+				"volumeMounts": [
+					{
+						"name": "default-token-vxtl2",
+						"readOnly": true,
+						"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+					},
+					{
+						"name": "runai-shared-directory",
+						"readOnly": true,
+						"mountPath": "/runai/shared"
+					},
+					{
+						"name": "job-0-9g7qs8s-runai-fraction-gpu-volume",
+						"readOnly": true,
+						"mountPath": "/etc/ld.so.preload",
+						"subPath": "ld.so.preload-key"
+					},
+					{
+						"name": "job-0-9g7qs8s-runai-fraction-gpu-volume",
+						"readOnly": true,
+						"mountPath": "/etc/runai.d/memory",
+						"subPath": "config"
+					}
+				],
+				"terminationMessagePath": "/dev/termination-log",
+				"terminationMessagePolicy": "File",
+				"imagePullPolicy": "Always",
+				"securityContext": {
+					"allowPrivilegeEscalation": true
+				}
+			}
+		],
+		"restartPolicy": "Never",
+		"terminationGracePeriodSeconds": 30,
+		"dnsPolicy": "ClusterFirst",
+		"serviceAccountName": "default",
+		"serviceAccount": "default",
+		"nodeName": "dev-erez-worker-gpu-1",
+		"securityContext": {},
+		"schedulerName": "runai-scheduler",
+		"tolerations": [
+			{
+				"key": "node.kubernetes.io/not-ready",
+				"operator": "Exists",
+				"effect": "NoExecute",
+				"tolerationSeconds": 300
+			},
+			{
+				"key": "node.kubernetes.io/unreachable",
+				"operator": "Exists",
+				"effect": "NoExecute",
+				"tolerationSeconds": 300
+			}
+		],
+		"priority": 0,
+		"enableServiceLinks": true,
+		"preemptionPolicy": "PreemptLowerPriority"
+	},
+	"PodMetadata": {
+		"name": "job-0-0-0",
+		"generateName": "job-0-",
+		"namespace": "runai-team-a",
+		"uid": "0031c99e-40ed-417a-8d82-5c035bcd4188",
+		"resourceVersion": "1071164",
+		"creationTimestamp": "2021-05-12T07:31:17Z",
+		"labels": {
+			"app": "runaijob",
+			"chart": "runaijob-1.0.1",
+			"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+			"createdBy": "RunaiJob",
+			"heritage": "Helm",
+			"project": "team-a",
+			"release": "job-0",
+			"runai/pod-index": "0-0"
+		},
+		"annotations": {
+			"gpu-fraction": "0.5",
+			"pod-group-name": "pg-job-0-0-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+			"runai-calculated-status": "Succeeded",
+			"runai-gpu": "0",
+			"runai-node": "dev-erez-worker-gpu-1",
+			"user": "erez"
+		},
+		"ownerReferences": [
+			{
+				"apiVersion": "run.ai/v1",
+				"kind": "RunaiJob",
+				"name": "job-0",
+				"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+				"controller": true,
+				"blockOwnerDeletion": true
+			}
+		],
+		"managedFields": [
+			{
+				"manager": "runaijob-controller",
+				"operation": "Update",
+				"apiVersion": "v1",
+				"time": "2021-05-12T07:31:17Z",
+				"fieldsType": "FieldsV1",
+				"fieldsV1": {
+					"f:metadata": {
+						"f:annotations": {
+							".": {},
+							"f:gpu-fraction": {},
+							"f:user": {}
+						},
+						"f:generateName": {},
+						"f:labels": {
+							".": {},
+							"f:app": {},
+							"f:chart": {},
+							"f:controller-uid": {},
+							"f:createdBy": {},
+							"f:heritage": {},
+							"f:project": {},
+							"f:release": {},
+							"f:runai/pod-index": {}
+						},
+						"f:ownerReferences": {
+							".": {},
+							"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+								".": {},
+								"f:apiVersion": {},
+								"f:blockOwnerDeletion": {},
+								"f:controller": {},
+								"f:kind": {},
+								"f:name": {},
+								"f:uid": {}
+							}
+						}
+					},
+					"f:spec": {
+						"f:containers": {
+							"k:{\"name\":\"job-0\"}": {
+								".": {},
+								"f:env": {
+									".": {},
+									"k:{\"name\":\"POD_INDEX\"}": {
+										".": {},
+										"f:name": {},
+										"f:value": {}
+									},
+									"k:{\"name\":\"POD_UUID\"}": {
+										".": {},
+										"f:name": {},
+										"f:valueFrom": {
+											".": {},
+											"f:fieldRef": {
+												".": {},
+												"f:apiVersion": {},
+												"f:fieldPath": {}
+											}
+										}
+									},
+									"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+										".": {},
+										"f:name": {},
+										"f:value": {}
+									},
+									"k:{\"name\":\"podUUID\"}": {
+										".": {},
+										"f:name": {},
+										"f:valueFrom": {
+											".": {},
+											"f:fieldRef": {
+												".": {},
+												"f:apiVersion": {},
+												"f:fieldPath": {}
+											}
+										}
+									},
+									"k:{\"name\":\"reporterGatewayURL\"}": {
+										".": {},
+										"f:name": {},
+										"f:value": {}
+									}
+								},
+								"f:image": {},
+								"f:imagePullPolicy": {},
+								"f:name": {},
+								"f:resources": {},
+								"f:securityContext": {
+									".": {},
+									"f:allowPrivilegeEscalation": {}
+								},
+								"f:terminationMessagePath": {},
+								"f:terminationMessagePolicy": {}
+							}
+						},
+						"f:dnsPolicy": {},
+						"f:enableServiceLinks": {},
+						"f:restartPolicy": {},
+						"f:schedulerName": {},
+						"f:securityContext": {},
+						"f:terminationGracePeriodSeconds": {}
+					}
+				}
+			},
+			{
+				"manager": "kubelet",
+				"operation": "Update",
+				"apiVersion": "v1",
+				"time": "2021-05-12T11:24:19Z",
+				"fieldsType": "FieldsV1",
+				"fieldsV1": {
+					"f:status": {
+						"f:conditions": {
+							"k:{\"type\":\"ContainersReady\"}": {
+								".": {},
+								"f:lastProbeTime": {},
+								"f:lastTransitionTime": {},
+								"f:reason": {},
+								"f:status": {},
+								"f:type": {}
+							},
+							"k:{\"type\":\"Initialized\"}": {
+								".": {},
+								"f:lastProbeTime": {},
+								"f:lastTransitionTime": {},
+								"f:reason": {},
+								"f:status": {},
+								"f:type": {}
+							},
+							"k:{\"type\":\"Ready\"}": {
+								".": {},
+								"f:lastProbeTime": {},
+								"f:lastTransitionTime": {},
+								"f:reason": {},
+								"f:status": {},
+								"f:type": {}
+							}
+						},
+						"f:hostIP": {},
+						"f:phase": {},
+						"f:podIP": {},
+						"f:podIPs": {
+							".": {},
+							"k:{\"ip\":\"10.244.2.224\"}": {
+								".": {},
+								"f:ip": {}
+							}
+						},
+						"f:startTime": {}
+					}
+				}
+			},
+			{
+				"manager": "kube-batch",
+				"operation": "Update",
+				"apiVersion": "v1",
+				"time": "2021-05-12T11:24:22Z",
+				"fieldsType": "FieldsV1",
+				"fieldsV1": {
+					"f:metadata": {
+						"f:annotations": {
+							"f:pod-group-name": {},
+							"f:runai-calculated-status": {},
+							"f:runai-gpu": {},
+							"f:runai-node": {}
+						}
+					},
+					"f:status": {
+						"f:containerStatuses": {}
+					}
+				}
+			}
+		]
+	},
+	"JobMetadata": {
+		"name": "job-0",
+		"namespace": "runai-team-a",
+		"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+		"resourceVersion": "1071234",
+		"generation": 2,
+		"creationTimestamp": "2021-05-12T07:31:17Z",
+		"labels": {
+			"app": "runaijob",
+			"chart": "runaijob-1.0.1",
+			"createdBy": "RunaiJob",
+			"heritage": "Helm",
+			"project": "team-a",
+			"release": "job-0",
+			"runai/job-index": "17"
+		},
+		"annotations": {
+			"kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"run.ai/v1\",\"kind\":\"RunaiJob\",\"metadata\":{\"annotations\":{\"runai-cli-command\":\"./bin/runai submit -i gcr.io/run-ai-demo/quickstart -g 0.5 --completions 10 --parallelism 5\",\"user\":\"erez\"},\"labels\":{\"app\":\"runaijob\",\"chart\":\"runaijob-1.0.1\",\"createdBy\":\"RunaiJob\",\"heritage\":\"Helm\",\"release\":\"job-0\",\"runai/job-index\":\"17\"},\"name\":\"job-0\",\"namespace\":\"runai-team-a\"},\"spec\":{\"completions\":10,\"parallelism\":5,\"template\":{\"metadata\":{\"annotations\":{\"gpu-fraction\":\"0.5\",\"user\":\"erez\"},\"labels\":{\"app\":\"runaijob\",\"chart\":\"runaijob-1.0.1\",\"createdBy\":\"RunaiJob\",\"heritage\":\"Helm\",\"release\":\"job-0\"}},\"spec\":{\"containers\":[{\"command\":null,\"env\":null,\"image\":\"gcr.io/run-ai-demo/quickstart\",\"imagePullPolicy\":\"Always\",\"name\":\"job-0\",\"resources\":{\"limits\":null,\"requests\":null},\"securityContext\":{\"allowPrivilegeEscalation\":true},\"stdin\":null,\"tty\":null}],\"hostIPC\":false,\"hostNetwork\":false,\"restartPolicy\":\"Never\",\"schedulerName\":\"runai-scheduler\",\"securityContext\":null}}}}\n",
+			"runai-calculated-status": "Running",
+			"runai-cli-command": "./bin/runai submit -i gcr.io/run-ai-demo/quickstart -g 0.5 --completions 10 --parallelism 5",
+			"runai-current-allocated-gpus": "2.000",
+			"runai-current-allocated-gpus-memory": "23800",
+			"runai-current-requested-gpus": "2.500",
+			"runai-current-requested-gpus-memory": "0",
+			"runai-pending-pods": "1",
+			"runai-podgroup-requested-gpus": "0.500",
+			"runai-podgroup-requested-gpus-memory": "0",
+			"runai-running-pods": "4",
+			"runai-total-requested-gpus": "5.000",
+			"runai-total-requested-gpus-memory": "0",
+			"runai-used-nodes": "dev-erez-worker-gpu-1, dev-erez-worker-gpu-2",
+			"user": "erez"
+		},
+		"managedFields": [
+			{
+				"manager": "kubectl-client-side-apply",
+				"operation": "Update",
+				"apiVersion": "run.ai/v1",
+				"time": "2021-05-12T07:31:17Z",
+				"fieldsType": "FieldsV1",
+				"fieldsV1": {
+					"f:metadata": {
+						"f:annotations": {
+							".": {},
+							"f:kubectl.kubernetes.io/last-applied-configuration": {},
+							"f:runai-cli-command": {},
+							"f:user": {}
+						},
+						"f:labels": {
+							".": {},
+							"f:app": {},
+							"f:chart": {},
+							"f:createdBy": {},
+							"f:heritage": {},
+							"f:release": {},
+							"f:runai/job-index": {}
+						}
+					},
+					"f:spec": {
+						".": {},
+						"f:completions": {},
+						"f:parallelism": {},
+						"f:template": {
+							".": {},
+							"f:metadata": {
+								".": {},
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:release": {}
+								}
+							},
+							"f:spec": {
+								".": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {}
+							}
+						}
+					}
+				}
+			},
+			{
+				"manager": "kube-batch",
+				"operation": "Update",
+				"apiVersion": "run.ai/v1",
+				"time": "2021-05-12T07:31:29Z",
+				"fieldsType": "FieldsV1",
+				"fieldsV1": {
+					"f:metadata": {
+						"f:annotations": {
+							"f:runai-calculated-status": {},
+							"f:runai-current-allocated-gpus": {},
+							"f:runai-current-allocated-gpus-memory": {},
+							"f:runai-current-requested-gpus": {},
+							"f:runai-current-requested-gpus-memory": {},
+							"f:runai-pending-pods": {},
+							"f:runai-podgroup-requested-gpus": {},
+							"f:runai-podgroup-requested-gpus-memory": {},
+							"f:runai-running-pods": {},
+							"f:runai-total-requested-gpus": {},
+							"f:runai-total-requested-gpus-memory": {},
+							"f:runai-used-nodes": {}
+						}
+					},
+					"f:spec": {
+						"f:template": {
+							"f:metadata": {
+								"f:creationTimestamp": {}
+							},
+							"f:spec": {
+								"f:containers": {}
+							}
+						}
+					}
+				}
+			},
+			{
+				"manager": "runaijob-controller",
+				"operation": "Update",
+				"apiVersion": "run.ai/v1",
+				"time": "2021-05-12T11:19:23Z",
+				"fieldsType": "FieldsV1",
+				"fieldsV1": {
+					"f:status": {
+						".": {},
+						"f:active": {},
+						"f:startTime": {},
+						"f:succeeded": {}
+					}
+				}
+			}
+		]
+	},
+	"Namespace": "runai-team-a",
+	"Pods": [
+		{
+			"metadata": {
+				"name": "job-0-0-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "0031c99e-40ed-417a-8d82-5c035bcd4188",
+				"resourceVersion": "1071164",
+				"creationTimestamp": "2021-05-12T07:31:17Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "0-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-0-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Succeeded",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-1",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T07:31:17Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:19Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.2.224\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:22Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-9g7qs8s-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-9g7qs8s-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "0"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-9g7qs8s-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-9g7qs8s-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-9g7qs8s-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-9g7qs8s-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-1",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Succeeded",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:21Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "Ready",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:19Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:19Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:21Z"
+					}
+				],
+				"hostIP": "10.23.0.4",
+				"podIP": "10.244.2.224",
+				"podIPs": [
+					{
+						"ip": "10.244.2.224"
+					}
+				],
+				"startTime": "2021-05-12T07:31:21Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"terminated": {
+								"exitCode": 0,
+								"reason": "Completed",
+								"startedAt": "2021-05-12T07:31:22Z",
+								"finishedAt": "2021-05-12T11:24:18Z",
+								"containerID": "docker://cecdc28538a93f1d09325f3c7c5bc33ad0c7f15f208389ef41635473ebd68d42"
+							}
+						},
+						"lastState": {},
+						"ready": false,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://cecdc28538a93f1d09325f3c7c5bc33ad0c7f15f208389ef41635473ebd68d42",
+						"started": false
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-1-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "74d5489d-b313-46b9-a2fb-6041432ac633",
+				"resourceVersion": "1071261",
+				"creationTimestamp": "2021-05-12T07:31:17Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "1-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-1-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Succeeded",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-1",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T07:31:17Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:54Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.2.223\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:58Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-r6qqq7k-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-r6qqq7k-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "1"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-r6qqq7k-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-r6qqq7k-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-r6qqq7k-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-r6qqq7k-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-1",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Succeeded",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:19Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "Ready",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:54Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:54Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:19Z"
+					}
+				],
+				"hostIP": "10.23.0.4",
+				"podIP": "10.244.2.223",
+				"podIPs": [
+					{
+						"ip": "10.244.2.223"
+					}
+				],
+				"startTime": "2021-05-12T07:31:19Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"terminated": {
+								"exitCode": 0,
+								"reason": "Completed",
+								"startedAt": "2021-05-12T07:31:20Z",
+								"finishedAt": "2021-05-12T11:24:53Z",
+								"containerID": "docker://62a7e0fe901e268c6d2b7465ced4a3b23f734fd0c92c16aa1db9c50603f506ef"
+							}
+						},
+						"lastState": {},
+						"ready": false,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://62a7e0fe901e268c6d2b7465ced4a3b23f734fd0c92c16aa1db9c50603f506ef",
+						"started": false
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-2-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "39002e51-d804-44a1-a27b-b2fbdf56d60a",
+				"resourceVersion": "1070568",
+				"creationTimestamp": "2021-05-12T07:31:17Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "2-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-2-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Succeeded",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-2",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T07:31:17Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:19:23Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.3.50\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:19:26Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-ns9fp45-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-ns9fp45-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "2"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-ns9fp45-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-ns9fp45-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-ns9fp45-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-ns9fp45-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-2",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Succeeded",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:24Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "Ready",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:19:23Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:19:23Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:24Z"
+					}
+				],
+				"hostIP": "10.23.0.5",
+				"podIP": "10.244.3.50",
+				"podIPs": [
+					{
+						"ip": "10.244.3.50"
+					}
+				],
+				"startTime": "2021-05-12T07:31:24Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"terminated": {
+								"exitCode": 0,
+								"reason": "Completed",
+								"startedAt": "2021-05-12T07:31:28Z",
+								"finishedAt": "2021-05-12T11:19:22Z",
+								"containerID": "docker://c300149f7b5d6768299cb6720b08ce1491233442b47591d84336593280c315f6"
+							}
+						},
+						"lastState": {},
+						"ready": false,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://c300149f7b5d6768299cb6720b08ce1491233442b47591d84336593280c315f6",
+						"started": false
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-3-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "46914b5e-eca3-4926-b9c4-2f63e1f0cced",
+				"resourceVersion": "1070583",
+				"creationTimestamp": "2021-05-12T07:31:17Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "3-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-3-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Running",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-2",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T07:31:17Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:19:27Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.3.55\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:19:28Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:conditions": {
+									".": {},
+									"k:{\"type\":\"PodScheduled\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:message": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-fm565sk-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-fm565sk-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "3"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-fm565sk-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-fm565sk-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-fm565sk-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-fm565sk-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-2",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Running",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:19:25Z"
+					},
+					{
+						"type": "Ready",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:19:27Z"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:19:27Z"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:19:25Z"
+					}
+				],
+				"hostIP": "10.23.0.5",
+				"podIP": "10.244.3.55",
+				"podIPs": [
+					{
+						"ip": "10.244.3.55"
+					}
+				],
+				"startTime": "2021-05-12T11:19:25Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"running": {
+								"startedAt": "2021-05-12T11:19:27Z"
+							}
+						},
+						"lastState": {},
+						"ready": true,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://5c98c148e27ccb2c2d66e8b1cc0c24f6d45fc037a66a212b0073e33f7121b5d0",
+						"started": true
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-4-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "d7dea711-9c14-467d-a8d0-7a3ab73aa608",
+				"resourceVersion": "1070764",
+				"creationTimestamp": "2021-05-12T07:31:17Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "4-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-4-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Succeeded",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-2",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T07:31:17Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:20:57Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.3.49\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:21:01Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-bc4vjw6-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-bc4vjw6-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "4"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-bc4vjw6-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-bc4vjw6-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-bc4vjw6-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-bc4vjw6-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-2",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Succeeded",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:23Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "Ready",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:20:57Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:20:57Z",
+						"reason": "PodCompleted"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T07:31:23Z"
+					}
+				],
+				"hostIP": "10.23.0.5",
+				"podIP": "10.244.3.49",
+				"podIPs": [
+					{
+						"ip": "10.244.3.49"
+					}
+				],
+				"startTime": "2021-05-12T07:31:23Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"terminated": {
+								"exitCode": 0,
+								"reason": "Completed",
+								"startedAt": "2021-05-12T07:31:28Z",
+								"finishedAt": "2021-05-12T11:20:56Z",
+								"containerID": "docker://a6bc681d2f2f53891d487e26d0022c6049129304b8d46cac42766697e89c2855"
+							}
+						},
+						"lastState": {},
+						"ready": false,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://a6bc681d2f2f53891d487e26d0022c6049129304b8d46cac42766697e89c2855",
+						"started": false
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-5-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "5fc3b519-d9be-4c3f-87e9-a0064b200df3",
+				"resourceVersion": "1070783",
+				"creationTimestamp": "2021-05-12T11:19:23Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "5-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-5-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Running",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-2",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:19:23Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:21:03Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.3.56\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:21:06Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:conditions": {
+									".": {},
+									"k:{\"type\":\"PodScheduled\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:message": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-62cj59m-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-62cj59m-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "5"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-62cj59m-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-62cj59m-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-62cj59m-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-62cj59m-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-2",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Running",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:21:00Z"
+					},
+					{
+						"type": "Ready",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:21:03Z"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:21:03Z"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:21:00Z"
+					}
+				],
+				"hostIP": "10.23.0.5",
+				"podIP": "10.244.3.56",
+				"podIPs": [
+					{
+						"ip": "10.244.3.56"
+					}
+				],
+				"startTime": "2021-05-12T11:21:00Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"running": {
+								"startedAt": "2021-05-12T11:21:03Z"
+							}
+						},
+						"lastState": {},
+						"ready": true,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://ea1ab6e94bac6d13cf387a2d5db0e6f5940e961497e767b9f5942a5cf8ae49c5",
+						"started": true
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-6-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "1f8fa590-27b0-4426-8d06-e11274e21ad7",
+				"resourceVersion": "1071179",
+				"creationTimestamp": "2021-05-12T11:20:57Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "6-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-6-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Running",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-1",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:20:57Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:23Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.2.225\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:26Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:conditions": {
+									".": {},
+									"k:{\"type\":\"PodScheduled\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:message": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-lffz8gr-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-lffz8gr-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "6"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-lffz8gr-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-lffz8gr-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-lffz8gr-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-lffz8gr-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-1",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Running",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:21Z"
+					},
+					{
+						"type": "Ready",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:23Z"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:23Z"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:21Z"
+					}
+				],
+				"hostIP": "10.23.0.4",
+				"podIP": "10.244.2.225",
+				"podIPs": [
+					{
+						"ip": "10.244.2.225"
+					}
+				],
+				"startTime": "2021-05-12T11:24:21Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"running": {
+								"startedAt": "2021-05-12T11:24:22Z"
+							}
+						},
+						"lastState": {},
+						"ready": true,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://c60a6bd5157553c3c9778bd0a3457afd93a5c5bed83716fb87b7217832352b1e",
+						"started": true
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-7-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "286e099d-12ae-45b7-ab50-854638d4f5e2",
+				"resourceVersion": "1071265",
+				"creationTimestamp": "2021-05-12T11:24:19Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "7-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-7-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Running",
+					"runai-gpu": "0",
+					"runai-node": "dev-erez-worker-gpu-1",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:19Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kubelet",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:57Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:status": {
+								"f:conditions": {
+									"k:{\"type\":\"ContainersReady\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Initialized\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									},
+									"k:{\"type\":\"Ready\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:hostIP": {},
+								"f:phase": {},
+								"f:podIP": {},
+								"f:podIPs": {
+									".": {},
+									"k:{\"ip\":\"10.244.2.226\"}": {
+										".": {},
+										"f:ip": {}
+									}
+								},
+								"f:startTime": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:25:01Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {},
+									"f:runai-gpu": {},
+									"f:runai-node": {}
+								}
+							},
+							"f:status": {
+								"f:conditions": {
+									".": {},
+									"k:{\"type\":\"PodScheduled\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:message": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								},
+								"f:containerStatuses": {}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-j92x579-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-j92x579-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "7"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-j92x579-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-j92x579-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-j92x579-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-j92x579-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"nodeName": "dev-erez-worker-gpu-1",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Running",
+				"conditions": [
+					{
+						"type": "Initialized",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:56Z"
+					},
+					{
+						"type": "Ready",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:57Z"
+					},
+					{
+						"type": "ContainersReady",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:57Z"
+					},
+					{
+						"type": "PodScheduled",
+						"status": "True",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:56Z"
+					}
+				],
+				"hostIP": "10.23.0.4",
+				"podIP": "10.244.2.226",
+				"podIPs": [
+					{
+						"ip": "10.244.2.226"
+					}
+				],
+				"startTime": "2021-05-12T11:24:56Z",
+				"containerStatuses": [
+					{
+						"name": "job-0",
+						"state": {
+							"running": {
+								"startedAt": "2021-05-12T11:24:57Z"
+							}
+						},
+						"lastState": {},
+						"ready": true,
+						"restartCount": 0,
+						"image": "gcr.io/run-ai-demo/quickstart:latest",
+						"imageID": "docker-pullable://gcr.io/run-ai-demo/quickstart@sha256:6b4e4040080ea4a2510b00143b0dc85c63262d2db0b455c6b6fe026800e92be8",
+						"containerID": "docker://3bc0eb0f78b80f126bf0772e86ce20c6f045f395c1e22815c93630aadbe35565",
+						"started": true
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		},
+		{
+			"metadata": {
+				"name": "job-0-8-0",
+				"generateName": "job-0-",
+				"namespace": "runai-team-a",
+				"uid": "63c2a965-09ee-4f5f-9001-a93d1e79ef70",
+				"resourceVersion": "1071258",
+				"creationTimestamp": "2021-05-12T11:24:54Z",
+				"labels": {
+					"app": "runaijob",
+					"chart": "runaijob-1.0.1",
+					"controller-uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"createdBy": "RunaiJob",
+					"heritage": "Helm",
+					"project": "team-a",
+					"release": "job-0",
+					"runai/pod-index": "8-0"
+				},
+				"annotations": {
+					"gpu-fraction": "0.5",
+					"pod-group-name": "pg-job-0-8-0-042f01d5-c04d-4425-b07c-76aa042fbc7d",
+					"runai-calculated-status": "Pending",
+					"user": "erez"
+				},
+				"ownerReferences": [
+					{
+						"apiVersion": "run.ai/v1",
+						"kind": "RunaiJob",
+						"name": "job-0",
+						"uid": "042f01d5-c04d-4425-b07c-76aa042fbc7d",
+						"controller": true,
+						"blockOwnerDeletion": true
+					}
+				],
+				"managedFields": [
+					{
+						"manager": "runaijob-controller",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:54Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									".": {},
+									"f:gpu-fraction": {},
+									"f:user": {}
+								},
+								"f:generateName": {},
+								"f:labels": {
+									".": {},
+									"f:app": {},
+									"f:chart": {},
+									"f:controller-uid": {},
+									"f:createdBy": {},
+									"f:heritage": {},
+									"f:project": {},
+									"f:release": {},
+									"f:runai/pod-index": {}
+								},
+								"f:ownerReferences": {
+									".": {},
+									"k:{\"uid\":\"042f01d5-c04d-4425-b07c-76aa042fbc7d\"}": {
+										".": {},
+										"f:apiVersion": {},
+										"f:blockOwnerDeletion": {},
+										"f:controller": {},
+										"f:kind": {},
+										"f:name": {},
+										"f:uid": {}
+									}
+								}
+							},
+							"f:spec": {
+								"f:containers": {
+									"k:{\"name\":\"job-0\"}": {
+										".": {},
+										"f:env": {
+											".": {},
+											"k:{\"name\":\"POD_INDEX\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"POD_UUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"REPORTER_GATEWAY_URL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											},
+											"k:{\"name\":\"podUUID\"}": {
+												".": {},
+												"f:name": {},
+												"f:valueFrom": {
+													".": {},
+													"f:fieldRef": {
+														".": {},
+														"f:apiVersion": {},
+														"f:fieldPath": {}
+													}
+												}
+											},
+											"k:{\"name\":\"reporterGatewayURL\"}": {
+												".": {},
+												"f:name": {},
+												"f:value": {}
+											}
+										},
+										"f:image": {},
+										"f:imagePullPolicy": {},
+										"f:name": {},
+										"f:resources": {},
+										"f:securityContext": {
+											".": {},
+											"f:allowPrivilegeEscalation": {}
+										},
+										"f:terminationMessagePath": {},
+										"f:terminationMessagePolicy": {}
+									}
+								},
+								"f:dnsPolicy": {},
+								"f:enableServiceLinks": {},
+								"f:restartPolicy": {},
+								"f:schedulerName": {},
+								"f:securityContext": {},
+								"f:terminationGracePeriodSeconds": {}
+							}
+						}
+					},
+					{
+						"manager": "kube-batch",
+						"operation": "Update",
+						"apiVersion": "v1",
+						"time": "2021-05-12T11:24:57Z",
+						"fieldsType": "FieldsV1",
+						"fieldsV1": {
+							"f:metadata": {
+								"f:annotations": {
+									"f:pod-group-name": {},
+									"f:runai-calculated-status": {}
+								}
+							},
+							"f:status": {
+								"f:conditions": {
+									".": {},
+									"k:{\"type\":\"PodScheduled\"}": {
+										".": {},
+										"f:lastProbeTime": {},
+										"f:lastTransitionTime": {},
+										"f:message": {},
+										"f:reason": {},
+										"f:status": {},
+										"f:type": {}
+									}
+								}
+							}
+						}
+					}
+				]
+			},
+			"spec": {
+				"volumes": [
+					{
+						"name": "default-token-vxtl2",
+						"secret": {
+							"secretName": "default-token-vxtl2",
+							"defaultMode": 420
+						}
+					},
+					{
+						"name": "runai-shared-directory",
+						"hostPath": {
+							"path": "/var/lib/runai/shared",
+							"type": "DirectoryOrCreate"
+						}
+					},
+					{
+						"name": "job-0-wpx2s9d-runai-fraction-gpu-volume",
+						"configMap": {
+							"name": "job-0-wpx2s9d-runai-fraction-gpu",
+							"defaultMode": 420
+						}
+					}
+				],
+				"containers": [
+					{
+						"name": "job-0",
+						"image": "gcr.io/run-ai-demo/quickstart",
+						"env": [
+							{
+								"name": "reporterGatewayURL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "REPORTER_GATEWAY_URL",
+								"value": "runai-prometheus-pushgateway.runai.svc.cluster.local:9091"
+							},
+							{
+								"name": "podUUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_UUID",
+								"valueFrom": {
+									"fieldRef": {
+										"apiVersion": "v1",
+										"fieldPath": "metadata.uid"
+									}
+								}
+							},
+							{
+								"name": "POD_INDEX",
+								"value": "8"
+							},
+							{
+								"name": "jobUUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "JOB_UUID",
+								"value": "042f01d5-c04d-4425-b07c-76aa042fbc7d"
+							},
+							{
+								"name": "jobName",
+								"value": "job-0"
+							},
+							{
+								"name": "JOB_NAME",
+								"value": "job-0"
+							},
+							{
+								"name": "NVIDIA_VISIBLE_DEVICES",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-wpx2s9d-runai-fraction-gpu",
+										"key": "RUNAI-VISIBLE-DEVICES"
+									}
+								}
+							},
+							{
+								"name": "RUNAI_NUM_OF_GPUS",
+								"valueFrom": {
+									"configMapKeyRef": {
+										"name": "job-0-wpx2s9d-runai-fraction-gpu",
+										"key": "RUNAI_NUM_OF_GPUS"
+									}
+								}
+							}
+						],
+						"resources": {},
+						"volumeMounts": [
+							{
+								"name": "default-token-vxtl2",
+								"readOnly": true,
+								"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+							},
+							{
+								"name": "runai-shared-directory",
+								"readOnly": true,
+								"mountPath": "/runai/shared"
+							},
+							{
+								"name": "job-0-wpx2s9d-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/ld.so.preload",
+								"subPath": "ld.so.preload-key"
+							},
+							{
+								"name": "job-0-wpx2s9d-runai-fraction-gpu-volume",
+								"readOnly": true,
+								"mountPath": "/etc/runai.d/memory",
+								"subPath": "config"
+							}
+						],
+						"terminationMessagePath": "/dev/termination-log",
+						"terminationMessagePolicy": "File",
+						"imagePullPolicy": "Always",
+						"securityContext": {
+							"allowPrivilegeEscalation": true
+						}
+					}
+				],
+				"restartPolicy": "Never",
+				"terminationGracePeriodSeconds": 30,
+				"dnsPolicy": "ClusterFirst",
+				"serviceAccountName": "default",
+				"serviceAccount": "default",
+				"securityContext": {},
+				"schedulerName": "runai-scheduler",
+				"tolerations": [
+					{
+						"key": "node.kubernetes.io/not-ready",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					},
+					{
+						"key": "node.kubernetes.io/unreachable",
+						"operator": "Exists",
+						"effect": "NoExecute",
+						"tolerationSeconds": 300
+					}
+				],
+				"priority": 0,
+				"enableServiceLinks": true,
+				"preemptionPolicy": "PreemptLowerPriority"
+			},
+			"status": {
+				"phase": "Pending",
+				"conditions": [
+					{
+						"type": "PodScheduled",
+						"status": "False",
+						"lastProbeTime": null,
+						"lastTransitionTime": "2021-05-12T11:24:56Z",
+						"reason": "Unschedulable",
+						"message": "all nodes are unavailable: ."
+					}
+				],
+				"qosClass": "BestEffort"
+			}
+		}
+	],
+	"Status": "Running",
+	"Parallelism": 5,
+	"Completions": 10,
+	"Failed": 0,
+	"Succeeded": 4,
+	"WorkloadType": "RunaiJob"
+}

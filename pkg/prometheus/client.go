@@ -74,6 +74,12 @@ type (
 		url                string
 		authorizationToken string
 	}
+
+	// QueryClient is interface to query prometheus
+	QueryClient interface {
+		// GroupMultiQueriesToItems queries prometheus for multiple queries from `queryMap` and groups the results by the `labelId` values
+		GroupMultiQueriesToItems(queryMap QueryNameToQuery, labelID string) (MetricResultsByItems, error)
+	}
 )
 
 func BuildPrometheusClient(c *client.Client) (*Client, error) {

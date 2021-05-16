@@ -1,0 +1,5 @@
+           │ Status         
+Name       │ Last Opened  Temprature
+────       │ ───────────  ──────────
+vegtables  │ 00:10:00     4 (C)
+fruit      │ 00:14:36     40 (F)

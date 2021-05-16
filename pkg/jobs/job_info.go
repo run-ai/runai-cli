@@ -2,13 +2,11 @@ package jobs
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/prometheus/common/log"
 	"github.com/run-ai/runai-cli/cmd/trainer"
-	"github.com/run-ai/runai-cli/pkg/client"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	"github.com/run-ai/runai-cli/pkg/types"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -35,21 +33,12 @@ var (
 		gpuUtilizationPQ:  `sum(runai_pod_group_gpu_utilization) by (pod_group_uuid) / on (pod_group_uuid) (count(runai_pod_group_gpu_utilization) by (pod_group_uuid))`,
 		usedGpusMemoryPQ:  `sum(runai_pod_group_used_gpu_memory) by (pod_group_uuid)`,
 		usedCpusMemoryPQ:  `runai_job_memory_used_bytes`,
-		requestedCpusPQ:   `runai_active_job_cpu_requested_cores`,
-		utilizedCpusPQ:    `runai_job_cpu_usage / on(pod_group_uuid) runai_active_job_cpu_requested_cores * 100`,
+		requestedCpusPQ:   `runai_active_job_cpu_allocated_cores`,
+		utilizedCpusPQ:    `runai_job_cpu_usage / on(pod_group_uuid) runai_active_job_cpu_allocated_cores * 100`,
 		usedCpusPQ:        `runai_job_cpu_usage`,
-		requestedCPUMemPQ: `runai_active_job_memory_requested_bytes`,
+		requestedCPUMemPQ: `runai_active_job_memory_allocated_bytes`,
 	}
 )
-
-func getPodGroupUUID(job trainer.TrainingJob) (string, error) {
-	podGroupName := job.GetPodGroupName()
-	podGroupNamePrefix := fmt.Sprintf("pg-%s-", job.Name())
-	if strings.HasPrefix(podGroupName, podGroupNamePrefix) {
-		return string(podGroupName[(len(podGroupName) - podGroupUUIDLength):]), nil // TODO - find a better way
-	}
-	return podGroupName, fmt.Errorf("Couldn't parse pod group uuid from pod group name: %v", podGroupName)
-}
 
 func getJobAllocatedGPUMem(job trainer.TrainingJob) float64 {
 	memoryQuantity, err := resource.ParseQuantity(job.CurrentAllocatedGPUsMemory())
@@ -101,14 +90,9 @@ func trainingJobToJobView(jobs []trainer.TrainingJob) map[string]types.JobView {
 	return views
 }
 
-func queryJobsMetrics(client *client.Client) (*prom.MetricResultsByItems, error) {
+func queryJobsMetrics(promClient prom.QueryClient) (*prom.MetricResultsByItems, error) {
 	var promData prom.MetricResultsByItems
-	promClient, promErr := prom.BuildPrometheusClient(client)
-	if promErr != nil {
-		return nil, promErr
-	}
-
-	promData, promErr = promClient.GroupMultiQueriesToItems(jobPQs, prometheusJobLabelID)
+	promData, promErr := promClient.GroupMultiQueriesToItems(jobPQs, prometheusJobLabelID)
 	if promErr != nil {
 		return nil, promErr
 	}
@@ -121,6 +105,9 @@ func printMetrics(metrics prom.MetricResultsByItems) {
 		log.Error("Error marshaling json: ", err)
 		return
 	}
+	// f, err := os.Create("metrics_example.json")
+	// defer f.Close()
+	// f.WriteString(string(b))
 	log.Infof("Metrics: %v", string(b))
 }
 
@@ -206,9 +193,7 @@ func addMetricsDataToViews(jobs map[string]types.JobView, metrics prom.MetricRes
 	for podGroupUUID, job := range jobs {
 		jobMetrics, found := metrics[podGroupUUID]
 		if !found {
-			if job.Info.Status == "Running" {
-				log.Infoln("Couldn't find metrics for job: ", job.Info.Name, " pod group uuid: ", podGroupUUID)
-			}
+			log.Debugln("Couldn't find metrics for job: ", job.Info.Name, " pod group uuid: ", podGroupUUID)
 			continue
 		}
 		for _, metricSetterInfo := range metricSetters {
@@ -220,14 +205,15 @@ func addMetricsDataToViews(jobs map[string]types.JobView, metrics prom.MetricRes
 					metricSetterInfo.Setter(&job, metricValue)
 				}
 			} else {
-				log.Info("Metric ", metricSetterInfo.Name, " is missing for job ", job.Info.Name)
+				log.Debug("Metric ", metricSetterInfo.Name, " is missing for job ", job.Info.Name)
 			}
 		}
 	}
 }
 
 // GetJobsMetrics fetches and returns information about all requested jobs
-func GetJobsMetrics(client *client.Client, jobs []trainer.TrainingJob) (views []types.JobView, err error) {
+func GetJobsMetrics(client prom.QueryClient, jobs []trainer.TrainingJob) (views []types.JobView, err error) {
+	jobs = trainer.MakeTrainingJobOrderdByGPUCount(trainer.MakeTrainingJobOrderdByName(jobs))
 	jobsInfo := trainingJobToJobView(jobs)
 	metrics, err := queryJobsMetrics(client)
 	if err == nil {
@@ -235,8 +221,8 @@ func GetJobsMetrics(client *client.Client, jobs []trainer.TrainingJob) (views []
 	}
 
 	views = make([]types.JobView, 0, len(jobs))
-	for _, job := range jobsInfo {
-		views = append(views, job)
+	for _, job := range jobs {
+		views = append(views, jobsInfo[job.GetPodGroupUUID()])
 	}
 
 	return views, err
