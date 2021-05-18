@@ -1,15 +1,16 @@
 package rsrch_client
 
 import (
-    "encoding/json"
-    "fmt"
-    "k8s.io/client-go/rest"
-    "k8s.io/klog"
-    "net"
-    "net/http"
-    "net/url"
-    "os"
-    "time"
+	"context"
+	"encoding/json"
+	"fmt"
+	"k8s.io/client-go/rest"
+	"k8s.io/klog"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"time"
 )
 
 type RsrchClient struct {
@@ -18,6 +19,12 @@ type RsrchClient struct {
     HTTPClient *http.Client
 }
 
+//
+//    store the version of the researcher service. this helps us to figure out which
+//    requests are supported by it
+//
+var rsVersion *VersionInfo
+
 type SuccessResponse struct {
     Data interface{} `json:"data"`
 }
@@ -25,7 +32,7 @@ type SuccessResponse struct {
 //
 //   Creates RS client for sending REST requests
 //
-func NewRsrchClient(restConfig *rest.Config) *RsrchClient {
+func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion VersionInfo, additionalMinVersions ...VersionInfo) *RsrchClient {
 
     //
     //   need to determine the URL to RS (researcher service)
@@ -51,13 +58,36 @@ func NewRsrchClient(restConfig *rest.Config) *RsrchClient {
         rsUrl = &url.URL{Scheme: "http", Host: host + ":" + rsServicePort}
     }
 
-    return &RsrchClient{
+    result := &RsrchClient{
         BaseURL:    rsUrl.String(),
-        authToken:  restConfig.AuthProvider.Config[KubeConfigIdToken],
         HTTPClient: &http.Client{
             Timeout: time.Minute,
         },
     }
+
+    if restConfig.AuthProvider != nil {
+		result.authToken  = restConfig.AuthProvider.Config[KubeConfigIdToken]
+	}
+
+	//
+	//    if we did not investigate for the RS version yet, do it now
+	//
+	if rsVersion == nil {
+		var err error
+		rsVersion, err = result.VersionGet(context.TODO())
+		if err != nil {
+			klog.Info("Failed to obtain RS version: %v" , err.Error())
+			rsVersion = NewVersionInfo(0, 0,0)
+		}
+	}
+
+	for _, minVersion := range append(additionalMinVersions, mandatoryMinVersion) {
+		if CompareVersion(minVersion, *rsVersion) > 0 {
+			klog.Warningf("RS service version %v < minimal required version %v\n", minVersion.Version, rsVersion.Version)
+			return nil
+		}
+	}
+	return result
 }
 
 //
