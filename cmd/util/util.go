@@ -2,6 +2,8 @@ package util
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/constants"
+	"strings"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
@@ -49,4 +51,16 @@ func BoolP(b bool) *bool {
 
 func IsBoolPTrue(b *bool) bool {
 	return b != nil && *b
+}
+
+func IsProjectNamespace(namespace string) bool {
+	return strings.HasPrefix(namespace, constants.RunaiNsProjectPrefix)
+}
+
+func ToNamespace(project string) string {
+	return constants.RunaiNsProjectPrefix + project
+}
+
+func ToProject(namespace string) string {
+	return namespace[len(constants.RunaiNsProjectPrefix):]
 }

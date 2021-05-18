@@ -2,8 +2,9 @@ package rsrch_client
 
 const (
 
-    //   WAIT_FOR_OFER we intend to take this value from researcher-ui repository, still working on it
-    GetProjectsURL = "/api/v1/projects"
+	VersionURL  = "/api/v1/version"
+    ProjectsURL = "/api/v1/projects"
+	JobsURL     = "/api/v1/jobs"
 
     //   full url of the researcher service, e.g. http://11.22.33.44:8080
     devRsrchUrlEnvVar = "RESEARCHER_SERVICE_URL"
