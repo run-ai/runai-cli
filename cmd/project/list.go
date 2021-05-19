@@ -8,6 +8,7 @@ import (
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/rsrch_client"
+	log "github.com/sirupsen/logrus"
 	restclient "k8s.io/client-go/rest"
 	"os"
 	"sort"
@@ -18,6 +19,9 @@ import (
 	"github.com/run-ai/runai-cli/pkg/ui"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
+
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
+	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 )
 
 var includeDeleted bool
@@ -62,12 +66,12 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 //      number of hidden proejects (=deleted projects which are filtered out from the list)
 //
 func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
-	map[string]*rsrch_client.Project, int, error) {
+	map[string]*rsrch_server.Project, int, error) {
 
 	rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.ProjectListMinVersion)
 
 	var err error
-	var projList *rsrch_client.ProjectListResponse
+	var projList *[]rsrch_server.Project
 
 	if rs != nil {
 		projList, err = rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
@@ -76,7 +80,15 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 			IncludeDeleted: true,
 		})
 	} else {
-		fmt.Println("Could not connect to RS")
+		log.Infof("RS cannot serve the request, use in-house CLI code for project list")
+
+		clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
+		if err != nil {
+			log.Error("Failed to create clientSet for in-house CLI project list: %v", err)
+			return nil, 0, err
+		}
+
+		projList, err = clientSet.GetProjects(context.TODO(), true)
 	}
 
 	if err != nil {
@@ -89,7 +101,7 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 	//
 	hiddenProjects := 0
 
-	projects := make(map[string]*rsrch_client.Project)
+	projects := make(map[string]*rsrch_server.Project)
 	for idx, project := range *projList {
 		if project.IsDeleted && !includeDeleted {
 			hiddenProjects += 1 // don't include in the list, only count them
@@ -101,8 +113,8 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 	return projects, hiddenProjects, nil
 }
 
-func getSortedProjects(projects map[string]*rsrch_client.Project) []*rsrch_client.Project {
-	projectsArray := []*rsrch_client.Project{}
+func getSortedProjects(projects map[string]*rsrch_server.Project) []*rsrch_server.Project {
+	projectsArray := []*rsrch_server.Project{}
 	for _, project := range projects {
 		projectsArray = append(projectsArray, project)
 	}
@@ -114,7 +126,7 @@ func getSortedProjects(projects map[string]*rsrch_client.Project) []*rsrch_clien
 	return projectsArray
 }
 
-func printProjects(infos []*rsrch_client.Project, hiddenProjects int, defaultProject string) {
+func printProjects(infos []*rsrch_server.Project, hiddenProjects int, defaultProject string) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")

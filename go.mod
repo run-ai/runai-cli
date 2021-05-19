@@ -2,6 +2,8 @@ module github.com/run-ai/runai-cli
 
 go 1.13
 
+replace github.com/run-ai/researcher-service  => /Users/ofer.lahav/go/src/github.com/run-ai/researcher-service
+
 require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -58,3 +60,5 @@ require (
 	sigs.k8s.io/controller-runtime v0.7.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.0 // indirect
 )
+
+

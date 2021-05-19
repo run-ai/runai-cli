@@ -17,6 +17,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
+	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/util"
@@ -24,7 +26,6 @@ import (
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
-	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -63,7 +64,7 @@ func NewDeleteCommand() *cobra.Command {
 			//
 			//   prepare the request as a list of job names + project
 			//
-			jobsToDelete := make([]rsrch_client.DeletedJob, 0, len(args))
+			jobsToDelete := make([]rsrch_server.DeletedJob, 0, len(args))
 			jobNamesToDelete := make([]string, 0, len(args))
 
 			if isAll {
@@ -83,48 +84,55 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			//
+			//    if RS can serve the request, prepare and send it
+			//
+			for _, jobNameToDelete := range jobNamesToDelete {
+				jobsToDelete = append(jobsToDelete, rsrch_server.DeletedJob{
+					Name:    jobNameToDelete,
+					Project: projectName,
+				})
+			}
+
+			//
 			//    connect to the researcher config, if it can serve delete job request
 			//
 			rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.DeleteJobMinVersion)
 
+			var deleteJobsStatus []rsrch_server.DeletedJobStatus
+
 			if rs != nil {
 				//
-				//    if RS can serve the request, prepare and send it
+				//   RS can serve the request, so send it to RS
 				//
-				for _, jobNameToDelete := range jobNamesToDelete {
-					jobsToDelete = append(jobsToDelete, rsrch_client.DeletedJob{
-						Name:    jobNameToDelete,
-						Project: projectName,
-					})
+				deleteJobsStatus, err = rs.JobDelete(context.TODO(), jobsToDelete)
+			} else {
+				log.Infof("RS cannot serve the request, use in-house CLI code for job delete")
+
+				clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
+				if err != nil {
+					log.Error("Failed to create clientSet for in-house CLI job delete: %v", err)
+					return
 				}
 
-				deleteJobsStatus, err := rs.JobDelete(context.TODO(), jobsToDelete)
-				if err != nil {
-					log.Error(err)
-					fmt.Printf("Error occured while attempting to delete jobs.\n")
-				} else {
-					for _, deleteJobStatus := range deleteJobsStatus {
-						if deleteJobStatus.Ok {
-							fmt.Printf("Job %s deleted successfully.\n", deleteJobStatus.Name)
-						} else if deleteJobStatus.Error.Status == http.StatusNotFound {
-							fmt.Printf("Job %s does not exist in project %s. If the job exists in a different project, use -p <project-name>.\n", deleteJobStatus.Name, projectName)
-						} else {
-							log.Errorf("%v: %v", deleteJobStatus.Error.Message, deleteJobStatus.Error.Details)
-							fmt.Printf("Failed to delete job %s: %s\n", deleteJobStatus.Name, deleteJobStatus.Error.Message)
-						}
-					}
-				}
+				deleteJobsStatus = clientSet.DeleteJobs(context.TODO(), jobsToDelete)
+			}
+
+			if err != nil {
+				log.Error(err)
+				fmt.Printf("Error occured while attempting to delete jobs.\n")
 			} else {
-				//
-				//   if RS cannot serve the request, perform in-house deletion
-				//
-				for _, jobName := range jobNamesToDelete {
-					err = workflow.DeleteJob(jobName, namespaceInfo, kubeClient.GetClientset())
-					if err != nil {
-						log.Error(err)
+				for _, deleteJobStatus := range deleteJobsStatus {
+					if deleteJobStatus.Ok {
+						fmt.Printf("Job %s deleted successfully.\n", deleteJobStatus.Name)
+					} else if deleteJobStatus.Error.Status == http.StatusNotFound {
+						fmt.Printf("Job %s does not exist in project %s. If the job exists in a different project, use -p <project-name>.\n", deleteJobStatus.Name, projectName)
+					} else {
+						log.Errorf("%v: %v", deleteJobStatus.Error.Message, deleteJobStatus.Error.Details)
+						fmt.Printf("Failed to delete job %s: %s\n", deleteJobStatus.Name, deleteJobStatus.Error.Message)
 					}
 				}
 			}
+
 		},
 	}
 

@@ -5,23 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
 	"net/http"
 )
 
-//   WAIT_FOR_OFER we intend to take this struct from researcher-ui repository, still working on it
-type DeletedJob struct {
-	Name    string `json:"name"`
-	Project string `json:"project"`
-}
-
-//   WAIT_FOR_OFER we intend to take this struct from researcher-ui repository, still working on it
-type DeletedJobStatus struct {
-	Name  string `json:"name"`
-	Ok    bool   `json:"ok"`
-	Error *Error `json:"error"`
-}
-
-func (c *RsrchClient) JobDelete(ctx context.Context, jobs []DeletedJob) ([]DeletedJobStatus, error) {
+func (c *RsrchClient) JobDelete(ctx context.Context, jobs []rsrch_server.DeletedJob) ([]rsrch_server.DeletedJobStatus, error) {
 
 	url := c.BaseURL + JobsURL
 
@@ -32,7 +20,7 @@ func (c *RsrchClient) JobDelete(ctx context.Context, jobs []DeletedJob) ([]Delet
 		return nil, err
 	}
 
-	res := make([]DeletedJobStatus, 0, len(jobs))
+	res := make([]rsrch_server.DeletedJobStatus, 0, len(jobs))
 	if _, err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}

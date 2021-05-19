@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,9 +14,9 @@ import (
 )
 
 type RsrchClient struct {
-    BaseURL    string
-    authToken  string
-    HTTPClient *http.Client
+	BaseURL    string
+	authToken  string
+	HTTPClient *http.Client
 }
 
 //
@@ -26,7 +26,7 @@ type RsrchClient struct {
 var rsVersion *VersionInfo
 
 type SuccessResponse struct {
-    Data interface{} `json:"data"`
+	Data interface{} `json:"data"`
 }
 
 //
@@ -34,39 +34,39 @@ type SuccessResponse struct {
 //
 func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion VersionInfo, additionalMinVersions ...VersionInfo) *RsrchClient {
 
-    //
-    //   need to determine the URL to RS (researcher service)
-    //
-    rsUrl := &url.URL{}
+	//
+	//   need to determine the URL to RS (researcher service)
+	//
+	rsUrl := &url.URL{}
 
-    //
-    //   for testing/debugging, allow the developer to specify RS URL
-    //
-    devRsrchUrl := os.Getenv(devRsrchUrlEnvVar)
-    if devRsrchUrl != "" {
-        rsUrl, _ = url.Parse(devRsrchUrl)
-    } else {
-        //
-        //   in production, take it from the kubernetes config, but change the port to
-        //   the port of the RS
-        //
-        mainUrl, err := url.Parse(restConfig.Host)
-        if err != nil {
-            klog.Fatal(err)
-        }
-        host, _, _ := net.SplitHostPort(mainUrl.Host)
-        rsUrl = &url.URL{Scheme: "http", Host: host + ":" + rsServicePort}
-    }
+	//
+	//   for testing/debugging, allow the developer to specify RS URL
+	//
+	devRsrchUrl := os.Getenv(devRsrchUrlEnvVar)
+	if devRsrchUrl != "" {
+		rsUrl, _ = url.Parse(devRsrchUrl)
+	} else {
+		//
+		//   in production, take it from the kubernetes config, but change the port to
+		//   the port of the RS
+		//
+		mainUrl, err := url.Parse(restConfig.Host)
+		if err != nil {
+			log.Fatal(err)
+		}
+		host, _, _ := net.SplitHostPort(mainUrl.Host)
+		rsUrl = &url.URL{Scheme: "http", Host: host + ":" + rsServicePort}
+	}
 
-    result := &RsrchClient{
-        BaseURL:    rsUrl.String(),
-        HTTPClient: &http.Client{
-            Timeout: time.Minute,
-        },
-    }
+	result := &RsrchClient{
+		BaseURL: rsUrl.String(),
+		HTTPClient: &http.Client{
+			Timeout: time.Minute,
+		},
+	}
 
-    if restConfig.AuthProvider != nil {
-		result.authToken  = restConfig.AuthProvider.Config[KubeConfigIdToken]
+	if restConfig.AuthProvider != nil {
+		result.authToken = restConfig.AuthProvider.Config[KubeConfigIdToken]
 	}
 
 	//
@@ -76,14 +76,14 @@ func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion VersionInfo, ad
 		var err error
 		rsVersion, err = result.VersionGet(context.TODO())
 		if err != nil {
-			klog.Info("Failed to obtain RS version: %v" , err.Error())
-			rsVersion = NewVersionInfo(0, 0,0)
+			log.Infof("Failed to obtain RS version: %v", err.Error())
+			rsVersion = NewVersionInfo(0, 0, 0)
 		}
 	}
 
 	for _, minVersion := range append(additionalMinVersions, mandatoryMinVersion) {
 		if CompareVersion(minVersion, *rsVersion) > 0 {
-			klog.Warningf("RS service version %v < minimal required version %v\n", minVersion.Version, rsVersion.Version)
+			log.Warningf("RS service version %v < minimal required version %v\n", rsVersion.Version, minVersion.Version)
 			return nil
 		}
 	}
@@ -101,31 +101,30 @@ func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion VersionInfo, ad
 //
 func (c *RsrchClient) sendRequest(req *http.Request, v interface{}) (int, error) {
 
-    req.Header.Set(HeaderContentType, ContentTypeApplicationJson)
-    req.Header.Set(HeaderAccept, ContentTypeApplicationJson)
-    if c.authToken != "" {
-        req.Header.Set(HeaderAuth, AuthBearerPrefix + c.authToken)
-    }
+	req.Header.Set(HeaderContentType, ContentTypeApplicationJson)
+	req.Header.Set(HeaderAccept, ContentTypeApplicationJson)
+	if c.authToken != "" {
+		req.Header.Set(HeaderAuth, AuthBearerPrefix+c.authToken)
+	}
 
-    res, err := c.HTTPClient.Do(req)
-    if err != nil {
-        return -1, err
-    }
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return -1, err
+	}
 
-    defer res.Body.Close()
+	defer res.Body.Close()
 
-    if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-        return res.StatusCode, fmt.Errorf("HTTP status code: %d", res.StatusCode)
-    }
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
+		return res.StatusCode, fmt.Errorf("HTTP status code: %d", res.StatusCode)
+	}
 
-    fullResponse := SuccessResponse{
-        Data: v,
-    }
+	fullResponse := SuccessResponse{
+		Data: v,
+	}
 
-    if err = json.NewDecoder(res.Body).Decode(&fullResponse); err != nil {
-        return -1, err
-    }
+	if err = json.NewDecoder(res.Body).Decode(&fullResponse); err != nil {
+		return -1, err
+	}
 
-    return res.StatusCode, nil
+	return res.StatusCode, nil
 }
-
