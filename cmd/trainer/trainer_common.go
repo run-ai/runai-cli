@@ -238,6 +238,10 @@ func getTotalAllocatedGPUs(trainingAnnotations map[string]string) (float64, bool
 	return 0, false
 }
 
+func getCliCommand(trainingAnnotations map[string]string) string {
+	return trainingAnnotations[util.CliCommand]
+}
+
 func getTotalRequestedGPUsMemory(trainingAnnotations map[string]string) uint64 {
 	if len(trainingAnnotations[util.WorkloadTotalRequestedGPUsMemory]) > 0 {
 		totalRequestedGpusMemory, err := strconv.ParseUint(trainingAnnotations[util.WorkloadTotalRequestedGPUsMemory], 10, 64)
