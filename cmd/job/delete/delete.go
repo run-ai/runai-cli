@@ -96,10 +96,9 @@ func NewDeleteCommand() *cobra.Command {
 			//
 			//    connect to the researcher config, if it can serve delete job request
 			//
-			rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.DeleteJobMinVersion)
-
 			var deleteJobsStatus []rsrch_server.DeletedJobStatus
 
+			rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.DeleteJobMinVersion)
 			if rs != nil {
 				//
 				//   RS can serve the request, so send it to RS
