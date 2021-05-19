@@ -65,7 +65,7 @@ func NewDeleteCommand() *cobra.Command {
 			//
 			//    obtain the list of job names to deleted, based on the command's arguments
 			//
-			jobNamesToDelete := make([]string, 0, len(args))
+			jobNamesToDelete := args
 
 			if isAll {
 				jobNamesToDelete, err = job.ListJobNamesByNamespace(kubeClient, namespaceInfo)
@@ -73,8 +73,6 @@ func NewDeleteCommand() *cobra.Command {
 					log.Error(err)
 					os.Exit(1)
 				}
-			} else {
-				jobNamesToDelete = args
 			}
 
 			restConfig, _, err := client.GetRestConfig()
