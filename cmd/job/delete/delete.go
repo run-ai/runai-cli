@@ -63,7 +63,7 @@ func NewDeleteCommand() *cobra.Command {
 			projectName := util.ToProject(namespaceInfo.Namespace)
 
 			//
-			//    obtain the list of job names to deleted, based on the command's arguments
+			//    obtain the list of job names to delete, based on the command's arguments
 			//
 			jobNamesToDelete := args
 

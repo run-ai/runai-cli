@@ -22,6 +22,9 @@ var (
 	DeleteJobMinVersion   = *NewVersionInfo(0, 1, 10)
 )
 
+//
+//   send version GET request to the RS
+//
 func (c *RsrchClient) VersionGet(ctx context.Context) (*rsrch_server.VersionInfo, error) {
 
 	url := c.BaseURL + VersionURL
@@ -39,6 +42,13 @@ func (c *RsrchClient) VersionGet(ctx context.Context) (*rsrch_server.VersionInfo
 	return &res, nil
 }
 
+//
+//    compsre two versions, e.g. 0.1.10 VS 0.1.11
+//    returns (strcmp style)
+//		0 -> the two versions are identical
+//		>0 -> versionA > versionB
+//		<0 -> versionA < versionB
+//
 func CompareVersion(versiona, versionb rsrch_server.VersionInfo) int {
 	if versiona.Major != versionb.Major {
 		return versiona.Major - versionb.Major
