@@ -105,9 +105,6 @@ func printMetrics(metrics prom.MetricResultsByItems) {
 		log.Error("Error marshaling json: ", err)
 		return
 	}
-	// f, err := os.Create("metrics_example.json")
-	// defer f.Close()
-	// f.WriteString(string(b))
 	log.Infof("Metrics: %v", string(b))
 }
 
@@ -189,7 +186,6 @@ var metricSetters = []metricSetter{
 }
 
 func addMetricsDataToViews(jobs map[string]types.JobView, metrics prom.MetricResultsByItems) {
-	// printMetrics(metrics) // EREZ DEBUG
 	for podGroupUUID, job := range jobs {
 		jobMetrics, found := metrics[podGroupUUID]
 		if !found {
