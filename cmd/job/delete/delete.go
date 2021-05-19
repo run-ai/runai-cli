@@ -59,12 +59,12 @@ func NewDeleteCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
 			projectName := util.ToProject(namespaceInfo.Namespace)
 
 			//
-			//   prepare the request as a list of job names + project
+			//    obtain the list of job names to deleted, based on the command's arguments
 			//
-			jobsToDelete := make([]rsrch_server.DeletedJob, 0, len(args))
 			jobNamesToDelete := make([]string, 0, len(args))
 
 			if isAll {
@@ -84,8 +84,10 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			//
-			//    if RS can serve the request, prepare and send it
+			//   prepare the request as a list of job names + project
 			//
+			jobsToDelete := make([]rsrch_server.DeletedJob, 0, len(args))
+
 			for _, jobNameToDelete := range jobNamesToDelete {
 				jobsToDelete = append(jobsToDelete, rsrch_server.DeletedJob{
 					Name:    jobNameToDelete,
