@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+//WAIT_FOR_OFER -> Should move to rsrch-service repository
 type ProjectListOptions struct {
 	IncludeDeleted bool
 }

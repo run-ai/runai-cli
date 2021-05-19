@@ -3,19 +3,13 @@ package rsrch_client
 import (
 	"context"
 	"fmt"
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
 	"net/http"
 )
 
-//   WAIT_FOR_OFER we intend to take this struct from researcher-ui repository, still working on it
-type VersionInfo struct {
-	Version string `json:"version"` // 0.1.10
-	Major   int    `json:"major"`   // 0
-	Minor   int    `json:"minor"`   // 1
-	Subver  int    `json:"subver"`  // 10
-}
-
-func NewVersionInfo(major, minor, subver int) *VersionInfo {
-	return &VersionInfo{
+//WAIT_FOR_OFER -> Should move to rsrch-service repository
+func NewVersionInfo(major, minor, subver int) *rsrch_server.VersionInfo {
+	return &rsrch_server.VersionInfo{
 		Version: fmt.Sprintf("%v.%v.%v", major, minor, subver),
 		Major:   major,
 		Minor:   minor,
@@ -28,7 +22,7 @@ var (
 	DeleteJobMinVersion   = *NewVersionInfo(0, 1, 10)
 )
 
-func (c *RsrchClient) VersionGet(ctx context.Context) (*VersionInfo, error) {
+func (c *RsrchClient) VersionGet(ctx context.Context) (*rsrch_server.VersionInfo, error) {
 
 	url := c.BaseURL + VersionURL
 
@@ -37,7 +31,7 @@ func (c *RsrchClient) VersionGet(ctx context.Context) (*VersionInfo, error) {
 		return nil, err
 	}
 
-	res := VersionInfo{}
+	res := rsrch_server.VersionInfo{}
 	if _, err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}
@@ -45,7 +39,7 @@ func (c *RsrchClient) VersionGet(ctx context.Context) (*VersionInfo, error) {
 	return &res, nil
 }
 
-func CompareVersion(versiona, versionb VersionInfo) int {
+func CompareVersion(versiona, versionb rsrch_server.VersionInfo) int {
 	if versiona.Major != versionb.Major {
 		return versiona.Major - versionb.Major
 	}

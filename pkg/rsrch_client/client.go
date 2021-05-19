@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"net"
@@ -21,9 +22,9 @@ type RsrchClient struct {
 
 //
 //    store the version of the researcher service. this helps us to figure out which
-//    requests are supported by it
+//    requests it supports
 //
-var rsVersion *VersionInfo
+var rsVersion *rsrch_server.VersionInfo
 
 type SuccessResponse struct {
 	Data interface{} `json:"data"`
@@ -31,8 +32,17 @@ type SuccessResponse struct {
 
 //
 //   Creates RS client for sending REST requests
+//   Parameters
+//		rest.Config - k8s configuration used for creating the RS client
+//		...VersionInfo - one or more minimal versions that we expect RS to comply with
+//					for example, if we know that job deletion is supported only from version 0.1.10 of RS
+//					then the function will receive this minimal version as parameter and will make sure that
+//					RS complies with this version. otherwise, it will not return a RS client
+//	Returns
+//		Pointer to the RsrchClient to use for comminucating with RS, or nil if RS is not available or
+//		does not comply with the versions that we expect it to comply with.
 //
-func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion VersionInfo, additionalMinVersions ...VersionInfo) *RsrchClient {
+func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion rsrch_server.VersionInfo, additionalMinVersions ...rsrch_server.VersionInfo) *RsrchClient {
 
 	//
 	//   need to determine the URL to RS (researcher service)
@@ -81,12 +91,16 @@ func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion VersionInfo, ad
 		}
 	}
 
+	//
+	//    make sure that the RS version complies with the versions we expect it to comply
+	//
 	for _, minVersion := range append(additionalMinVersions, mandatoryMinVersion) {
 		if CompareVersion(minVersion, *rsVersion) > 0 {
 			log.Warningf("RS service version %v < minimal required version %v\n", rsVersion.Version, minVersion.Version)
 			return nil
 		}
 	}
+
 	return result
 }
 
