@@ -17,19 +17,19 @@ type JobGeneralInfo struct {
 
 // ResourceUsage resource usage
 type ResourceUsage struct {
-	Usage       float64 `title:"USAGE"`
-	Utilization float64 `title:"UTILIZ."`
+	Usage       float64 `title:"Usage"`
+	Utilization float64 `title:"Utiliz."`
 }
 
 // MemoryMetrics resource metrics
 type MemoryMetrics struct {
-	Allocated float64        `title:"ALLOCATED" format:"memory"`
+	Allocated float64        `title:"Allocated" format:"memory"`
 	Usage     *ResourceUsage `title:"Usage" format:"memoryusage"`
 }
 
 // CPUMetrics resource metrics
 type CPUMetrics struct {
-	Allocated float64        `title:"ALLOCATED"`
+	Allocated float64        `title:"Allocated"`
 	Usage     *ResourceUsage `title:"Usage" format:"cpuusage"`
 }
 
