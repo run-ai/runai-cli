@@ -110,7 +110,7 @@ func NewDeleteCommand() *cobra.Command {
 
 				clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 				if err != nil {
-					log.Error("Failed to create clientSet for in-house CLI job delete: %v", err)
+					log.Errorf("Failed to create clientSet for in-house CLI job delete: %v", err.Error())
 					return
 				}
 

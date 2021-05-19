@@ -84,7 +84,7 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 
 		clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 		if err != nil {
-			log.Error("Failed to create clientSet for in-house CLI project list: %v", err)
+			log.Errorf("Failed to create clientSet for in-house CLI project list: %v", err.Error())
 			return nil, 0, err
 		}
 
