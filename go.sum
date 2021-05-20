@@ -657,6 +657,8 @@ github.com/run-ai/researcher-service v0.1.9 h1:2AfuT682vNMT9vD0MR0KWJQrUP3+tquMc
 github.com/run-ai/researcher-service v0.1.9/go.mod h1:wIcEV7RWhYnRYNJK4OqVDSM80tuKu4sD1MyP9MpGHWM=
 github.com/run-ai/researcher-service v0.1.10 h1:AHt2TKtU/WJuXAzF+uHLVEPnD2i907URPoD6fGynNAU=
 github.com/run-ai/researcher-service v0.1.10/go.mod h1:xdv6STbYukj43jVMK7wq0i+21VIXrDByBuNHaCtwsNU=
+github.com/run-ai/researcher-service v0.1.11 h1:pNCCsL4zNS69WjTkboxnRy5KzXBYY50KZcoOWQpR+8M=
+github.com/run-ai/researcher-service v0.1.11/go.mod h1:JAIYcamvxgTlbAqdi3IDZzk0OQi6/XI5s5y6vs96SBg=
 github.com/russross/blackfriday v1.5.2 h1:HyvC0ARfnZBqnXwABFeSZHpKvJHJJfPz81GNueLj0oo=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
 github.com/russross/blackfriday/v2 v2.0.1 h1:lPqVAte+HuHNfhJ/0LC98ESWRz8afy9tM/0RK8m9o+Q=
