@@ -80,7 +80,7 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 			IncludeDeleted: true,
 		})
 	} else {
-		log.Infof("RS cannot serve the request, use in-house CLI code for project list")
+		log.Infof("researcher-service cannot serve the request, use in-house CLI for project list")
 
 		clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 		if err != nil {

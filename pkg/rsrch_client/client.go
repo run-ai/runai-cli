@@ -86,7 +86,7 @@ func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion rsrch_server.Ve
 		var err error
 		rsVersion, err = result.VersionGet(context.TODO())
 		if err != nil {
-			log.Infof("Failed to obtain RS version: %v", err.Error())
+			log.Infof("Failed to obtain researcher-service version: %v", err.Error())
 			rsVersion = NewVersionInfo(0, 0, 0)
 		}
 	}
@@ -97,7 +97,7 @@ func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion rsrch_server.Ve
 	for _, minVersion := range append(additionalMinVersions, mandatoryMinVersion) {
 		if CompareVersion(*rsVersion, minVersion) < 0 {
 			if !IsZeroVersion(*rsVersion) {
-				log.Warningf("RS service version %v < minimal required version %v\n", rsVersion.Version, minVersion.Version)
+				log.Warningf("researcher-service version %v < minimal required version %v\n", rsVersion.Version, minVersion.Version)
 			}
 			return nil
 		}
