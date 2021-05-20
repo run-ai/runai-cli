@@ -88,6 +88,13 @@ func TopCommand() *cobra.Command {
 }
 
 var usageFormatters = map[string]ui.FormatFunction{
+	"cpu": func(value, model interface{}) (string, error) {
+		cpu, ok := value.(float64)
+		if !ok {
+			return "", fmt.Errorf("[CPU Format]:: expecting float64")
+		}
+		return fmt.Sprintf("%.0fm", cpu*1000), nil
+	},
 	"cpuusage": func(value, model interface{}) (string, error) {
 		resourceUsage, ok := value.(types.ResourceUsage)
 		if !ok {

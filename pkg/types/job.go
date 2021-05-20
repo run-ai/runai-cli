@@ -29,14 +29,20 @@ type MemoryMetrics struct {
 
 // CPUMetrics resource metrics
 type CPUMetrics struct {
-	Allocated float64        `title:"Allocated"`
+	Allocated float64        `title:"Allocated" format:"cpu"`
 	Usage     *ResourceUsage `title:"Usage" format:"cpuusage"`
+}
+
+// GPUMetrics resource metrics
+type GPUMetrics struct {
+	Allocated   float64 `title:"Allocated"`
+	Utilization float64 `title:"Util" format:"%"`
 }
 
 // JobView is general status of a RunAI/MPI Job
 type JobView struct {
 	Info   *JobGeneralInfo `group:"GENERAL,flatten"`
-	GPUs   *CPUMetrics     `group:"GPU" def:"<none>"`
+	GPUs   *GPUMetrics     `group:"GPU" def:"<none>"`
 	GPUMem *MemoryMetrics  `group:"GPU MEMORY" def:"<none>"`
 	CPUs   *CPUMetrics     `group:"CPU"`
 	Mem    *MemoryMetrics  `group:"CPU MEMORY"`

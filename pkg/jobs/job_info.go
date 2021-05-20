@@ -71,9 +71,8 @@ func trainingJobToJobView(jobs []trainer.TrainingJob) map[string]types.JobView {
 				Duration: jobInfo.Duration(),
 				Node:     nodeName,
 			},
-			GPUs: &types.CPUMetrics{
+			GPUs: &types.GPUMetrics{
 				Allocated: jobInfo.CurrentAllocatedGPUs(),
-				Usage:     &types.ResourceUsage{},
 			},
 			GPUMem: &types.MemoryMetrics{
 				Allocated: getJobAllocatedGPUMem(jobInfo),
@@ -126,7 +125,7 @@ var metricSetters = []metricSetter{
 		Name:      "GPU Utilization",
 		QueryName: gpuUtilizationPQ,
 		Setter: func(job *types.JobView, value prom.MetricValue) {
-			job.GPUs.Usage.Utilization = value.(float64)
+			job.GPUs.Utilization = value.(float64)
 		},
 	},
 	{

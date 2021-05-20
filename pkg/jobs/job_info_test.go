@@ -55,11 +55,10 @@ var _ = Describe("Job Information Collection", func() {
 				Duration: 0,
 				Node:     "test_node",
 			},
-			GPUs: &types.CPUMetrics{
-				Allocated: 1,
-				Usage: &types.ResourceUsage{
-					Usage:       0,
-					Utilization: 99}},
+			GPUs: &types.GPUMetrics{
+				Allocated:   1,
+				Utilization: 99,
+			},
 			GPUMem: &types.MemoryMetrics{
 				Allocated: 10000 * 1000 * 1000,
 				Usage: &types.ResourceUsage{
@@ -137,7 +136,7 @@ var _ = Describe("Job Information Collection", func() {
 				}
 				fakePromClient := util.FakePrometheusClient(metrics, nil)
 				jobViews, _ := GetJobsMetrics(fakePromClient, jobs)
-				expectedJobView.GPUs = &types.CPUMetrics{Usage: &types.ResourceUsage{}}
+				expectedJobView.GPUs = &types.GPUMetrics{}
 				expectedJobView.CPUs = &types.CPUMetrics{Usage: &types.ResourceUsage{}}
 				expectedJobView.Mem = &types.MemoryMetrics{Usage: &types.ResourceUsage{}}
 				expectedJobView.GPUMem.Usage = &types.ResourceUsage{}
