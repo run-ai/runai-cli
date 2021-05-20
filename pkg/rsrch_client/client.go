@@ -96,7 +96,9 @@ func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion rsrch_server.Ve
 	//
 	for _, minVersion := range append(additionalMinVersions, mandatoryMinVersion) {
 		if CompareVersion(*rsVersion, minVersion) < 0 {
-			log.Warningf("RS service version %v < minimal required version %v\n", rsVersion.Version, minVersion.Version)
+			if !IsZeroVersion(*rsVersion) {
+				log.Warningf("RS service version %v < minimal required version %v\n", rsVersion.Version, minVersion.Version)
+			}
 			return nil
 		}
 	}

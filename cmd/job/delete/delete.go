@@ -105,7 +105,7 @@ func NewDeleteCommand() *cobra.Command {
 				//
 				deleteJobsStatus, err = rs.JobDelete(context.TODO(), jobsToDelete)
 			} else {
-				log.Infof("RS cannot serve the request, use in-house CLI code for job delete")
+				log.Infof("researcher-service cannot serve the request, use in-house CLI code for job delete")
 
 				clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 				if err != nil {

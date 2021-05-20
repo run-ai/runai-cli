@@ -43,7 +43,8 @@ func (c *RsrchClient) VersionGet(ctx context.Context) (*rsrch_server.VersionInfo
 }
 
 //
-//    compsre two versions, e.g. 0.1.10 VS 0.1.11
+//    WAIT_FOR_OFER Should move to researcher service
+//    compare two versions, e.g. 0.1.10 VS 0.1.11
 //    returns (strcmp style)
 //		0 -> the two versions are identical
 //		>0 -> versionA > versionB
@@ -60,4 +61,7 @@ func CompareVersion(versiona, versionb rsrch_server.VersionInfo) int {
 		return versiona.Subver - versionb.Subver
 	}
 	return 0
+}
+func IsZeroVersion(version rsrch_server.VersionInfo) bool {
+	return version.Major == 0 && version.Minor == 0 && version.Subver == 0
 }
