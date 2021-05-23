@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"encoding/json"
-
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/cmd/util"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
@@ -195,51 +193,6 @@ func getEndTimeOfPod(pod *v1.Pod) *metav1.Time {
 		}
 	}
 	return &finishTime
-}
-
-// MarshalJSON encoding/json api
-func (rj *RunaiJob) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		BasicJobInfo      *cmdTypes.BasicJobInfo
-		TrainerType       string
-		ChiefPod          *v1.Pod
-		CreationTimestamp metav1.Time
-		Interactive       bool
-		CreatedByCLI      bool
-		ServiceUrls       []string
-		Deleted           bool
-		PodSpec           v1.PodSpec
-		PodMetadata       metav1.ObjectMeta
-		JobMetadata       metav1.ObjectMeta
-		Namespace         string
-		Pods              []v1.Pod
-		Status            string
-		Parallelism       int32
-		Completions       int32
-		Failed            int32
-		Succeeded         int32
-		WorkloadType      cmdTypes.ResourceType
-	}{
-		BasicJobInfo:      rj.BasicJobInfo,
-		TrainerType:       rj.trainerType,
-		ChiefPod:          rj.chiefPod,
-		CreationTimestamp: rj.creationTimestamp,
-		Interactive:       rj.interactive,
-		CreatedByCLI:      rj.createdByCLI,
-		ServiceUrls:       rj.serviceUrls,
-		Deleted:           rj.deleted,
-		PodSpec:           rj.podSpec,
-		PodMetadata:       rj.podMetadata,
-		JobMetadata:       rj.jobMetadata,
-		Namespace:         rj.namespace,
-		Pods:              rj.pods,
-		Status:            rj.status,
-		Parallelism:       rj.parallelism,
-		Completions:       rj.completions,
-		Failed:            rj.failed,
-		Succeeded:         rj.succeeded,
-		WorkloadType:      rj.workloadType,
-	})
 }
 
 func (rj *RunaiJob) GetPodGroupName() string {

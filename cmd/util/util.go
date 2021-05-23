@@ -6,6 +6,7 @@ import (
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
 	"github.com/run-ai/runai-cli/pkg/types"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,7 +34,7 @@ func GetJobDoesNotExistsInNamespaceError(jobName string, namespaceInfo types.Nam
 	}
 }
 
-func PrintShowingJobsInNamespaceMessage(namespaceInfo types.NamespaceInfo, status string) {
+func PrintShowingJobsInNamespaceMessageByStatuses(namespaceInfo types.NamespaceInfo, status v1.PodPhase) {
 	if namespaceInfo.ProjectName != types.AllProjects {
 		if namespaceInfo.ProjectName != "" {
 			var statusMessage = ""

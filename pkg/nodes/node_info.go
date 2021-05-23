@@ -55,7 +55,6 @@ type NodeInfo struct {
 	PrometheusData prom.MetricResultsByQueryName
 }
 
-// GetGeneralInfo returns
 func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
 	return types.NodeGeneralInfo{
 		Name:      ni.Node.Name,
@@ -219,7 +218,7 @@ func GetAllNodeInfos(client *client.Client, shouldQueryMetrics bool) ([]NodeInfo
 
 func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error) {
 	var promData prom.MetricResultsByItems
-	promClient, promErr := prom.BuildPrometheusClient(client)
+	promClient, promErr := prom.BuildMetricsClient(client)
 	if promErr != nil {
 		return nil, promErr
 	}

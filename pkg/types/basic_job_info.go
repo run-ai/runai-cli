@@ -1,8 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -37,28 +35,6 @@ func PodResources(pods []v1.Pod) []Resource {
 type BasicJobInfo struct {
 	name      string
 	resources []Resource
-}
-
-type globalJobInfo struct {
-	Name      string
-	Resources []Resource
-}
-
-func (j *BasicJobInfo) MarshalJSON() ([]byte, error) {
-	return json.Marshal(globalJobInfo{
-		Name:      j.name,
-		Resources: j.resources,
-	})
-}
-
-func (j *BasicJobInfo) UnmarshalJSON(data []byte) error {
-	var tempJobInfo globalJobInfo
-	err := json.Unmarshal(data, &tempJobInfo)
-	if err == nil {
-		j.name = tempJobInfo.Name
-		j.resources = tempJobInfo.Resources
-	}
-	return err
 }
 
 func NewBasicJobInfo(name string, resources []Resource) *BasicJobInfo {

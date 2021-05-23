@@ -82,7 +82,7 @@ type (
 	}
 )
 
-func BuildPrometheusClient(c *client.Client) (*Client, error) {
+func BuildMetricsClient(c *client.Client) (*Client, error) {
 	ps := &Client{
 		client:        c.GetClientset(),
 		dynamicClient: c.GetDynamicClient(),

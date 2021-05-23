@@ -5,6 +5,8 @@ import (
 	"io"
 	"reflect"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // DECLERATION: currently sub grouping are not supported
@@ -192,7 +194,8 @@ func (td *tableData) RenderRows(w io.Writer, rows interface{}) Table {
 					val, err = c.Formmater(ft.Interface(), r)
 					if err != nil {
 						td.err = err
-						return td
+						log.Warn(err)
+						val = "N/A"
 					}
 				} else {
 					val = StringifyValue(ft)

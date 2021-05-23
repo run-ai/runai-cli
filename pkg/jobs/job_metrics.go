@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -22,90 +21,7 @@ const (
 	usedCpusPQ        = "usedCpus"
 	requestedCpusPQ   = "requestedCpus"
 	requestedCPUMemPQ = "requestedCPUMem"
-
-	podGroupUUIDLength = 36
 )
-
-var (
-	prometheusJobLabelID = "pod_group_uuid"
-	jobPQs               = prom.QueryNameToQuery{
-		gpuAllocationPQ:   `runai_allocated_gpus`,
-		gpuUtilizationPQ:  `sum(runai_pod_group_gpu_utilization) by (pod_group_uuid) / on (pod_group_uuid) (count(runai_pod_group_gpu_utilization) by (pod_group_uuid))`,
-		usedGpusMemoryPQ:  `sum(runai_pod_group_used_gpu_memory) by (pod_group_uuid)`,
-		usedCpusMemoryPQ:  `runai_job_memory_used_bytes`,
-		requestedCpusPQ:   `runai_active_job_cpu_allocated_cores`,
-		utilizedCpusPQ:    `runai_job_cpu_usage / on(pod_group_uuid) runai_active_job_cpu_allocated_cores * 100`,
-		usedCpusPQ:        `runai_job_cpu_usage`,
-		requestedCPUMemPQ: `runai_active_job_memory_allocated_bytes`,
-	}
-)
-
-func getJobAllocatedGPUMem(job trainer.TrainingJob) float64 {
-	memoryQuantity, err := resource.ParseQuantity(job.CurrentAllocatedGPUsMemory())
-	if err != nil {
-		log.Warn("Couldn't read allocated memory for job ", job.Name(), " : ", err)
-		memoryQuantity = *resource.NewQuantity(0, resource.DecimalSI)
-	}
-	allocatedMemory, ok := memoryQuantity.AsInt64()
-	if !ok {
-		return 0
-	}
-	return float64(allocatedMemory)
-}
-
-func trainingJobToJobView(jobs []trainer.TrainingJob) map[string]types.JobView {
-	views := make(map[string]types.JobView, len(jobs))
-	for _, jobInfo := range jobs {
-		podGroupUUID := jobInfo.GetPodGroupUUID()
-		nodeName := jobInfo.HostIPOfChief()
-		if strings.Contains(nodeName, ", ") {
-			nodeName = "<multiple>"
-		}
-		views[podGroupUUID] = types.JobView{
-			Info: &types.JobGeneralInfo{
-				Name:     jobInfo.Name(),
-				Project:  jobInfo.Project(),
-				User:     jobInfo.User(),
-				Type:     jobInfo.Trainer(),
-				Status:   jobInfo.GetStatus(),
-				Duration: jobInfo.Duration(),
-				Node:     nodeName,
-			},
-			GPUs: &types.GPUMetrics{
-				Allocated: jobInfo.CurrentAllocatedGPUs(),
-			},
-			GPUMem: &types.MemoryMetrics{
-				Allocated: getJobAllocatedGPUMem(jobInfo),
-				Usage:     &types.ResourceUsage{},
-			},
-			CPUs: &types.CPUMetrics{
-				Usage: &types.ResourceUsage{},
-			},
-			Mem: &types.MemoryMetrics{
-				Usage: &types.ResourceUsage{},
-			},
-		}
-	}
-	return views
-}
-
-func queryJobsMetrics(promClient prom.QueryClient) (*prom.MetricResultsByItems, error) {
-	var promData prom.MetricResultsByItems
-	promData, promErr := promClient.GroupMultiQueriesToItems(jobPQs, prometheusJobLabelID)
-	if promErr != nil {
-		return nil, promErr
-	}
-	return &promData, nil
-}
-
-func printMetrics(metrics prom.MetricResultsByItems) {
-	b, err := json.MarshalIndent(metrics, "", "\t")
-	if err != nil {
-		log.Error("Error marshaling json: ", err)
-		return
-	}
-	log.Infof("Metrics: %v", string(b))
-}
 
 type metricSetter struct {
 	Name      string
@@ -184,6 +100,78 @@ var metricSetters = []metricSetter{
 	},
 }
 
+var (
+	prometheusJobLabelID = "pod_group_uuid"
+	jobPQs               = prom.QueryNameToQuery{
+		gpuAllocationPQ:   `runai_allocated_gpus`,
+		gpuUtilizationPQ:  `sum(runai_pod_group_gpu_utilization) by (pod_group_uuid) / on (pod_group_uuid) (count(runai_pod_group_gpu_utilization) by (pod_group_uuid))`,
+		usedGpusMemoryPQ:  `sum(runai_pod_group_used_gpu_memory) by (pod_group_uuid)`,
+		usedCpusMemoryPQ:  `runai_job_memory_used_bytes`,
+		requestedCpusPQ:   `runai_active_job_cpu_allocated_cores`,
+		utilizedCpusPQ:    `runai_job_cpu_usage / on(pod_group_uuid) runai_active_job_cpu_allocated_cores * 100`,
+		usedCpusPQ:        `runai_job_cpu_usage`,
+		requestedCPUMemPQ: `runai_active_job_memory_allocated_bytes`,
+	}
+)
+
+func getJobAllocatedGPUMem(job trainer.TrainingJob) float64 {
+	memoryQuantity, err := resource.ParseQuantity(job.CurrentAllocatedGPUsMemory())
+	if err != nil {
+		log.Warn("Couldn't read allocated memory for job ", job.Name(), " : ", err)
+		memoryQuantity = *resource.NewQuantity(0, resource.DecimalSI)
+	}
+	allocatedMemory, ok := memoryQuantity.AsInt64()
+	if !ok {
+		return 0
+	}
+	return float64(allocatedMemory)
+}
+
+func trainingJobToJobView(jobs []trainer.TrainingJob) map[string]types.JobView {
+	views := make(map[string]types.JobView, len(jobs))
+	for _, jobInfo := range jobs {
+		podGroupUUID := jobInfo.GetPodGroupUUID()
+		nodeName := jobInfo.HostIPOfChief()
+		if strings.Contains(nodeName, ", ") {
+			nodeName = "<multiple>"
+		}
+		views[podGroupUUID] = types.JobView{
+			Info: &types.JobGeneralInfo{
+				Name:     jobInfo.Name(),
+				Project:  jobInfo.Project(),
+				User:     jobInfo.User(),
+				Type:     jobInfo.Trainer(),
+				Status:   jobInfo.GetStatus(),
+				Duration: jobInfo.Duration(),
+				Node:     nodeName,
+			},
+			GPUs: &types.GPUMetrics{
+				Allocated: jobInfo.CurrentAllocatedGPUs(),
+			},
+			GPUMem: &types.MemoryMetrics{
+				Allocated: getJobAllocatedGPUMem(jobInfo),
+				Usage:     &types.ResourceUsage{},
+			},
+			CPUs: &types.CPUMetrics{
+				Usage: &types.ResourceUsage{},
+			},
+			Mem: &types.MemoryMetrics{
+				Usage: &types.ResourceUsage{},
+			},
+		}
+	}
+	return views
+}
+
+func queryJobsMetrics(promClient prom.QueryClient) (*prom.MetricResultsByItems, error) {
+	var promData prom.MetricResultsByItems
+	promData, promErr := promClient.GroupMultiQueriesToItems(jobPQs, prometheusJobLabelID)
+	if promErr != nil {
+		return nil, promErr
+	}
+	return &promData, nil
+}
+
 func addMetricsDataToViews(jobs map[string]types.JobView, metrics prom.MetricResultsByItems) {
 	for podGroupUUID, job := range jobs {
 		jobMetrics, found := metrics[podGroupUUID]
@@ -208,7 +196,6 @@ func addMetricsDataToViews(jobs map[string]types.JobView, metrics prom.MetricRes
 
 // GetJobsMetrics fetches and returns information about all requested jobs
 func GetJobsMetrics(client prom.QueryClient, jobs []trainer.TrainingJob) (views []types.JobView, err error) {
-	jobs = trainer.MakeTrainingJobOrderdByGPUCount(trainer.MakeTrainingJobOrderdByName(jobs))
 	jobsInfo := trainingJobToJobView(jobs)
 	metrics, err := queryJobsMetrics(client)
 	if err == nil {

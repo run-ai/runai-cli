@@ -142,7 +142,7 @@ var _ = Describe("Job Information Collection", func() {
 				expectedJobView.GPUMem.Usage = &types.ResourceUsage{}
 				Expect(jobViews).To(Equal([]types.JobView{expectedJobView}))
 			})
-			It("Shows metrics for multiple jobs sorted by requested gpu count and name", func() {
+			It("Shows metrics for multiple jobs sorted by the order they were sent in", func() {
 				job3 := util.GetRunaiJob(NAMESPACE, "job-3", "id3")
 				job3.Annotations[cmdutil.PodGroupRequestedGPUs] = "2"
 				pod3 := util.CreatePodOwnedBy(NAMESPACE, "pod3", nil, string(job3.UID), string(cmdTypes.ResourceTypeJob), job3.Name)
@@ -155,6 +155,7 @@ var _ = Describe("Job Information Collection", func() {
 				if err != nil {
 					Fail(fmt.Sprintf("%v", err))
 				}
+				jobs = trainer.MakeTrainingJobOrderdByGPUCount(trainer.MakeTrainingJobOrderdByName(jobs))
 				metrics[string(job2.UID)] = metrics[string(job.UID)]
 				metrics[string(job3.UID)] = metrics[string(job.UID)]
 				fakePromClient := util.FakePrometheusClient(metrics, nil)

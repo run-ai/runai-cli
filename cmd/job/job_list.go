@@ -77,7 +77,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 		os.Exit(1)
 	}
 
-	cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo, "")
+	cmdUtil.PrintShowingJobsInNamespaceMessageByStatuses(namespaceInfo, cmdUtil.AllStatuses)
 
 	jobs, invalidJobs, err := PrepareTrainerJobList(kubeClient, namespaceInfo)
 	if err != nil {

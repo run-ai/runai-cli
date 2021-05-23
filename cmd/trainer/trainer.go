@@ -19,7 +19,7 @@ import (
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/types"
-	"github.com/run-ai/runai-cli/pkg/ui"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -144,17 +144,29 @@ func MakeTrainingJobOrderdByGPUCount(jobList []TrainingJob) []TrainingJob {
 	return []TrainingJob(newJoblist)
 }
 
+func contains(s []v1.PodPhase, searchterm string) bool {
+	for _, a := range s {
+		if a == v1.PodPhase(searchterm) {
+			return true
+		}
+	}
+	return false
+}
+
 // GetAllJobs and filter them by `namespaceInfo` and optionaly filters out pod `filterStatus`
-func GetAllJobs(kubeClient *client.Client, namespaceInfo types.NamespaceInfo, filterStatus []string) (jobs []TrainingJob, err error) {
+func GetAllJobs(kubeClient *client.Client, namespaceInfo types.NamespaceInfo, filterStatus []v1.PodPhase) (jobs []TrainingJob, err error) {
 	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
+		if !trainer.IsEnabled() {
+			continue
+		}
 		trainingJobs, err := trainer.ListTrainingJobs(namespaceInfo.Namespace)
 		if err != nil {
 			return nil, err
 		}
 		if len(filterStatus) != 0 {
 			for _, job := range trainingJobs {
-				if filterStatus != nil && ui.Contains(filterStatus, job.GetStatus()) {
+				if filterStatus != nil && contains(filterStatus, job.GetStatus()) {
 					jobs = append(jobs, job)
 				}
 			}
