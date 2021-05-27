@@ -15,7 +15,6 @@
 package trainer
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -82,33 +81,6 @@ func (mj *MPIJob) Trainer() string {
 
 func (mj *MPIJob) CreatedByCLI() bool {
 	return true
-}
-
-// MarshalJSON encoding/json api
-func (mj *MPIJob) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		BasicJobInfo *cmdTypes.BasicJobInfo
-		Mpijob       mpi.MPIJob
-		Chiefjob     batchv1.Job
-		Pods         []v1.Pod // all the pods including statefulset and job
-		ChiefPod     v1.Pod   // the chief pod
-		RequestedGPU int64
-		AllocatedGPU int64
-		TrainerType  string // return trainer type: TENSORFLOW
-		PodMetadata  metav1.ObjectMeta
-		ImageName    string
-	}{
-		BasicJobInfo: mj.BasicJobInfo,
-		Mpijob:       mj.mpijob,
-		Chiefjob:     mj.chiefjob,
-		Pods:         mj.pods,
-		ChiefPod:     mj.chiefPod,
-		RequestedGPU: mj.requestedGPU,
-		AllocatedGPU: mj.allocatedGPU,
-		TrainerType:  mj.trainerType,
-		PodMetadata:  mj.podMetadata,
-		ImageName:    mj.imageName,
-	})
 }
 
 // GetPodGroupUUID the uid of the pod group for pods of this job
