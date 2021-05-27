@@ -74,9 +74,15 @@ type (
 		url                string
 		authorizationToken string
 	}
+
+	// QueryClient is interface to query prometheus
+	QueryClient interface {
+		// GroupMultiQueriesToItems queries prometheus for multiple queries from `queryMap` and groups the results by the `labelId` values
+		GroupMultiQueriesToItems(queryMap QueryNameToQuery, labelID string) (MetricResultsByItems, error)
+	}
 )
 
-func BuildPrometheusClient(c *client.Client) (*Client, error) {
+func BuildMetricsClient(c *client.Client) (*Client, error) {
 	ps := &Client{
 		client:        c.GetClientset(),
 		dynamicClient: c.GetDynamicClient(),
@@ -202,7 +208,7 @@ func handleQueryResponse(rawMetric []byte, query string) (*MetricData, error) {
 		return nil, fmt.Errorf("failed to query prometheus, status: %s", metricResponse.Status)
 	}
 	if len(metricResponse.Data.Result) == 0 {
-		log.Debugf("The metric is not exist in prometheus for query %s", query)
+		log.Debugf("The metric does not exist in prometheus for query %s", query)
 	}
 	return &metricResponse.Data, nil
 }

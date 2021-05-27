@@ -16,12 +16,13 @@ package job
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/cmd/completion"
-	"github.com/run-ai/runai-cli/pkg/types"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/pkg/types"
 
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
@@ -46,10 +47,10 @@ const jobInvalidStateOnCreationTimeInSeconds = 30
 func ListCommand() *cobra.Command {
 	var allNamespaces bool
 	var command = &cobra.Command{
-		Use:     "jobs",
-		Aliases: []string{"job"},
-		Short:   "List all jobs.",
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		Use:               "jobs",
+		Aliases:           []string{"job"},
+		Short:             "List all jobs.",
+		PreRun:            commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		ValidArgsFunction: completion.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			RunJobList(cmd, args, allNamespaces)
@@ -76,7 +77,7 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 		os.Exit(1)
 	}
 
-	cmdUtil.PrintShowingJobsInNamespaceMessage(namespaceInfo)
+	cmdUtil.PrintShowingJobsInNamespaceMessageByStatuses(namespaceInfo, cmdUtil.AllStatuses)
 
 	jobs, invalidJobs, err := PrepareTrainerJobList(kubeClient, namespaceInfo)
 	if err != nil {
@@ -91,16 +92,9 @@ func RunJobList(cmd *cobra.Command, args []string, allNamespaces bool) {
 }
 
 func PrepareTrainerJobList(kubeClient *client.Client, namespaceInfo types.NamespaceInfo) ([]trainer.TrainingJob, []string, error) {
-	jobs := []trainer.TrainingJob{}
-	trainers := trainer.NewTrainers(kubeClient)
-	for _, curTrainer := range trainers {
-		if curTrainer.IsEnabled() {
-			trainingJobs, err := curTrainer.ListTrainingJobs(namespaceInfo.Namespace)
-			if err != nil {
-				return nil, nil, err
-			}
-			jobs = append(jobs, trainingJobs...)
-		}
+	jobs, err := trainer.GetAllJobs(kubeClient, namespaceInfo, nil)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	invalidJobs := []string{}

@@ -1,0 +1,112 @@
+{
+	"id1": {
+		"gpuAllocation": [
+			{
+				"metric": {
+					"__name__": "runai_allocated_gpus",
+					"endpoint": "http-metrics",
+					"instance": "10.244.2.71:8080",
+					"job": "prometheus-operator-runai-scheduler",
+					"namespace": "runai",
+					"pod": "runai-scheduler-85cd54cd58-t4xch",
+					"pod_group_name": "job-0",
+					"pod_group_uuid": "d1",
+					"queue_name": "team-a",
+					"service": "prometheus-operator-runai-scheduler",
+					"workload_name": "job-0",
+					"workload_type": "Train"
+				},
+				"value": [
+					1621333800,
+					"1"
+				]
+			}
+		],
+		"gpuUtilization": [
+			{
+				"metric": {
+					"pod_group_uuid": "6ae70f1d-eff5-4bad-a2db-17f3b9fd597c"
+				},
+				"value": [
+					1621333800,
+					"99"
+				]
+			}
+		],
+		"requestedCPUMem": [
+			{
+				"metric": {
+					"__name__": "runai_active_job_memory_allocated_bytes",
+					"pod_group_name": "job-0",
+					"pod_group_uuid": "6ae70f1d-eff5-4bad-a2db-17f3b9fd597c"
+				},
+				"value": [
+					1621333800,
+					"104857600"
+				]
+			}
+		],
+		"requestedCpus": [
+			{
+				"metric": {
+					"__name__": "runai_active_job_cpu_allocated_cores",
+					"pod_group_name": "job-0",
+					"pod_group_uuid": "6ae70f1d-eff5-4bad-a2db-17f3b9fd597c"
+				},
+				"value": [
+					1621333800,
+					"0.5"
+				]
+			}
+		],
+		"usedCpus": [
+			{
+				"metric": {
+					"__name__": "runai_job_cpu_usage",
+					"pod_group_name": "job-0",
+					"pod_group_uuid": "6ae70f1d-eff5-4bad-a2db-17f3b9fd597c",
+					"pod_namespace": "runai-team-a"
+				},
+				"value": [
+					1621333800,
+					"0.75"
+				]
+			}
+		],
+		"usedCpusMemory": [
+			{
+				"metric": {
+					"__name__": "runai_job_memory_used_bytes",
+					"pod_group_name": "job-0",
+					"pod_group_uuid": "6ae70f1d-eff5-4bad-a2db-17f3b9fd597c"
+				},
+				"value": [
+					1621333800,
+                    "2621440000"
+				]
+			}
+		],
+		"usedGpusMemory": [
+			{
+				"metric": {
+					"pod_group_uuid": "6ae70f1d-eff5-4bad-a2db-17f3b9fd597c"
+				},
+				"value": [
+					1621333800,
+					"9000"
+				]
+			}
+		],
+		"utilizedCpus": [
+			{
+				"metric": {
+					"pod_group_uuid": "6ae70f1d-eff5-4bad-a2db-17f3b9fd597c"
+				},
+				"value": [
+					1621333800,
+					"150.0000000000000"
+				]
+			}
+		]
+	}
+}

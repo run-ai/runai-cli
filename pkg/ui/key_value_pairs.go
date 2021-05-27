@@ -202,7 +202,7 @@ func renderPairChildren(w io.Writer, t reflect.Value, pair PairMeta, root interf
 
 		// set default value if it is an empty
 		if len(val) == 0 {
-			val = c.Defult
+			val = c.Default
 		}
 
 		// skip empty values

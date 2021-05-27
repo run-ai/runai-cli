@@ -1,17 +1,17 @@
 package ui
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type (
 
 	// Tag is a general tag structure
 	Tag struct {
-		Val string // the first value 
+		Val   string // the first value
 		Flags map[string]bool
-		Keys map[string]string
+		Keys  map[string]string
 	}
 
 	GroupTag struct {
@@ -27,25 +27,24 @@ type (
 
 const (
 	// tag names
-	titleTagName  = "title"
-	defultTagName = "def"
-	formatTagName = "format"
-	groupTagName  = "group"
+	titleTagName   = "title"
+	defaultTagName = "def"
+	formatTagName  = "format"
+	groupTagName   = "group"
 
 	// group flags
-	flattenGroupFlag	= "flatten"
-	
+	flattenGroupFlag = "flatten"
 )
 
 func NewTag(tag string) Tag {
-	t :=  Tag {
+	t := Tag{
 		Flags: map[string]bool{},
-		Keys: map[string]string{},
+		Keys:  map[string]string{},
 	}
 	tag = strings.TrimSpace(tag)
 	tagSegments := strings.Split(tag, ",")
-	for i,s := range tagSegments {
-		if (i == 0) {
+	for i, s := range tagSegments {
+		if i == 0 {
 			t.Val = s
 			continue
 		}
@@ -57,16 +56,15 @@ func NewTag(tag string) Tag {
 			t.Flags[sub[0]] = true
 		}
 	}
-	return t;
+	return t
 }
 
-
-func NewGroupTag(tagStr string) GroupTag{
+func NewGroupTag(tagStr string) GroupTag {
 	tag := NewTag(tagStr)
-	groupId+=1
-	return GroupTag {
-		ID: strconv.Itoa(groupId),
-		Name: tag.Val,
-		Flatten: tag.Flags[flattenGroupFlag] || len(tag.Val)==0,
+	groupID += 1
+	return GroupTag{
+		ID:      strconv.Itoa(groupID),
+		Name:    tag.Val,
+		Flatten: tag.Flags[flattenGroupFlag] || len(tag.Val) == 0,
 	}
 }

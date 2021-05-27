@@ -1,11 +1,10 @@
 package ui
 
-
 import (
 	"fmt"
-	"strings"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 func interfaceToArrayOfInterface(a interface{}) ([]interface{}, error) {
@@ -59,7 +58,6 @@ func StringifyValue(ft reflect.Value) string {
 	}
 }
 
-
 func getNesstedVal(v reflect.Value, path []string) (val *reflect.Value) {
 	val = &v
 
@@ -70,10 +68,10 @@ func getNesstedVal(v reflect.Value, path []string) (val *reflect.Value) {
 			return
 		}
 	}
-	return 
+	return
 }
 
-func getNesstedType(t reflect.Type, path []string) (*reflect.Type) {
+func getNesstedType(t reflect.Type, path []string) *reflect.Type {
 	nestedType := t
 
 	for _, key := range path {
@@ -87,29 +85,30 @@ func getNesstedType(t reflect.Type, path []string) (*reflect.Type) {
 	return &nestedType
 }
 
+// EnsureStringPaths ensures that each path in `paths` describes a valid nested fied of the object `obj`
 func EnsureStringPaths(obj interface{}, paths []string) []string {
 	objType := reflect.TypeOf(obj)
 	for _, path := range paths {
 		if getNesstedType(objType, strings.Split(path, ".")) == nil {
-			panic(fmt.Sprintf("[EnsureStringPaths]:: Not found path: '%s' on type: %s",path ,objType.Name()))
+			panic(fmt.Sprintf("[EnsureStringPaths]:: Not found path: '%s' on type: %s", path, objType.Name()))
 		}
 	}
 	return paths
 }
 
+// Contains checks that the string array `s` contains the search term `searchterm`
 func Contains(s []string, searchterm string) bool {
 	for _, a := range s {
-        if a ==  searchterm {
-            return true
-        }
-    }
-    return false
+		if a == searchterm {
+			return true
+		}
+	}
+	return false
 }
-
 
 func multiStr(s string, len int) string {
 	str := ""
-	for i :=0; i<len; i++ {
+	for i := 0; i < len; i++ {
 		str += s
 	}
 	return str

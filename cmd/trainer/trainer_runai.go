@@ -202,7 +202,6 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-
 	runaiJobs, err := rt.runaijobClient.RunV1().RunaiJobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
@@ -411,7 +410,6 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		return nil, err
 	}
 
-
 	// Get all different job stypes to one general job type with pod spec
 	jobsForListCommand := []*cmdTypes.PodTemplateJob{}
 	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
@@ -448,7 +446,6 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		podTemplate := cmdTypes.PodTemplateJobFromPod(pod)
 		jobsForListCommand = append(jobsForListCommand, podTemplate)
 	}
-
 
 	for _, job := range jobsForListCommand {
 		if !rt.isRunaiPodObject(job.ObjectMeta, job.Template) {

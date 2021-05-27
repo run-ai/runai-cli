@@ -5,18 +5,18 @@ import (
 	"reflect"
 )
 
+// FieldMeta metadata about a table field
 type FieldMeta struct {
-	Formmater                 FormatFunction
-	Path 					  []string
-	Key, Title, Defult string
+	Formmater           FormatFunction
+	Path                []string
+	Key, Title, Default string
 }
 
-
-func createFieldMeta(field reflect.StructField, formatMap FormattersByName, path []string)  (FieldMeta, error) {
+func createFieldMeta(field reflect.StructField, formatMap FormattersByName, path []string) (FieldMeta, error) {
 	var formaterFunc FormatFunction
 	key := field.Name
 	title := field.Tag.Get(titleTagName)
-	def := field.Tag.Get(defultTagName)
+	def := field.Tag.Get(defaultTagName)
 	format := field.Tag.Get(formatTagName)
 
 	if len(format) != 0 {
@@ -27,7 +27,7 @@ func createFieldMeta(field reflect.StructField, formatMap FormattersByName, path
 		}
 
 		if !found {
-			return FieldMeta{}, fmt.Errorf("[UI::FieldMeta] Not found format function for format name: %s  on field name: %s . Please make sure to include it in the TableOpt.CustomFormat", format, key)
+			return FieldMeta{}, fmt.Errorf("[UI::FieldMeta] Not found format function for format name: %s  on field name: %s . Please make sure to include it in the TableOpt.Formatts", format, key)
 		}
 		formaterFunc = f
 	}
@@ -38,7 +38,7 @@ func createFieldMeta(field reflect.StructField, formatMap FormattersByName, path
 
 	return FieldMeta{
 		Title:     title,
-		Defult:    def,
+		Default:   def,
 		Key:       key,
 		Path:      path,
 		Formmater: formaterFunc,

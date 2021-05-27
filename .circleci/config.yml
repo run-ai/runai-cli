@@ -2,7 +2,7 @@
 executors:
   runai-executor:
     docker:
-      - image: gcr.io/run-ai-staging/circleci-go:latest
+      - image: gcr.io/run-ai-staging/circleci-go:1.15.12
         auth:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY

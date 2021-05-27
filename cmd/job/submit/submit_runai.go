@@ -2,14 +2,15 @@ package submit
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/cmd/completion"
-	"github.com/run-ai/runai-cli/cmd/job"
 	"math"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/cmd/job"
 
 	"github.com/run-ai/runai-cli/cmd/exec"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
@@ -66,7 +67,7 @@ func NewRunaiJobCommand() *cobra.Command {
 		Use:                   "submit [flags] -- [COMMAND] [args...] [options]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Submit a new job.",
-		ValidArgsFunction: completion.NoArgs,
+		ValidArgsFunction:     completion.NoArgs,
 		Example:               submitExamples,
 		PreRun:                commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -204,7 +205,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 	fbg := flags.NewFlagsByGroups(command)
 	submitArgs.addCommonSubmit(fbg)
-	
+
 	submitArgs.addFlags(fbg)
 
 	fbg.UpdateFlagsByGroupsToCmd()
@@ -301,13 +302,13 @@ type submitRunaiJobArgs struct {
 	IsJupyter        *bool
 	IsPreemptible    *bool `yaml:"isPreemptible,omitempty"`
 	IsRunaiJob       *bool `yaml:"isRunaiJob,omitempty"`
-	Inference        *bool  `yaml:"inference,omitempty"`
+	Inference        *bool `yaml:"inference,omitempty"`
 	TtlAfterFinished *time.Duration
 
 	// Hidden flags
-	IsOldJob  *bool
-	IsMPS     *bool `yaml:"isMps,omitempty"`
-	Replicas  *int  `yaml:"replicas,omitempty"`
+	IsOldJob *bool
+	IsMPS    *bool `yaml:"isMps,omitempty"`
+	Replicas *int  `yaml:"replicas,omitempty"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {

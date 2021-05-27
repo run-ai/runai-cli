@@ -18,6 +18,7 @@ const (
 	GpuMbFactor   = 1000000 // 1024 * 1024
 )
 
+// RunaiJob information on RunAI jobs
 type RunaiJob struct {
 	*cmdTypes.BasicJobInfo
 	trainerType       string
@@ -211,6 +212,10 @@ func (rj *RunaiJob) GetPodGroupName() string {
 		return pod.Annotations[constants.PodGroupAnnotationForPod]
 	}
 	return ""
+}
+
+func (rj *RunaiJob) GetPodGroupUUID() string {
+	return string(rj.jobMetadata.UID)
 }
 
 // Get Dashboard

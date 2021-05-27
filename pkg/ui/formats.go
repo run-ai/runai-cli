@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type (
@@ -25,7 +26,7 @@ func BytesFormat(v interface{}, _ interface{}) (string, error) {
 	if err == nil {
 		return ByteCountIEC(n), nil
 	}
-	
+
 	return fmt.Sprintf("%v", v), err
 }
 
@@ -39,7 +40,7 @@ func TimeFormat(v interface{}, _ interface{}) (string, error) {
 	if err != nil {
 		return "00:00:00", err
 	}
-	return fmt.Sprintf("%02d:%02d:%02d", int64(s / (60 * 60)) , int64(s / 60) % 60, s % 60), nil
+	return fmt.Sprintf("%02d:%02d:%02d", int64(s/(60*60)), int64(s/60)%60, s%60), nil
 }
 
 /// utils
@@ -72,8 +73,7 @@ func ByteCountIEC(b int64) string {
 		float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-
-func numericInterfaceToFloat64(n interface{}) (float64, error){
+func numericInterfaceToFloat64(n interface{}) (float64, error) {
 	var err error
 	switch t := n.(type) {
 	case int64:
@@ -85,19 +85,19 @@ func numericInterfaceToFloat64(n interface{}) (float64, error){
 	case float64:
 		return t, nil
 	case string:
-		asNum, convertErr := strconv.ParseFloat(t,64)
+		asNum, convertErr := strconv.ParseFloat(t, 64)
 		if convertErr != nil {
 			return asNum, nil
 		}
 		err = convertErr
 
-	default: 
+	default:
 		err = fmt.Errorf("Unknown type")
 	}
 	return 0, err
 }
 
-func numericInterfaceToInt64(n interface{}) (int64, error){
+func numericInterfaceToInt64(n interface{}) (int64, error) {
 	var err error
 	switch t := n.(type) {
 	case int64:
@@ -108,6 +108,8 @@ func numericInterfaceToInt64(n interface{}) (int64, error){
 		return int64(t), nil
 	case float64:
 		return int64(t), nil
+	case time.Duration:
+		return int64(t / 1000000000), nil
 	case string:
 		asNum, convertErr := strconv.ParseInt(t, 10, 64)
 		if convertErr != nil {
@@ -115,7 +117,7 @@ func numericInterfaceToInt64(n interface{}) (int64, error){
 		}
 		err = convertErr
 
-	default: 
+	default:
 		err = fmt.Errorf("Unknown type")
 	}
 	return 0, err

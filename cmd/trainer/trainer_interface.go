@@ -85,6 +85,7 @@ type TrainingJob interface {
 	ServiceURLs() []string
 
 	GetPodGroupName() string
+	GetPodGroupUUID() string
 
 	RunningPods() int32
 	PendingPods() int32
@@ -102,6 +103,7 @@ type TrainingJob interface {
 	CliCommand() string
 }
 
+// Trainer interface for querying specific types of training jobs
 type Trainer interface {
 	// Check if the training job is supported
 	IsSupported(name, ns string) bool
@@ -114,5 +116,6 @@ type Trainer interface {
 
 	ListTrainingJobs(namespace string) ([]TrainingJob, error)
 
+	// Returns whether the trainer is enabled
 	IsEnabled() bool
 }

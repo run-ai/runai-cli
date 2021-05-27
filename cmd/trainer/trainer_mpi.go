@@ -83,6 +83,11 @@ func (mj *MPIJob) CreatedByCLI() bool {
 	return true
 }
 
+// GetPodGroupUUID the uid of the pod group for pods of this job
+func (mj *MPIJob) GetPodGroupUUID() string {
+	return string(mj.mpijob.UID)
+}
+
 func (mj *MPIJob) GetPodGroupName() string {
 	if len(mj.chiefPod.Annotations) == 0 {
 		return ""
