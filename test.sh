@@ -1,1 +1,1 @@
-GO111MODULE=on ${GENERAL_BUILD_OPTIONS} go test ./... -v
+GO111MODULE=on ${GENERAL_BUILD_OPTIONS} go test ./... -v -tags test

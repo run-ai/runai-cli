@@ -42,13 +42,6 @@ func NewRunaiTrainer(client client.Client) Trainer {
 	}
 }
 
-func NewRunaiTrainerWithClients(client client.Client, runaiclient clientset.Interface) Trainer {
-	return &RunaiTrainer{
-		client:         client.GetClientset(),
-		runaijobClient: runaiclient,
-	}
-}
-
 func fieldSelectorByName(name string) string {
 	return fmt.Sprintf("metadata.name=%s", name)
 }
