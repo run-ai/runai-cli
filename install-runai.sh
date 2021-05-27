@@ -25,7 +25,7 @@ if [ ! -d "${NEW_SCRIPT_FILES}" ]; then
   mkdir "${NEW_SCRIPT_FILES}"
 fi
 
-cp "${SCRIPT_DIR}"/bin/runai "${NEW_SCRIPT_FILES}"
+cp "${SCRIPT_DIR}"/runai "${NEW_SCRIPT_FILES}"
 cp "${SCRIPT_DIR}"/VERSION "${NEW_SCRIPT_FILES}"
 cp -R "${SCRIPT_DIR}"/charts "${NEW_SCRIPT_FILES}"
 
