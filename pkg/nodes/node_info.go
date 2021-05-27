@@ -2,8 +2,9 @@ package nodes
 
 import (
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/client"
 	"strings"
+
+	"github.com/run-ai/runai-cli/pkg/client"
 
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/helpers"
@@ -54,8 +55,6 @@ type NodeInfo struct {
 	PrometheusData prom.MetricResultsByQueryName
 }
 
-
-
 func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
 	return types.NodeGeneralInfo{
 		Name:      ni.Node.Name,
@@ -83,7 +82,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Capacity, ni.Node.Status.Capacity)
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )
-	totalGpus := int(util.AllocatableGpuInNodeIncludingFractions(ni.Node))
+	totalGpus := int(util.GetNodeGpuCapacity(ni.Node))
 	// check that the totalGpus is set
 	isFractionRunningOnNode := totalGpus > int(nodeResStatus.Capacity.GPUs)
 	if isFractionRunningOnNode {
@@ -217,7 +216,7 @@ func GetAllNodeInfos(client *client.Client, shouldQueryMetrics bool) ([]NodeInfo
 	return nodeInfoList, warning, err
 }
 
-func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error){
+func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error) {
 	var promData prom.MetricResultsByItems
 	promClient, promErr := prom.BuildPrometheusClient(client)
 	if promErr != nil {
