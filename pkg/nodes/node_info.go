@@ -75,7 +75,7 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 
 	// adding the kube data
 	nodeResStatus.Requested = podResStatus.Requested
-	nodeResStatus.Allocated = podResStatus.Requested
+	nodeResStatus.Allocated = podResStatus.Allocated
 	nodeResStatus.Allocated.GPUs = podResStatus.Allocated.GPUs // needed to count fractions as well
 	nodeResStatus.Limited = podResStatus.Limited
 	nodeResStatus.GpuType = ni.Node.Labels["nvidia.com/gpu.product"]
@@ -86,14 +86,14 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 	// check that the totalGpus is set
 	isFractionRunningOnNode := totalGpus > int(nodeResStatus.Capacity.GPUs)
 	if isFractionRunningOnNode {
-		nodeResStatus.NumberOfFractionalAllocatedGpu = len(util.GetSharedGPUsIndexUsedInPods(ni.Pods))
+		nodeResStatus.NumSharedGpus = totalGpus - int(util.GpuCapacity(ni.Node))
 		nodeResStatus.Capacity.GPUs = float64(totalGpus)
 		// update the allocatable too
-		nodeResStatus.Allocatable.GPUs += float64(nodeResStatus.NumberOfFractionalAllocatedGpu)
+		nodeResStatus.Allocatable.GPUs += float64(nodeResStatus.NumSharedGpus)
 	}
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Allocatable, ni.Node.Status.Allocatable)
-	nodeResStatus.GPUsInUse = nodeResStatus.NumberOfFractionalAllocatedGpu + int(podResStatus.Limited.GPUs)
+	nodeResStatus.GPUsInUse = nodeResStatus.NumSharedGpus + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
 

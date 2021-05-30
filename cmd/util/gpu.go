@@ -41,7 +41,7 @@ const (
 )
 
 // The way to get total GPU Count of Node: nvidia.com/gpu
-func TotalGpuInNode(node v1.Node) int64 {
+func GpuCapacity(node v1.Node) int64 {
 	val, ok := node.Status.Capacity[NVIDIAGPUResourceName]
 
 	if !ok {
@@ -62,11 +62,12 @@ func AllocatableGpuInNodeIncludingFractions(node v1.Node) int64 {
 		}
 	}
 
-	return TotalGpuInNode(node)
+	return GpuCapacity(node)
 }
 
 // The way to get GPU Count of Node: alpha.kubernetes.io/nvidia-gpu
 func GpuInNodeDeprecated(node v1.Node) int64 {
+	// FIXME: Should be node.Status.Capacity?
 	val, ok := node.Status.Allocatable[DeprecatedNVIDIAGPUResourceName]
 
 	if !ok {
