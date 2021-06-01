@@ -331,14 +331,14 @@ func BuildJobInfo(job trainer.TrainingJob, clientset kubernetes.Interface) *type
 	}
 
 	return &types.JobInfo{
-		Name:      job.Name(),
-		Namespace: job.Namespace(),
-		Status:    types.JobStatus(GetJobRealStatus(job)),
-		Duration:  util.ShortHumanDuration(job.Duration()),
-		Trainer:   job.Trainer(),
-		Priority:  getPriorityClass(job),
-		ChiefName: job.ChiefPod().Name,
-		Instances: instances,
+		Name:        job.Name(),
+		Namespace:   job.Namespace(),
+		Status:      types.JobStatus(GetJobRealStatus(job)),
+		Duration:    util.ShortHumanDuration(job.Duration()),
+		Trainer:     job.Trainer(),
+		Priority:    getPriorityClass(job),
+		ChiefName:   job.ChiefPod().Name,
+		Instances:   instances,
 		CommandLine: getCliCommand(job),
 	}
 }
@@ -361,5 +361,5 @@ func getCliCommand(job trainer.TrainingJob) string {
 		return cmd
 	} else {
 		return "N/A"
-	}	
+	}
 }

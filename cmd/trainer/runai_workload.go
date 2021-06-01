@@ -18,8 +18,8 @@ const (
 	GpuMbFactor   = 1000000 // 1024 * 1024
 )
 
-// RunaiJob information on RunAI jobs
-type RunaiJob struct {
+// RunaiWorkload information on RunAI workloads (RunaiJobs, inference jobs...)
+type RunaiWorkload struct {
 	*cmdTypes.BasicJobInfo
 	trainerType       string
 	chiefPod          *v1.Pod
@@ -41,10 +41,10 @@ type RunaiJob struct {
 	workloadType      cmdTypes.ResourceType
 }
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource, status string, parallelism, completions, failed, succeeded int32) *RunaiJob {
+func NewRunaiWorkload(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource, status string, parallelism, completions, failed, succeeded int32) *RunaiWorkload {
 	workloadType := ownerResource.ResourceType
 	resources := append(cmdTypes.PodResources(pods), ownerResource)
-	return &RunaiJob{
+	return &RunaiWorkload{
 		pods:              pods,
 		BasicJobInfo:      cmdTypes.NewBasicJobInfo(jobName, resources),
 		chiefPod:          lastCreatedPod,
@@ -67,46 +67,46 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1
 }
 
 // // Get the chief Pod of the Job.
-func (rj *RunaiJob) ChiefPod() *v1.Pod {
+func (rj *RunaiWorkload) ChiefPod() *v1.Pod {
 	return rj.chiefPod
 }
 
 // Get the name of the Training Job
-func (rj *RunaiJob) Name() string {
+func (rj *RunaiWorkload) Name() string {
 	return rj.BasicJobInfo.Name()
 }
 
 // Get the namespace of the Training Job
-func (rj *RunaiJob) Namespace() string {
+func (rj *RunaiWorkload) Namespace() string {
 	return rj.namespace
 }
 
 // Get all the pods of the Training Job
-func (rj *RunaiJob) AllPods() []v1.Pod {
+func (rj *RunaiWorkload) AllPods() []v1.Pod {
 	return rj.pods
 }
 
 // Get all the kubernetes resource of the Training Job
-func (rj *RunaiJob) Resources() []cmdTypes.Resource {
+func (rj *RunaiWorkload) Resources() []cmdTypes.Resource {
 	return rj.BasicJobInfo.Resources()
 }
 
-func (rj *RunaiJob) getStatus() v1.PodPhase {
+func (rj *RunaiWorkload) getStatus() v1.PodPhase {
 	return rj.chiefPod.Status.Phase
 }
 
 // Get the Status of the Job: RUNNING, PENDING,
-func (rj *RunaiJob) GetStatus() string {
+func (rj *RunaiWorkload) GetStatus() string {
 	return rj.status
 }
 
 // Return trainer Type, support MPI, standalone, tensorflow
-func (rj *RunaiJob) Trainer() string {
+func (rj *RunaiWorkload) Trainer() string {
 	return rj.trainerType
 }
 
 // Get the Job Age
-func (rj *RunaiJob) Age() time.Duration {
+func (rj *RunaiWorkload) Age() time.Duration {
 	if rj.creationTimestamp.IsZero() {
 		return 0
 	}
@@ -115,7 +115,7 @@ func (rj *RunaiJob) Age() time.Duration {
 
 // TODO
 // Get the Job Duration
-func (rj *RunaiJob) Duration() time.Duration {
+func (rj *RunaiWorkload) Duration() time.Duration {
 	if rj.chiefPod == nil {
 		return 0
 	}
@@ -129,12 +129,12 @@ func (rj *RunaiJob) Duration() time.Duration {
 	return rj.FinishTime().Sub(startTime.Time)
 }
 
-func (rj *RunaiJob) CreatedByCLI() bool {
+func (rj *RunaiWorkload) CreatedByCLI() bool {
 	return rj.createdByCLI
 }
 
 // Get start time
-func (rj *RunaiJob) StartTime() *metav1.Time {
+func (rj *RunaiWorkload) StartTime() *metav1.Time {
 	if rj.parallelism > 1 {
 		var earliestStartTime *metav1.Time
 		for _, pod := range rj.pods {
@@ -150,7 +150,7 @@ func (rj *RunaiJob) StartTime() *metav1.Time {
 }
 
 // Get start time
-func (rj *RunaiJob) FinishTime() *metav1.Time {
+func (rj *RunaiWorkload) FinishTime() *metav1.Time {
 	if rj.parallelism > 1 {
 		now := metav1.Now()
 		latestEndTimeOfPod := &now
@@ -195,7 +195,7 @@ func getEndTimeOfPod(pod *v1.Pod) *metav1.Time {
 	return &finishTime
 }
 
-func (rj *RunaiJob) GetPodGroupName() string {
+func (rj *RunaiWorkload) GetPodGroupName() string {
 	pod := rj.chiefPod
 	if pod == nil {
 		if len(rj.jobMetadata.Annotations) > 0 {
@@ -214,17 +214,17 @@ func (rj *RunaiJob) GetPodGroupName() string {
 	return ""
 }
 
-func (rj *RunaiJob) GetPodGroupUUID() string {
+func (rj *RunaiWorkload) GetPodGroupUUID() string {
 	return string(rj.jobMetadata.UID)
 }
 
 // Get Dashboard
-func (rj *RunaiJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
+func (rj *RunaiWorkload) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
 	return []string{}, nil
 }
 
 // Requested GPU count of the Job
-func (rj *RunaiJob) RequestedGPU() float64 {
+func (rj *RunaiWorkload) RequestedGPU() float64 {
 	requestedGPUs, ok := util.GetRequestedGPUsPerPodGroup(rj.jobMetadata.Annotations)
 	if ok {
 		return requestedGPUs
@@ -250,7 +250,7 @@ func (rj *RunaiJob) RequestedGPU() float64 {
 	return float64(val.Value())
 }
 
-func (rj *RunaiJob) RequestedGPUMemory() uint64 {
+func (rj *RunaiWorkload) RequestedGPUMemory() uint64 {
 	memory := util.GetRequestedGPUsMemoryPerPodGroup(rj.jobMetadata.Annotations)
 	if memory != 0 {
 		return memory
@@ -266,7 +266,7 @@ func (rj *RunaiJob) RequestedGPUMemory() uint64 {
 	return memory
 }
 
-func (rj *RunaiJob) RequestedGPUString() string {
+func (rj *RunaiWorkload) RequestedGPUString() string {
 	if memory := rj.RequestedGPUMemory(); memory != 0 {
 		return GetGpuMemoryStringFromMemoryCount(int64(memory))
 	}
@@ -274,7 +274,7 @@ func (rj *RunaiJob) RequestedGPUString() string {
 }
 
 // Requested GPU count of the Job
-func (rj *RunaiJob) AllocatedGPU() float64 {
+func (rj *RunaiWorkload) AllocatedGPU() float64 {
 	if rj.chiefPod == nil {
 		return 0
 	}
@@ -289,7 +289,7 @@ func (rj *RunaiJob) AllocatedGPU() float64 {
 }
 
 // the host ip of the chief pod
-func (rj *RunaiJob) HostIPOfChief() string {
+func (rj *RunaiWorkload) HostIPOfChief() string {
 	if rj.chiefPod == nil {
 		return ""
 	}
@@ -307,19 +307,19 @@ func (rj *RunaiJob) HostIPOfChief() string {
 }
 
 // The priority class name of the training job
-func (rj *RunaiJob) GetPriorityClass() string {
+func (rj *RunaiWorkload) GetPriorityClass() string {
 	return ""
 }
 
-func (rj *RunaiJob) Image() string {
+func (rj *RunaiWorkload) Image() string {
 	return rj.podSpec.Containers[0].Image
 }
 
-func (rj *RunaiJob) Project() string {
+func (rj *RunaiWorkload) Project() string {
 	return rj.podMetadata.Labels["project"]
 }
 
-func (rj *RunaiJob) User() string {
+func (rj *RunaiWorkload) User() string {
 
 	if userFromAnnotation, exists := rj.jobMetadata.Annotations[userFieldName]; exists && userFromAnnotation != "" {
 		return userFromAnnotation
@@ -333,11 +333,11 @@ func (rj *RunaiJob) User() string {
 	return rj.podMetadata.Labels[userFieldName]
 }
 
-func (rj *RunaiJob) ServiceURLs() []string {
+func (rj *RunaiWorkload) ServiceURLs() []string {
 	return rj.serviceUrls
 }
 
-func (rj *RunaiJob) RunningPods() int32 {
+func (rj *RunaiWorkload) RunningPods() int32 {
 	runningPods, ok := getRunningPods(rj.jobMetadata.Annotations)
 	if ok {
 		return runningPods
@@ -353,7 +353,7 @@ func (rj *RunaiJob) RunningPods() int32 {
 	return runningPods
 }
 
-func (rj *RunaiJob) PendingPods() int32 {
+func (rj *RunaiWorkload) PendingPods() int32 {
 	pendingPods, ok := getPendingPods(rj.jobMetadata.Annotations)
 	if ok {
 		return pendingPods
@@ -369,24 +369,24 @@ func (rj *RunaiJob) PendingPods() int32 {
 	return pendingPods
 }
 
-func (rj *RunaiJob) Completions() int32 {
+func (rj *RunaiWorkload) Completions() int32 {
 	return rj.completions
 }
 
-func (rj *RunaiJob) Parallelism() int32 {
+func (rj *RunaiWorkload) Parallelism() int32 {
 	return rj.parallelism
 }
 
-func (rj *RunaiJob) Succeeded() int32 {
+func (rj *RunaiWorkload) Succeeded() int32 {
 	return rj.succeeded
 
 }
 
-func (rj *RunaiJob) Failed() int32 {
+func (rj *RunaiWorkload) Failed() int32 {
 	return rj.failed
 }
 
-func (rj *RunaiJob) CurrentRequestedGPUs() float64 {
+func (rj *RunaiWorkload) CurrentRequestedGPUs() float64 {
 	totalRequestedGPUs, ok := getCurrentRequestedGPUs(rj.jobMetadata.Annotations)
 	if ok {
 		return totalRequestedGPUs
@@ -407,19 +407,19 @@ func (rj *RunaiJob) CurrentRequestedGPUs() float64 {
 	return rj.RequestedGPU()
 }
 
-func (rj *RunaiJob) CurrentRequestedGPUsMemory() int64 {
+func (rj *RunaiWorkload) CurrentRequestedGPUsMemory() int64 {
 	totalRequestedGpusMemory, _ := getCurrentRequestedGPUsMemory(rj.jobMetadata.Annotations)
 	return totalRequestedGpusMemory
 }
 
-func (rj *RunaiJob) CurrentRequestedGpusString() string {
+func (rj *RunaiWorkload) CurrentRequestedGpusString() string {
 	if memory := rj.CurrentRequestedGPUsMemory(); memory != 0 {
 		return GetGpuMemoryStringFromMemoryCount(memory)
 	}
 	return fmt.Sprintf("%v", rj.CurrentRequestedGPUs())
 }
 
-func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
+func (rj *RunaiWorkload) CurrentAllocatedGPUs() float64 {
 	totalRequestedGPUs, ok := getAllocatedRequestedGPUs(rj.jobMetadata.Annotations)
 	if ok {
 		return totalRequestedGPUs
@@ -436,23 +436,23 @@ func (rj *RunaiJob) CurrentAllocatedGPUs() float64 {
 	return rj.RequestedGPU()
 }
 
-func (rj *RunaiJob) CurrentAllocatedGPUsMemory() string {
+func (rj *RunaiWorkload) CurrentAllocatedGPUsMemory() string {
 	allocatedGpuMemoryInMb := getAllocatedGpusMemory(rj.jobMetadata.Annotations)
 	return GetGpuMemoryStringFromMemoryCount(int64(allocatedGpuMemoryInMb))
 }
 
-func (rj *RunaiJob) WorkloadType() string {
+func (rj *RunaiWorkload) WorkloadType() string {
 	return string(rj.workloadType)
 }
 
-func (rj *RunaiJob) TotalRequestedGPUsString() string {
+func (rj *RunaiWorkload) TotalRequestedGPUsString() string {
 	if memory := rj.TotalRequestedGPUsMemory(); memory != 0 {
 		return GetGpuMemoryStringFromMemoryCount(int64(memory))
 	}
 	return fmt.Sprintf("%v", rj.TotalRequestedGPUs())
 }
 
-func (rj *RunaiJob) TotalRequestedGPUs() float64 {
+func (rj *RunaiWorkload) TotalRequestedGPUs() float64 {
 	totalRequestedGPUs, ok := getTotalAllocatedGPUs(rj.jobMetadata.Annotations)
 	if ok {
 		return totalRequestedGPUs
@@ -461,10 +461,10 @@ func (rj *RunaiJob) TotalRequestedGPUs() float64 {
 	return rj.RequestedGPU() * float64(rj.Completions())
 }
 
-func (rj *RunaiJob) TotalRequestedGPUsMemory() uint64 {
+func (rj *RunaiWorkload) TotalRequestedGPUsMemory() uint64 {
 	return getTotalRequestedGPUsMemory(rj.jobMetadata.Annotations)
 }
 
-func (rj *RunaiJob) CliCommand() string {
+func (rj *RunaiWorkload) CliCommand() string {
 	return getCliCommand(rj.jobMetadata.Annotations)
 }
