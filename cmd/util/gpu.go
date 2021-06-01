@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -26,10 +27,9 @@ const (
 	RunaiGPUFraction = "gpu-fraction"
 	RunaiGPUMemory   = "gpu-memory"
 	// an annotation on each node
-	AllocatableGpus                    = "nvidia.com/gpu.count"
+	GpuCount                           = "nvidia.com/gpu.count"
 	NVIDIAGPUResourceName              = "nvidia.com/gpu"
 	ALIYUNGPUResourceName              = "aliyun.com/gpu-mem"
-	DeprecatedNVIDIAGPUResourceName    = "alpha.kubernetes.io/nvidia-gpu"
 	PodGroupRequestedGPUs              = "runai-podgroup-requested-gpus"
 	PodGroupRequestedGPUsMemory        = "runai-podgroup-requested-gpus-memory"
 	WorkloadCurrentAllocatedGPUs       = "runai-current-allocated-gpus"
@@ -40,22 +40,19 @@ const (
 	WorkloadTotalRequestedGPUsMemory   = "runai-total-requested-gpus-memory"
 )
 
-// The way to get total GPU Count of Node: nvidia.com/gpu
+// The way to get total GPU Count of Node (not including shared GPUs): nvidia.com/gpu
 func GpuCapacity(node v1.Node) int64 {
-	val, ok := node.Status.Capacity[NVIDIAGPUResourceName]
-
-	if !ok {
-		return GpuInNodeDeprecated(node)
+	if val, ok := node.Status.Capacity[NVIDIAGPUResourceName]; ok {
+		return val.Value()
 	}
 
-	return val.Value()
+	log.Debugf("Failed to retreive GPU capacity of node %v.", node.Name)
+	return 0
 }
 
-// The way to get allocatble GPU Count of Node
-func AllocatableGpuInNodeIncludingFractions(node v1.Node) int64 {
-	val, ok := node.Labels[AllocatableGpus]
-
-	if ok {
+// Including shared GPUs
+func TotalGpuCount(node v1.Node) int64 {
+	if val, ok := node.Labels[GpuCount]; ok {
 		gpus, err := strconv.ParseInt(val, 10, 64)
 		if err == nil {
 			return gpus
@@ -65,22 +62,14 @@ func AllocatableGpuInNodeIncludingFractions(node v1.Node) int64 {
 	return GpuCapacity(node)
 }
 
-// The way to get GPU Count of Node: alpha.kubernetes.io/nvidia-gpu
-func GpuInNodeDeprecated(node v1.Node) int64 {
-	// FIXME: Should be node.Status.Capacity?
-	val, ok := node.Status.Allocatable[DeprecatedNVIDIAGPUResourceName]
-
-	if !ok {
-		return 0
-	}
-
-	return val.Value()
+func NumSharedGpus(node v1.Node) int64 {
+	return TotalGpuCount(node) - GpuCapacity(node)
 }
 
 func GpuInPod(pod v1.Pod) (gpuCount int64) {
 	containers := pod.Spec.Containers
 	for _, container := range containers {
-		gpuCount += gpuInContainer(container)
+		gpuCount += containerGpuLimits(container)
 	}
 
 	return gpuCount
@@ -129,37 +118,6 @@ func GetRequestedGPUString(trainingAnnotations map[string]string) string {
 	return fmt.Sprintf("%v", 0)
 }
 
-func getGPUFractionUsedByPod(pod v1.Pod) float64 {
-	if pod.Annotations != nil {
-		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[RunaiGPUFraction], 64)
-		if GPUFractionErr == nil {
-			return gpuFraction
-		}
-	}
-
-	return 0
-}
-
-func gpuInContainer(container v1.Container) int64 {
-	val, ok := container.Resources.Limits[NVIDIAGPUResourceName]
-
-	if !ok {
-		return GpuInContainerDeprecated(container)
-	}
-
-	return val.Value()
-}
-
-func GpuInContainerDeprecated(container v1.Container) int64 {
-	val, ok := container.Resources.Limits[DeprecatedNVIDIAGPUResourceName]
-
-	if !ok {
-		return 0
-	}
-
-	return val.Value()
-}
-
 func GetSharedGPUsIndexUsedInPods(pods []v1.Pod) map[string]float64 {
 	gpuIndexUsed := map[string]float64{}
 	for _, pod := range pods {
@@ -180,4 +138,26 @@ func GetSharedGPUsIndexUsedInPods(pods []v1.Pod) map[string]float64 {
 	}
 
 	return gpuIndexUsed
+}
+
+func getGPUFractionUsedByPod(pod v1.Pod) float64 {
+	if pod.Annotations != nil {
+		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[RunaiGPUFraction], 64)
+		if GPUFractionErr == nil {
+			return gpuFraction
+		}
+	}
+
+	return 0
+}
+
+func containerGpuLimits(container v1.Container) int64 {
+	val, ok := container.Resources.Limits[NVIDIAGPUResourceName]
+
+	if !ok {
+		log.Debugf("Failed to retreive GPU limits of container %v.", container.Name)
+		return 0
+	}
+
+	return val.Value()
 }
