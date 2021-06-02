@@ -251,7 +251,7 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 	if err != nil {
 		return nil, err
 	}
-	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runaijob", serviceUrls, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
+	return NewRunaiWorkload(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runaijob", serviceUrls, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, podSpecJob.Namespace, ownerResource, status, podSpecJob.Parallelism, podSpecJob.Completions, podSpecJob.Failed, podSpecJob.Succeeded), nil
 }
 
 func (rt *RunaiTrainer) getPodsOfJob(podSpecJob cmdTypes.PodTemplateJob) []v1.Pod {
@@ -497,7 +497,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		}
 
 		jobInfo.status = getTrainingStatus(jobInfo.ObjectMeta.Annotations, lastCreatedPod, jobInfo.status)
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, jobInfo.status, jobInfo.parallelism, jobInfo.completions, jobInfo.failed, jobInfo.succeeded))
+		runaiJobs = append(runaiJobs, NewRunaiWorkload(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, jobInfo.namespace, jobInfo.owner, jobInfo.status, jobInfo.parallelism, jobInfo.completions, jobInfo.failed, jobInfo.succeeded))
 	}
 
 	return runaiJobs, nil
