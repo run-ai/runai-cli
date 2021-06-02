@@ -2,7 +2,6 @@
 set -e
 
 SCRIPT_NAME=runai
-OLD_SCRIPT_FILES=/etc/runai
 
 # If first argument is not empty,
 # use that for the installation path
