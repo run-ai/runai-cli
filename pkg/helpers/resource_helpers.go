@@ -16,7 +16,7 @@ func AddToResourceList(rl *types.ResourceList, rl2 types.ResourceList) {
 
 func AddKubeResourceListToResourceList(rl *types.ResourceList, krl v1.ResourceList) {
 	rl.CPUs += kubeQuantityToMilliFloat64(krl, v1.ResourceCPU)
-	rl.GPUs += kubeQuantityToFloat64(krl, util.NVIDIAGPUResourceName) + kubeQuantityToFloat64(krl, util.DeprecatedNVIDIAGPUResourceName)
+	rl.GPUs += kubeQuantityToFloat64(krl, util.NVIDIAGPUResourceName)
 	rl.Memory += kubeQuantityToFloat64(krl, v1.ResourceMemory)
 	rl.Storage += kubeQuantityToFloat64(krl, v1.ResourceStorage)
 }

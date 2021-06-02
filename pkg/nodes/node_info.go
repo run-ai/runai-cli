@@ -75,25 +75,23 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 
 	// adding the kube data
 	nodeResStatus.Requested = podResStatus.Requested
-	nodeResStatus.Allocated = podResStatus.Requested
+	nodeResStatus.Allocated = podResStatus.Allocated
 	nodeResStatus.Allocated.GPUs = podResStatus.Allocated.GPUs // needed to count fractions as well
 	nodeResStatus.Limited = podResStatus.Limited
 	nodeResStatus.GpuType = ni.Node.Labels["nvidia.com/gpu.product"]
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Capacity, ni.Node.Status.Capacity)
+
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )
-	totalGpus := int(util.AllocatableGpuInNodeIncludingFractions(ni.Node))
-	// check that the totalGpus is set
-	isFractionRunningOnNode := totalGpus > int(nodeResStatus.Capacity.GPUs)
-	if isFractionRunningOnNode {
-		nodeResStatus.NumberOfFractionalAllocatedGpu = len(util.GetSharedGPUsIndexUsedInPods(ni.Pods))
-		nodeResStatus.Capacity.GPUs = float64(totalGpus)
+	if numSharedGpus := util.NumSharedGpus(ni.Node); numSharedGpus > 0 {
+		nodeResStatus.NumSharedGpus = int(numSharedGpus)
+		nodeResStatus.Capacity.GPUs = float64(util.GpuCapacity(ni.Node))
 		// update the allocatable too
-		nodeResStatus.Allocatable.GPUs += float64(nodeResStatus.NumberOfFractionalAllocatedGpu)
+		nodeResStatus.Allocatable.GPUs += float64(numSharedGpus)
 	}
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Allocatable, ni.Node.Status.Allocatable)
-	nodeResStatus.GPUsInUse = nodeResStatus.NumberOfFractionalAllocatedGpu + int(podResStatus.Limited.GPUs)
+	nodeResStatus.GPUsInUse = nodeResStatus.NumSharedGpus + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
 
