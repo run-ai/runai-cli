@@ -220,7 +220,7 @@ func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, 
 		if err != nil {
 			return "", err
 		}
-		fmt.Println("Generate the template on:")
+		fmt.Println("Template YAML file can be found at:")
 		fmt.Println(jobFiles.template)
 		return "", nil
 	}

@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/run-ai/runai-cli/cmd/completion"
-	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
-	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"io"
 	"os"
 	"sort"
@@ -14,6 +11,10 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
+	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -67,11 +68,11 @@ func RunDescribeJobDEPRECATED(cmd *cobra.Command, printArgs PrintArgs, name stri
 func DescribeCommand() *cobra.Command {
 	printArgs := PrintArgs{}
 	var command = &cobra.Command{
-		Use:     "job JOB_NAME",
-		Aliases: []string{"jobs"},
-		Short:   "Display details of a job.",
+		Use:               "job JOB_NAME",
+		Aliases:           []string{"jobs"},
+		Short:             "Display details of a job.",
 		ValidArgsFunction: GenJobNames,
-		PreRun:  commandUtil.RoleAssertion(assertion.AssertViewerRole),
+		PreRun:            commandUtil.RoleAssertion(assertion.AssertViewerRole),
 		Run: func(cmd *cobra.Command, args []string) {
 
 			if len(args) == 0 {
@@ -242,8 +243,7 @@ func printEvents(clientset kubernetes.Interface, w io.Writer, namespace string, 
 	}
 }
 
-// Get real job status
-// WHen has pods being pending, tfJob still show in Running state, it should be Pending
+// GetJobRealStatus When has pods being pending, tfJob still show in Running state, it should be Pending
 func GetJobRealStatus(job trainer.TrainingJob) string {
 	hasPendingPod := false
 	jobStatus := job.GetStatus()
@@ -332,14 +332,14 @@ func BuildJobInfo(job trainer.TrainingJob, clientset kubernetes.Interface) *type
 	}
 
 	return &types.JobInfo{
-		Name:      job.Name(),
-		Namespace: job.Namespace(),
-		Status:    types.JobStatus(GetJobRealStatus(job)),
-		Duration:  util.ShortHumanDuration(job.Duration()),
-		Trainer:   job.Trainer(),
-		Priority:  getPriorityClass(job),
-		ChiefName: job.ChiefPod().Name,
-		Instances: instances,
+		Name:        job.Name(),
+		Namespace:   job.Namespace(),
+		Status:      types.JobStatus(GetJobRealStatus(job)),
+		Duration:    util.ShortHumanDuration(job.Duration()),
+		Trainer:     job.Trainer(),
+		Priority:    getPriorityClass(job),
+		ChiefName:   job.ChiefPod().Name,
+		Instances:   instances,
 		CommandLine: getCliCommand(job),
 	}
 }
@@ -362,5 +362,5 @@ func getCliCommand(job trainer.TrainingJob) string {
 		return cmd
 	} else {
 		return "N/A"
-	}	
+	}
 }

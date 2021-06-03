@@ -3,8 +3,9 @@ package nodes
 import (
 	"context"
 	"fmt"
-	"github.com/run-ai/runai-cli/pkg/client"
 	"strings"
+
+	"github.com/run-ai/runai-cli/pkg/client"
 
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	"github.com/run-ai/runai-cli/pkg/helpers"
@@ -19,7 +20,6 @@ import (
 )
 
 const (
-
 	// prometheus query names
 	TotalGpusMemoryPQ = "totalGpusMemory"
 	UsedGpusMemoryPQ  = "usedGpusMemory"
@@ -49,13 +49,12 @@ var (
 	}
 )
 
+// NodeInfo contains information about a node in the runai cluster
 type NodeInfo struct {
 	Node           v1.Node
 	Pods           []v1.Pod
 	PrometheusData prom.MetricResultsByQueryName
 }
-
-
 
 func (ni *NodeInfo) GetGeneralInfo() types.NodeGeneralInfo {
 	return types.NodeGeneralInfo{
@@ -77,25 +76,23 @@ func (ni *NodeInfo) GetResourcesStatus() types.NodeResourcesStatus {
 
 	// adding the kube data
 	nodeResStatus.Requested = podResStatus.Requested
-	nodeResStatus.Allocated = podResStatus.Requested
+	nodeResStatus.Allocated = podResStatus.Allocated
 	nodeResStatus.Allocated.GPUs = podResStatus.Allocated.GPUs // needed to count fractions as well
 	nodeResStatus.Limited = podResStatus.Limited
 	nodeResStatus.GpuType = ni.Node.Labels["nvidia.com/gpu.product"]
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Capacity, ni.Node.Status.Capacity)
+
 	// fix the gpus capacity (when there is a job that using fractional gpu the gpu will not appear in the node > status > capacity so we need to override the capacity.gpus  )
-	totalGpus := int(util.AllocatableGpuInNodeIncludingFractions(ni.Node))
-	// check that the totalGpus is set
-	isFractionRunningOnNode := totalGpus > int(nodeResStatus.Capacity.GPUs)
-	if isFractionRunningOnNode {
-		nodeResStatus.NumberOfFractionalAllocatedGpu = len(util.GetSharedGPUsIndexUsedInPods(ni.Pods))
-		nodeResStatus.Capacity.GPUs = float64(totalGpus)
+	if numSharedGpus := util.NumSharedGpus(ni.Node); numSharedGpus > 0 {
+		nodeResStatus.NumSharedGpus = int(numSharedGpus)
+		nodeResStatus.Capacity.GPUs = float64(util.GpuCapacity(ni.Node))
 		// update the allocatable too
-		nodeResStatus.Allocatable.GPUs += float64(nodeResStatus.NumberOfFractionalAllocatedGpu)
+		nodeResStatus.Allocatable.GPUs += float64(numSharedGpus)
 	}
 
 	helpers.AddKubeResourceListToResourceList(&nodeResStatus.Allocatable, ni.Node.Status.Allocatable)
-	nodeResStatus.GPUsInUse = nodeResStatus.NumberOfFractionalAllocatedGpu + int(podResStatus.Limited.GPUs)
+	nodeResStatus.GPUsInUse = nodeResStatus.NumSharedGpus + int(podResStatus.Limited.GPUs)
 
 	// adding the prometheus data
 
@@ -218,9 +215,9 @@ func GetAllNodeInfos(client *client.Client, shouldQueryMetrics bool) ([]NodeInfo
 	return nodeInfoList, warning, err
 }
 
-func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error){
+func queryMetrics(client *client.Client) (*prom.MetricResultsByItems, error) {
 	var promData prom.MetricResultsByItems
-	promClient, promErr := prom.BuildPrometheusClient(client)
+	promClient, promErr := prom.BuildMetricsClient(client)
 	if promErr != nil {
 		return nil, promErr
 	}

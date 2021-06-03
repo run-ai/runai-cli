@@ -26,6 +26,7 @@ so it solved by allowed a user to set it. in case that a user did not set it - i
 
 */
 
+// DisplayOpt is a group of options for displaying elements
 type DisplayOpt struct {
 	// set the default for the root struct (any root fields will be hidden by default if is true)
 	HideAllByDefault bool
@@ -34,7 +35,6 @@ type DisplayOpt struct {
 	// which field paths to hide
 	Hide []string
 }
-
 
 func (opt *DisplayOpt) rootShowByDefault() bool {
 
@@ -51,7 +51,7 @@ func (opt *DisplayOpt) rootShowByDefault() bool {
 	return true
 }
 
-func (opt *DisplayOpt) calcFieldShowByDefault(path []string ,parentShowByDefault bool) bool {
+func (opt *DisplayOpt) calcFieldShowByDefault(path []string, parentShowByDefault bool) bool {
 	pathStr := strings.Join(path, ".")
 
 	if opt.Hide != nil {
@@ -66,4 +66,3 @@ func (opt *DisplayOpt) calcFieldShowByDefault(path []string ,parentShowByDefault
 	}
 	return parentShowByDefault
 }
-
