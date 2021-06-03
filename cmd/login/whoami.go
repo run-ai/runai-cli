@@ -25,7 +25,7 @@ func NewWhoamiCommand() *cobra.Command {
 				}
 				os.Exit(1)
 			}
-			log.Info(fmt.Sprintf("User: %s\nLoged in Id: %s", email, subject))
+			log.Info(fmt.Sprintf("User: %s\nLogged in Id: %s", email, subject))
 		},
 	}
 
