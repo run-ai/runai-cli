@@ -21,5 +21,7 @@ cp -R "${SCRIPT_DIR}"/charts "${NEW_SCRIPT_FILES}"
 if [ "$NEW_SCRIPT_FILES" == "/usr/local/runai" ] ; then
     ln -sf "${NEW_SCRIPT_FILES}"/"${SCRIPT_NAME}" /usr/local/bin/"${SCRIPT_NAME}"
 else
-    echo "Add ${NEW_SCRIPT_FILES} to your \$PATH"
+    echo "Add ${NEW_SCRIPT_FILES} to your \$PATH: export PATH=\$PATH:${NEW_SCRIPT_FILES}"
 fi
+
+echo "Run:AI CLI installed successfully!"
