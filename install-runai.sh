@@ -11,7 +11,12 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
 
 # Create copy destination if it doesn't exist to have directories copied under the folder.
 if [ ! -d "${NEW_SCRIPT_FILES}" ]; then
-  mkdir "${NEW_SCRIPT_FILES}"
+    if [ "$NEW_SCRIPT_FILES" == "/usr/local/runai" ]; then
+        mkdir "${NEW_SCRIPT_FILES}"
+    else
+        echo "${NEW_SCRIPT_FILES} doesn't exist or is not a directory"
+        ls "${NEW_SCRIPT_FILES}" 2> /dev/null
+    fi
 fi
 
 cp "${SCRIPT_DIR}"/runai "${NEW_SCRIPT_FILES}"
