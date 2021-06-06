@@ -67,6 +67,13 @@ func ToNamespace(project string) string {
 	return constants.RunaiNsProjectPrefix + project
 }
 
+//
+//   if a namespace is a runai project, returns the name of the project. otherwise, return empty string
+//
 func ToProject(namespace string) string {
-	return namespace[len(constants.RunaiNsProjectPrefix):]
+	if IsProjectNamespace(namespace) {
+		return namespace[len(constants.RunaiNsProjectPrefix):]
+	} else {
+		return ""
+	}
 }
