@@ -8,7 +8,7 @@ import (
 const (
 	CodePkceBrowser           = "browser"
 	CodePkceRemoteBrowser     = "remote-browser"
-	Auth0PasswordRealm        = "cli"
+	ClientCredentials         = "cli"
 	defaultRedirectServer     = "localhost:8000"
 	defaultAirgappedFlag      = false
 	defaultAuthenticationFlow = CodePkceBrowser
@@ -18,7 +18,7 @@ type AuthenticationParams struct {
 	ClientId         string
 	IssuerURL        string
 	ListenAddress    string
-	Auth0Realm       string
+	Realm            string
 	AdditionalScopes []string
 
 	AuthenticationFlow string
@@ -43,8 +43,8 @@ func (a *AuthenticationParams) MergeAuthenticationParams(patch *AuthenticationPa
 	if a.AuthenticationFlow == "" {
 		a.AuthenticationFlow = patch.AuthenticationFlow
 	}
-	if a.Auth0Realm == "" {
-		a.Auth0Realm = patch.Auth0Realm
+	if a.Realm == "" {
+		a.Realm = patch.Realm
 	}
 	if a.IsAirgapped == nil {
 		a.IsAirgapped = patch.IsAirgapped
@@ -69,8 +69,8 @@ func (a *AuthenticationParams) ValidateAndSetDefaultAuthenticationParams() (*Aut
 	if a.ClientId == "" || a.IssuerURL == "" {
 		return nil, fmt.Errorf("both client-id and idp-issuer-URL must be set")
 	}
-	if a.AuthenticationFlow == Auth0PasswordRealm && a.Auth0Realm == "" && !util.IsBoolPTrue(a.IsAirgapped) {
-		return nil, fmt.Errorf("must provide auth0-realm when using CLI authentication")
+	if a.AuthenticationFlow == ClientCredentials && a.Realm == "" && !util.IsBoolPTrue(a.IsAirgapped) {
+		return nil, fmt.Errorf("must provide realm when using CLI authentication")
 	}
 	return a, nil
 }

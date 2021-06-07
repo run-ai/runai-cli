@@ -18,7 +18,7 @@ const (
 	idTokenFieldName            = "id-token"
 	refreshTokenFieldName       = "refresh-token"
 	authenticationFlowFieldName = "auth-flow"
-	auth0RealmFieldName         = "realm"
+	realmFieldName              = "realm"
 	redirectUriFieldName        = "redirect-uri"
 	additionalScopeFieldName    = "additional-scope"
 )
@@ -141,7 +141,7 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 	clientId := kubeConfigUser.AuthProvider.Config[clientIdFieldName]
 	issuerUrl := kubeConfigUser.AuthProvider.Config[issuerUrlFieldName]
 	authenticationFlow := kubeConfigUser.AuthProvider.Config[authenticationFlowFieldName]
-	auth0Realm := kubeConfigUser.AuthProvider.Config[auth0RealmFieldName]
+	realm := kubeConfigUser.AuthProvider.Config[realmFieldName]
 	airgapped := kubeConfigUser.AuthProvider.Config[airgappedFieldName]
 	redirectUri := kubeConfigUser.AuthProvider.Config[redirectUriFieldName]
 	additionalScope := kubeConfigUser.AuthProvider.Config[additionalScopeFieldName]
@@ -154,7 +154,7 @@ func getUserAuthenticationParams(user string, kubeConfig *api.Config) (*types.Au
 		ClientId:           clientId,
 		IssuerURL:          issuerUrl,
 		AuthenticationFlow: authenticationFlow,
-		Auth0Realm:         auth0Realm,
+		Realm:              realm,
 		IsAirgapped:        &airgappedFlag,
 		ListenAddress:      redirectUri,
 		AdditionalScopes:   []string{additionalScope},

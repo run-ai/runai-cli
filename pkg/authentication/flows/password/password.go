@@ -33,7 +33,7 @@ type ServerTokens struct {
 }
 
 func AuthenticateAuth0PasswordRealm(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Token, error) {
-	return sendAuthenticationRequest(ctx, auth0PasswordRealmGrantType, authParams.Auth0Realm, authParams)
+	return sendAuthenticationRequest(ctx, auth0PasswordRealmGrantType, authParams.Realm, authParams)
 }
 
 func AuthenticateKeycloakPassword(ctx context.Context, authParams *types.AuthenticationParams) (*oauth2.Token, error) {
@@ -101,21 +101,21 @@ func getTokenFromResponse(contentType string, responseBody []byte) (*oauth2.Toke
 		}).WithExtra(formParams)
 		return token, nil
 	default:
-		var auth0Tokens ServerTokens
-		if err := json.Unmarshal(responseBody, &auth0Tokens); err != nil {
+		var serverTokens ServerTokens
+		if err := json.Unmarshal(responseBody, &serverTokens); err != nil {
 			return nil, err
 		}
 
-		return convertServerTokensToOauth2Token(&auth0Tokens), nil
+		return convertServerTokensToOauth2Token(&serverTokens), nil
 	}
 }
 
-func convertServerTokensToOauth2Token(auth0Tokens *ServerTokens) *oauth2.Token {
+func convertServerTokensToOauth2Token(serverTokens *ServerTokens) *oauth2.Token {
 	oauth2Token := &oauth2.Token{
-		RefreshToken: auth0Tokens.RefreshToken,
+		RefreshToken: serverTokens.RefreshToken,
 	}
 	extraTokensOauth2 := make(map[string]interface{})
-	extraTokensOauth2[kubeconfig.IdTokenRawTokenName] = auth0Tokens.IdToken
+	extraTokensOauth2[kubeconfig.IdTokenRawTokenName] = serverTokens.IdToken
 	oauth2Token = oauth2Token.WithExtra(extraTokensOauth2)
 	return oauth2Token
 }
