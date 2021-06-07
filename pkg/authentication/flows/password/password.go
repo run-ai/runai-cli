@@ -46,11 +46,12 @@ func sendAuthenticationRequest(ctx context.Context, grantType, realm string, aut
 		return nil, err
 	}
 
+	scopes := append(flows.Scopes, authParams.AdditionalScopes...)
 	requestParams := url.Values{
 		"grant_type": {grantType},
 		"username":   {user},
 		"password":   {password},
-		"scope":      {strings.Join(flows.Scopes, " ")},
+		"scope":      {strings.Join(scopes, " ")},
 		"client_id":  {authParams.ClientId},
 	}
 

@@ -21,6 +21,7 @@ func AuthenticateCodePkceBrowser(ctx context.Context, authParams *types.Authenti
 	if err != nil {
 		return nil, err
 	}
+	oauth2Config.Scopes = append(oauth2Config.Scopes, authParams.AdditionalScopes...)
 	log.Debugf("Generated oauth2config object: %v", oauth2Config)
 	oauth2cliConfig, err := getOauth2cliGetTokenConfig(oauth2Config, localServerReadyChan, authParams)
 	if err != nil {

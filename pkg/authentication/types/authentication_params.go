@@ -7,7 +7,7 @@ import (
 
 const (
 	CodePkceBrowser           = "browser"
-	CodePkceRemoteBrowser	  = "remote-browser"
+	CodePkceRemoteBrowser     = "remote-browser"
 	Auth0PasswordRealm        = "cli"
 	defaultRedirectServer     = "localhost:8000"
 	defaultAirgappedFlag      = false
@@ -15,10 +15,11 @@ const (
 )
 
 type AuthenticationParams struct {
-	ClientId      string
-	IssuerURL     string
-	ListenAddress string
-	Auth0Realm    string
+	ClientId         string
+	IssuerURL        string
+	ListenAddress    string
+	Auth0Realm       string
+	AdditionalScopes []string
 
 	AuthenticationFlow string
 	User               string
@@ -47,6 +48,9 @@ func (a *AuthenticationParams) MergeAuthenticationParams(patch *AuthenticationPa
 	}
 	if a.IsAirgapped == nil {
 		a.IsAirgapped = patch.IsAirgapped
+	}
+	if len(patch.AdditionalScopes) != 0 {
+		a.AdditionalScopes = append(a.AdditionalScopes, patch.AdditionalScopes...)
 	}
 	return a
 }

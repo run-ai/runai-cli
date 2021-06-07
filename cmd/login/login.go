@@ -12,8 +12,8 @@ import (
 func NewLoginCommand() *cobra.Command {
 	params := &types.AuthenticationParams{}
 	var command = &cobra.Command{
-		Use:   "login",
-		Short: "Log in to Run:AI",
+		Use:               "login",
+		Short:             "Log in to Run:AI",
 		ValidArgsFunction: completion.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Debugf("starting authentication [cli args: %v, authentication params cli: %v]", args, params)
@@ -29,6 +29,7 @@ func NewLoginCommand() *cobra.Command {
 	command.Flags().StringVar(&params.IssuerURL, "idp-issuer-url", "", "issuer url")
 	command.Flags().StringVar(&params.ListenAddress, "redirect-server", "", "listen address")
 	command.Flags().StringVar(&params.User, "user", "", "user to log in")
+	command.Flags().StringArrayVarP(&(params.AdditionalScopes), "additional-scope", "", []string{}, "Additional scopes to request from Identity Provider")
 	command.Flags().MarkHidden("client-id")
 	command.Flags().MarkHidden("idp-issuer-url")
 	command.Flags().MarkHidden("redirect-server")

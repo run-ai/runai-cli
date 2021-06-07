@@ -55,7 +55,7 @@ func GetCurrentAuthenticateUserUidGid() (string, string, error) {
 
 func Authenticate(params *types.AuthenticationParams) error {
 	ctx := context.Background()
-	params, err := GetFinalAuthenticationParams(params)
+	params, err := CalculateAuthenticationParams(params)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func Authenticate(params *types.AuthenticationParams) error {
 	return kubeconfig.SetTokenToUser(params.User, params.AuthenticationFlow, token)
 }
 
-func GetFinalAuthenticationParams(cliParams *types.AuthenticationParams) (*types.AuthenticationParams, error) {
+func CalculateAuthenticationParams(cliParams *types.AuthenticationParams) (*types.AuthenticationParams, error) {
 	var kubeConfigParams *types.AuthenticationParams
 	var err error
 	if cliParams.User == "" {
