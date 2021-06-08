@@ -230,3 +230,44 @@ func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, 
 	}
 	return jobName, nil
 }
+
+// SuspendJob suspends a runai job by setting job.Spec.Suspend to true
+// TODO: support mpi, podjob, deployment
+func SuspendJob(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client) error {
+	return setRunaiSuspend(jobName, namespaceInfo, kubeClient, true)
+}
+
+// ResumeJob resumes a runai job by setting job.Spec.Suspend to true
+// TODO: support mpi, podjob, deployment
+func ResumeJob(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client) error {
+	return setRunaiSuspend(jobName, namespaceInfo, kubeClient, false)
+}
+
+func setRunaiSuspend(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client, suspendValue bool) error {
+	runaijobClient := runaiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
+
+	job, e := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{})
+
+	if e != nil {
+		log.Warningf("Failed to suspend job %s. Does the job exist?", jobName)
+		return e
+	}
+
+	if job.Spec.Suspend != nil {
+		if *job.Spec.Suspend == suspendValue {
+			if suspendValue {
+				log.Warningf("Job %s is already suspended.", jobName)
+			} else {
+				log.Warningf("Job %s is already resumed.", jobName)
+			}
+			return nil
+		}
+	} else {
+		job.Spec.Suspend = new(bool)
+	}
+	*job.Spec.Suspend = suspendValue
+
+	_, err := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Update(job, metav1.UpdateOptions{})
+
+	return err
+}
