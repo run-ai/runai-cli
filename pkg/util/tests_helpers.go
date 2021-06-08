@@ -3,18 +3,22 @@
 package util
 
 import (
+	"fmt"
+
 	"github.com/run-ai/runai-cli/cmd/constants"
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/api/runaijob/v1"
 	fakeclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/fake"
 	"github.com/run-ai/runai-cli/cmd/util"
 	kubeclient "github.com/run-ai/runai-cli/pkg/client"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
-	batch "k8s.io/api/batch/v1"
+	runaitypes "github.com/run-ai/runai-cli/pkg/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 var runaiPodTemplate = v1.PodTemplateSpec{
@@ -35,17 +39,37 @@ func NewClientForTesting(clientset kubernetes.Interface) *kubeclient.Client {
 	return &client
 }
 
-// GetClientWithObject creates a new client with given objects already "created" in its system
-func GetClientWithObject(objects []runtime.Object) (kubeclient.Client, *fakeclientset.Clientset) {
-	client := fake.NewSimpleClientset(objects...)
-	return *NewClientForTesting(client), fakeclientset.NewSimpleClientset()
+func filterRunAIObjects(objects []runtime.Object, filterIn bool) (filtered []runtime.Object) {
+	for _, obj := range objects {
+		objGroup := obj.GetObjectKind().GroupVersionKind().Group
+		if objGroup == runaijobv1.SchemeGroupVersion.Group {
+			if filterIn {
+				filtered = append(filtered, obj)
+			}
+		} else if !filterIn {
+			filtered = append(filtered, obj)
+		}
+	}
+	return
 }
 
-func GetRunaiJob(namespace, jobName, jobUUID string) *batch.Job {
+// GetClientWithObject creates a new client with given objects already "created" in its system
+func GetClientWithObject(objects []runtime.Object) (kubeclient.Client, *fakeclientset.Clientset) {
+	fake.AddToScheme(scheme.Scheme)
+	runaijobv1.AddToScheme(scheme.Scheme)
+	client := fake.NewSimpleClientset(filterRunAIObjects(objects, false)...)
+	return *NewClientForTesting(client), fakeclientset.NewSimpleClientset(filterRunAIObjects(objects, true)...)
+}
+
+func GetRunaiJob(namespace, jobName, jobUUID string) *runaijobv1.RunaiJob {
 	var labelSelector = make(map[string]string)
 	labelSelector["controller-uid"] = jobUUID
 
-	return &batch.Job{
+	return &runaijobv1.RunaiJob{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       string(runaitypes.ResourceTypeRunaiJob),
+			APIVersion: fmt.Sprintf("%s/%s", runaijobv1.GroupName, "v1"),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      jobName,
@@ -56,13 +80,13 @@ func GetRunaiJob(namespace, jobName, jobUUID string) *batch.Job {
 				"user":                                  "test_user",
 			},
 		},
-		Spec: batch.JobSpec{
+		Spec: runaijobv1.JobSpec{
 			Template: runaiPodTemplate,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labelSelector,
 			},
 		},
-		Status: batch.JobStatus{},
+		Status: runaijobv1.JobStatus{},
 	}
 }
 
@@ -91,6 +115,18 @@ func CreatePodOwnedBy(namespace, podName string, labelSelector map[string]string
 				{
 					Name:  "container-1",
 					Image: "image-1",
+				},
+			},
+		},
+		Status: v1.PodStatus{
+			ContainerStatuses: []v1.ContainerStatus{
+				{
+					Name: "Pending",
+					State: v1.ContainerState{
+						Waiting: &v1.ContainerStateWaiting{
+							Reason: "Pending",
+						},
+					},
 				},
 			},
 		},
