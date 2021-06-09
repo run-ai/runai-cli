@@ -176,14 +176,10 @@ func getInstallDir() (currentInstallDir string) {
 		log.Errorf("Failed to get current executable: %v", err)
 		os.Exit(1)
 	}
-	currentExecDir, err := filepath.Abs(filepath.Dir(ex))
+	currentInstallDir, err = filepath.Abs(filepath.Dir(ex))
 	if err != nil {
 		log.Errorf("Failed to get current install directory %v", err)
 		os.Exit(1)
-	}
-	currentInstallDir, runaiDir := filepath.Split(currentExecDir)
-	if runaiDir != "runai" {
-		currentInstallDir = currentExecDir
 	}
 	return
 }

@@ -5,24 +5,26 @@ SCRIPT_NAME=runai
 
 # If first argument is not empty,
 # use that for the installation path
-NEW_SCRIPT_PATH=${1:-/usr/local}
+NEW_SCRIPT_PATH=${1:-/usr/local/runai}
 
 SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
 
 # Remove old version files
-if [ -d "${NEW_SCRIPT_PATH}/runai" ]; then
-  rm -rf "${NEW_SCRIPT_PATH}/runai"
+if [ -d "${NEW_SCRIPT_PATH}" ]; then
+  rm "${NEW_SCRIPT_PATH}/runai"
+  rm "${NEW_SCRIPT_PATH}/VERSION"
+  rm -rf "${NEW_SCRIPT_PATH}/charts"
 fi
 
 # Create copy destination if it doesn't exist to have directories copied under the folder.
 if [ ! -d "${NEW_SCRIPT_PATH}" ]; then
-    echo "${NEW_SCRIPT_PATH} doesn't exist or is not a directory"
-    ls "${NEW_SCRIPT_PATH}" 2> /dev/null
+    if [ "${NEW_SCRIPT_PATH}" == "/usr/local/runai" ]; then
+        mkdir "${NEW_SCRIPT_PATH}"
+    else
+        echo "${NEW_SCRIPT_PATH} doesn't exist or is not a directory"
+        ls "${NEW_SCRIPT_PATH}" 2> /dev/null
+    fi
 fi
-if [ ! -d "${NEW_SCRIPT_PATH}/runai" ]; then
-    mkdir "${NEW_SCRIPT_PATH}/runai"
-fi
-NEW_SCRIPT_PATH="${NEW_SCRIPT_PATH}/runai"
 
 cp "${SCRIPT_DIR}"/runai "${NEW_SCRIPT_PATH}"
 cp "${SCRIPT_DIR}"/VERSION "${NEW_SCRIPT_PATH}"
