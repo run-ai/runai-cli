@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -105,10 +106,11 @@ func NewUpdateCommand() *cobra.Command {
 			}
 
 			log.Infof("Unarchived version in %s", unarchivePath)
+			currentInstallDir := getInstallDir()
 
 			// Install using install script
 			installScriptPath := path.Join(unarchivePath, "install-runai.sh")
-			installCommand := exec.Command(installScriptPath)
+			installCommand := exec.Command(installScriptPath, currentInstallDir)
 			installCommand.Stdout = os.Stdout
 			installCommand.Stderr = os.Stderr
 			err = installCommand.Run()
@@ -166,4 +168,18 @@ func downloadFile(url string, assetName string) (string, error) {
 	log.Infof("Downloaded archive to %s", downloadPath)
 
 	return downloadPath, nil
+}
+
+func getInstallDir() (currentInstallDir string) {
+	ex, err := os.Executable()
+	if err != nil {
+		log.Errorf("Failed to get current executable: %v", err)
+		os.Exit(1)
+	}
+	currentInstallDir, err = filepath.Abs(filepath.Dir(ex))
+	if err != nil {
+		log.Errorf("Failed to get current install directory %v", err)
+		os.Exit(1)
+	}
+	return
 }

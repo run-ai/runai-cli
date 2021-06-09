@@ -5,28 +5,35 @@ SCRIPT_NAME=runai
 
 # If first argument is not empty,
 # use that for the installation path
-NEW_SCRIPT_FILES=${1:-/usr/local/runai}
+NEW_SCRIPT_PATH=${1:-/usr/local/runai}
 
 SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
 
+# Remove old version files
+if [ -d "${NEW_SCRIPT_PATH}" ]; then
+  rm "${NEW_SCRIPT_PATH}/runai"
+  rm "${NEW_SCRIPT_PATH}/VERSION"
+  rm -rf "${NEW_SCRIPT_PATH}/charts"
+fi
+
 # Create copy destination if it doesn't exist to have directories copied under the folder.
-if [ ! -d "${NEW_SCRIPT_FILES}" ]; then
-    if [ "$NEW_SCRIPT_FILES" == "/usr/local/runai" ]; then
-        mkdir "${NEW_SCRIPT_FILES}"
+if [ ! -d "${NEW_SCRIPT_PATH}" ]; then
+    if [ "${NEW_SCRIPT_PATH}" == "/usr/local/runai" ]; then
+        mkdir "${NEW_SCRIPT_PATH}"
     else
-        echo "${NEW_SCRIPT_FILES} doesn't exist or is not a directory"
-        ls "${NEW_SCRIPT_FILES}" 2> /dev/null
+        echo "${NEW_SCRIPT_PATH} doesn't exist or is not a directory"
+        ls "${NEW_SCRIPT_PATH}" 2> /dev/null
     fi
 fi
 
-cp "${SCRIPT_DIR}"/runai "${NEW_SCRIPT_FILES}"
-cp "${SCRIPT_DIR}"/VERSION "${NEW_SCRIPT_FILES}"
-cp -R "${SCRIPT_DIR}"/charts "${NEW_SCRIPT_FILES}"
+cp "${SCRIPT_DIR}"/runai "${NEW_SCRIPT_PATH}"
+cp "${SCRIPT_DIR}"/VERSION "${NEW_SCRIPT_PATH}"
+cp -R "${SCRIPT_DIR}"/charts "${NEW_SCRIPT_PATH}"
 
-if [ "$NEW_SCRIPT_FILES" == "/usr/local/runai" ] ; then
-    ln -sf "${NEW_SCRIPT_FILES}"/"${SCRIPT_NAME}" /usr/local/bin/"${SCRIPT_NAME}"
+if [ "$NEW_SCRIPT_PATH" == "/usr/local/runai" ] ; then
+    ln -sf "${NEW_SCRIPT_PATH}"/"${SCRIPT_NAME}" /usr/local/bin/"${SCRIPT_NAME}"
 else
-    echo "Add ${NEW_SCRIPT_FILES} to your \$PATH: export PATH=\$PATH:${NEW_SCRIPT_FILES}"
+    echo "Add ${NEW_SCRIPT_PATH} to your \$PATH: export PATH=\$PATH:${NEW_SCRIPT_PATH}"
 fi
 
 echo "Run:AI CLI installed successfully!"
