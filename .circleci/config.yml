@@ -19,7 +19,8 @@ jobs:
     - run:
         name: run test
         command: |
-          ./test.sh
+          git config --global url."https://$GITHUB_DEV_TOKEN:x-oauth-basic@github.com/run-ai".insteadOf "https://github.com/run-ai" || true
+          GO111MODULE=on ${GENERAL_BUILD_OPTIONS} go test ./... -v -tags test
     - slack/notify:
         channel: circleci
         event: fail
