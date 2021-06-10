@@ -44,12 +44,14 @@ jobs:
     - run:
         name: build-mac
         command: |
+          git config --global url."https://$GITHUB_DEV_TOKEN:x-oauth-basic@github.com/run-ai".insteadOf "https://github.com/run-ai" || true
           make cli-darwin-amd64
           tar --transform "s,bin/runai,runai," -czvf runai-cli-darwin-amd64.tar.gz bin/runai install-runai.sh charts VERSION
           mv runai-cli-darwin-amd64.tar.gz workspace/binaries/runai-cli-darwin-amd64.tar.gz
     - run: 
         name: build-linux
         command: |
+          git config --global url."https://$GITHUB_DEV_TOKEN:x-oauth-basic@github.com/run-ai".insteadOf "https://github.com/run-ai" || true
           make cli-linux-amd64
           tar --transform "s,bin/runai,runai," -czvf runai-cli-linux-amd64.tar.gz bin/runai install-runai.sh charts VERSION
           mv runai-cli-linux-amd64.tar.gz workspace/binaries/runai-cli-linux-amd64.tar.gz
