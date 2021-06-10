@@ -28,7 +28,7 @@ func Logout(user string) error {
 	log.Debug("Tokens deleted")
 
 	var emptyParams types.AuthenticationParams
-	params, err := authentication.GetFinalAuthenticationParams(&emptyParams)
+	params, err := authentication.CalculateAuthenticationParams(&emptyParams)
 	if err != nil {
 		return err
 	}
