@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 
+	runaiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
+	"github.com/run-ai/runai-cli/pkg/types"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/run-ai/runai-cli/pkg/util/helm"
@@ -161,7 +163,7 @@ func populateConfigMap(configMap *corev1.ConfigMap, chartName, chartVersion, val
 	data["app"] = string(appFileContent)
 
 	configMap.Data = data
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(context.TODO(), configMap, metav1.UpdateOptions {})
+	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(context.TODO(), configMap, metav1.UpdateOptions{})
 	return err
 }
 
@@ -233,20 +235,18 @@ func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, 
 
 // SuspendJob suspends a runai job by setting job.Spec.Suspend to true
 // TODO: support mpi, podjob, deployment
-func SuspendJob(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client) error {
-	return setRunaiSuspend(jobName, namespaceInfo, kubeClient, true)
+func SuspendJob(jobName string, namespaceInfo types.NamespaceInfo, runaijobsClient runaiClient.Interface) error {
+	return setRunaiSuspend(jobName, namespaceInfo, runaijobsClient, true)
 }
 
 // ResumeJob resumes a runai job by setting job.Spec.Suspend to true
 // TODO: support mpi, podjob, deployment
-func ResumeJob(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client) error {
-	return setRunaiSuspend(jobName, namespaceInfo, kubeClient, false)
+func ResumeJob(jobName string, namespaceInfo types.NamespaceInfo, runaijobsClient runaiClient.Interface) error {
+	return setRunaiSuspend(jobName, namespaceInfo, runaijobsClient, false)
 }
 
-func setRunaiSuspend(jobName string, namespaceInfo types.NamespaceInfo, kubeClient *client.Client, suspendValue bool) error {
-	runaijobClient := runaiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
-
-	job, e := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{})
+func setRunaiSuspend(jobName string, namespaceInfo types.NamespaceInfo, runaijobsClient runaiClient.Interface, suspendValue bool) error {
+	job, e := runaijobsClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{})
 
 	if e != nil {
 		log.Warningf("Failed to suspend job %s. Does the job exist?", jobName)
@@ -267,7 +267,7 @@ func setRunaiSuspend(jobName string, namespaceInfo types.NamespaceInfo, kubeClie
 	}
 	*job.Spec.Suspend = suspendValue
 
-	_, err := runaijobClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Update(job, metav1.UpdateOptions{})
+	_, err := runaijobsClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Update(job, metav1.UpdateOptions{})
 
 	return err
 }

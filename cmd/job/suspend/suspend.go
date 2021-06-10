@@ -6,6 +6,7 @@ import (
 
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/job"
+	runaiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/types"
@@ -15,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type workflowCommand func(string, types.NamespaceInfo, *client.Client) error
+type workflowCommand func(string, types.NamespaceInfo, runaiClient.Interface) error
 
 // NewSuspendCommand creates a new suspend command for cobra to suspend jobs.
 func NewSuspendCommand() *cobra.Command {
@@ -85,8 +86,9 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, workflowCmd workfl
 		}
 	}
 
+	runaijobClient := runaiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
 	for _, jobName := range jobNamesToSuspend {
-		err = workflowCmd(jobName, namespaceInfo, kubeClient)
+		err = workflowCmd(jobName, namespaceInfo, runaijobClient)
 		if err != nil {
 			log.Error(err)
 		}
