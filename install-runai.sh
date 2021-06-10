@@ -11,8 +11,8 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
 
 # Remove old version files
 if [ -d "${NEW_SCRIPT_PATH}" ]; then
-  rm "${NEW_SCRIPT_PATH}/runai"
-  rm "${NEW_SCRIPT_PATH}/VERSION"
+  rm -f "${NEW_SCRIPT_PATH}/runai"
+  rm -f "${NEW_SCRIPT_PATH}/VERSION"
   rm -rf "${NEW_SCRIPT_PATH}/charts"
 fi
 
