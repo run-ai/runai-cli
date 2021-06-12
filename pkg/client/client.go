@@ -21,22 +21,31 @@ type Client struct {
 	namespace     string
 }
 
-func GetClient() (*Client, error) {
-	if client != nil {
-		return client, nil
-	}
+func GetRestConfig() (*restclient.Config, string, error) {
 
 	getter := genericclioptions.NewConfigFlags(true)
 	factory := cmdutil.NewFactory(getter)
 	namespace, _, err := factory.ToRawKubeConfigLoader().Namespace()
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	clientConfig := factory.ToRawKubeConfigLoader()
 	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, "", err
+	}
 
+	return restConfig, namespace, nil
+}
+
+func GetClient() (*Client, error) {
+	if client != nil {
+		return client, nil
+	}
+
+	restConfig, namespace, err := GetRestConfig()
 	if err != nil {
 		return nil, err
 	}

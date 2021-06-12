@@ -1,6 +1,7 @@
 package clusterConfig
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/yaml.v2"
@@ -20,7 +21,7 @@ const (
 )
 
 func GetClusterConfig(clientset kubernetes.Interface) (*ClusterConfig, error) {
-	configsList, err := clientset.CoreV1().ConfigMaps(runaiNamespace).List(metav1.ListOptions{
+	configsList, err := clientset.CoreV1().ConfigMaps(runaiNamespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=true", runaiClusterConfigLabel),
 	})
 

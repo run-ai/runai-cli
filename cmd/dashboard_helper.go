@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"context"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -53,7 +54,7 @@ func dashboard(client kubernetes.Interface, namespace string, name string) (stri
 		return url, nil
 	}
 
-	ep, err := client.CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
+	ep, err := client.CoreV1().Endpoints(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -113,7 +114,7 @@ func GetJobDashboards(dashboard string, job *v1.Job, pods []corev1.Pod) []string
 
 // Get dashboard url if it's load balancer
 func dashboardFromLoadbalancer(client kubernetes.Interface, namespace string, name string) (string, error) {
-	svc, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+	svc, err := client.CoreV1().Services(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -131,7 +132,7 @@ func dashboardFromLoadbalancer(client kubernetes.Interface, namespace string, na
 
 // Get dashboard url if it's nodePort
 func dashboardFromNodePort(client kubernetes.Interface, namespace string, name string) (string, error) {
-	svc, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+	svc, err := client.CoreV1().Services(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -144,7 +145,7 @@ func dashboardFromNodePort(client kubernetes.Interface, namespace string, name s
 			for _, port := range svc.Spec.Ports {
 				nodePort := port.NodePort
 				// Get node address
-				nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+				nodeList, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 				if err != nil {
 					return "", err
 				}

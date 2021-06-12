@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -264,7 +265,7 @@ func GetJobRealStatus(job trainer.TrainingJob) string {
 
 // Get Event of the Job
 func getResourcesEvents(client kubernetes.Interface, namespace string, job trainer.TrainingJob) ([]eventAndName, error) {
-	events, err := client.CoreV1().Events(namespace).List(metav1.ListOptions{})
+	events, err := client.CoreV1().Events(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return []eventAndName{}, err
 	}

@@ -16,6 +16,7 @@ package tensorboard
 
 import (
 	"fmt"
+	"context"
 	"path"
 	"strings"
 
@@ -72,7 +73,7 @@ func TensorboardURL(name, namespace string, clientset kubernetes.Interface) (url
 	)
 
 	// 1. Get port
-	serviceList, err := clientset.CoreV1().Services(namespace).List(metav1.ListOptions{
+	serviceList, err := clientset.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",
@@ -113,7 +114,7 @@ func TensorboardURL(name, namespace string, clientset kubernetes.Interface) (url
 	port = portList[0].NodePort
 
 	// 2. Get address
-	nodeList, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodeList, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
