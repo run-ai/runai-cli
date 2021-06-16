@@ -1,22 +1,26 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
+	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/job"
-	runaiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
+	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/types"
+	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
-	"github.com/run-ai/runai-cli/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-type workflowCommand func(string, types.NamespaceInfo, runaiClient.Interface) error
+type serverCommand func(*rsrch_client.RsrchClient, context.Context, []rsrch_server.ResourceID) ([]rsrch_server.JobActionStatus, error)
+type directCommand func(rsrch_server.Interface, context.Context, []rsrch_server.ResourceID) []rsrch_server.JobActionStatus
 
 // NewSuspendCommand creates a new suspend command for cobra to suspend jobs.
 func NewSuspendCommand() *cobra.Command {
@@ -28,7 +32,7 @@ func NewSuspendCommand() *cobra.Command {
 		ValidArgsFunction: job.GenJobNames,
 		PreRun:            commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
-			suspendWorkflowHelper(cmd, args, workflow.SuspendJob, isAll)
+			suspendWorkflowHelper(cmd, args, rsrch_server.Interface.SuspendJobs, "suspend", isAll)
 		},
 	}
 
@@ -47,7 +51,7 @@ func NewResumeCommand() *cobra.Command {
 		ValidArgsFunction: job.GenJobNames,
 		PreRun:            commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
-			suspendWorkflowHelper(cmd, args, workflow.ResumeJob, isAll)
+			suspendWorkflowHelper(cmd, args, rsrch_server.Interface.ResumeJobs, "resume", isAll)
 		},
 	}
 
@@ -56,7 +60,7 @@ func NewResumeCommand() *cobra.Command {
 	return command
 }
 
-func suspendWorkflowHelper(cmd *cobra.Command, args []string, workflowCmd workflowCommand, isAll bool) {
+func suspendWorkflowHelper(cmd *cobra.Command, args []string, directCmd directCommand, cmdName string, isAll bool) {
 	if !isAll && len(args) == 0 {
 		cmd.HelpFunc()(cmd, args)
 		os.Exit(1)
@@ -69,6 +73,7 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, workflowCmd workfl
 	}
 
 	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+	projectName := util.ToProject(namespaceInfo.Namespace)
 
 	if err != nil {
 		log.Debugf("Failed due to %v", err)
@@ -85,12 +90,30 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, workflowCmd workfl
 			os.Exit(1)
 		}
 	}
-
-	runaijobClient := runaiClient.NewForConfigOrDie(kubeClient.GetRestConfig())
+	jobs := make([]rsrch_server.ResourceID, 0, len(jobNamesToSuspend))
 	for _, jobName := range jobNamesToSuspend {
-		err = workflowCmd(jobName, namespaceInfo, runaijobClient)
-		if err != nil {
-			log.Error(err)
+		jobs = append(jobs, rsrch_server.ResourceID{
+			Name:    jobName,
+			Project: projectName,
+		})
+	}
+
+	clientSet, err := rsrch_cs.NewCliClientFromConfig(kubeClient.GetRestConfig())
+	if err != nil {
+		log.Errorf("Failed to create clientSet for in-house CLI job delete: %v", err.Error())
+		return
+	}
+	cmdStatuses := directCmd(clientSet, context.TODO(), jobs)
+	for _, status := range cmdStatuses {
+		if status.Ok {
+			if cmdName[len(cmdName)-1] == 'e' {
+				cmdName = cmdName[:len(cmdName)-1]
+			}
+			log.Infof("Job %s %sed successfully.\n", status.Name, cmdName)
+		} else if status.Error.Status == http.StatusNotFound {
+			log.Infof("Job %s not found \n", status.Name)
+		} else {
+			log.Infof("Job %s failed to %s: %s\n", status.Name, cmdName, status.Error.Message)
 		}
 	}
 }

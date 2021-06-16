@@ -17,6 +17,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+
 	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
 	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -28,8 +31,6 @@ import (
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 // NewDeleteCommand
@@ -84,10 +85,10 @@ func NewDeleteCommand() *cobra.Command {
 			//
 			//   prepare the request as a list of job names + project
 			//
-			jobsToDelete := make([]rsrch_server.DeletedJob, 0, len(args))
+			jobsToDelete := make([]rsrch_server.ResourceID, 0, len(args))
 
 			for _, jobNameToDelete := range jobNamesToDelete {
-				jobsToDelete = append(jobsToDelete, rsrch_server.DeletedJob{
+				jobsToDelete = append(jobsToDelete, rsrch_server.ResourceID{
 					Name:    jobNameToDelete,
 					Project: projectName,
 				})
@@ -96,7 +97,7 @@ func NewDeleteCommand() *cobra.Command {
 			//
 			//    connect to the researcher config, if it can serve delete job request
 			//
-			var deleteJobsStatus []rsrch_server.DeletedJobStatus
+			var deleteJobsStatus []rsrch_server.JobActionStatus
 
 			rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.DeleteJobMinVersion)
 			if rs != nil {

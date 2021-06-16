@@ -7,8 +7,6 @@ import (
 	"os"
 	"strconv"
 
-	runaiClient "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned"
-	"github.com/run-ai/runai-cli/pkg/types"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/run-ai/runai-cli/pkg/util/helm"
@@ -231,43 +229,4 @@ func SubmitJob(name, namespace string, generateSuffix bool, values interface{}, 
 		return "", err
 	}
 	return jobName, nil
-}
-
-// SuspendJob suspends a runai job by setting job.Spec.Suspend to true
-// TODO: support mpi, podjob, deployment
-func SuspendJob(jobName string, namespaceInfo types.NamespaceInfo, runaijobsClient runaiClient.Interface) error {
-	return setRunaiSuspend(jobName, namespaceInfo, runaijobsClient, true)
-}
-
-// ResumeJob resumes a runai job by setting job.Spec.Suspend to true
-// TODO: support mpi, podjob, deployment
-func ResumeJob(jobName string, namespaceInfo types.NamespaceInfo, runaijobsClient runaiClient.Interface) error {
-	return setRunaiSuspend(jobName, namespaceInfo, runaijobsClient, false)
-}
-
-func setRunaiSuspend(jobName string, namespaceInfo types.NamespaceInfo, runaijobsClient runaiClient.Interface, suspendValue bool) error {
-	job, e := runaijobsClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Get(jobName, metav1.GetOptions{})
-
-	if e != nil {
-		log.Warningf("Failed to suspend job %s. Does the job exist?", jobName)
-		return e
-	}
-
-	if job.Spec.Suspend != nil {
-		if *job.Spec.Suspend == suspendValue {
-			if suspendValue {
-				log.Warningf("Job %s is already suspended.", jobName)
-			} else {
-				log.Warningf("Job %s is already resumed.", jobName)
-			}
-			return nil
-		}
-	} else {
-		job.Spec.Suspend = new(bool)
-	}
-	*job.Spec.Suspend = suspendValue
-
-	_, err := runaijobsClient.RunV1().RunaiJobs(namespaceInfo.Namespace).Update(job, metav1.UpdateOptions{})
-
-	return err
 }
