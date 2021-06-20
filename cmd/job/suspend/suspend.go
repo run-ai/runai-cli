@@ -73,14 +73,13 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, directCmd directCo
 	}
 
 	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
-	projectName := util.ToProject(namespaceInfo.Namespace)
-
 	if err != nil {
 		log.Debugf("Failed due to %v", err)
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
+	projectName := util.ToProject(namespaceInfo.Namespace)
 	jobNamesToSuspend := args
 
 	if isAll {
@@ -100,12 +99,13 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, directCmd directCo
 
 	clientSet, err := rsrch_cs.NewCliClientFromConfig(kubeClient.GetRestConfig())
 	if err != nil {
-		log.Errorf("Failed to create clientSet for in-house CLI job delete: %v", err.Error())
+		log.Errorf("Failed to create clientSet for in-house CLI job %s: %v", cmdName, err.Error())
 		return
 	}
 	cmdStatuses := directCmd(clientSet, context.TODO(), jobs)
 	for _, status := range cmdStatuses {
 		if status.Ok {
+			// trim trailing 'e' from cmd name to convert to past tense
 			if cmdName[len(cmdName)-1] == 'e' {
 				cmdName = cmdName[:len(cmdName)-1]
 			}
