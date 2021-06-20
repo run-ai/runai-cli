@@ -21,7 +21,7 @@ require (
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/common v0.10.0
-	github.com/run-ai/researcher-service v0.1.11
+	github.com/run-ai/researcher-service v0.1.14
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
