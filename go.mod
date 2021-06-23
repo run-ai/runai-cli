@@ -9,6 +9,7 @@ require (
 	github.com/go-openapi/spec v0.19.5
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/hashicorp/go-version v1.3.0
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/int128/oauth2cli v1.13.0
 	github.com/magiconair/properties v1.8.1
@@ -21,7 +22,7 @@ require (
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/common v0.10.0
-	github.com/run-ai/researcher-service v0.1.11
+	github.com/run-ai/researcher-service v0.1.14
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5

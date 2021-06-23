@@ -10,13 +10,13 @@ import (
 	"gopkg.in/square/go-jose.v2/json"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/api/runaijob/v1"
 	"github.com/run-ai/runai-cli/cmd/trainer"
 	cmdutil "github.com/run-ai/runai-cli/cmd/util"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
 	"github.com/run-ai/runai-cli/pkg/types"
 	cmdTypes "github.com/run-ai/runai-cli/pkg/types"
 	"github.com/run-ai/runai-cli/pkg/util"
-	batch "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -83,7 +83,7 @@ var _ = Describe("Job Information Collection", func() {
 	Describe("GetJobsMetrics", func() {
 		Context("RunaiJob", func() {
 			var (
-				job     *batch.Job
+				job     *runaijobv1.RunaiJob
 				pod     *v1.Pod
 				metrics prom.MetricResultsByItems
 			)

@@ -15,13 +15,14 @@ type ClusterConfig struct {
 }
 
 const (
-	runaiNamespace          = "runai"
+	// RunaiNamespace is the namespace where the runai core components are defined
+	RunaiNamespace          = "runai"
 	runaiClusterConfigLabel = "runai/cluster-config"
 	runaiConfigKey          = "config"
 )
 
 func GetClusterConfig(clientset kubernetes.Interface) (*ClusterConfig, error) {
-	configsList, err := clientset.CoreV1().ConfigMaps(runaiNamespace).List(context.TODO(), metav1.ListOptions{
+	configsList, err := clientset.CoreV1().ConfigMaps(RunaiNamespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=true", runaiClusterConfigLabel),
 	})
 

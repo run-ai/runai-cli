@@ -126,6 +126,18 @@ type JobSpec struct {
 	// TTLAfterFinished feature.
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty" protobuf:"varint,8,opt,name=ttlSecondsAfterFinished"`
+
+	// Suspend specifies whether the Job controller should create Pods or not. If
+	// a Job is created with suspend set to true, no Pods are created by the Job
+	// controller. If a Job is suspended after creation (i.e. the flag goes from
+	// false to true), the Job controller will delete all active Pods associated
+	// with this Job. Users must design their workload to gracefully handle this.
+	// Suspending a Job will reset the StartTime field of the Job, effectively
+	// resetting the ActiveDeadlineSeconds timer too. This is an alpha field and
+	// requires the SuspendJob feature gate to be enabled; otherwise this field
+	// may not be set to true. Defaults to false.
+	// +optional
+	Suspend *bool `json:"suspend,omitempty" protobuf:"varint,9,opt,name=suspend"`
 }
 
 // JobStatus represents the current state of a RunaiJob.
@@ -162,10 +174,13 @@ type JobStatus struct {
 	Failed int32 `json:"failed,omitempty" protobuf:"varint,6,opt,name=failed"`
 }
 
+// JobConditionType is a valid value for JobCondition.Type
 type JobConditionType string
 
 // These are valid conditions of a job.
 const (
+	// JobSuspended means the job has been suspended.
+	JobSuspended JobConditionType = "Suspended"
 	// JobComplete means the job has completed its execution.
 	JobComplete JobConditionType = "Complete"
 	// JobFailed means the job has failed its execution.
@@ -174,7 +189,7 @@ const (
 
 // JobCondition describes current state of a job.
 type JobCondition struct {
-	// Type of job condition, Complete or Failed.
+	// Type of job condition
 	Type JobConditionType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=JobConditionType"`
 	// Status of the condition, one of True, False, Unknown.
 	Status v1.ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status,casttype=k8s.io/api/core/v1.ConditionStatus"`
