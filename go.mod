@@ -41,4 +41,3 @@ require (
 	k8s.io/kubectl v0.19.3
 )
 
-replace github.com/run-ai/researcher-service  => /Users/ofer.lahav/go/src/github.com/run-ai/researcher-service
