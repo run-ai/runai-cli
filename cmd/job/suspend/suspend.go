@@ -14,6 +14,7 @@ import (
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/rsrch_client"
+	pkgUtil "github.com/run-ai/runai-cli/pkg/util"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -71,6 +72,10 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, directCmd directCo
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	if !pkgUtil.CheckComponentVersion("runai-job-controller", ">=v0.1.8", kubeClient) {
+		fmt.Printf("runai job controller version should be >=0.1.8\n")
+		os.Exit(1)
+	}
 
 	namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 	if err != nil {
@@ -109,11 +114,13 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, directCmd directCo
 			if cmdName[len(cmdName)-1] == 'e' {
 				cmdName = cmdName[:len(cmdName)-1]
 			}
-			log.Infof("Job %s %sed successfully.\n", status.Name, cmdName)
-		} else if status.Error.Status == http.StatusNotFound {
-			log.Infof("Job %s not found \n", status.Name)
-		} else {
-			log.Infof("Job %s failed to %s: %s\n", status.Name, cmdName, status.Error.Message)
+			fmt.Printf("Job %s %sed successfully.\n", status.Name, cmdName)
+		} else if status.Error != nil {
+			if status.Error.Status == http.StatusNotFound {
+				fmt.Printf("Job %s not found \n", status.Name)
+			} else {
+				fmt.Printf("Job %s failed to %s: %s\n", status.Name, cmdName, status.Error.Message)
+			}
 		}
 	}
 }
