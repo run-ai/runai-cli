@@ -29,6 +29,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/global"
 	deleteJob "github.com/run-ai/runai-cli/cmd/job/delete"
 	submitJob "github.com/run-ai/runai-cli/cmd/job/submit"
+	suspendJob "github.com/run-ai/runai-cli/cmd/job/suspend"
 	"github.com/run-ai/runai-cli/cmd/logs"
 	"github.com/run-ai/runai-cli/cmd/project"
 	"github.com/run-ai/runai-cli/cmd/template"
@@ -68,6 +69,8 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(resource.NewListCommand())
 	command.AddCommand(logs.NewLogsCommand())
 	command.AddCommand(deleteJob.NewDeleteCommand())
+	command.AddCommand(suspendJob.NewSuspendCommand())
+	command.AddCommand(suspendJob.NewResumeCommand())
 	command.AddCommand(resource.GetCommand())
 	command.AddCommand(resource.NewTopCommand())
 	command.AddCommand(resource.NewDescribeCommand())

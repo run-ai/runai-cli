@@ -161,7 +161,7 @@ func populateConfigMap(configMap *corev1.ConfigMap, chartName, chartVersion, val
 	data["app"] = string(appFileContent)
 
 	configMap.Data = data
-	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(context.TODO(), configMap, metav1.UpdateOptions {})
+	_, err = clientset.CoreV1().ConfigMaps(namespace).Update(context.TODO(), configMap, metav1.UpdateOptions{})
 	return err
 }
 

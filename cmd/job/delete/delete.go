@@ -17,6 +17,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+
 	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
 	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -28,8 +31,6 @@ import (
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 // NewDeleteCommand
@@ -105,7 +106,7 @@ func NewDeleteCommand() *cobra.Command {
 				//
 				deleteJobsStatus, err = rs.JobDelete(context.TODO(), jobsToDelete)
 			} else {
-				log.Infof("researcher-service cannot serve the request, use in-house CLI for job delete")
+				log.Debugf("researcher-service cannot serve the request, use in-house CLI for job delete")
 
 				clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 				if err != nil {

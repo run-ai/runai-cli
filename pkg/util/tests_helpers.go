@@ -3,12 +3,16 @@
 package util
 
 import (
+	"fmt"
+
 	"github.com/run-ai/runai-cli/cmd/constants"
+	runaijobv1 "github.com/run-ai/runai-cli/cmd/mpi/api/runaijob/v1"
+	mpi "github.com/run-ai/runai-cli/cmd/mpi/api/v1alpha2"
 	fakeclientset "github.com/run-ai/runai-cli/cmd/mpi/client/clientset/versioned/fake"
 	"github.com/run-ai/runai-cli/cmd/util"
 	kubeclient "github.com/run-ai/runai-cli/pkg/client"
 	prom "github.com/run-ai/runai-cli/pkg/prometheus"
-	batch "k8s.io/api/batch/v1"
+	runaitypes "github.com/run-ai/runai-cli/pkg/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,22 +34,40 @@ var runaiPodTemplate = v1.PodTemplateSpec{
 
 // NewClientForTesting creates a new client for testing purposes
 func NewClientForTesting(clientset kubernetes.Interface) *kubeclient.Client {
-	client := kubeclient.Client{}
+	client, _ := kubeclient.GetClient()
 	client.SetClientset(clientset)
-	return &client
+	return client
+}
+
+func filterRunAIObjects(objects []runtime.Object, filterIn bool) (filtered []runtime.Object) {
+	for _, obj := range objects {
+		objGroup := obj.GetObjectKind().GroupVersionKind().Group
+		if objGroup == runaijobv1.SchemeGroupVersion.Group || objGroup == mpi.GroupName {
+			if filterIn {
+				filtered = append(filtered, obj)
+			}
+		} else if !filterIn {
+			filtered = append(filtered, obj)
+		}
+	}
+	return
 }
 
 // GetClientWithObject creates a new client with given objects already "created" in its system
 func GetClientWithObject(objects []runtime.Object) (kubeclient.Client, *fakeclientset.Clientset) {
-	client := fake.NewSimpleClientset(objects...)
-	return *NewClientForTesting(client), fakeclientset.NewSimpleClientset()
+	client := fake.NewSimpleClientset(filterRunAIObjects(objects, false)...)
+	return *NewClientForTesting(client), fakeclientset.NewSimpleClientset(filterRunAIObjects(objects, true)...)
 }
 
-func GetRunaiJob(namespace, jobName, jobUUID string) *batch.Job {
+func GetRunaiJob(namespace, jobName, jobUUID string) *runaijobv1.RunaiJob {
 	var labelSelector = make(map[string]string)
 	labelSelector["controller-uid"] = jobUUID
 
-	return &batch.Job{
+	return &runaijobv1.RunaiJob{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       string(runaitypes.ResourceTypeRunaiJob),
+			APIVersion: fmt.Sprintf("%s/%s", runaijobv1.GroupName, "v1"),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      jobName,
@@ -56,13 +78,35 @@ func GetRunaiJob(namespace, jobName, jobUUID string) *batch.Job {
 				"user":                                  "test_user",
 			},
 		},
-		Spec: batch.JobSpec{
+		Spec: runaijobv1.JobSpec{
 			Template: runaiPodTemplate,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labelSelector,
 			},
 		},
-		Status: batch.JobStatus{},
+		Status: runaijobv1.JobStatus{},
+	}
+}
+
+func GetMPIJob(namespace, jobName, jobUUID string) *mpi.MPIJob {
+	var labelSelector = make(map[string]string)
+	labelSelector["controller-uid"] = jobUUID
+
+	return &mpi.MPIJob{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       string(mpi.Kind),
+			APIVersion: fmt.Sprintf("%s/%s", mpi.GroupName, mpi.GroupVersion),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      jobName,
+			UID:       types.UID(jobUUID),
+			Annotations: map[string]string{
+				util.WorkloadCurrentAllocatedGPUsMemory: "10000",
+				constants.WorkloadUsedNodes:             "test_node",
+				"user":                                  "test_user",
+			},
+		},
 	}
 }
 
@@ -72,6 +116,7 @@ func CreatePodOwnedBy(namespace, podName string, labelSelector map[string]string
 		labelSelector = make(map[string]string)
 	}
 	labelSelector["project"] = "test_project"
+	now := metav1.Now()
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
@@ -91,6 +136,19 @@ func CreatePodOwnedBy(namespace, podName string, labelSelector map[string]string
 				{
 					Name:  "container-1",
 					Image: "image-1",
+				},
+			},
+		},
+		Status: v1.PodStatus{
+			StartTime: &now,
+			ContainerStatuses: []v1.ContainerStatus{
+				{
+					Name: "Pending",
+					State: v1.ContainerState{
+						Waiting: &v1.ContainerStateWaiting{
+							Reason: "Pending",
+						},
+					},
 				},
 			},
 		},
