@@ -39,11 +39,11 @@ import (
 )
 
 const (
-	runaiNamespace = "runai"
-	jobDefaultName = "job"
-	dashArg        = "--"
-	commandFlag    = "command"
-	oldCommandFlag = "old-command"
+	runaiNamespace        = "runai"
+	jobDefaultName        = "job"
+	dashArg               = "--"
+	commandFlag           = "command"
+	oldCommandFlag        = "old-command"
 	getResourceMaxRetries = 5
 
 	// flag group names
@@ -83,7 +83,7 @@ type submitArgs struct {
 	Memory              string   `yaml:"memory,omitempty"`
 	MemoryLimit         string   `yaml:"memoryLimit,omitempty"`
 	EnvironmentVariable []string `yaml:"environment,omitempty"`
-	CliCommand		     string  `yaml:"cliCommand,omitempty"`
+	CliCommand          string   `yaml:"cliCommand,omitempty"`
 
 	ImagePullPolicy            string   `yaml:"imagePullPolicy"`
 	AlwaysPullImage            *bool    `yaml:"alwaysPullImage,omitempty"`
@@ -128,13 +128,13 @@ func (s submitArgs) check() error {
 	return nil
 }
 
-func(submitArgs *submitArgs) addCommonSubmit(fbg flags.FlagsByGroups) {
+func (submitArgs *submitArgs) addCommonSubmit(fbg flags.FlagsByGroups) {
 	submitArgs.addCommonFlags(fbg)
 	submitArgs.addCliCommand()
 }
 
-func(submitArgs *submitArgs) addCliCommand() {
-	submitArgs.CliCommand = strings.Join( os.Args , " ")
+func (submitArgs *submitArgs) addCliCommand() {
+	submitArgs.CliCommand = strings.Join(os.Args, " ")
 }
 
 func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
@@ -327,7 +327,7 @@ func (submitArgs *submitArgs) setCommonRun(cmd *cobra.Command, args []string, ku
 func (sa *submitArgs) applyRunAsAuthenticatedUser() (bool, error) {
 	uid, gid, err := authentication.GetCurrentAuthenticateUserUidGid()
 	if err != nil {
-		return true, err
+		return false, nil
 	}
 
 	if uid == "" && gid == "" {
