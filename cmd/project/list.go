@@ -3,6 +3,12 @@ package project
 import (
 	"context"
 	"fmt"
+	"os"
+	"sort"
+	"strings"
+	"text/tabwriter"
+	"time"
+
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
@@ -10,11 +16,6 @@ import (
 	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	log "github.com/sirupsen/logrus"
 	restclient "k8s.io/client-go/rest"
-	"os"
-	"sort"
-	"strings"
-	"text/tabwriter"
-	"time"
 
 	"github.com/run-ai/runai-cli/pkg/ui"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
@@ -80,7 +81,7 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 			IncludeDeleted: true,
 		})
 	} else {
-		log.Infof("researcher-service cannot serve the request, use in-house CLI for project list")
+		log.Debugf("researcher-service cannot serve the request, use in-house CLI for project list")
 
 		clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 		if err != nil {
