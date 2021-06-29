@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
-	log "github.com/sirupsen/logrus"
-	"k8s.io/client-go/rest"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
+
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
+	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/rest"
 )
 
 type RsrchClient struct {
@@ -86,7 +87,7 @@ func NewRsrchClient(restConfig *rest.Config, mandatoryMinVersion rsrch_server.Ve
 		var err error
 		rsVersion, err = result.VersionGet(context.TODO())
 		if err != nil {
-			log.Infof("Failed to obtain researcher-service version: %v", err.Error())
+			log.Debugf("Failed to obtain researcher-service version: %v", err.Error())
 			rsVersion = NewVersionInfo(0, 0, 0)
 		}
 	}
