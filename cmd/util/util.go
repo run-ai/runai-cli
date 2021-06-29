@@ -1,7 +1,10 @@
 package util
 
 import (
+	"context"
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/constants"
+	"strings"
 
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/config"
@@ -11,7 +14,7 @@ import (
 )
 
 func GetNamespaceFromProjectName(project string, kubeClient *client.Client) (string, error) {
-	namespaceList, err := kubeClient.GetClientset().CoreV1().Namespaces().List(metav1.ListOptions{
+	namespaceList, err := kubeClient.GetClientset().CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", RUNAI_QUEUE_LABEL, project),
 	})
 
@@ -54,4 +57,23 @@ func BoolP(b bool) *bool {
 
 func IsBoolPTrue(b *bool) bool {
 	return b != nil && *b
+}
+
+func IsProjectNamespace(namespace string) bool {
+	return strings.HasPrefix(namespace, constants.RunaiNsProjectPrefix)
+}
+
+func ToNamespace(project string) string {
+	return constants.RunaiNsProjectPrefix + project
+}
+
+//
+//   if a namespace is a runai project, returns the name of the project. otherwise, return empty string
+//
+func ToProject(namespace string) string {
+	if IsProjectNamespace(namespace) {
+		return namespace[len(constants.RunaiNsProjectPrefix):]
+	} else {
+		return ""
+	}
 }

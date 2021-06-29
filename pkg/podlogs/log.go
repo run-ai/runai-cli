@@ -1,6 +1,7 @@
 package podlogs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -57,7 +58,7 @@ func (pl *PodLog) GetPodLogEntry(accept func(io.ReadCloser)) error {
 		SinceSeconds: pl.Args.SinceSeconds,
 		SinceTime:    pl.Args.SinceTime,
 		TailLines:    pl.Args.Tail,
-	}).Stream()
+	}).Stream(context.TODO())
 
 	if err != nil {
 		return err
@@ -69,7 +70,7 @@ func (pl *PodLog) GetPodLogEntry(accept func(io.ReadCloser)) error {
 
 func (pl *PodLog) ensureContainerStarted() error {
 	for pl.Args.RetryCnt > 0 {
-		pod, err := pl.Args.KubeClient.CoreV1().Pods(pl.Args.Namespace).Get(pl.Args.PodName, metav1.GetOptions{})
+		pod, err := pl.Args.KubeClient.CoreV1().Pods(pl.Args.Namespace).Get(context.TODO(), pl.Args.PodName, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}

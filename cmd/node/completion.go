@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/spf13/cobra"
@@ -16,7 +17,7 @@ func GenNodeNames(_ *cobra.Command, _ []string, _ string) ([]string, cobra.Shell
 		os.Exit(1)
 	}
 
-	nodeList, err := kubeClient.GetClientset().CoreV1().Nodes().List(metav1.ListOptions{})
+	nodeList, err := kubeClient.GetClientset().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

@@ -2,6 +2,7 @@ package project
 
 import (
 	"github.com/run-ai/runai-cli/cmd/completion"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +15,12 @@ func GenProjectNamesForFlag(_ *cobra.Command, _ []string, _ string) ([]string, c
 		return result, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	projects, err := PrepareListOfProjects();
+	restConfig, _, err := client.GetRestConfig()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	projects, _, err := PrepareListOfProjects(restConfig, false /*do not include deleted projects*/)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -39,4 +45,3 @@ func GenProjectNamesForArg(cmd *cobra.Command, args []string, toComplete string)
 	}
 	return GenProjectNamesForFlag(cmd, args, toComplete)
 }
-

@@ -1,6 +1,7 @@
 package serving
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,13 +14,13 @@ import (
 // Get all jobs under the assigned conditons.
 func NewServingJobList(client *kubernetes.Clientset, servingName string, ns string) ([]Serving, error) {
 	jobs := []Serving{}
-	deployments, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
+	deployments, err := client.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("serviceName=%s", servingName),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed due to %v", err)
 	}
-	podListObject, err := client.CoreV1().Pods(ns).List(metav1.ListOptions{
+	podListObject, err := client.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",

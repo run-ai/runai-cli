@@ -15,6 +15,7 @@
 package root
 
 import (
+	"context"
 	"github.com/run-ai/runai-cli/cmd/cluster"
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -28,6 +29,7 @@ import (
 	"github.com/run-ai/runai-cli/cmd/global"
 	deleteJob "github.com/run-ai/runai-cli/cmd/job/delete"
 	submitJob "github.com/run-ai/runai-cli/cmd/job/submit"
+	suspendJob "github.com/run-ai/runai-cli/cmd/job/suspend"
 	"github.com/run-ai/runai-cli/cmd/logs"
 	"github.com/run-ai/runai-cli/cmd/project"
 	"github.com/run-ai/runai-cli/cmd/template"
@@ -59,14 +61,16 @@ func NewCommand() *cobra.Command {
 	//
 	//   add global flags to the command
 	//
-	addKubectlFlagsToCmd(command)     	// project flag
-	addDebugLevelFlagsToCmd(command)	// log level flag
+	addKubectlFlagsToCmd(command)    // project flag
+	addDebugLevelFlagsToCmd(command) // log level flag
 
 	command.AddCommand(submitJob.NewRunaiJobCommand())
 	command.AddCommand(submitJob.NewRunaiSubmitMPIJobCommand())
 	command.AddCommand(resource.NewListCommand())
 	command.AddCommand(logs.NewLogsCommand())
 	command.AddCommand(deleteJob.NewDeleteCommand())
+	command.AddCommand(suspendJob.NewSuspendCommand())
+	command.AddCommand(suspendJob.NewResumeCommand())
 	command.AddCommand(resource.GetCommand())
 	command.AddCommand(resource.NewTopCommand())
 	command.AddCommand(resource.NewDescribeCommand())
@@ -105,12 +109,12 @@ func createNamespace(client *kubernetes.Clientset, namespace string) error {
 			Name: namespace,
 		},
 	}
-	_, err := client.CoreV1().Namespaces().Create(ns)
+	_, err := client.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 	return err
 }
 
 func getNamespace(client *kubernetes.Clientset, namespace string) (*v1.Namespace, error) {
-	return client.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	return client.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 }
 
 func ensureNamespace(client *kubernetes.Clientset, namespace string) error {

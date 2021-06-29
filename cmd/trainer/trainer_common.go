@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	"context"
 	"fmt"
 	"strconv"
 
@@ -347,7 +348,7 @@ func getTrainingJobsByName(kubeClient *client.Client, name string, namespaceInfo
 
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespaceInfo.Namespace)
-		configMap, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).Get(name, metav1.GetOptions{})
+		configMap, err := kubeClient.GetClientset().CoreV1().ConfigMaps(namespaceInfo.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err == nil {
 			return nil, fmt.Errorf("The job %s is invalid. Please delete it", configMap.Name)
 		}
@@ -369,7 +370,7 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 * get App Configs by name, which is created by arena
  */
 func GetTrainingTypes(name, namespace string, clientset kubernetes.Interface) (cms []string, err error) {
-	configMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
+	configMaps, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return []string{}, err
 	}

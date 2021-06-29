@@ -17,6 +17,7 @@
 package v1alpha2
 
 import (
+	"context"
 	"time"
 
 	v1alpha2 "github.com/run-ai/runai-cli/cmd/mpi/api/v1alpha2"
@@ -69,7 +70,7 @@ func (c *mPIJobs) Get(name string, options v1.GetOptions) (result *v1alpha2.MPIJ
 		Resource("mpijobs").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -86,7 +87,7 @@ func (c *mPIJobs) List(opts v1.ListOptions) (result *v1alpha2.MPIJobList, err er
 		Resource("mpijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -103,7 +104,7 @@ func (c *mPIJobs) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("mpijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.TODO())
 }
 
 // Create takes the representation of a mPIJob and creates it.  Returns the server's representation of the mPIJob, and an error, if there is any.
@@ -113,7 +114,7 @@ func (c *mPIJobs) Create(mPIJob *v1alpha2.MPIJob) (result *v1alpha2.MPIJob, err 
 		Namespace(c.ns).
 		Resource("mpijobs").
 		Body(mPIJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -126,7 +127,7 @@ func (c *mPIJobs) Update(mPIJob *v1alpha2.MPIJob) (result *v1alpha2.MPIJob, err 
 		Resource("mpijobs").
 		Name(mPIJob.Name).
 		Body(mPIJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -142,7 +143,7 @@ func (c *mPIJobs) UpdateStatus(mPIJob *v1alpha2.MPIJob) (result *v1alpha2.MPIJob
 		Name(mPIJob.Name).
 		SubResource("status").
 		Body(mPIJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -154,7 +155,7 @@ func (c *mPIJobs) Delete(name string, options *v1.DeleteOptions) error {
 		Resource("mpijobs").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -170,7 +171,7 @@ func (c *mPIJobs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.Lis
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -183,7 +184,7 @@ func (c *mPIJobs) Patch(name string, pt types.PatchType, data []byte, subresourc
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }

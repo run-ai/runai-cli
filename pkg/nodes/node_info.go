@@ -1,6 +1,7 @@
 package nodes
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -182,7 +183,7 @@ func GetAllNodeInfos(client *client.Client, shouldQueryMetrics bool) ([]NodeInfo
 		return nil, "", err
 	}
 
-	nodeList, err := client.GetClientset().CoreV1().Nodes().List(metav1.ListOptions{})
+	nodeList, err := client.GetClientset().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
 		return nodeInfoList, warning, err

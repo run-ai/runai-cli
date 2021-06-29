@@ -11,8 +11,8 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
 
 # Remove old version files
 if [ -d "${NEW_SCRIPT_PATH}" ]; then
-  rm "${NEW_SCRIPT_PATH}/runai"
-  rm "${NEW_SCRIPT_PATH}/VERSION"
+  rm -f "${NEW_SCRIPT_PATH}/runai"
+  rm -f "${NEW_SCRIPT_PATH}/VERSION"
   rm -rf "${NEW_SCRIPT_PATH}/charts"
 fi
 
@@ -31,6 +31,10 @@ cp "${SCRIPT_DIR}"/VERSION "${NEW_SCRIPT_PATH}"
 cp -R "${SCRIPT_DIR}"/charts "${NEW_SCRIPT_PATH}"
 
 if [ "$NEW_SCRIPT_PATH" == "/usr/local/runai" ] ; then
+    if [ ! -d "/usr/local/bin" ] ; then
+        mkdir -p /usr/local/bin
+        echo "Add \"/usr/local/bin\" to your PATH: export PATH=\$PATH:/usr/local/bin"
+    fi
     ln -sf "${NEW_SCRIPT_PATH}"/"${SCRIPT_NAME}" /usr/local/bin/"${SCRIPT_NAME}"
 else
     echo "Add ${NEW_SCRIPT_PATH} to your \$PATH: export PATH=\$PATH:${NEW_SCRIPT_PATH}"
