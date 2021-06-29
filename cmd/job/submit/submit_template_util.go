@@ -3,11 +3,25 @@ package submit
 import (
 	"fmt"
 	log "github.com/golang/glog"
+	"github.com/run-ai/researcher-service/server/pkg/runai/api"
+	"github.com/run-ai/researcher-service/server/pkg/schema"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/templates"
+	"os"
+	"reflect"
 	"strconv"
 	"time"
 )
+
+func enforce(field schema.SettingsEnforcer, value interface{}, name string) {
+	if reflect.ValueOf(field).IsNil() {
+		return
+	}
+	if err := field.Enforce(value, name); err != nil {
+		fmt.Printf("Usage: %s\n", err.Error())
+		os.Exit(1)
+	}
+}
 
 func recoverFromMissingFlag(err *error) {
 	if r := recover(); r != nil {
@@ -15,33 +29,34 @@ func recoverFromMissingFlag(err *error) {
 	}
 }
 
-func applyTemplateToSubmitRunaijob(template *templates.SubmitTemplate, args *submitRunaiJobArgs, extraArgs []string) (err error) {
+func applyTemplateToSubmitRunaijob(template *templates.SubmitTemplate, args *submitRunaiJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
 	defer recoverFromMissingFlag(&err)
 
-	*args = mergeTemplateToRunaiSubmitArgs(*args, template, extraArgs)
+	*args = mergeTemplateToRunaiSubmitArgs(*args, template, jobSettings, extraArgs)
 	return nil
 }
 
-func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submitMPIJobArgs, extraArgs []string) (err error) {
+func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submitMPIJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
 	defer recoverFromMissingFlag(&err)
 
-	*args = mergeTemplateToMpiSubmitArgs(*args, template, extraArgs)
+	*args = mergeTemplateToMpiSubmitArgs(*args, template, jobSettings, extraArgs)
 	return nil
 }
 
-func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, extraArgs []string) submitArgs {
-	submitArgs.NameParameter = applyTemplateFieldForString(submitArgs.NameParameter, template.Name, "name")
+func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitArgs {
+	enforce(jobSettings.Fields.Name, &submitArgs.NameParameter, "name")
+	enforce(jobSettings.Fields.Environment, &submitArgs.EnvironmentVariable, "environment")
 	submitArgs.EnvironmentVariable = templates.MergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
 	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
 	submitArgs.AlwaysPullImage = applyTemplateFieldForBool(submitArgs.AlwaysPullImage, template.AlwaysPullImage, "always-pull-image")
 	submitArgs.Attach = applyTemplateFieldForBool(submitArgs.Attach, template.Attach, "attach")
-	submitArgs.CPU = applyTemplateFieldForString(submitArgs.CPU, template.Cpu, "cpu")
+	enforce(jobSettings.Fields.Cpu, &submitArgs.CPU, "cpu")
 	submitArgs.CPULimit = applyTemplateFieldForString(submitArgs.CPULimit, template.CpuLimit, "cpu-limit")
 	submitArgs.CreateHomeDir = applyTemplateFieldForBool(submitArgs.CreateHomeDir, template.CreateHomeDir, "create-home-dir")
 	submitArgs.GPU = applyTemplateFieldForFloat64(submitArgs.GPU, template.Gpu, "gpu")
 	submitArgs.HostIPC = applyTemplateFieldForBool(submitArgs.HostIPC, template.HostIpc, "host-ipc")
 	submitArgs.HostNetwork = applyTemplateFieldForBool(submitArgs.HostNetwork, template.HostNetwork, "host-network")
-	submitArgs.Image = applyTemplateFieldForString(submitArgs.Image, template.Image, "image")
+	enforce(jobSettings.Fields.Image, &submitArgs.Image, "image")
 	submitArgs.Interactive = applyTemplateFieldForBool(submitArgs.Interactive, template.Interactive, "interactive")
 	submitArgs.LargeShm = applyTemplateFieldForBool(submitArgs.LargeShm, template.LargeShm, "large-shm")
 	submitArgs.LocalImage = applyTemplateFieldForBool(submitArgs.LocalImage, template.LocalImage, "local-image")
@@ -76,8 +91,8 @@ func mergeGitSync(submitArgs *submitArgs, templateGitSync *templates.GitSyncTemp
 	submitArgs.GitSync.Directory = applyTemplateFieldForString(submitArgs.GitSync.Directory, templateGitSync.Directory, "git-sync.target")
 }
 
-func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitRunaiJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitRunaiJobArgs {
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, jobSettings, extraArgs)
 	submitArgs.BackoffLimit = applyTemplateFieldForInt(submitArgs.BackoffLimit, template.BackoffLimit, "backofflimit")
 	submitArgs.Elastic = applyTemplateFieldForBool(submitArgs.Elastic, template.Elastic, "elastic")
 	submitArgs.Parallelism = applyTemplateFieldForInt(submitArgs.Parallelism, template.Parallelism, "parallelism")
@@ -88,8 +103,8 @@ func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *tem
 	return submitArgs
 }
 
-func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitMPIJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
+func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitMPIJobArgs {
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, jobSettings, extraArgs)
 	submitArgs.Processes = applyTemplateFieldForInt(submitArgs.Processes, template.Processes, "processes")
 	return submitArgs
 }

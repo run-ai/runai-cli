@@ -4,6 +4,7 @@ const (
 	VersionURL  = "/api/v1/version"
 	ProjectsURL = "/api/v1/projects"
 	JobsURL     = "/api/v1/jobs"
+	SettingsURL = "/api/v1/settings"
 
 	//   full url of the researcher service, e.g. http://11.22.33.44:8080
 	devRsrchUrlEnvVar = "RESEARCHER_SERVICE_URL"

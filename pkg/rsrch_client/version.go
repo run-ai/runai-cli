@@ -18,8 +18,9 @@ func NewVersionInfo(major, minor, subver int) *rsrch_server.VersionInfo {
 }
 
 var (
-	ProjectListMinVersion = *NewVersionInfo(0, 1, 11)
-	DeleteJobMinVersion   = *NewVersionInfo(0, 1, 11)
+	ProjectListMinVersion  = *NewVersionInfo(0, 1, 11)
+	DeleteJobMinVersion    = *NewVersionInfo(0, 1, 11)
+	SettingsListMinVersion = *NewVersionInfo(0, 1, 14)
 )
 
 //
