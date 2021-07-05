@@ -13,14 +13,16 @@ import (
 	"time"
 )
 
-func enforce(field schema.SettingsEnforcer, value interface{}, name string) {
+func enforce(value interface{}, field schema.SettingsEnforcer, name string) interface{} {
 	if reflect.ValueOf(field).IsNil() {
-		return
+		return nil
 	}
-	if err := field.Enforce(value, name); err != nil {
+	val, err := field.Enforce(value, name)
+	if err != nil {
 		fmt.Printf("Usage: %s\n", err.Error())
 		os.Exit(1)
 	}
+	return val
 }
 
 func recoverFromMissingFlag(err *error) {
@@ -44,21 +46,21 @@ func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submi
 }
 
 func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitArgs {
-	enforce(jobSettings.Fields.Name, &submitArgs.NameParameter, "name")
-	enforce(jobSettings.Fields.Environment, &submitArgs.EnvironmentVariable, "environment")
+	submitArgs.NameParameter = enforce(submitArgs.NameParameter, jobSettings.Fields.Name, "name").(string)
+	submitArgs.EnvironmentVariable = enforce(submitArgs.EnvironmentVariable, jobSettings.Fields.Environment, "environment").([]string)
 	submitArgs.EnvironmentVariable = templates.MergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
 	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
 	submitArgs.AlwaysPullImage = applyTemplateFieldForBool(submitArgs.AlwaysPullImage, template.AlwaysPullImage, "always-pull-image")
 	submitArgs.Attach = applyTemplateFieldForBool(submitArgs.Attach, template.Attach, "attach")
-	enforce(jobSettings.Fields.Cpu, &submitArgs.CPU, "cpu")
+	submitArgs.CPU = enforce(submitArgs.CPU, jobSettings.Fields.Cpu, "cpu").(string)
 	submitArgs.CPULimit = applyTemplateFieldForString(submitArgs.CPULimit, template.CpuLimit, "cpu-limit")
-	submitArgs.CreateHomeDir = applyTemplateFieldForBool(submitArgs.CreateHomeDir, template.CreateHomeDir, "create-home-dir")
+	submitArgs.CreateHomeDir = enforce(submitArgs.CreateHomeDir, jobSettings.Fields.CreateHomeDir, "create-home-dir").(*bool)
 	submitArgs.GPU = applyTemplateFieldForFloat64(submitArgs.GPU, template.Gpu, "gpu")
 	submitArgs.HostIPC = applyTemplateFieldForBool(submitArgs.HostIPC, template.HostIpc, "host-ipc")
-	submitArgs.HostNetwork = applyTemplateFieldForBool(submitArgs.HostNetwork, template.HostNetwork, "host-network")
-	enforce(jobSettings.Fields.Image, &submitArgs.Image, "image")
+	submitArgs.HostNetwork = enforce(submitArgs.HostNetwork, jobSettings.Fields.HostNetwork, "host-network").(*bool)
+	submitArgs.Image = enforce(submitArgs.Image, jobSettings.Fields.Image, "image").(string)
 	submitArgs.Interactive = applyTemplateFieldForBool(submitArgs.Interactive, template.Interactive, "interactive")
-	submitArgs.LargeShm = applyTemplateFieldForBool(submitArgs.LargeShm, template.LargeShm, "large-shm")
+	submitArgs.LargeShm = enforce(submitArgs.LargeShm, jobSettings.Fields.LargeShm, "large-shm").(*bool)
 	submitArgs.LocalImage = applyTemplateFieldForBool(submitArgs.LocalImage, template.LocalImage, "local-image")
 	submitArgs.Memory = applyTemplateFieldForString(submitArgs.Memory, template.Memory, "memory")
 	submitArgs.MemoryLimit = applyTemplateFieldForString(submitArgs.MemoryLimit, template.MemoryLimit, "memory-limit")
@@ -66,7 +68,7 @@ func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.
 	submitArgs.PersistentVolumes = append(submitArgs.PersistentVolumes, template.PersistentVolumes...)
 	submitArgs.WorkingDir = applyTemplateFieldForString(submitArgs.WorkingDir, template.WorkingDir, "working-dir")
 	submitArgs.NamePrefix = applyTemplateFieldForString(submitArgs.NamePrefix, template.JobNamePrefix, "job-name-prefix")
-	submitArgs.PreventPrivilegeEscalation = applyTemplateFieldForBool(submitArgs.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation, "prevent-privilege-escalation")
+	submitArgs.PreventPrivilegeEscalation = enforce(submitArgs.PreventPrivilegeEscalation, jobSettings.Fields.PreventPrivilegeEscalation, "prevent-privilege-escalation").(*bool)
 	submitArgs.RunAsCurrentUser = applyTemplateFieldForBool(submitArgs.RunAsCurrentUser, template.RunAsCurrentUser, "run-as-user")
 	submitArgs.Command = applyTemplateFieldForBool(submitArgs.Command, template.IsCommand, "command")
 	mergeGitSync(&submitArgs, template.GitSync)
@@ -94,11 +96,11 @@ func mergeGitSync(submitArgs *submitArgs, templateGitSync *templates.GitSyncTemp
 func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitRunaiJobArgs {
 	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, jobSettings, extraArgs)
 	submitArgs.BackoffLimit = applyTemplateFieldForInt(submitArgs.BackoffLimit, template.BackoffLimit, "backofflimit")
-	submitArgs.Elastic = applyTemplateFieldForBool(submitArgs.Elastic, template.Elastic, "elastic")
+	submitArgs.Elastic = enforce(submitArgs.Elastic, jobSettings.Fields.Elastic, "elastic").(*bool)
 	submitArgs.Parallelism = applyTemplateFieldForInt(submitArgs.Parallelism, template.Parallelism, "parallelism")
-	submitArgs.IsPreemptible = applyTemplateFieldForBool(submitArgs.IsPreemptible, template.IsPreemptible, "preemptible")
+	submitArgs.IsPreemptible = enforce(submitArgs.IsPreemptible, jobSettings.Fields.Preemptible, "preemptible").(*bool)
 	submitArgs.ServiceType = applyTemplateFieldForString(submitArgs.ServiceType, template.ServiceType, "service-type")
-	submitArgs.IsJupyter = applyTemplateFieldForBool(submitArgs.IsJupyter, template.IsJupyter, "jupyter")
+	submitArgs.IsJupyter = enforce(submitArgs.IsJupyter, jobSettings.Fields.Jupyter, "jupyter").(*bool)
 	submitArgs.TtlAfterFinished = applyTemplateFieldForDuration(submitArgs.TtlAfterFinished, template.TtlAfterFinished, "ttl-after-finish")
 	return submitArgs
 }
