@@ -25,7 +25,7 @@ func GetNamespaceFromProjectName(project string, kubeClient *client.Client) (str
 	if namespaceList != nil && len(namespaceList.Items) != 0 {
 		return namespaceList.Items[0].Name, nil
 	} else {
-		return "", fmt.Errorf("project %s was not found. Please run '%s project list' to view all avaliable projects", project, config.CLIName)
+		return "", fmt.Errorf("project %s was not found. Please run '%s list project' to view all avaliable projects", project, config.CLIName)
 	}
 }
 
