@@ -3,27 +3,11 @@ package submit
 import (
 	"fmt"
 	log "github.com/golang/glog"
-	"github.com/run-ai/researcher-service/server/pkg/runai/api"
-	"github.com/run-ai/researcher-service/server/pkg/schema"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/templates"
-	"os"
-	"reflect"
 	"strconv"
 	"time"
 )
-
-func enforce(value interface{}, field schema.SettingsEnforcer, name string) interface{} {
-	if reflect.ValueOf(field).IsNil() {
-		return nil
-	}
-	val, err := field.Enforce(value, name)
-	if err != nil {
-		fmt.Printf("Usage: %s\n", err.Error())
-		os.Exit(1)
-	}
-	return val
-}
 
 func recoverFromMissingFlag(err *error) {
 	if r := recover(); r != nil {
@@ -31,36 +15,35 @@ func recoverFromMissingFlag(err *error) {
 	}
 }
 
-func applyTemplateToSubmitRunaijob(template *templates.SubmitTemplate, args *submitRunaiJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
+func applyTemplateToSubmitRunaijob(template *templates.SubmitTemplate, args *submitRunaiJobArgs, extraArgs []string) (err error) {
 	defer recoverFromMissingFlag(&err)
 
-	*args = mergeTemplateToRunaiSubmitArgs(*args, template, jobSettings, extraArgs)
+	*args = mergeTemplateToRunaiSubmitArgs(*args, template, extraArgs)
 	return nil
 }
 
-func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submitMPIJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
+func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submitMPIJobArgs, extraArgs []string) (err error) {
 	defer recoverFromMissingFlag(&err)
 
-	*args = mergeTemplateToMpiSubmitArgs(*args, template, jobSettings, extraArgs)
+	*args = mergeTemplateToMpiSubmitArgs(*args, template, extraArgs)
 	return nil
 }
 
-func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitArgs {
-	submitArgs.NameParameter = enforce(submitArgs.NameParameter, jobSettings.Fields.Name, "name").(string)
-	submitArgs.EnvironmentVariable = enforce(submitArgs.EnvironmentVariable, jobSettings.Fields.Environment, "environment").([]string)
+func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, extraArgs []string) submitArgs {
+	submitArgs.NameParameter = applyTemplateFieldForString(submitArgs.NameParameter, template.Name, "name")
 	submitArgs.EnvironmentVariable = templates.MergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
 	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
 	submitArgs.AlwaysPullImage = applyTemplateFieldForBool(submitArgs.AlwaysPullImage, template.AlwaysPullImage, "always-pull-image")
 	submitArgs.Attach = applyTemplateFieldForBool(submitArgs.Attach, template.Attach, "attach")
-	submitArgs.CPU = enforce(submitArgs.CPU, jobSettings.Fields.Cpu, "cpu").(string)
+	submitArgs.CPU = applyTemplateFieldForString(submitArgs.CPU, template.Cpu, "cpu")
 	submitArgs.CPULimit = applyTemplateFieldForString(submitArgs.CPULimit, template.CpuLimit, "cpu-limit")
-	submitArgs.CreateHomeDir = enforce(submitArgs.CreateHomeDir, jobSettings.Fields.CreateHomeDir, "create-home-dir").(*bool)
+	submitArgs.CreateHomeDir = applyTemplateFieldForBool(submitArgs.CreateHomeDir, template.CreateHomeDir, "create-home-dir")
 	submitArgs.GPU = applyTemplateFieldForFloat64(submitArgs.GPU, template.Gpu, "gpu")
 	submitArgs.HostIPC = applyTemplateFieldForBool(submitArgs.HostIPC, template.HostIpc, "host-ipc")
-	submitArgs.HostNetwork = enforce(submitArgs.HostNetwork, jobSettings.Fields.HostNetwork, "host-network").(*bool)
-	submitArgs.Image = enforce(submitArgs.Image, jobSettings.Fields.Image, "image").(string)
+	submitArgs.HostNetwork = applyTemplateFieldForBool(submitArgs.HostNetwork, template.HostNetwork, "host-network")
+	submitArgs.Image = applyTemplateFieldForString(submitArgs.Image, template.Image, "image")
 	submitArgs.Interactive = applyTemplateFieldForBool(submitArgs.Interactive, template.Interactive, "interactive")
-	submitArgs.LargeShm = enforce(submitArgs.LargeShm, jobSettings.Fields.LargeShm, "large-shm").(*bool)
+	submitArgs.LargeShm = applyTemplateFieldForBool(submitArgs.LargeShm, template.LargeShm, "large-shm")
 	submitArgs.LocalImage = applyTemplateFieldForBool(submitArgs.LocalImage, template.LocalImage, "local-image")
 	submitArgs.Memory = applyTemplateFieldForString(submitArgs.Memory, template.Memory, "memory")
 	submitArgs.MemoryLimit = applyTemplateFieldForString(submitArgs.MemoryLimit, template.MemoryLimit, "memory-limit")
@@ -68,7 +51,7 @@ func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.
 	submitArgs.PersistentVolumes = append(submitArgs.PersistentVolumes, template.PersistentVolumes...)
 	submitArgs.WorkingDir = applyTemplateFieldForString(submitArgs.WorkingDir, template.WorkingDir, "working-dir")
 	submitArgs.NamePrefix = applyTemplateFieldForString(submitArgs.NamePrefix, template.JobNamePrefix, "job-name-prefix")
-	submitArgs.PreventPrivilegeEscalation = enforce(submitArgs.PreventPrivilegeEscalation, jobSettings.Fields.PreventPrivilegeEscalation, "prevent-privilege-escalation").(*bool)
+	submitArgs.PreventPrivilegeEscalation = applyTemplateFieldForBool(submitArgs.PreventPrivilegeEscalation, template.PreventPrivilegeEscalation, "prevent-privilege-escalation")
 	submitArgs.RunAsCurrentUser = applyTemplateFieldForBool(submitArgs.RunAsCurrentUser, template.RunAsCurrentUser, "run-as-user")
 	submitArgs.Command = applyTemplateFieldForBool(submitArgs.Command, template.IsCommand, "command")
 	mergeGitSync(&submitArgs, template.GitSync)
@@ -93,20 +76,20 @@ func mergeGitSync(submitArgs *submitArgs, templateGitSync *templates.GitSyncTemp
 	submitArgs.GitSync.Directory = applyTemplateFieldForString(submitArgs.GitSync.Directory, templateGitSync.Directory, "git-sync.target")
 }
 
-func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitRunaiJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, jobSettings, extraArgs)
+func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitRunaiJobArgs {
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
 	submitArgs.BackoffLimit = applyTemplateFieldForInt(submitArgs.BackoffLimit, template.BackoffLimit, "backofflimit")
-	submitArgs.Elastic = enforce(submitArgs.Elastic, jobSettings.Fields.Elastic, "elastic").(*bool)
+	submitArgs.Elastic = applyTemplateFieldForBool(submitArgs.Elastic, template.Elastic, "elastic")
 	submitArgs.Parallelism = applyTemplateFieldForInt(submitArgs.Parallelism, template.Parallelism, "parallelism")
-	submitArgs.IsPreemptible = enforce(submitArgs.IsPreemptible, jobSettings.Fields.Preemptible, "preemptible").(*bool)
+	submitArgs.IsPreemptible = applyTemplateFieldForBool(submitArgs.IsPreemptible, template.IsPreemptible, "preemptible")
 	submitArgs.ServiceType = applyTemplateFieldForString(submitArgs.ServiceType, template.ServiceType, "service-type")
-	submitArgs.IsJupyter = enforce(submitArgs.IsJupyter, jobSettings.Fields.Jupyter, "jupyter").(*bool)
+	submitArgs.IsJupyter = applyTemplateFieldForBool(submitArgs.IsJupyter, template.IsJupyter, "jupyter")
 	submitArgs.TtlAfterFinished = applyTemplateFieldForDuration(submitArgs.TtlAfterFinished, template.TtlAfterFinished, "ttl-after-finish")
 	return submitArgs
 }
 
-func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitMPIJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, jobSettings, extraArgs)
+func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, extraArgs []string) submitMPIJobArgs {
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, extraArgs)
 	submitArgs.Processes = applyTemplateFieldForInt(submitArgs.Processes, template.Processes, "processes")
 	return submitArgs
 }

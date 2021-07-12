@@ -1,10 +1,7 @@
 package submit
 
 import (
-	"context"
 	"fmt"
-	"github.com/run-ai/researcher-service/server/pkg/runai/api"
-	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	"math"
 	"os"
 	"path"
@@ -94,15 +91,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 			submitArgs.GitSync = GitSyncFromConnectionString(gitSyncConnectionString)
 
-			jobSettings, err := rsrch_client.GetJobSettings(context.TODO(), rsrch_client.JobSettingsGetOptions{
-				Interactive: submitArgs.Interactive != nil && *submitArgs.Interactive,
-			})
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			err = applyTemplate(submitArgs, jobSettings, commandArgs, clientset)
+			err = applyTemplate(submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -133,14 +122,14 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.Completions = &interactiveCompletions
 			}
 
-			err = submitRunaiJob(submitArgs, clientset, *runaijobClient)
-			if err != nil {
-				fmt.Println(err)
+			if len(submitArgs.Image) == 0 {
+				fmt.Print("\n-i, --image must be set\n\n")
 				os.Exit(1)
 			}
 
-			if len(submitArgs.Image) == 0 {
-				fmt.Print("\n-i, --image must be set\n\n")
+			err = submitRunaiJob(submitArgs, clientset, *runaijobClient)
+			if err != nil {
+				fmt.Println(err)
 				os.Exit(1)
 			}
 
@@ -226,7 +215,7 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
-func applyTemplate(submitArgs interface{}, jobSettings *api.JobSettings, extraArgs []string, clientset kubernetes.Interface) error {
+func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kubernetes.Interface) error {
 	templatesHandler := templates.NewTemplates(clientset)
 	var submitTemplateToUse *templates.SubmitTemplate
 
@@ -264,9 +253,9 @@ func applyTemplate(submitArgs interface{}, jobSettings *api.JobSettings, extraAr
 	if submitTemplateToUse != nil {
 		switch submitArgs.(type) {
 		case *submitRunaiJobArgs:
-			err = applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs.(*submitRunaiJobArgs), jobSettings, extraArgs)
+			err = applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs.(*submitRunaiJobArgs), extraArgs)
 		case *submitMPIJobArgs:
-			err = applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs.(*submitMPIJobArgs), jobSettings, extraArgs)
+			err = applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs.(*submitMPIJobArgs), extraArgs)
 		}
 
 		if err != nil {

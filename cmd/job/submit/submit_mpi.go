@@ -15,11 +15,9 @@
 package submit
 
 import (
-	"context"
 	"fmt"
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/cmd/job"
-	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	"os"
 	"path"
 	"strconv"
@@ -54,12 +52,12 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	)
 
 	var command = &cobra.Command{
-		Use:               SubmitMpiCommand + " [NAME]",
-		Short:             "Submit a new MPI job.",
-		Aliases:           []string{"mpi", "mj"},
-		Example:           mpiExamples,
+		Use:     SubmitMpiCommand + " [NAME]",
+		Short:   "Submit a new MPI job.",
+		Aliases: []string{"mpi", "mj"},
+		Example: mpiExamples,
 		ValidArgsFunction: completion.NoArgs,
-		PreRun:            commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
+		PreRun:  commandUtil.NamespacedRoleAssertion(assertion.AssertExecutorRole),
 		Run: func(cmd *cobra.Command, args []string) {
 			kubeClient, err := client.GetClient()
 			if err != nil {
@@ -80,15 +78,7 @@ func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 			submitArgs.GitSync = GitSyncFromConnectionString(gitSyncConnectionString)
 
-			jobSettings, err := rsrch_client.GetJobSettings(context.TODO(), rsrch_client.JobSettingsGetOptions{
-				Interactive: submitArgs.Interactive != nil && *submitArgs.Interactive,
-			})
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			err = applyTemplate(&submitArgs, jobSettings, commandArgs, clientset)
+			err = applyTemplate(&submitArgs, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
