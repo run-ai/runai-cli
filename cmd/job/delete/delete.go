@@ -24,7 +24,6 @@ import (
 	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/job"
-	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/rsrch_client"
@@ -61,7 +60,7 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			projectName := util.ToProject(namespaceInfo.Namespace)
+			projectName := namespaceInfo.ProjectName
 
 			//
 			//    obtain the list of job names to delete, based on the command's arguments

@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"fmt"
+	"github.com/run-ai/runai-cli/cmd/flags"
 	"os"
 	"sort"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/run-ai/runai-cli/cmd/completion"
-	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
 	"github.com/run-ai/runai-cli/pkg/rsrch_client"
@@ -37,10 +37,12 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defaultProject := ""
-	if len(namespace) > len(constants.RunaiNsProjectPrefix) {
-		defaultProject = namespace[len(constants.RunaiNsProjectPrefix):]
+	kubeClient, err := client.GetClient()
+	if err != nil {
+		return err
 	}
+
+	defaultProject, _ := flags.GetProjectRelatedToNamespace(namespace, kubeClient)
 
 	projects, hiddenProjects, err := PrepareListOfProjects(restConfig, includeDeleted)
 	if err != nil {

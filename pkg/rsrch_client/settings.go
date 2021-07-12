@@ -58,7 +58,7 @@ func GetJobSettings(ctx context.Context, options JobSettingsGetOptions) (*rsrch_
 		//
 		result, err = rs.JobSettingsGet(context.TODO(), options)
 	} else {
-		log.Infof("researcher-service cannot serve the request, use in-house CLI for job delete")
+		log.Infof("researcher-service cannot serve the request, use in-house CLI for job settings")
 
 		clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 		if err != nil {

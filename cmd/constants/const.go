@@ -1,9 +1,8 @@
 package constants
 
-	const (
-		RunaiQueueLabel      = "runai/queue"
-		RunaiNsProjectPrefix = "runai-"
-	)
+const (
+	RunaiQueueLabel = "runai/queue"
+)
 
 // Same statuses appear in the scheduler - update both if needed
 var Status = struct {
@@ -29,7 +28,6 @@ var Status = struct {
 // todo organize
 
 const (
-
 	PodGroupAnnotationForPod = "pod-group-name"
 
 	CHART_PKG_LOC = "CHARTREPO"
@@ -43,10 +41,9 @@ const (
 	// It's copied over to here until it's merged in core: https://github.com/kubernetes/kubernetes/pull/39112
 	labelNodeRolePrefix = "node-role.kubernetes.io/"
 
-	WorkloadCalculatedStatus     = "runai-calculated-status"
-	WorkloadRunningPods          = "runai-running-pods"
-	WorkloadPendingPods          = "runai-pending-pods"
-	WorkloadUsedNodes            = "runai-used-nodes"
-	AliyunENIAnnotation          = "k8s.aliyun.com/eni"
+	WorkloadCalculatedStatus = "runai-calculated-status"
+	WorkloadRunningPods      = "runai-running-pods"
+	WorkloadPendingPods      = "runai-pending-pods"
+	WorkloadUsedNodes        = "runai-used-nodes"
+	AliyunENIAnnotation      = "k8s.aliyun.com/eni"
 )
-
