@@ -77,6 +77,7 @@ type submitArgs struct {
 	GPUInt              *int     `yaml:"gpuInt,omitempty"`
 	GPUFraction         string   `yaml:"gpuFraction,omitempty"`
 	GPUMemory           string   `yaml:"gpuMemory,omitempty"`
+	MigDevice           string   `yaml:"migDevice,omitempty"`
 	NodeType            string   `yaml:"node_type,omitempty"`
 	SpecArgs            []string `yaml:"args,omitempty"`
 	CPU                 string   `yaml:"cpu,omitempty"`
@@ -173,6 +174,7 @@ func (submitArgs *submitArgs) addCommonFlags(fbg flags.FlagsByGroups) {
 	flagSet = fbg.GetOrAddFlagSet(ResourceAllocationFlagGroup)
 	flags.AddFloat64NullableFlagP(flagSet, &(submitArgs.GPU), "gpu", "g", "GPU units to allocate for the Job (0.5, 1).")
 	flagSet.StringVar(&(submitArgs.GPUMemory), "gpu-memory", "", "GPU Memory to allocate for this job (1G, 500M)")
+	flagSet.StringVar(&(submitArgs.MigDevice), "mig", "", "MIG device to allocate for the job (1g.5gb, 2g.10gb, 3g.20gb, 4g.20gb, 7g.40gb)")
 	flagSet.StringVar(&(submitArgs.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1)")
 	flagSet.StringVar(&(submitArgs.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M)")
 	flagSet.StringVar(&(submitArgs.CPULimit), "cpu-limit", "", "CPU limit for the job (0.5, 1)")

@@ -6,16 +6,41 @@ import (
 )
 
 const (
-	minGpuMemory = 100
-	GpuMbFactor  = 1000000 // 1024 * 1024
+	minGpuMemory            = 100
+	GpuMbFactor             = 1000000 // 1024 * 1024
+	migDeviceResourcePrefix = "nvidia.com/mig-"
 )
 
+var supportedMigDevices = map[string]bool{
+	"1g.5gb":  true,
+	"2g.10gb": true,
+	"3g.20gb": true,
+	"4g.20gb": true,
+	"7g.40gb": true,
+}
+
 func handleRequestedGPUs(submitArgs *submitArgs) error {
-	if submitArgs.GPU == nil && submitArgs.GPUMemory == "" {
+	if submitArgs.GPU == nil && submitArgs.GPUMemory == "" && submitArgs.MigDevice == "" {
 		return nil
-	} else if submitArgs.GPU != nil && submitArgs.GPUMemory != "" {
+	}
+
+	if (submitArgs.GPU != nil) && (submitArgs.GPUMemory != "") {
 		return fmt.Errorf("unexpected to accept both gpu and gpu-memory flag. please use only one of them")
-	} else if submitArgs.GPU == nil {
+	} else if (submitArgs.GPU != nil) && (submitArgs.MigDevice != "") {
+		return fmt.Errorf("unexpected to accept both gpu and mig flag. please use only one of them")
+	} else if (submitArgs.GPUMemory != "") && (submitArgs.MigDevice != "") {
+		return fmt.Errorf("unexpected to accept both gpu-memory and mig flag. please use only one of them")
+	}
+
+	if submitArgs.MigDevice != "" {
+		if _, ok := supportedMigDevices[submitArgs.MigDevice]; !ok {
+			return fmt.Errorf("unsupported mig device: %v", submitArgs.MigDevice)
+		}
+		submitArgs.MigDevice = fmt.Sprintf("%v%v", migDeviceResourcePrefix, submitArgs.MigDevice)
+		return nil
+	}
+
+	if submitArgs.GPUMemory != "" {
 		memoryQuantity, err := resource.ParseQuantity(submitArgs.GPUMemory)
 		if err != nil {
 			return err
