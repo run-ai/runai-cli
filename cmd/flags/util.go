@@ -19,7 +19,7 @@ func GetNamespaceToUseFromProjectFlagAndPrintError(cmd *cobra.Command, kubeClien
 
 // This function will print an error if necessary (no project exists and the user did not use -b flag)
 func GetNamespaceToUseFromProjectFlag(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
-	//return getNamespaceToUseFromProjectFlag(cmd, kubeClient, false)
+	return getNamespaceToUseFromProjectFlag(cmd, kubeClient, false)
 }
 
 // Return the namespace to use on first argument. on second argument get
