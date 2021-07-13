@@ -7,19 +7,11 @@ import (
 	"net/http"
 )
 
-//WAIT_FOR_OFER -> Should move to rsrch-service repository
-type ProjectListOptions struct {
-	IncludeDeleted bool
-}
+type ProjectListOptions struct{}
 
 func (c *RsrchClient) ProjectList(ctx context.Context, options *ProjectListOptions) (*[]rsrch_api.Project, error) {
 
 	url := c.BaseURL + ProjectsURL
-	if options != nil {
-		if options.IncludeDeleted {
-			url = url + "?includeDeleted=true"
-		}
-	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(url), nil)
 	if err != nil {
