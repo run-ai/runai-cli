@@ -81,7 +81,7 @@ func PrepareListOfProjects(restConfig *restclient.Config) (
 			return nil, err
 		}
 
-		projList, err = clientSet.GetProjects(context.TODO(), true)
+		projList, err = clientSet.GetProjects(context.TODO())
 	}
 
 	if err != nil {
