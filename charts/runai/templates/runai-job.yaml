@@ -71,6 +71,9 @@ spec:
         {{- if .Values.gpuMemory }}
         gpu-memory: "{{ .Values.gpuMemory }}"
         {{- end }}
+        {{- if .Values.migDevice }}
+        {{ .Values.migDevice }}: "1"
+        {{- end }}
         {{- if .Values.elastic }}
         elastic: {{ .Values.elastic | quote }}
         {{- end }}
