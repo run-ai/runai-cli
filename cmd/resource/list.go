@@ -5,7 +5,6 @@ import (
 	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/node"
 	"github.com/run-ai/runai-cli/cmd/project"
-	"github.com/run-ai/runai-cli/cmd/template"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
@@ -53,7 +52,6 @@ func NewListCommand() *cobra.Command {
 	command.AddCommand(job.ListCommand())
 	command.AddCommand(project.ListCommand())
 	command.AddCommand(cluster.ListCommand())
-	command.AddCommand(template.ListCommand())
 
 	return command
 }

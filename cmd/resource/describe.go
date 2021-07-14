@@ -3,7 +3,6 @@ package resource
 import (
 	"github.com/run-ai/runai-cli/cmd/job"
 	"github.com/run-ai/runai-cli/cmd/node"
-	"github.com/run-ai/runai-cli/cmd/template"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	"github.com/spf13/cobra"
@@ -21,7 +20,6 @@ func NewDescribeCommand() *cobra.Command {
 
 	command.AddCommand(node.DescribeCommand())
 	command.AddCommand(job.DescribeCommand())
-	command.AddCommand(template.DescribeCommand())
 
 	return command
 }

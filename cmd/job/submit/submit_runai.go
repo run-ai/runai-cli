@@ -1,7 +1,10 @@
 package submit
 
 import (
+	"context"
 	"fmt"
+	"github.com/run-ai/researcher-service/server/pkg/runai/api"
+	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	"math"
 	"os"
 	"path"
@@ -15,8 +18,6 @@ import (
 	"github.com/run-ai/runai-cli/cmd/exec"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
-
-	"github.com/run-ai/runai-cli/pkg/templates"
 
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
@@ -91,7 +92,15 @@ func NewRunaiJobCommand() *cobra.Command {
 			commandArgs := convertOldCommandArgsFlags(cmd, &submitArgs.submitArgs, args)
 			submitArgs.GitSync = GitSyncFromConnectionString(gitSyncConnectionString)
 
-			err = applyTemplate(submitArgs, commandArgs, clientset)
+			jobSettings, err := rsrch_client.GetJobSettings(context.TODO(), rsrch_client.JobSettingsGetOptions{
+				Interactive: submitArgs.Interactive != nil && *submitArgs.Interactive,
+			})
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = applyTemplate(submitArgs, jobSettings, commandArgs, clientset)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -122,14 +131,14 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.Completions = &interactiveCompletions
 			}
 
-			if len(submitArgs.Image) == 0 {
-				fmt.Print("\n-i, --image must be set\n\n")
-				os.Exit(1)
-			}
-
 			err = submitRunaiJob(submitArgs, clientset, *runaijobClient)
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			if len(submitArgs.Image) == 0 {
+				fmt.Print("\n-i, --image must be set\n\n")
 				os.Exit(1)
 			}
 
@@ -215,52 +224,19 @@ func NewRunaiJobCommand() *cobra.Command {
 	return command
 }
 
-func applyTemplate(submitArgs interface{}, extraArgs []string, clientset kubernetes.Interface) error {
-	templatesHandler := templates.NewTemplates(clientset)
-	var submitTemplateToUse *templates.SubmitTemplate
+func applyTemplate(submitArgs interface{}, jobSettings *api.JobSettings, extraArgs []string, clientset kubernetes.Interface) error {
 
-	adminTemplate, err := templatesHandler.GetDefaultTemplate()
+	var err error
+
+	switch submitArgs.(type) {
+	case *submitRunaiJobArgs:
+		err = applyTemplateToSubmitRunaijob(submitArgs.(*submitRunaiJobArgs), jobSettings, extraArgs)
+	case *submitMPIJobArgs:
+		err = applyTemplateToSubmitMpijob(submitArgs.(*submitMPIJobArgs), jobSettings, extraArgs)
+	}
+
 	if err != nil {
-		return err
-	}
-
-	if templateName != "" {
-		userTemplate, err := templatesHandler.GetTemplate(templateName)
-		if err != nil {
-			return err
-		}
-
-		if adminTemplate != nil {
-			mergedTemplate, err := templates.MergeSubmitTemplatesYamls(userTemplate.Values, adminTemplate.Values)
-			if err != nil {
-				return err
-			}
-			submitTemplateToUse = mergedTemplate
-		} else {
-			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
-			if err != nil {
-				return fmt.Errorf("Could not apply template %s: %v", templateName, err)
-			}
-		}
-	} else if adminTemplate != nil {
-		templateToUse, err := templates.GetSubmitTemplateFromYaml(adminTemplate.Values)
-		if err != nil {
-			return err
-		}
-		submitTemplateToUse = templateToUse
-	}
-
-	if submitTemplateToUse != nil {
-		switch submitArgs.(type) {
-		case *submitRunaiJobArgs:
-			err = applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs.(*submitRunaiJobArgs), extraArgs)
-		case *submitMPIJobArgs:
-			err = applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs.(*submitMPIJobArgs), extraArgs)
-		}
-
-		if err != nil {
-			return fmt.Errorf("could not submit job due to: %v", err)
-		}
+		return fmt.Errorf("could not submit job due to: %v", err)
 	}
 
 	return nil
