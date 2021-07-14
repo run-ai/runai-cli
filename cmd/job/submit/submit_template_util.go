@@ -2,20 +2,17 @@ package submit
 
 import (
 	"fmt"
-	log "github.com/golang/glog"
 	"github.com/run-ai/researcher-service/server/pkg/runai/api"
 	"github.com/run-ai/researcher-service/server/pkg/schema"
 	raUtil "github.com/run-ai/runai-cli/cmd/util"
-	"github.com/run-ai/runai-cli/pkg/templates"
 	"os"
 	"reflect"
-	"strconv"
 	"time"
 )
 
 func enforce(value interface{}, field schema.SettingsEnforcer, name string) interface{} {
 	if reflect.ValueOf(field).IsNil() {
-		return nil
+		return value
 	}
 	val, err := field.Enforce(value, name)
 	if err != nil {
@@ -25,89 +22,108 @@ func enforce(value interface{}, field schema.SettingsEnforcer, name string) inte
 	return val
 }
 
+func enforceImagePolicy(isAlwaysPull *bool, imagePullPolicy *schema.StringField, paramName string) *bool {
+	if imagePullPolicy == nil {
+		return isAlwaysPull
+	}
+	policy := "IfNotPresent"
+	if isAlwaysPull != nil && *isAlwaysPull {
+		policy = "Always"
+	}
+
+	policy = enforce(policy, imagePullPolicy, paramName).(string)
+
+	return schema.BoolRef(policy == "Always")
+}
+
+func enforceDuration(duration *time.Duration, durationPolicy *schema.StringField, paramName string) *time.Duration {
+	if durationPolicy == nil {
+		return duration
+	}
+	var durationAsStr string
+	if duration != nil {
+		durationAsStr = fmt.Sprintf("%vs", duration.Seconds())
+	}
+
+	durationAsStr = enforce(durationAsStr, durationPolicy, paramName).(string)
+	if durationAsStr == "" {
+		return nil
+	}
+
+	resultDuration, err := time.ParseDuration(durationAsStr)
+	if err != nil {
+		fmt.Print("Invalid duration '%s' provided for %s: %s", durationAsStr, paramName, err.Error())
+	}
+	return &resultDuration
+}
+
 func recoverFromMissingFlag(err *error) {
 	if r := recover(); r != nil {
 		*err = fmt.Errorf(r.(string))
 	}
 }
 
-func applyTemplateToSubmitRunaijob(template *templates.SubmitTemplate, args *submitRunaiJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
+func applyTemplateToSubmitRunaijob(args *submitRunaiJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
 	defer recoverFromMissingFlag(&err)
 
-	*args = mergeTemplateToRunaiSubmitArgs(*args, template, jobSettings, extraArgs)
+	*args = mergeTemplateToRunaiSubmitArgs(*args, jobSettings, extraArgs)
 	return nil
 }
 
-func applyTemplateToSubmitMpijob(template *templates.SubmitTemplate, args *submitMPIJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
+func applyTemplateToSubmitMpijob(args *submitMPIJobArgs, jobSettings *api.JobSettings, extraArgs []string) (err error) {
 	defer recoverFromMissingFlag(&err)
 
-	*args = mergeTemplateToMpiSubmitArgs(*args, template, jobSettings, extraArgs)
+	*args = mergeTemplateToMpiSubmitArgs(*args, jobSettings, extraArgs)
 	return nil
 }
 
-func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitArgs {
+func mergeTemplateToCommonSubmitArgs(submitArgs submitArgs, jobSettings *api.JobSettings, extraArgs []string) submitArgs {
 	submitArgs.NameParameter = enforce(submitArgs.NameParameter, jobSettings.Fields.Name, "name").(string)
 	submitArgs.EnvironmentVariable = enforce(submitArgs.EnvironmentVariable, jobSettings.Fields.Environment, "environment").([]string)
-	submitArgs.EnvironmentVariable = templates.MergeEnvironmentVariables(&submitArgs.EnvironmentVariable, &template.EnvVariables)
-	submitArgs.Volumes = append(submitArgs.Volumes, template.Volumes...)
-	submitArgs.AlwaysPullImage = applyTemplateFieldForBool(submitArgs.AlwaysPullImage, template.AlwaysPullImage, "always-pull-image")
-	submitArgs.Attach = applyTemplateFieldForBool(submitArgs.Attach, template.Attach, "attach")
+	submitArgs.AlwaysPullImage = enforceImagePolicy(submitArgs.AlwaysPullImage, jobSettings.Fields.ImagePullPolicy, "always-pull-image")
 	submitArgs.CPU = enforce(submitArgs.CPU, jobSettings.Fields.Cpu, "cpu").(string)
-	submitArgs.CPULimit = applyTemplateFieldForString(submitArgs.CPULimit, template.CpuLimit, "cpu-limit")
+	submitArgs.CPULimit = enforce(submitArgs.CPULimit, jobSettings.Fields.CpuLimit, "cpu-limit").(string)
 	submitArgs.CreateHomeDir = enforce(submitArgs.CreateHomeDir, jobSettings.Fields.CreateHomeDir, "create-home-dir").(*bool)
-	submitArgs.GPU = applyTemplateFieldForFloat64(submitArgs.GPU, template.Gpu, "gpu")
-	submitArgs.HostIPC = applyTemplateFieldForBool(submitArgs.HostIPC, template.HostIpc, "host-ipc")
+	submitArgs.GPU = enforce(submitArgs.GPU, jobSettings.Fields.Gpu, "gpu").(*float64)
+	submitArgs.HostIPC = enforce(submitArgs.HostIPC, jobSettings.Fields.HostIpc, "host-ipc").(*bool)
 	submitArgs.HostNetwork = enforce(submitArgs.HostNetwork, jobSettings.Fields.HostNetwork, "host-network").(*bool)
 	submitArgs.Image = enforce(submitArgs.Image, jobSettings.Fields.Image, "image").(string)
-	submitArgs.Interactive = applyTemplateFieldForBool(submitArgs.Interactive, template.Interactive, "interactive")
+	submitArgs.Image = enforce(submitArgs.Image, jobSettings.Fields.Image, "image").(string)
 	submitArgs.LargeShm = enforce(submitArgs.LargeShm, jobSettings.Fields.LargeShm, "large-shm").(*bool)
-	submitArgs.LocalImage = applyTemplateFieldForBool(submitArgs.LocalImage, template.LocalImage, "local-image")
-	submitArgs.Memory = applyTemplateFieldForString(submitArgs.Memory, template.Memory, "memory")
-	submitArgs.MemoryLimit = applyTemplateFieldForString(submitArgs.MemoryLimit, template.MemoryLimit, "memory-limit")
-	submitArgs.Ports = append(submitArgs.Ports, template.Ports...)
-	submitArgs.PersistentVolumes = append(submitArgs.PersistentVolumes, template.PersistentVolumes...)
-	submitArgs.WorkingDir = applyTemplateFieldForString(submitArgs.WorkingDir, template.WorkingDir, "working-dir")
-	submitArgs.NamePrefix = applyTemplateFieldForString(submitArgs.NamePrefix, template.JobNamePrefix, "job-name-prefix")
+	submitArgs.Memory = enforce(submitArgs.Memory, jobSettings.Fields.Memory, "memory").(string)
+	submitArgs.MemoryLimit = enforce(submitArgs.MemoryLimit, jobSettings.Fields.MemoryLimit, "memory-limit").(string)
+	submitArgs.Ports = enforce(submitArgs.Ports, jobSettings.Fields.Ports, "ports").([]string)
+	submitArgs.PersistentVolumes = enforce(submitArgs.PersistentVolumes, jobSettings.Fields.Pvc, "pvc").([]string)
+	submitArgs.WorkingDir = enforce(submitArgs.WorkingDir, jobSettings.Fields.WorkingDir, "working-dir").(string)
+	submitArgs.NamePrefix = enforce(submitArgs.NamePrefix, jobSettings.Fields.NamePrefix, "job-name-prefix").(string)
 	submitArgs.PreventPrivilegeEscalation = enforce(submitArgs.PreventPrivilegeEscalation, jobSettings.Fields.PreventPrivilegeEscalation, "prevent-privilege-escalation").(*bool)
-	submitArgs.RunAsCurrentUser = applyTemplateFieldForBool(submitArgs.RunAsCurrentUser, template.RunAsCurrentUser, "run-as-user")
-	submitArgs.Command = applyTemplateFieldForBool(submitArgs.Command, template.IsCommand, "command")
-	mergeGitSync(&submitArgs, template.GitSync)
-	mergeCommandAndArgs(&submitArgs, template, extraArgs)
+	submitArgs.Command = enforce(submitArgs.Command, jobSettings.Fields.Command, "command").(*bool)
+	mergeGitSync(&submitArgs, jobSettings)
+	mergeCommandAndArgs(&submitArgs, jobSettings, extraArgs)
 	return submitArgs
 }
 
-func mergeGitSync(submitArgs *submitArgs, templateGitSync *templates.GitSyncTemplate) {
-	if templateGitSync == nil {
-		return
-	}
+func mergeGitSync(submitArgs *submitArgs, jobSettings *api.JobSettings) {
 	if submitArgs.GitSync == nil {
 		submitArgs.GitSync = NewGitSync()
 	}
-
-	submitArgs.GitSync.Repository = applyTemplateFieldForString(submitArgs.GitSync.Repository, templateGitSync.Repository, "git-sync.repository")
-	submitArgs.GitSync.Branch = applyTemplateFieldForString(submitArgs.GitSync.Branch, templateGitSync.Branch, "git-sync.branch")
-	submitArgs.GitSync.Revision = applyTemplateFieldForString(submitArgs.GitSync.Revision, templateGitSync.Revision, "git-sync.revision")
-	submitArgs.GitSync.Username = applyTemplateFieldForString(submitArgs.GitSync.Username, templateGitSync.Username, "git-sync.username")
-	submitArgs.GitSync.Password = applyTemplateFieldForString(submitArgs.GitSync.Password, templateGitSync.Password, "git-sync.password")
-	submitArgs.GitSync.Image = applyTemplateFieldForString(submitArgs.GitSync.Image, templateGitSync.Image, "git-sync.image")
-	submitArgs.GitSync.Directory = applyTemplateFieldForString(submitArgs.GitSync.Directory, templateGitSync.Directory, "git-sync.target")
 }
 
-func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitRunaiJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, jobSettings, extraArgs)
-	submitArgs.BackoffLimit = applyTemplateFieldForInt(submitArgs.BackoffLimit, template.BackoffLimit, "backofflimit")
+func mergeTemplateToRunaiSubmitArgs(submitArgs submitRunaiJobArgs, jobSettings *api.JobSettings, extraArgs []string) submitRunaiJobArgs {
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, jobSettings, extraArgs)
+	submitArgs.BackoffLimit = enforce(submitArgs.BackoffLimit, jobSettings.Fields.BackoffLimit, "backofflimit").(*int)
 	submitArgs.Elastic = enforce(submitArgs.Elastic, jobSettings.Fields.Elastic, "elastic").(*bool)
-	submitArgs.Parallelism = applyTemplateFieldForInt(submitArgs.Parallelism, template.Parallelism, "parallelism")
+	submitArgs.Parallelism = enforce(submitArgs.Parallelism, jobSettings.Fields.Parallelism, "parallelism").(*int)
 	submitArgs.IsPreemptible = enforce(submitArgs.IsPreemptible, jobSettings.Fields.Preemptible, "preemptible").(*bool)
-	submitArgs.ServiceType = applyTemplateFieldForString(submitArgs.ServiceType, template.ServiceType, "service-type")
+	submitArgs.ServiceType = enforce(submitArgs.ServiceType, jobSettings.Fields.ServiceType, "service-type").(string)
 	submitArgs.IsJupyter = enforce(submitArgs.IsJupyter, jobSettings.Fields.Jupyter, "jupyter").(*bool)
-	submitArgs.TtlAfterFinished = applyTemplateFieldForDuration(submitArgs.TtlAfterFinished, template.TtlAfterFinished, "ttl-after-finish")
+	submitArgs.TtlAfterFinished = enforceDuration(submitArgs.TtlAfterFinished, jobSettings.Fields.TtlSecondsAfterFinished, "ttl-after-finish")
 	return submitArgs
 }
 
-func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, template *templates.SubmitTemplate, jobSettings *api.JobSettings, extraArgs []string) submitMPIJobArgs {
-	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, template, jobSettings, extraArgs)
-	submitArgs.Processes = applyTemplateFieldForInt(submitArgs.Processes, template.Processes, "processes")
+func mergeTemplateToMpiSubmitArgs(submitArgs submitMPIJobArgs, jobSettings *api.JobSettings, extraArgs []string) submitMPIJobArgs {
+	submitArgs.submitArgs = mergeTemplateToCommonSubmitArgs(submitArgs.submitArgs, jobSettings, extraArgs)
+	submitArgs.Processes = enforce(submitArgs.Processes, jobSettings.Fields.MpiProcs, "processes").(*int)
 	return submitArgs
 }
 
@@ -156,125 +172,15 @@ func mergeDurationFlags(cliFlag, templateFlag *time.Duration) *time.Duration {
 	return nil
 }
 
-func mergeExtraArgs(cliExtraArgs, templateExtraArgs []string) []string {
-	if len(cliExtraArgs) > 0 {
-		return cliExtraArgs
-	} else if len(templateExtraArgs) > 0 {
-		return templateExtraArgs
-	}
-
-	return []string{}
-}
-
-func mergeCommandAndArgs(submitArgs *submitArgs, template *templates.SubmitTemplate, extraArgs []string) {
-	submitArgs.Command = applyTemplateFieldForBool(submitArgs.Command, template.IsCommand, "command")
+func mergeCommandAndArgs(submitArgs *submitArgs, jobSettings *api.JobSettings, extraArgs []string) {
+	submitArgs.Command = enforce(submitArgs.Command, jobSettings.Fields.Command, "command").(*bool)
 	if raUtil.IsBoolPTrue(submitArgs.Command) {
-		submitArgs.SpecCommand = mergeExtraArgs(extraArgs, template.ExtraArgs)
+		submitArgs.SpecCommand = enforce(submitArgs.SpecCommand, jobSettings.Fields.Arguments, "command").([]string)
 		submitArgs.SpecArgs = []string{}
 	} else {
 		submitArgs.SpecCommand = []string{}
-		submitArgs.SpecArgs = mergeExtraArgs(extraArgs, template.ExtraArgs)
+		submitArgs.SpecArgs = enforce(submitArgs.SpecArgs, jobSettings.Fields.Arguments, "arguments").([]string)
 	}
-}
-
-func applyTemplateFieldForFloat64(cliFlag *float64, templateField *templates.TemplateField, fieldName string) *float64 {
-	var value *float64
-	required := false
-	var templateFlag *float64
-	if templateField != nil {
-		required = raUtil.IsBoolPTrue(templateField.Required)
-		templateFieldValue, err := strconv.ParseFloat(templateField.Value, 64)
-		if err != nil {
-			if templateField.Value != "" {
-				log.Info(fmt.Sprintf("could not parse %s flag from template. Value: %s", fieldName, templateField.Value))
-			}
-		} else {
-			templateFlag = &templateFieldValue
-		}
-	}
-
-	value = mergeFloat64Flags(cliFlag, templateFlag)
-	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
-	return value
-}
-
-func applyTemplateFieldForInt(cliFlag *int, templateField *templates.TemplateField, fieldName string) *int {
-	var value *int
-	required := false
-	var templateFlag *int
-	if templateField != nil {
-		required = raUtil.IsBoolPTrue(templateField.Required)
-		templateFieldValue, err := strconv.Atoi(templateField.Value)
-		if err != nil {
-			if templateField.Value != "" {
-				log.Info(fmt.Sprintf("could not parse %s flag from template. Value: %s", fieldName, templateField.Value))
-			}
-		} else {
-			templateFlag = &templateFieldValue
-		}
-	}
-
-	value = mergeIntFlags(cliFlag, templateFlag)
-	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
-	return value
-}
-
-func applyTemplateFieldForBool(cliFlag *bool, templateField *templates.TemplateField, fieldName string) *bool {
-	var value *bool
-	required := false
-	var templateFlag *bool
-	if templateField != nil {
-		required = raUtil.IsBoolPTrue(templateField.Required)
-		templateFieldValue, err := strconv.ParseBool(templateField.Value)
-		if err != nil {
-			if templateField.Value != "" {
-				log.Info(fmt.Sprintf("could not parse %s flag from template. Value: %s", fieldName, templateField.Value))
-			}
-		} else {
-			templateFlag = &templateFieldValue
-		}
-	}
-
-	value = mergeBoolFlags(cliFlag, templateFlag)
-	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
-	return value
-}
-
-func applyTemplateFieldForDuration(cliFlag *time.Duration, templateField *templates.TemplateField, fieldName string) *time.Duration {
-	var value *time.Duration
-	required := false
-	var templateFlag *time.Duration
-	if templateField != nil {
-		required = raUtil.IsBoolPTrue(templateField.Required)
-		templateFieldValue, err := time.ParseDuration(templateField.Value)
-		if err != nil {
-			if templateField.Value != "" {
-				log.Info(fmt.Sprintf("could not parse %s flag from template. Value: %s", fieldName, templateField.Value))
-			}
-		} else {
-			templateFlag = &templateFieldValue
-		}
-	}
-
-	value = mergeDurationFlags(cliFlag, templateFlag)
-	validateValueIsNotRequiredAndNil(value == nil, required, fieldName)
-	return value
-}
-
-func applyTemplateFieldForString(cliFlag string, templateField *templates.TemplateField, fieldName string) string {
-	var value string
-	required := false
-	if templateField != nil {
-		required = raUtil.IsBoolPTrue(templateField.Required)
-		value = mergeStringFlags(cliFlag, templateField.Value)
-	} else {
-		value = mergeStringFlags(cliFlag, "")
-	}
-
-	if value == "" && required {
-		panic(fmt.Sprintf("the flag %s is mandatory.", fieldName))
-	}
-	return value
 }
 
 func validateValueIsNotRequiredAndNil(valueIsNil, required bool, fieldName string) {

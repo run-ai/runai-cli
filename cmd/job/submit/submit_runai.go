@@ -19,8 +19,6 @@ import (
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 
-	"github.com/run-ai/runai-cli/pkg/templates"
-
 	"github.com/run-ai/runai-cli/cmd/attach"
 	"github.com/run-ai/runai-cli/cmd/flags"
 	"github.com/run-ai/runai-cli/cmd/trainer"
@@ -227,51 +225,18 @@ func NewRunaiJobCommand() *cobra.Command {
 }
 
 func applyTemplate(submitArgs interface{}, jobSettings *api.JobSettings, extraArgs []string, clientset kubernetes.Interface) error {
-	templatesHandler := templates.NewTemplates(clientset)
-	var submitTemplateToUse *templates.SubmitTemplate
 
-	adminTemplate, err := templatesHandler.GetDefaultTemplate()
+	var err error
+
+	switch submitArgs.(type) {
+	case *submitRunaiJobArgs:
+		err = applyTemplateToSubmitRunaijob(submitArgs.(*submitRunaiJobArgs), jobSettings, extraArgs)
+	case *submitMPIJobArgs:
+		err = applyTemplateToSubmitMpijob(submitArgs.(*submitMPIJobArgs), jobSettings, extraArgs)
+	}
+
 	if err != nil {
-		return err
-	}
-
-	if templateName != "" {
-		userTemplate, err := templatesHandler.GetTemplate(templateName)
-		if err != nil {
-			return err
-		}
-
-		if adminTemplate != nil {
-			mergedTemplate, err := templates.MergeSubmitTemplatesYamls(userTemplate.Values, adminTemplate.Values)
-			if err != nil {
-				return err
-			}
-			submitTemplateToUse = mergedTemplate
-		} else {
-			submitTemplateToUse, err = templates.GetSubmitTemplateFromYaml(userTemplate.Values)
-			if err != nil {
-				return fmt.Errorf("Could not apply template %s: %v", templateName, err)
-			}
-		}
-	} else if adminTemplate != nil {
-		templateToUse, err := templates.GetSubmitTemplateFromYaml(adminTemplate.Values)
-		if err != nil {
-			return err
-		}
-		submitTemplateToUse = templateToUse
-	}
-
-	if submitTemplateToUse != nil {
-		switch submitArgs.(type) {
-		case *submitRunaiJobArgs:
-			err = applyTemplateToSubmitRunaijob(submitTemplateToUse, submitArgs.(*submitRunaiJobArgs), jobSettings, extraArgs)
-		case *submitMPIJobArgs:
-			err = applyTemplateToSubmitMpijob(submitTemplateToUse, submitArgs.(*submitMPIJobArgs), jobSettings, extraArgs)
-		}
-
-		if err != nil {
-			return fmt.Errorf("could not submit job due to: %v", err)
-		}
+		return fmt.Errorf("could not submit job due to: %v", err)
 	}
 
 	return nil
