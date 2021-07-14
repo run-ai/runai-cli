@@ -20,7 +20,7 @@ func GenProjectNamesForFlag(_ *cobra.Command, _ []string, _ string) ([]string, c
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	projects, _, err := PrepareListOfProjects(restConfig, false /*do not include deleted projects*/)
+	projects, err := PrepareListOfProjects(restConfig)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

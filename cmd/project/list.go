@@ -25,8 +25,6 @@ import (
 	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 )
 
-var includeDeleted bool
-
 func runListCommand(cmd *cobra.Command, args []string) error {
 
 	//
@@ -44,7 +42,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 
 	defaultProject, _ := flags.GetProjectRelatedToNamespace(namespace, kubeClient)
 
-	projects, hiddenProjects, err := PrepareListOfProjects(restConfig, includeDeleted)
+	projects, err := PrepareListOfProjects(restConfig)
 	if err != nil {
 		return err
 	}
@@ -54,7 +52,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 	//
 	projectsArray := getSortedProjects(projects)
 
-	printProjects(projectsArray, hiddenProjects, defaultProject)
+	printProjects(projectsArray, defaultProject)
 
 	return nil
 }
@@ -63,13 +61,11 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 //  ask for the list of projects from the researcher service
 //  parameters:
 //      restConfig - pointer to kubernetes config, used for creating RS client
-//      includeDeleted - indication if we want the result list to include deleted projects
 //  returns:
 //      list of projects
-//      number of hidden proejects (=deleted projects which are filtered out from the list)
 //
-func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
-	map[string]*rsrch_server.Project, int, error) {
+func PrepareListOfProjects(restConfig *restclient.Config) (
+	map[string]*rsrch_server.Project, error) {
 
 	rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.ProjectListMinVersion)
 
@@ -77,43 +73,29 @@ func PrepareListOfProjects(restConfig *restclient.Config, includeDeleted bool) (
 	var projList *[]rsrch_server.Project
 
 	if rs != nil {
-		projList, err = rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{
-			// even if deleted projects are filtered out, we still count the number
-			// of deleted projects, thus needs the entire list
-			IncludeDeleted: true,
-		})
+		projList, err = rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{})
 	} else {
 		log.Debugf("researcher-service cannot serve the request, use in-house CLI for project list")
 
 		clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
 		if err != nil {
 			log.Errorf("Failed to create clientSet for in-house CLI project list: %v", err.Error())
-			return nil, 0, err
+			return nil, err
 		}
 
 		projList, err = clientSet.GetProjects(context.TODO(), true)
 	}
 
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-
-	//
-	//   if --include-deleted flag is not provided, deleted projects are hidden from the output
-	//   in this case we want to add a textual message notifying the user about those hidden projects
-	//
-	hiddenProjects := 0
 
 	projects := make(map[string]*rsrch_server.Project)
 	for idx, project := range *projList {
-		if project.IsDeleted && !includeDeleted {
-			hiddenProjects += 1 // don't include in the list, only count them
-		} else {
-			projects[project.Name] = &(*projList)[idx] // include in the list
-		}
+		projects[project.Name] = &(*projList)[idx]
 	}
 
-	return projects, hiddenProjects, nil
+	return projects, nil
 }
 
 func getSortedProjects(projects map[string]*rsrch_server.Project) []*rsrch_server.Project {
@@ -129,7 +111,7 @@ func getSortedProjects(projects map[string]*rsrch_server.Project) []*rsrch_serve
 	return projectsArray
 }
 
-func printProjects(infos []*rsrch_server.Project, hiddenProjects int, defaultProject string) {
+func printProjects(infos []*rsrch_server.Project, defaultProject string) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	ui.Line(w, "PROJECT", "DEPARTMENT", "DESERVED GPUs", "INT LIMIT", "INT AFFINITY", "TRAIN AFFINITY")
@@ -148,15 +130,10 @@ func printProjects(infos []*rsrch_server.Project, hiddenProjects int, defaultPro
 		}
 
 		isDefault := info.Name == defaultProject
-		isDeleted := info.IsDeleted
 
 		name := info.Name
-		if isDefault && isDeleted {
-			name += " (default,deleted)"
-		} else if isDefault {
+		if isDefault {
 			name += " (default)"
-		} else if isDeleted {
-			name += " (deleted)"
 		}
 
 		departmentName := "-"
@@ -169,15 +146,6 @@ func printProjects(infos []*rsrch_server.Project, hiddenProjects int, defaultPro
 			strings.Join(info.TrainNodeAffinity, ";"))
 	}
 
-	if hiddenProjects != 0 {
-		hiddenMsg := ""
-		if hiddenProjects == 1 {
-			hiddenMsg = fmt.Sprintf("\nAdditionally, there is 1 deleted project. Use the --include-deleted flag to show it.\n")
-		} else {
-			hiddenMsg = fmt.Sprintf("\nAdditionally, there are %d deleted projects. Use the --include-deleted flag to show them.\n", hiddenProjects)
-		}
-		w.Write([]byte(hiddenMsg))
-	}
 	_ = w.Flush()
 }
 
@@ -205,6 +173,5 @@ func ListCommand() *cobra.Command {
 		Run:               commandUtil.WrapRunCommand(runListCommand),
 	}
 
-	command.Flags().BoolVarP(&includeDeleted, "include-deleted", "d", false, "Include deleted projects")
 	return command
 }
