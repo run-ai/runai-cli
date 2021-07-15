@@ -1,7 +1,6 @@
 package project
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"sort"
@@ -13,7 +12,6 @@ import (
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	log "github.com/sirupsen/logrus"
 	restclient "k8s.io/client-go/rest"
 
@@ -65,25 +63,16 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 func PrepareListOfProjects(restConfig *restclient.Config) (
 	map[string]*rsrch_server.Project, error) {
 
-	rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.ProjectListMinVersion)
-
 	var err error
 	var projList *[]rsrch_server.Project
 
-	if rs != nil {
-		projList, err = rs.ProjectList(context.TODO(), &rsrch_client.ProjectListOptions{})
-	} else {
-		log.Debugf("researcher-service cannot serve the request, use in-house CLI for project list")
-
-		clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
-		if err != nil {
-			log.Errorf("Failed to create clientSet for in-house CLI project list: %v", err.Error())
-			return nil, err
-		}
-
-		projList, err = clientSet.GetProjects(context.TODO(), true)
+	clientSet, ctx, err := rsrch_cs.NewCliClientFromConfig(restConfig)
+	if err != nil {
+		log.Errorf("Failed to create client for fetching project list: %v", err.Error())
+		return nil, err
 	}
 
+	projList, err = clientSet.GetProjects(ctx)
 	if err != nil {
 		return nil, err
 	}
