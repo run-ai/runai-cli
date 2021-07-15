@@ -455,6 +455,8 @@ github.com/run-ai/project-controller v0.2.17 h1:6E+/C595BxBH8fq//llGdLtXWHWwG9/J
 github.com/run-ai/project-controller v0.2.17/go.mod h1:KnM4cQB34RQeI3CLq/zq1SPoPqNjPjz6+Ebr1PW4lAI=
 github.com/run-ai/researcher-service v0.1.14 h1:8l9WvgyKlGRKW2a15tOY/w2hH+AgoCpsUQvy56dMVko=
 github.com/run-ai/researcher-service v0.1.14/go.mod h1:L2YAChxzBS656bsosrRMz/QvByTR0LRUISIjoY+bY8I=
+github.com/run-ai/researcher-service v0.1.22 h1:A/EpW5Gu7RbY9ccwkCG8Bab794D7ZpHjzZmaUJ+8vA0=
+github.com/run-ai/researcher-service v0.1.22/go.mod h1:APZKzLO9CawshD58uaBG414dL8Qo3tZZRTcFg6r/spk=
 github.com/russross/blackfriday v1.5.2 h1:HyvC0ARfnZBqnXwABFeSZHpKvJHJJfPz81GNueLj0oo=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
 github.com/russross/blackfriday/v2 v2.0.1 h1:lPqVAte+HuHNfhJ/0LC98ESWRz8afy9tM/0RK8m9o+Q=

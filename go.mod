@@ -38,9 +38,8 @@ require (
 	k8s.io/apimachinery v0.19.3
 	k8s.io/cli-runtime v0.19.3
 	k8s.io/client-go v0.19.3
+	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 	k8s.io/kubectl v0.19.3
 )
-
-replace github.com/run-ai/researcher-service  => /Users/ofer.lahav/go/src/github.com/run-ai/researcher-service
 

@@ -8,19 +8,17 @@ import (
 	"text/tabwriter"
 	"time"
 
+	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
+	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
 	"github.com/run-ai/runai-cli/cmd/completion"
 	"github.com/run-ai/runai-cli/cmd/constants"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
-	log "github.com/sirupsen/logrus"
-	restclient "k8s.io/client-go/rest"
-
 	"github.com/run-ai/runai-cli/pkg/ui"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	rsrch_server "github.com/run-ai/researcher-service/server/pkg/runai/api"
-	rsrch_cs "github.com/run-ai/researcher-service/server/pkg/runai/client"
+	restclient "k8s.io/client-go/rest"
 )
 
 func runListCommand(cmd *cobra.Command, args []string) error {
