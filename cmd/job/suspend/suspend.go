@@ -13,14 +13,12 @@ import (
 	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	pkgUtil "github.com/run-ai/runai-cli/pkg/util"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-type serverCommand func(*rsrch_client.RsrchClient, context.Context, []rsrch_server.ResourceID) ([]rsrch_server.JobActionStatus, error)
 type directCommand func(rsrch_server.Interface, context.Context, []rsrch_server.ResourceID) []rsrch_server.JobActionStatus
 
 // NewSuspendCommand creates a new suspend command for cobra to suspend jobs.
@@ -102,12 +100,12 @@ func suspendWorkflowHelper(cmd *cobra.Command, args []string, directCmd directCo
 		})
 	}
 
-	clientSet, err := rsrch_cs.NewCliClientFromConfig(kubeClient.GetRestConfig())
+	clientSet, ctx, err := rsrch_cs.NewCliClientFromConfig(kubeClient.GetRestConfig())
 	if err != nil {
-		log.Errorf("Failed to create clientSet for in-house CLI job %s: %v", cmdName, err.Error())
+		log.Errorf("Failed to create clientSet for modifying CLI job %s: %v", cmdName, err.Error())
 		return
 	}
-	cmdStatuses := directCmd(clientSet, context.TODO(), jobs)
+	cmdStatuses := directCmd(clientSet, ctx, jobs)
 	for _, status := range cmdStatuses {
 		if status.Ok {
 			// trim trailing 'e' from cmd name to convert to past tense

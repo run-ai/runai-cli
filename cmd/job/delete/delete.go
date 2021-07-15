@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,7 +26,6 @@ import (
 	"github.com/run-ai/runai-cli/cmd/util"
 	"github.com/run-ai/runai-cli/pkg/authentication/assertion"
 	"github.com/run-ai/runai-cli/pkg/client"
-	"github.com/run-ai/runai-cli/pkg/rsrch_client"
 	commandUtil "github.com/run-ai/runai-cli/pkg/util/command"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -99,23 +97,13 @@ func NewDeleteCommand() *cobra.Command {
 			//
 			var deleteJobsStatus []rsrch_server.JobActionStatus
 
-			rs := rsrch_client.NewRsrchClient(restConfig, rsrch_client.DeleteJobMinVersion)
-			if rs != nil {
-				//
-				//   RS can serve the request, so send it to RS
-				//
-				deleteJobsStatus, err = rs.JobDelete(context.TODO(), jobsToDelete)
-			} else {
-				log.Debugf("researcher-service cannot serve the request, use in-house CLI for job delete")
-
-				clientSet, err := rsrch_cs.NewCliClientFromConfig(restConfig)
-				if err != nil {
-					log.Errorf("Failed to create clientSet for in-house CLI job delete: %v", err.Error())
-					return
-				}
-
-				deleteJobsStatus = clientSet.DeleteJobs(context.TODO(), jobsToDelete)
+			clientSet, ctx, err := rsrch_cs.NewCliClientFromConfig(restConfig)
+			if err != nil {
+				log.Errorf("Failed to create client for running job delete: %v", err.Error())
+				return
 			}
+
+			deleteJobsStatus = clientSet.DeleteJobs(ctx, jobsToDelete)
 
 			if err != nil {
 				log.Error(err)

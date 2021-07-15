@@ -22,7 +22,7 @@ require (
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/common v0.10.0
-	github.com/run-ai/researcher-service v0.1.14
+	github.com/run-ai/researcher-service v0.1.22
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
@@ -38,6 +38,8 @@ require (
 	k8s.io/apimachinery v0.19.3
 	k8s.io/cli-runtime v0.19.3
 	k8s.io/client-go v0.19.3
+	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 	k8s.io/kubectl v0.19.3
 )
+
