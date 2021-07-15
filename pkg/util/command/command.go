@@ -2,11 +2,10 @@ package command
 
 import (
 	"fmt"
+	"github.com/run-ai/runai-cli/pkg/client"
 	"os"
 
-	log "github.com/golang/glog"
 	"github.com/run-ai/runai-cli/cmd/flags"
-	"github.com/run-ai/runai-cli/pkg/authentication/kubeconfig"
 	"github.com/spf13/cobra"
 )
 
@@ -33,16 +32,13 @@ func RoleAssertion(assertionFunc func() error) func(cmd *cobra.Command, args []s
 
 func NamespacedRoleAssertion(assertionFunc func(namespace string) error) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		var err error
-		namespace := flags.GetNamespaceToUseFromProjectFlagOffline(cmd)
-		if namespace == "" {
-			namespace, err = kubeconfig.GetCurrentContextDefaultNamespace()
-			if err != nil {
-				log.Error("Please configure which project to use")
-			}
-		}
+		kubeClient, err := client.GetClient()
+		printErrorAndAbortIfNeeded(err)
 
-		assertionErr := assertionFunc(namespace)
+		namespaceInfo, err := flags.GetNamespaceToUseFromProjectFlagAndPrintError(cmd, kubeClient)
+		printErrorAndAbortIfNeeded(err)
+
+		assertionErr := assertionFunc(namespaceInfo.Namespace)
 		printErrorAndAbortIfNeeded(assertionErr)
 	}
 }

@@ -12,14 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func GetNamespaceToUseFromProjectFlagOffline(cmd *cobra.Command) string {
-	flagValue := getFlagValue(cmd, ProjectFlag)
-	if flagValue == "" {
-		return ""
-	}
-	return fmt.Sprintf("%v%v", constants.RunaiNsProjectPrefix, flagValue)
-}
-
 // This function will print an error even if -b flag was used
 func GetNamespaceToUseFromProjectFlagAndPrintError(cmd *cobra.Command, kubeClient *client.Client) (types.NamespaceInfo, error) {
 	return getNamespaceToUseFromProjectFlag(cmd, kubeClient, true)
@@ -61,7 +53,7 @@ func GetNamespaceInfoToUse(cmd *cobra.Command, kubeClient *client.Client) (types
 	}
 
 	namespace := kubeClient.GetDefaultNamespace()
-	projectName, err := getProjectRelatedToNamespace(namespace, kubeClient)
+	projectName, err := GetProjectRelatedToNamespace(namespace, kubeClient)
 
 	if err != nil {
 		return types.NamespaceInfo{
@@ -76,7 +68,7 @@ func GetNamespaceInfoToUse(cmd *cobra.Command, kubeClient *client.Client) (types
 	}, nil
 }
 
-func getProjectRelatedToNamespace(namespaceName string, kubeClient *client.Client) (string, error) {
+func GetProjectRelatedToNamespace(namespaceName string, kubeClient *client.Client) (string, error) {
 	namespace, err := kubeClient.GetClientset().CoreV1().Namespaces().Get(context.TODO(), namespaceName, metav1.GetOptions{})
 
 	if err != nil {
